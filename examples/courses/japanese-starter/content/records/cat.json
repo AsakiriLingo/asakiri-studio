@@ -1,0 +1,74 @@
+{
+  "id": "record_cat",
+  "collectionId": "collection_vocabulary",
+  "fields": {
+    "field_japanese": {
+      "kind": "text",
+      "value": "猫"
+    },
+    "field_english": {
+      "kind": "text",
+      "value": "cat"
+    },
+    "field_pronunciations": {
+      "kind": "list",
+      "items": [
+        {
+          "id": "pronunciation_cat_ja",
+          "kind": "asset",
+          "label": "Japanese — primary speaker",
+          "locale": "ja",
+          "assetId": "asset_cat_ja_audio"
+        },
+        {
+          "id": "pronunciation_cat_en",
+          "kind": "asset",
+          "label": "English — primary speaker",
+          "locale": "en",
+          "assetId": "asset_cat_en_audio"
+        }
+      ]
+    },
+    "field_images": {
+      "kind": "list",
+      "items": [
+        {
+          "id": "image_cat_primary",
+          "kind": "asset",
+          "label": "Cat illustration",
+          "assetId": "asset_cat_image"
+        }
+      ]
+    },
+    "field_alternate_answers": {
+      "kind": "list",
+      "items": [
+        {
+          "id": "answer_cat_with_article",
+          "kind": "text",
+          "value": "a cat"
+        },
+        {
+          "id": "answer_cat_plural",
+          "kind": "text",
+          "value": "cats"
+        }
+      ]
+    },
+    "field_tags": {
+      "kind": "list",
+      "items": [
+        {
+          "id": "tag_cat_animal",
+          "kind": "text",
+          "value": "animals"
+        },
+        {
+          "id": "tag_cat_beginner",
+          "kind": "text",
+          "value": "beginner"
+        }
+      ]
+    }
+  }
+}

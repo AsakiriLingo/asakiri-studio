@@ -1,0 +1,24 @@
+{
+  "id": "record_dog",
+  "collectionId": "collection_vocabulary",
+  "fields": {
+    "field_japanese": {
+      "kind": "text",
+      "value": "犬"
+    },
+    "field_english": {
+      "kind": "text",
+      "value": "dog"
+    },
+    "field_tags": {
+      "kind": "list",
+      "items": [
+        {
+          "id": "tag_dog_animal",
+          "kind": "text",
+          "value": "animals"
+        }
+      ]
+    }
+  }
+}

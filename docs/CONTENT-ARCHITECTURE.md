@@ -157,3 +157,7 @@ The following remain intentionally undecided until realistic course fixtures are
 - packaging rules for the separate learner application.
 
 These choices must remain behind repository and resolver ports so they do not leak into feature components or Tiptap documents.
+
+## Working fixture
+
+[`examples/courses/japanese-starter`](../examples/courses/japanese-starter) exercises these ideas with reusable vocabulary, local image media, audio placeholders, a Tiptap document, a rich-media composition, a detached literal, and an exercise. It is intentionally labeled as a draft fixture rather than a canonical storage format. Its manifest declares collections, assets, and lessons explicitly; collections declare their record files. `pnpm check:example` validates its schema and references.

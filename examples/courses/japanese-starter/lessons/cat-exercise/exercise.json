@@ -1,0 +1,104 @@
+{
+  "id": "exercise_identify_cat",
+  "type": "multiple-choice",
+  "instruction": "Choose the English word that matches the image and audio.",
+  "prompt": [
+    {
+      "id": "prompt_cat_image",
+      "role": "visual",
+      "binding": {
+        "kind": "item",
+        "recordId": "record_cat",
+        "fieldId": "field_images",
+        "itemId": "image_cat_primary"
+      }
+    },
+    {
+      "id": "prompt_cat_audio",
+      "role": "audio",
+      "binding": {
+        "kind": "item",
+        "recordId": "record_cat",
+        "fieldId": "field_pronunciations",
+        "itemId": "pronunciation_cat_ja"
+      }
+    }
+  ],
+  "options": [
+    {
+      "id": "option_cat",
+      "body": [
+        {
+          "id": "option_cat_text",
+          "role": "primary",
+          "binding": {
+            "kind": "field",
+            "recordId": "record_cat",
+            "fieldId": "field_english"
+          }
+        },
+        {
+          "id": "option_cat_japanese",
+          "role": "supporting-text",
+          "binding": {
+            "kind": "field",
+            "recordId": "record_cat",
+            "fieldId": "field_japanese"
+          }
+        }
+      ]
+    },
+    {
+      "id": "option_dog",
+      "body": [
+        {
+          "id": "option_dog_text",
+          "role": "primary",
+          "binding": {
+            "kind": "field",
+            "recordId": "record_dog",
+            "fieldId": "field_english"
+          }
+        },
+        {
+          "id": "option_dog_japanese",
+          "role": "supporting-text",
+          "binding": {
+            "kind": "field",
+            "recordId": "record_dog",
+            "fieldId": "field_japanese"
+          }
+        }
+      ]
+    },
+    {
+      "id": "option_bird",
+      "body": [
+        {
+          "id": "option_bird_text",
+          "role": "primary",
+          "binding": {
+            "kind": "field",
+            "recordId": "record_bird",
+            "fieldId": "field_english"
+          }
+        },
+        {
+          "id": "option_bird_japanese",
+          "role": "supporting-text",
+          "binding": {
+            "kind": "field",
+            "recordId": "record_bird",
+            "fieldId": "field_japanese"
+          }
+        }
+      ]
+    }
+  ],
+  "evaluation": {
+    "kind": "selected-options",
+    "correctOptionIds": [
+      "option_cat"
+    ]
+  }
+}

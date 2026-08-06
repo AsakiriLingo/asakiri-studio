@@ -1,0 +1,69 @@
+{
+  "type": "doc",
+  "content": [
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 1
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Meet 猫"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "猫 means cat. This is a normal Tiptap lesson containing headings, paragraphs, lists, and optional reusable content references."
+        }
+      ]
+    },
+    {
+      "type": "bulletList",
+      "content": [
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Japanese: 猫"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "English: cat"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "contentRecord",
+      "attrs": {
+        "binding": {
+          "kind": "record",
+          "recordId": "record_cat"
+        },
+        "presentation": "vocabulary-card"
+      }
+    }
+  ]
+}

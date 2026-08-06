@@ -1,0 +1,73 @@
+{
+  "blocks": [
+    {
+      "id": "block_cat_card",
+      "type": "content-card",
+      "binding": {
+        "kind": "record",
+        "recordId": "record_cat"
+      },
+      "presentation": {
+        "view": "vocabulary-card",
+        "showFieldIds": [
+          "field_japanese",
+          "field_english"
+        ]
+      }
+    },
+    {
+      "id": "block_cat_image",
+      "type": "media",
+      "binding": {
+        "kind": "item",
+        "recordId": "record_cat",
+        "fieldId": "field_images",
+        "itemId": "image_cat_primary"
+      },
+      "presentation": {
+        "fit": "contain",
+        "caption": "猫 — cat"
+      }
+    },
+    {
+      "id": "block_cat_ja_audio",
+      "type": "media",
+      "binding": {
+        "kind": "item",
+        "recordId": "record_cat",
+        "fieldId": "field_pronunciations",
+        "itemId": "pronunciation_cat_ja"
+      },
+      "presentation": {
+        "label": "Listen in Japanese"
+      }
+    },
+    {
+      "id": "block_cat_en_audio",
+      "type": "media",
+      "binding": {
+        "kind": "item",
+        "recordId": "record_cat",
+        "fieldId": "field_pronunciations",
+        "itemId": "pronunciation_cat_en"
+      },
+      "presentation": {
+        "label": "Listen in English"
+      }
+    },
+    {
+      "id": "block_detached_note",
+      "type": "callout",
+      "binding": {
+        "kind": "literal",
+        "value": {
+          "type": "text",
+          "text": "This note is intentionally detached and will not change when the Cat record changes."
+        }
+      },
+      "presentation": {
+        "tone": "note"
+      }
+    }
+  ]
+}

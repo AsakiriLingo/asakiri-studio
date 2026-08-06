@@ -8,7 +8,7 @@ A desktop-first, local-first course editor built with React, TypeScript, Vite, a
 pnpm dev          # Chromium development server
 pnpm tauri dev    # Tauri desktop development
 pnpm test         # feature tests in a browser-like DOM
-pnpm check        # boundaries, TypeScript, tests, web build, and Rust
+pnpm check        # boundaries, example data, TypeScript, tests, web build, and Rust
 pnpm build        # production web build
 ```
 
@@ -26,3 +26,5 @@ src/
 See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) before adding a feature and [docs/CONTENT-ARCHITECTURE.md](docs/CONTENT-ARCHITECTURE.md) before changing reusable content, media bindings, or exercises. Repository-wide agent rules are in [AGENTS.md](AGENTS.md).
 
 The on-disk course structure is intentionally deferred. This repository does not assume a single `course.json` file.
+
+A provisional, validated data fixture lives at [examples/courses/japanese-starter](examples/courses/japanese-starter). It exists to test architectural decisions and is not a committed storage specification.

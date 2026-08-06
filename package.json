@@ -6,8 +6,9 @@
   "scripts": {
     "dev": "vite",
     "build": "pnpm typecheck && vite build",
-    "check": "pnpm check:boundaries && pnpm typecheck && pnpm test && pnpm build:web && pnpm check:rust",
+    "check": "pnpm check:boundaries && pnpm check:example && pnpm typecheck && pnpm test && pnpm build:web && pnpm check:rust",
     "check:boundaries": "node scripts/check-boundaries.mjs",
+    "check:example": "node scripts/validate-example-course.mjs",
     "check:rust": "cargo check --manifest-path src-tauri/Cargo.toml",
     "build:web": "vite build",
     "test": "vitest run",

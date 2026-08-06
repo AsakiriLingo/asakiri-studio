@@ -1,0 +1,36 @@
+{
+  "$comment": "Provisional fixture, not a canonical Asakiri storage schema.",
+  "format": "asakiri-example",
+  "formatVersion": "0.1-draft",
+  "project": {
+    "id": "course_japanese_starter",
+    "title": "Japanese Starter",
+    "description": "A small fixture showing reusable content across lessons and exercises.",
+    "defaultLocale": "en",
+    "learningLocales": ["ja"]
+  },
+  "collections": [
+    "content/collections/vocabulary.json"
+  ],
+  "assets": [
+    "media/assets/cat-image/asset.json",
+    "media/assets/cat-ja-audio/asset.json",
+    "media/assets/cat-en-audio/asset.json"
+  ],
+  "lessons": [
+    "lessons/welcome/lesson.json",
+    "lessons/cat-rich-media/lesson.json",
+    "lessons/cat-exercise/lesson.json"
+  ],
+  "outline": [
+    {
+      "id": "section_getting_started",
+      "title": "Getting started",
+      "lessonIds": [
+        "lesson_welcome",
+        "lesson_cat_rich_media",
+        "lesson_cat_exercise"
+      ]
+    }
+  ]
+}

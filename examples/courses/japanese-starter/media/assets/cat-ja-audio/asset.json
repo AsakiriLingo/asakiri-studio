@@ -1,0 +1,14 @@
+{
+  "id": "asset_cat_ja_audio",
+  "kind": "audio",
+  "label": "猫 — Japanese pronunciation",
+  "availability": "placeholder",
+  "file": null,
+  "expectedFile": "original.wav",
+  "mimeType": "audio/wav",
+  "metadata": {
+    "locale": "ja",
+    "speaker": "Primary speaker",
+    "transcript": "猫"
+  }
+}

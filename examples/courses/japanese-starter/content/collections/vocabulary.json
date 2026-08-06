@@ -1,0 +1,59 @@
+{
+  "id": "collection_vocabulary",
+  "name": "Vocabulary",
+  "description": "Reusable vocabulary records shown as a table in the Content area.",
+  "fields": [
+    {
+      "id": "field_japanese",
+      "name": "Japanese",
+      "kind": "text",
+      "cardinality": "one",
+      "locale": "ja",
+      "required": true
+    },
+    {
+      "id": "field_english",
+      "name": "English",
+      "kind": "text",
+      "cardinality": "one",
+      "locale": "en",
+      "required": true
+    },
+    {
+      "id": "field_pronunciations",
+      "name": "Pronunciations",
+      "kind": "asset",
+      "assetKind": "audio",
+      "cardinality": "many",
+      "required": false
+    },
+    {
+      "id": "field_images",
+      "name": "Images",
+      "kind": "asset",
+      "assetKind": "image",
+      "cardinality": "many",
+      "required": false
+    },
+    {
+      "id": "field_alternate_answers",
+      "name": "Alternate answers",
+      "kind": "text",
+      "cardinality": "many",
+      "locale": "en",
+      "required": false
+    },
+    {
+      "id": "field_tags",
+      "name": "Tags",
+      "kind": "text",
+      "cardinality": "many",
+      "required": false
+    }
+  ],
+  "recordFiles": [
+    "../records/cat.json",
+    "../records/dog.json",
+    "../records/bird.json"
+  ]
+}

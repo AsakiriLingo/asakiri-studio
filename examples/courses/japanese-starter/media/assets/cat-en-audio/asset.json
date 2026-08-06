@@ -1,0 +1,14 @@
+{
+  "id": "asset_cat_en_audio",
+  "kind": "audio",
+  "label": "Cat — English pronunciation",
+  "availability": "placeholder",
+  "file": null,
+  "expectedFile": "original.wav",
+  "mimeType": "audio/wav",
+  "metadata": {
+    "locale": "en",
+    "speaker": "Primary speaker",
+    "transcript": "cat"
+  }
+}

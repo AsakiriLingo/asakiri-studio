@@ -1,0 +1,13 @@
+{
+  "id": "asset_cat_image",
+  "kind": "image",
+  "label": "Cat illustration",
+  "availability": "ready",
+  "file": "original.svg",
+  "mimeType": "image/svg+xml",
+  "metadata": {
+    "width": 640,
+    "height": 480,
+    "alt": "A simple illustration of a seated cat"
+  }
+}

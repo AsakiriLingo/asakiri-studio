@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="480" viewBox="0 0 640 480" role="img" aria-labelledby="title description">
+  <title id="title">Cat illustration</title>
+  <desc id="description">A simple dark green seated cat on a warm cream background.</desc>
+  <rect width="640" height="480" rx="36" fill="#f4ead7"/>
+  <circle cx="320" cy="210" r="112" fill="#285849"/>
+  <path d="M235 130 255 52 300 112M405 130 385 52 340 112" fill="#285849" stroke="#285849" stroke-width="20" stroke-linejoin="round"/>
+  <ellipse cx="320" cy="382" rx="135" ry="82" fill="#285849"/>
+  <circle cx="280" cy="195" r="12" fill="#f4ead7"/>
+  <circle cx="360" cy="195" r="12" fill="#f4ead7"/>
+  <path d="m320 225-13 12h26Z" fill="#e8a495"/>
+  <path d="M320 239c-8 17-24 22-38 20m38-20c8 17 24 22 38 20" fill="none" stroke="#f4ead7" stroke-width="7" stroke-linecap="round"/>
+  <path d="M226 231 130 208m96 52-105 15m293-44 96-23m-96 52 105 15" fill="none" stroke="#285849" stroke-width="7" stroke-linecap="round"/>
+  <path d="M437 375c93-22 100 75 24 62" fill="none" stroke="#285849" stroke-width="34" stroke-linecap="round"/>
+</svg>

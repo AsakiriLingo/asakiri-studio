@@ -1,0 +1,24 @@
+{
+  "id": "record_bird",
+  "collectionId": "collection_vocabulary",
+  "fields": {
+    "field_japanese": {
+      "kind": "text",
+      "value": "鳥"
+    },
+    "field_english": {
+      "kind": "text",
+      "value": "bird"
+    },
+    "field_tags": {
+      "kind": "list",
+      "items": [
+        {
+          "id": "tag_bird_animal",
+          "kind": "text",
+          "value": "animals"
+        }
+      ]
+    }
+  }
+}
