@@ -1,5 +1,6 @@
 import { render, screen, waitFor } from "@testing-library/react";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import type { WindowThemeGateway } from "@core/appearance";
 import { ThemeProvider } from "@app/theme/ThemeProvider";
 import { useTheme } from "@app/theme/use-theme";
 import { THEME_STORAGE_KEY } from "@app/theme/theme";
@@ -22,8 +23,10 @@ afterEach(() => {
 
 describe("ThemeProvider", () => {
   it("persists an explicit theme and updates the document", async () => {
+    const setTheme = vi.fn<WindowThemeGateway["setTheme"]>().mockResolvedValue();
+
     render(
-      <ThemeProvider>
+      <ThemeProvider windowThemeGateway={{ setTheme }}>
         <ThemeConsumer />
       </ThemeProvider>,
     );
@@ -39,5 +42,6 @@ describe("ThemeProvider", () => {
     );
     expect(window.localStorage.getItem(THEME_STORAGE_KEY)).toBe("dark");
     expect(screen.getByText("dark:dark")).toBeVisible();
+    expect(setTheme).toHaveBeenLastCalledWith("dark");
   });
 });

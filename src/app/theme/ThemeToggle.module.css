@@ -1,0 +1,10 @@
+.button {
+  width: var(--control-height-md);
+  min-height: var(--control-height-md);
+  padding: 0;
+  color: var(--color-text-muted);
+}
+
+.button:hover:not([data-disabled]) {
+  color: var(--color-text);
+}

@@ -1,4 +1,5 @@
 import type { ProjectDirectoryGateway } from "@core/projects";
+import type { ReactNode } from "react";
 import { Button } from "@shared/components/button";
 import { useProjectHub } from "@features/project-hub/hooks/use-project-hub";
 import type { ProjectHubMessages } from "@features/project-hub/i18n/project-hub-messages";
@@ -6,11 +7,13 @@ import styles from "@features/project-hub/components/ProjectHubPage.module.css";
 
 interface ProjectHubPageProps {
   readonly directoryGateway: ProjectDirectoryGateway;
+  readonly headerActions?: ReactNode;
   readonly messages: ProjectHubMessages;
 }
 
 export function ProjectHubPage({
   directoryGateway,
+  headerActions,
   messages,
 }: ProjectHubPageProps) {
   const { state, openProject } = useProjectHub(directoryGateway);
@@ -18,6 +21,10 @@ export function ProjectHubPage({
 
   return (
     <main className={styles.projectHub}>
+      {headerActions && (
+        <header className={styles.headerActions}>{headerActions}</header>
+      )}
+
       <section className={styles.content} aria-labelledby="project-hub-title">
         <div className={styles.eyebrow}>{messages.eyebrow}</div>
         <h1 className={styles.title} id="project-hub-title">{messages.title}</h1>

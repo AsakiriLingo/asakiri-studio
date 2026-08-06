@@ -1,6 +1,10 @@
 import type { AppMessages } from "@app/localization/messages";
 
 export const jaMessages = {
+  themeToggle: {
+    switchToDark: "ダークモードに切り替える",
+    switchToLight: "ライトモードに切り替える",
+  },
   projectHub: {
     eyebrow: "ローカルファーストのコースエディター",
     title: "コースはあなたのコンピューターに保存されます。",

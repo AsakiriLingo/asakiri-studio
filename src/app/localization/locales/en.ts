@@ -1,6 +1,10 @@
 import type { AppMessages } from "@app/localization/messages";
 
 export const enMessages = {
+  themeToggle: {
+    switchToDark: "Switch to dark mode",
+    switchToLight: "Switch to light mode",
+  },
   projectHub: {
     eyebrow: "Local-first course editor",
     title: "Your courses live on your computer.",

@@ -11,7 +11,7 @@ interface AppProvidersProps extends PropsWithChildren {
 
 export function AppProviders({ children, dependencies }: AppProvidersProps) {
   return (
-    <ThemeProvider>
+    <ThemeProvider windowThemeGateway={dependencies.windowThemeGateway}>
       <LocalizationProvider>
         <AppDependenciesContext.Provider value={dependencies}>
           {children}

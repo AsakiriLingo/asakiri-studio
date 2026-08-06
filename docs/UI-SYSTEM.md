@@ -20,6 +20,7 @@ The shared Button supports `primary`, `secondary`, and `ghost` variants plus `sm
 - Global CSS is limited to tokens, normalization, application-root behavior, and accessibility preferences.
 - New colors use OKLCH. Dark mode remaps semantic roles rather than duplicating component rules.
 - Use tonal surface changes and separator borders instead of drop shadows or decorative glow.
+- Use `--border-hairline` with `--color-border` for quiet surface separation; reserve `--color-border-strong` for controls that need a distinct boundary.
 - Motion must respect `prefers-reduced-motion`.
 
 ## Themes

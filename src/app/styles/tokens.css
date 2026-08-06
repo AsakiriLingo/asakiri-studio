@@ -38,6 +38,8 @@
   --control-height-md: 2.75rem;
   --control-height-lg: 3rem;
 
+  --border-hairline: 1px;
+
   --duration-fast: 120ms;
   --duration-normal: 180ms;
   --ease-standard: cubic-bezier(0.2, 0, 0, 1);
@@ -47,7 +49,7 @@
   --color-surface-subtle: oklch(0.95 0.014 145);
   --color-text: oklch(0.25 0.025 155);
   --color-text-muted: oklch(0.51 0.025 155);
-  --color-border: oklch(0.87 0.014 155);
+  --color-border: oklch(0.91 0.012 155);
   --color-border-strong: oklch(0.73 0.025 155);
   --color-brand: oklch(0.44 0.115 155);
   --color-brand-hover: oklch(0.37 0.105 155);
@@ -66,7 +68,7 @@
   --color-surface-subtle: oklch(0.245 0.009 155);
   --color-text: oklch(0.94 0.008 155);
   --color-text-muted: oklch(0.72 0.012 155);
-  --color-border: oklch(0.3 0.01 155);
+  --color-border: oklch(0.255 0.008 155);
   --color-border-strong: oklch(0.43 0.014 155);
   --color-brand: oklch(0.44 0.115 155);
   --color-brand-hover: oklch(0.37 0.105 155);
@@ -76,4 +78,11 @@
   --color-danger-surface: oklch(0.225 0.035 25);
   --color-success: oklch(0.74 0.1 155);
   --color-success-surface: oklch(0.225 0.03 155);
+}
+
+@media only screen and (min-device-pixel-ratio: 2),
+  only screen and (min-resolution: 192dpi) {
+  :root {
+    --border-hairline: 0.5px;
+  }
 }

@@ -13,6 +13,11 @@ import {
   THEME_STORAGE_KEY,
   type ThemePreference,
 } from "@app/theme/theme";
+import type { WindowThemeGateway } from "@core/appearance";
+
+interface ThemeProviderProps extends PropsWithChildren {
+  readonly windowThemeGateway: WindowThemeGateway;
+}
 
 function readStoredPreference(): ThemePreference {
   try {
@@ -23,7 +28,10 @@ function readStoredPreference(): ThemePreference {
   }
 }
 
-export function ThemeProvider({ children }: PropsWithChildren) {
+export function ThemeProvider({
+  children,
+  windowThemeGateway,
+}: ThemeProviderProps) {
   const [preference, setPreferenceState] =
     useState<ThemePreference>(readStoredPreference);
   const [systemTheme, setSystemTheme] = useState(getSystemTheme);
@@ -41,7 +49,10 @@ export function ThemeProvider({ children }: PropsWithChildren) {
   useEffect(() => {
     document.documentElement.dataset.theme = resolvedTheme;
     document.documentElement.dataset.themePreference = preference;
-  }, [preference, resolvedTheme]);
+    void windowThemeGateway.setTheme(resolvedTheme).catch(() => {
+      // The web theme remains usable if native window synchronization fails.
+    });
+  }, [preference, resolvedTheme, windowThemeGateway]);
 
   const setPreference = useCallback((nextPreference: ThemePreference) => {
     setPreferenceState(nextPreference);
