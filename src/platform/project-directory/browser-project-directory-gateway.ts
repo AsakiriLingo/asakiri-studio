@@ -2,16 +2,18 @@ import type {
   ProjectDirectory,
   ProjectDirectoryGateway,
 } from "@core/projects";
+import { ProjectDirectoryError } from "@core/projects";
 
 export class BrowserProjectDirectoryGateway implements ProjectDirectoryGateway {
   readonly isSupported = "showDirectoryPicker" in window;
+  readonly runtime = "browser" as const;
   readonly #handles = new Map<string, FileSystemDirectoryHandle>();
 
-  async openProjectDirectory(): Promise<ProjectDirectory | null> {
+  async openProjectDirectory(_options: {
+    readonly dialogTitle: string;
+  }): Promise<ProjectDirectory | null> {
     if (!this.isSupported) {
-      throw new Error(
-        "This Chromium version does not support local directory access.",
-      );
+      throw new ProjectDirectoryError("unsupported");
     }
 
     try {
@@ -29,8 +31,11 @@ export class BrowserProjectDirectoryGateway implements ProjectDirectoryGateway {
       if (error instanceof DOMException && error.name === "AbortError") {
         return null;
       }
+      if (error instanceof DOMException && error.name === "NotAllowedError") {
+        throw new ProjectDirectoryError("permissionDenied");
+      }
 
-      throw error;
+      throw new ProjectDirectoryError("unknown");
     }
   }
 }

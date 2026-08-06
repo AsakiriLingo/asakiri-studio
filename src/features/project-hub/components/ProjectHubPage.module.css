@@ -1,0 +1,172 @@
+.projectHub {
+  min-height: 100vh;
+  background: var(--color-canvas);
+}
+
+.navigation {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 4.5rem;
+  padding-inline: var(--space-10);
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-surface);
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  color: var(--color-text);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: -0.02em;
+  text-decoration: none;
+}
+
+.brand:focus-visible {
+  outline: 3px solid var(--color-focus-ring);
+  outline-offset: 3px;
+}
+
+.brandMark {
+  display: grid;
+  width: 2rem;
+  height: 2rem;
+  place-items: center;
+  border-radius: var(--radius-md);
+  color: var(--color-on-brand);
+  background: var(--color-brand);
+  font-family: var(--font-family-display);
+}
+
+.environmentPill,
+.openedProjectStatus {
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  color: var(--color-text-muted);
+  background: var(--color-surface-subtle);
+  font-size: var(--font-size-100);
+  font-weight: var(--font-weight-semibold);
+}
+
+.content {
+  width: min(52.5rem, calc(100% - var(--space-12)));
+  margin-inline: auto;
+  padding-block: 6.5rem var(--space-16);
+}
+
+.eyebrow {
+  margin-bottom: var(--space-4);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-200);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.title {
+  max-width: 43.75rem;
+  margin: 0 0 var(--space-5);
+  font-family: var(--font-family-display);
+  font-size: clamp(2.625rem, 6vw, 4.25rem);
+  font-weight: var(--font-weight-regular);
+  line-height: 0.98;
+  letter-spacing: -0.045em;
+}
+
+.introduction {
+  max-width: 38.125rem;
+  margin: 0 0 var(--space-12);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-500);
+  line-height: 1.65;
+}
+
+.projectCard,
+.openedProject {
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  background: var(--color-surface);
+}
+
+.projectCard {
+  justify-content: space-between;
+  padding: var(--space-7);
+}
+
+.projectCardTitle {
+  margin: 0 0 var(--space-2);
+  font-size: var(--font-size-600);
+  letter-spacing: -0.02em;
+}
+
+.projectCardDescription {
+  margin: 0;
+  color: var(--color-text-muted);
+}
+
+.notice {
+  margin: var(--space-4) var(--space-1) 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-300);
+}
+
+.noticeError {
+  color: var(--color-danger);
+}
+
+.openedProject {
+  margin-top: var(--space-5);
+  padding: var(--space-5);
+}
+
+.openedProjectIcon {
+  display: grid;
+  width: 2.125rem;
+  height: 2.125rem;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: var(--radius-full);
+  color: var(--color-success);
+  background: var(--color-success-surface);
+  font-weight: var(--font-weight-bold);
+}
+
+.openedProjectDetails {
+  display: grid;
+  min-width: 0;
+  gap: var(--space-1);
+}
+
+.openedProjectDetails span {
+  overflow: hidden;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-200);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.openedProjectStatus {
+  margin-left: auto;
+  color: var(--color-success);
+}
+
+@media (max-width: 40rem) {
+  .navigation {
+    padding-inline: var(--space-5);
+  }
+
+  .content {
+    width: calc(100% - var(--space-8));
+    padding-top: var(--space-16);
+  }
+
+  .projectCard {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}

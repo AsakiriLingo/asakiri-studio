@@ -30,6 +30,10 @@ These instructions apply to this entire repository.
 - `src/app` is the composition root. It is the only layer allowed to connect features to concrete platform adapters.
 - Keep platform objects such as browser file handles and Tauri paths behind contracts. Do not put them in feature state or course domain types.
 - Prefer small, composable React components. Forward refs and native HTML props in reusable controls; avoid boolean-prop and configuration-object component APIs.
+- Build accessible component behavior on Base UI. Preserve its `render` composition API, state attributes, native props, and refs.
+- Style reusable components and features with CSS Modules. Keep global CSS limited to tokens, resets, root behavior, and accessibility preferences.
+- Consume semantic variables from `src/app/styles/tokens.css`; do not add raw color literals to component CSS. Author new colors in OKLCH.
+- All user-facing text must come from strict localized message contracts. Update every supported locale when changing a contract, and pass localized native labels through platform ports.
 
 ## Quality bar
 

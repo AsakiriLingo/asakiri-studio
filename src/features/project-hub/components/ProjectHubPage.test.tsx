@@ -5,6 +5,29 @@ import type {
   ProjectDirectoryGateway,
 } from "@core/projects";
 import { ProjectHubPage } from "@features/project-hub/components/ProjectHubPage";
+import type { ProjectHubMessages } from "@features/project-hub/i18n/project-hub-messages";
+
+const messages: ProjectHubMessages = {
+  navigationLabel: "Studio",
+  homeLabel: "Asakiri Studio home",
+  productName: "Asakiri Studio",
+  runtime: { browser: "Chromium", desktop: "Desktop" },
+  eyebrow: "Local-first course editor",
+  title: "Your courses live on your computer.",
+  introduction: "Open a course repository to start editing.",
+  openProjectTitle: "Open a project",
+  openProjectDescription: "Choose the folder that contains one course repository.",
+  chooseFolder: "Choose folder",
+  openingFolder: "Opening…",
+  dialogTitle: "Open course project",
+  unsupported: "Local folders require a current Chromium browser.",
+  errors: {
+    permissionDenied: "Folder permission was denied.",
+    unknown: "The project could not be opened.",
+    unsupported: "This browser cannot access local project folders.",
+  },
+  ready: "Ready",
+};
 
 const project: ProjectDirectory = {
   id: "course-project",
@@ -17,14 +40,14 @@ function createGateway(
   openProjectDirectory: ProjectDirectoryGateway["openProjectDirectory"],
   isSupported = true,
 ): ProjectDirectoryGateway {
-  return { isSupported, openProjectDirectory };
+  return { isSupported, openProjectDirectory, runtime: "desktop" };
 }
 
 describe("ProjectHubPage", () => {
   it("disables folder selection when the runtime cannot access directories", () => {
     const gateway = createGateway(vi.fn(), false);
 
-    render(<ProjectHubPage directoryGateway={gateway} />);
+    render(<ProjectHubPage directoryGateway={gateway} messages={messages} />);
 
     expect(screen.getByRole("button", { name: "Choose folder" })).toBeDisabled();
     expect(screen.getByText(/require a current Chromium browser/i)).toBeVisible();
@@ -34,34 +57,37 @@ describe("ProjectHubPage", () => {
     const openProjectDirectory = vi.fn().mockResolvedValue(project);
     const gateway = createGateway(openProjectDirectory);
 
-    render(<ProjectHubPage directoryGateway={gateway} />);
+    render(<ProjectHubPage directoryGateway={gateway} messages={messages} />);
     fireEvent.click(screen.getByRole("button", { name: "Choose folder" }));
 
     expect(await screen.findByText("Course project")).toBeVisible();
     expect(screen.getByText("course-project")).toBeVisible();
-    expect(openProjectDirectory).toHaveBeenCalledOnce();
+    expect(openProjectDirectory).toHaveBeenCalledWith({
+      dialogTitle: "Open course project",
+    });
   });
 
   it("returns to idle when the directory picker is cancelled", async () => {
     const gateway = createGateway(vi.fn().mockResolvedValue(null));
 
-    render(<ProjectHubPage directoryGateway={gateway} />);
+    render(<ProjectHubPage directoryGateway={gateway} messages={messages} />);
     fireEvent.click(screen.getByRole("button", { name: "Choose folder" }));
 
     expect(await screen.findByRole("button", { name: "Choose folder" })).toBeEnabled();
     expect(screen.queryByText("Ready")).not.toBeInTheDocument();
   });
 
-  it("renders adapter failures without throwing the feature tree", async () => {
+  it("localizes adapter failures without exposing raw errors", async () => {
     const gateway = createGateway(
-      vi.fn().mockRejectedValue(new Error("Folder permission was denied.")),
+      vi.fn().mockRejectedValue(new Error("Native implementation detail")),
     );
 
-    render(<ProjectHubPage directoryGateway={gateway} />);
+    render(<ProjectHubPage directoryGateway={gateway} messages={messages} />);
     fireEvent.click(screen.getByRole("button", { name: "Choose folder" }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent(
-      "Folder permission was denied.",
+      "The project could not be opened.",
     );
+    expect(screen.queryByText("Native implementation detail")).not.toBeInTheDocument();
   });
 });

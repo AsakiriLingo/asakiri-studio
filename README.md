@@ -23,7 +23,7 @@ src/
 └── shared/       Product-agnostic components and utilities
 ```
 
-See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) before adding a feature and [docs/CONTENT-ARCHITECTURE.md](docs/CONTENT-ARCHITECTURE.md) before changing reusable content, media bindings, or exercises. Repository-wide agent rules are in [AGENTS.md](AGENTS.md).
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) before adding a feature, [docs/UI-SYSTEM.md](docs/UI-SYSTEM.md) before creating interface components, and [docs/CONTENT-ARCHITECTURE.md](docs/CONTENT-ARCHITECTURE.md) before changing reusable content, media bindings, or exercises. Repository-wide agent rules are in [AGENTS.md](AGENTS.md).
 
 The on-disk course structure is intentionally deferred. This repository does not assume a single `course.json` file.
 

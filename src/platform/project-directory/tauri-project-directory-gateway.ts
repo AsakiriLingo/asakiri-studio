@@ -6,13 +6,16 @@ import type {
 
 export class TauriProjectDirectoryGateway implements ProjectDirectoryGateway {
   readonly isSupported = true;
+  readonly runtime = "desktop" as const;
   readonly #paths = new Map<string, string>();
 
-  async openProjectDirectory(): Promise<ProjectDirectory | null> {
+  async openProjectDirectory(options: {
+    readonly dialogTitle: string;
+  }): Promise<ProjectDirectory | null> {
     const path = await open({
       directory: true,
       multiple: false,
-      title: "Open course project",
+      title: options.dialogTitle,
     });
 
     if (!path) {

@@ -1,67 +1,72 @@
 import type { ProjectDirectoryGateway } from "@core/projects";
-import { Button } from "@shared/components/Button";
+import { Button } from "@shared/components/button";
 import { useProjectHub } from "@features/project-hub/hooks/use-project-hub";
+import type { ProjectHubMessages } from "@features/project-hub/i18n/project-hub-messages";
+import styles from "@features/project-hub/components/ProjectHubPage.module.css";
 
 interface ProjectHubPageProps {
   readonly directoryGateway: ProjectDirectoryGateway;
+  readonly messages: ProjectHubMessages;
 }
 
-export function ProjectHubPage({ directoryGateway }: ProjectHubPageProps) {
+export function ProjectHubPage({
+  directoryGateway,
+  messages,
+}: ProjectHubPageProps) {
   const { state, openProject } = useProjectHub(directoryGateway);
   const isOpening = state.status === "opening";
 
   return (
-    <main className="project-hub">
-      <nav className="project-hub__nav" aria-label="Studio">
-        <a className="brand" href="/" aria-label="Asakiri Studio home">
-          <span className="brand__mark" aria-hidden="true">A</span>
-          <span>Asakiri Studio</span>
+    <main className={styles.projectHub}>
+      <nav className={styles.navigation} aria-label={messages.navigationLabel}>
+        <a className={styles.brand} href="/" aria-label={messages.homeLabel}>
+          <span className={styles.brandMark} aria-hidden="true">A</span>
+          <span>{messages.productName}</span>
         </a>
-        <span className="environment-pill">
-          {"__TAURI_INTERNALS__" in window ? "Desktop" : "Chromium"}
+        <span className={styles.environmentPill}>
+          {messages.runtime[directoryGateway.runtime]}
         </span>
       </nav>
 
-      <section className="project-hub__content" aria-labelledby="project-hub-title">
-        <div className="eyebrow">Local-first course editor</div>
-        <h1 id="project-hub-title">Your courses live on your computer.</h1>
-        <p className="project-hub__intro">
-          Open a course repository to start editing. Content and media remain
-          project-scoped, portable, and under your control.
-        </p>
+      <section className={styles.content} aria-labelledby="project-hub-title">
+        <div className={styles.eyebrow}>{messages.eyebrow}</div>
+        <h1 className={styles.title} id="project-hub-title">{messages.title}</h1>
+        <p className={styles.introduction}>{messages.introduction}</p>
 
-        <div className="project-card">
+        <div className={styles.projectCard}>
           <div>
-            <h2>Open a project</h2>
-            <p>Choose the folder that contains one course repository.</p>
+            <h2 className={styles.projectCardTitle}>{messages.openProjectTitle}</h2>
+            <p className={styles.projectCardDescription}>
+              {messages.openProjectDescription}
+            </p>
           </div>
           <Button
-            type="button"
-            onClick={() => void openProject()}
+            focusableWhenDisabled={isOpening}
+            onClick={() => void openProject(messages.dialogTitle)}
             disabled={!directoryGateway.isSupported || isOpening}
           >
-            {isOpening ? "Opening…" : "Choose folder"}
+            {isOpening ? messages.openingFolder : messages.chooseFolder}
           </Button>
         </div>
 
         {!directoryGateway.isSupported && (
-          <p className="notice" role="status">
-            Local folders require a current Chromium browser or the desktop app.
-          </p>
+          <p className={styles.notice} role="status">{messages.unsupported}</p>
         )}
 
         {state.status === "error" && (
-          <p className="notice notice--error" role="alert">{state.message}</p>
+          <p className={`${styles.notice} ${styles.noticeError}`} role="alert">
+            {messages.errors[state.code]}
+          </p>
         )}
 
         {state.status === "opened" && (
-          <div className="opened-project" aria-live="polite">
-            <span className="opened-project__icon" aria-hidden="true">✓</span>
-            <div>
+          <div className={styles.openedProject} aria-live="polite">
+            <span className={styles.openedProjectIcon} aria-hidden="true">✓</span>
+            <div className={styles.openedProjectDetails}>
               <strong>{state.project.name}</strong>
               <span>{state.project.locationLabel}</span>
             </div>
-            <span className="opened-project__status">Ready</span>
+            <span className={styles.openedProjectStatus}>{messages.ready}</span>
           </div>
         )}
       </section>
