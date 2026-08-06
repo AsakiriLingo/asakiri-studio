@@ -18,16 +18,6 @@ export function ProjectHubPage({
 
   return (
     <main className={styles.projectHub}>
-      <nav className={styles.navigation} aria-label={messages.navigationLabel}>
-        <a className={styles.brand} href="/" aria-label={messages.homeLabel}>
-          <span className={styles.brandMark} aria-hidden="true">A</span>
-          <span>{messages.productName}</span>
-        </a>
-        <span className={styles.environmentPill}>
-          {messages.runtime[directoryGateway.runtime]}
-        </span>
-      </nav>
-
       <section className={styles.content} aria-labelledby="project-hub-title">
         <div className={styles.eyebrow}>{messages.eyebrow}</div>
         <h1 className={styles.title} id="project-hub-title">{messages.title}</h1>

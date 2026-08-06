@@ -2,13 +2,6 @@ import type { AppMessages } from "@app/localization/messages";
 
 export const jaMessages = {
   projectHub: {
-    navigationLabel: "スタジオ",
-    homeLabel: "Asakiri Studio ホーム",
-    productName: "Asakiri Studio",
-    runtime: {
-      browser: "Chromium",
-      desktop: "デスクトップ",
-    },
     eyebrow: "ローカルファーストのコースエディター",
     title: "コースはあなたのコンピューターに保存されます。",
     introduction:

@@ -3,43 +3,6 @@
   background: var(--color-canvas);
 }
 
-.navigation {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  height: 4.5rem;
-  padding-inline: var(--space-10);
-  border-bottom: 1px solid var(--color-border);
-  background: var(--color-surface);
-}
-
-.brand {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-3);
-  color: var(--color-text);
-  font-weight: var(--font-weight-bold);
-  letter-spacing: -0.02em;
-  text-decoration: none;
-}
-
-.brand:focus-visible {
-  outline: 3px solid var(--color-focus-ring);
-  outline-offset: 3px;
-}
-
-.brandMark {
-  display: grid;
-  width: 2rem;
-  height: 2rem;
-  place-items: center;
-  border-radius: var(--radius-md);
-  color: var(--color-on-brand);
-  background: var(--color-brand);
-  font-family: var(--font-family-display);
-}
-
-.environmentPill,
 .openedProjectStatus {
   padding: var(--space-1) var(--space-2);
   border: 1px solid var(--color-border);
@@ -156,10 +119,6 @@
 }
 
 @media (max-width: 40rem) {
-  .navigation {
-    padding-inline: var(--space-5);
-  }
-
   .content {
     width: calc(100% - var(--space-8));
     padding-top: var(--space-16);

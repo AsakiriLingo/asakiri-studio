@@ -2,13 +2,6 @@ import type { AppMessages } from "@app/localization/messages";
 
 export const enMessages = {
   projectHub: {
-    navigationLabel: "Studio",
-    homeLabel: "Asakiri Studio home",
-    productName: "Asakiri Studio",
-    runtime: {
-      browser: "Chromium",
-      desktop: "Desktop",
-    },
     eyebrow: "Local-first course editor",
     title: "Your courses live on your computer.",
     introduction:

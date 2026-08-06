@@ -8,10 +8,6 @@ import { ProjectHubPage } from "@features/project-hub/components/ProjectHubPage"
 import type { ProjectHubMessages } from "@features/project-hub/i18n/project-hub-messages";
 
 const messages: ProjectHubMessages = {
-  navigationLabel: "Studio",
-  homeLabel: "Asakiri Studio home",
-  productName: "Asakiri Studio",
-  runtime: { browser: "Chromium", desktop: "Desktop" },
   eyebrow: "Local-first course editor",
   title: "Your courses live on your computer.",
   introduction: "Open a course repository to start editing.",

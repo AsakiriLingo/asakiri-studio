@@ -1,13 +1,6 @@
-import type {
-  ProjectDirectoryErrorCode,
-  ProjectRuntime,
-} from "@core/projects";
+import type { ProjectDirectoryErrorCode } from "@core/projects";
 
 export interface ProjectHubMessages {
-  readonly navigationLabel: string;
-  readonly homeLabel: string;
-  readonly productName: string;
-  readonly runtime: Readonly<Record<ProjectRuntime, string>>;
   readonly eyebrow: string;
   readonly title: string;
   readonly introduction: string;
