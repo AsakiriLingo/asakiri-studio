@@ -1,35 +1,43 @@
 # Architecture
 
-Asakiri Studio uses a feature-first React architecture with an explicit dependency direction. The aim is to keep course editing independent from the environment that reads and writes local files.
+Asakiri Studio is a feature-first modular monolith. UI workflows stay inside features, reusable product concepts live in a small core, and Chromium/Tauri differences remain behind platform adapters.
 
 ```text
 main.tsx
    │
    ▼
-app (composition and providers)
-   ├──────────────► features (product behavior)
-   └──────────────► platform (Chromium and Tauri adapters)
-                         │
-features ────────────────┴────► shared (contracts and UI primitives)
+app (composition root)
+   ├────────► features (user workflows)
+   ├────────► platform (Chromium and Tauri adapters)
+   └────────► core (product contracts)
+                   ▲
+features ──────────┤
+platform ──────────┘
+
+core, features, platform ─────► shared (generic UI and utilities)
 ```
 
 ## Directories
 
-- `src/app`: application bootstrap, dependency injection, global providers, routing, and global styles.
-- `src/features/<feature>`: a vertical product slice. A feature owns its components, hooks, model, tests, and application logic.
-- `src/platform`: concrete integration code for browser APIs and Tauri plugins.
-- `src/shared`: stable contracts, generic utilities, and low-level reusable components. Shared code must not know about a product feature.
+- `src/app`: bootstrap, dependency injection, routing, global providers, and global styles.
+- `src/core/<module>`: stable product concepts and ports shared by multiple features or platform adapters. Examples are projects, content references, media identities, and exercise evaluation contracts.
+- `src/features/<feature>`: a vertical user workflow. A feature owns its components, hooks, UI state, application logic, and tests.
+- `src/platform`: concrete integrations with Chromium APIs, Tauri plugins, and Rust commands.
+- `src/shared`: product-agnostic components and utilities. Shared code must not contain course, content, lesson, exercise, or media concepts.
 - `src-tauri`: the native shell and narrowly scoped native capabilities.
+
+`core` is intentionally small. A type belongs there only when at least two independent features need the same product meaning, or when a platform adapter must implement its port. Feature-specific types stay inside their feature.
 
 ## Dependency rules
 
-1. The app composition root can import feature public APIs, platform factories, and shared code.
-2. A feature can import only its own internals and shared code.
-3. A platform adapter can import only platform and shared code.
-4. Shared code can import only shared code and third-party packages.
-5. Code outside a feature imports `@features/<feature>`, never one of its internal files.
+1. `app` can compose feature public APIs, platform factories, core public APIs, and shared code.
+2. A feature can import its own internals, core public APIs, and shared code.
+3. A platform adapter can import platform code, core public APIs, and shared code.
+4. A core module can import itself, shared code, and another core module's public API.
+5. Shared code can import only shared code and third-party packages.
+6. Code outside a feature or core module imports its `index.ts`, never an internal file.
 
-`pnpm check:boundaries` enforces these rules. TypeScript path aliases make the intended dependency visible in every import.
+`pnpm check:boundaries` enforces these directions. TypeScript path aliases make boundary crossings explicit.
 
 ## Feature shape
 
@@ -39,37 +47,56 @@ Add only the folders a feature needs:
 src/features/lesson-editor/
 ├── components/       React views owned by the feature
 ├── hooks/            UI orchestration
-├── model/            feature state and domain types
-├── services/         framework-free application logic
-├── tests/            behavior tests
+├── model/            editor-specific state
+├── services/         framework-free workflow logic
+├── tests/            larger feature scenarios
 └── index.ts          public API
 ```
 
-Keep framework-free logic out of components. Components should translate user actions into feature operations and render explicit state.
+Keep framework-free behavior out of components. Components translate user actions into feature operations and render explicit state. Do not create global `domain/` and `application/` dumping grounds; domain behavior stays with its owning feature until it is genuinely shared.
+
+## Core module shape
+
+```text
+src/core/content/
+├── model/            stable content concepts
+├── ports/            persistence or lookup capabilities
+├── services/         cross-feature product rules
+└── index.ts          narrow public API
+```
+
+Core modules should not depend on React, Tiptap, browser handles, Tauri APIs, or JSON file layouts.
 
 ## Platform ports
 
-Features depend on contracts, not implementations. For example, `ProjectDirectoryGateway` lives in shared contracts. The app selects either the Chromium File System Access adapter or the Tauri dialog adapter and injects it into the project-hub feature.
+Features depend on product-facing ports, not implementations. `ProjectDirectoryGateway`, for example, lives in `core/projects`. The app selects either the Chromium File System Access adapter or the Tauri dialog adapter and injects it into the project-hub feature.
 
-Follow the same pattern for future persistence:
+Follow the same pattern for persistence:
 
-- define operations around user intent, not low-level filesystem calls;
-- keep browser handles, absolute paths, and Tauri command payloads inside adapters;
-- expose typed failures and capabilities where platform behavior differs;
-- test feature logic with an in-memory contract implementation.
+- define operations around user intent rather than raw filesystem calls;
+- keep browser handles, absolute paths, and Tauri payloads inside adapters;
+- expose platform capabilities and typed failures explicitly;
+- test feature behavior with in-memory implementations;
+- run the same contract tests against Chromium and Tauri adapters.
 
-The course-file structure is deliberately not represented yet. When it is decided, introduce a versioned storage manifest and migrations behind a repository contract; do not let UI components parse or write JSON directly.
+The course-file structure remains deliberately undecided. When it is selected, place serialization, versioning, validation, and migrations behind repository ports. UI components must never parse or write project JSON directly.
 
 ## State
 
-Start state locally in the owning feature. Lift state only when two independent feature surfaces must share it. Introduce a state library only when React state and injected services no longer express the required lifecycle clearly.
+Use three levels of state:
+
+- editor-local state belongs to Tiptap or the active editor;
+- feature workflow state belongs to the owning feature;
+- persisted project state is loaded and saved through a repository port.
+
+Do not mirror every Tiptap transaction into a global store. Introduce a shared state library only after two independent feature surfaces genuinely need the same live state.
 
 ## Adding a feature
 
-1. Create `src/features/<feature>/index.ts` and only the internal folders needed.
-2. Define product types and behavior inside the feature.
-3. Put environment-neutral cross-layer contracts in `src/shared/contracts`.
-4. Add concrete integrations in `src/platform`.
-5. Connect them in `src/app`.
+1. Create `src/features/<feature>/index.ts` and only the internals it currently needs.
+2. Keep product behavior with the feature until another feature needs the same meaning.
+3. Promote stable cross-feature concepts into a focused `src/core/<module>` public API.
+4. Add platform implementations in `src/platform` when a core port needs one.
+5. Connect concrete implementations only in `src/app`.
 6. Add behavior tests beside the feature code.
 7. Run `pnpm check`.

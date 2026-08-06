@@ -25,18 +25,21 @@ function describeSourcePath(path) {
   return {
     layer,
     feature: layer === "features" ? parts[1] : undefined,
+    coreModule: layer === "core" ? parts[1] : undefined,
   };
 }
 
 function describeImport(importer, specifier) {
-  const alias = specifier.match(/^@(app|features|platform|shared)(?:\/(.*))?$/);
+  const alias = specifier.match(/^@(app|core|features|platform|shared)(?:\/(.*))?$/);
   if (alias) {
     const layer = alias[1];
     const remainder = alias[2]?.split("/") ?? [];
     return {
       layer,
       feature: layer === "features" ? remainder[0] : undefined,
+      coreModule: layer === "core" ? remainder[0] : undefined,
       isFeaturePublicApi: layer === "features" && remainder.length === 1,
+      isCorePublicApi: layer === "core" && remainder.length === 1,
     };
   }
 
@@ -46,7 +49,11 @@ function describeImport(importer, specifier) {
 
   const target = normalize(resolve(importer, "..", specifier));
   const description = describeSourcePath(target);
-  return { ...description, isFeaturePublicApi: false };
+  return {
+    ...description,
+    isFeaturePublicApi: false,
+    isCorePublicApi: false,
+  };
 }
 
 function checkImport(importer, specifier) {
@@ -62,19 +69,35 @@ function checkImport(importer, specifier) {
     report("shared code cannot depend on an outer layer");
   }
 
+  if (from.layer === "core") {
+    const isOwnCoreModule =
+      target.layer === "core" && target.coreModule === from.coreModule;
+    const isOtherCorePublicApi =
+      target.layer === "core" && target.isCorePublicApi;
+    if (
+      target.layer !== "shared" &&
+      !isOwnCoreModule &&
+      !isOtherCorePublicApi
+    ) {
+      report("core code may depend only on shared, itself, or another core public API");
+    }
+  }
+
   if (
     from.layer === "platform" &&
     target.layer !== "platform" &&
-    target.layer !== "shared"
+    target.layer !== "shared" &&
+    !(target.layer === "core" && target.isCorePublicApi)
   ) {
-    report("platform code may depend only on platform or shared code");
+    report("platform code may depend only on platform, shared, or core public APIs");
   }
 
   if (from.layer === "features") {
     const isOwnFeature =
       target.layer === "features" && target.feature === from.feature;
-    if (target.layer !== "shared" && !isOwnFeature) {
-      report("a feature may depend only on itself or shared code");
+    const isCorePublicApi = target.layer === "core" && target.isCorePublicApi;
+    if (target.layer !== "shared" && !isOwnFeature && !isCorePublicApi) {
+      report("a feature may depend only on itself, shared, or core public APIs");
     }
   }
 
@@ -86,20 +109,28 @@ function checkImport(importer, specifier) {
     report("code outside a feature must import its public index");
   }
 
+  if (
+    target.layer === "core" &&
+    from.layer !== "core" &&
+    !target.isCorePublicApi
+  ) {
+    report("code outside a core module must import its public index");
+  }
+
   if (from.layer !== "app" && target.layer === "app") {
     report("only app code may import app code");
   }
 }
 
-async function checkFeatureIndexes() {
-  const featuresRoot = join(sourceRoot, "features");
-  const entries = await readdir(featuresRoot, { withFileTypes: true });
+async function checkPublicIndexes(layer) {
+  const layerRoot = join(sourceRoot, layer);
+  const entries = await readdir(layerRoot, { withFileTypes: true });
 
   for (const entry of entries) {
     if (!entry.isDirectory()) continue;
-    const files = await readdir(join(featuresRoot, entry.name));
+    const files = await readdir(join(layerRoot, entry.name));
     if (!files.includes("index.ts")) {
-      violations.push(`src/features/${entry.name}: feature needs a public index.ts`);
+      violations.push(`src/${layer}/${entry.name}: module needs a public index.ts`);
     }
   }
 }
@@ -118,7 +149,8 @@ for (const file of files) {
   }
 }
 
-await checkFeatureIndexes();
+await checkPublicIndexes("core");
+await checkPublicIndexes("features");
 
 if (violations.length > 0) {
   console.error("Architecture boundary violations:\n");

@@ -1,7 +1,7 @@
 import type {
   ProjectDirectory,
   ProjectDirectoryGateway,
-} from "@shared/contracts/project-directory";
+} from "@core/projects";
 
 export class BrowserProjectDirectoryGateway implements ProjectDirectoryGateway {
   readonly isSupported = "showDirectoryPicker" in window;

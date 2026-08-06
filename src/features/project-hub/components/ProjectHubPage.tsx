@@ -1,4 +1,4 @@
-import type { ProjectDirectoryGateway } from "@shared/contracts/project-directory";
+import type { ProjectDirectoryGateway } from "@core/projects";
 import { Button } from "@shared/components/Button";
 import { useProjectHub } from "@features/project-hub/hooks/use-project-hub";
 

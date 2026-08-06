@@ -8,8 +8,8 @@ export interface ProjectDirectory {
 }
 
 /**
- * A feature-facing port. Platform-specific directory handles stay inside its
- * adapters and never leak into React components or course domain models.
+ * Product-facing port for selecting a course project. Platform-specific
+ * handles and absolute paths remain private to concrete adapters.
  */
 export interface ProjectDirectoryGateway {
   readonly isSupported: boolean;

@@ -12,6 +12,9 @@ These instructions apply to this entire repository.
 
 - Asakiri Studio is a desktop-first, local-first course editor delivered as a Chromium web app and a Tauri desktop app.
 - One course lives in one project directory. Content and media are project-scoped and remain local.
+- Use a content-first domain model with context-first authoring: reusable records can be created in Content or inline from lessons and exercises.
+- Content records, media assets, and lesson/exercise compositions are separate concepts. Compositions reference stable IDs; never embed binary data or absolute paths.
+- Treat content tables as authoring views, not as a requirement that one table equals one JSON file.
 - The course storage schema is intentionally undecided. Do not introduce a single `course.json` or finalize a course-file layout without an explicit product decision.
 - Do not add AI, publishing, learner-app, cloud-sync, or persistent Git UI features.
 
@@ -19,8 +22,10 @@ These instructions apply to this entire repository.
 
 - Organize product code by feature under `src/features/<feature>`.
 - Every feature exposes a deliberately small public API through `index.ts`. Import another feature only through that public API.
-- Features may import their own internals and `src/shared`; they must not import `app`, `platform`, or another feature's internals.
-- `src/platform` contains browser/Tauri adapters and may import only `platform` and `shared` code.
+- Put only stable cross-feature product concepts and platform-facing ports in focused modules under `src/core/<module>`.
+- Every core module exposes a narrow public API through `index.ts`. Do not use `core` as a generic dumping ground.
+- Features may import their own internals, core public APIs, and `src/shared`; they must not import `app`, `platform`, another feature's internals, or core internals.
+- `src/platform` contains browser/Tauri adapters and may import only `platform`, `shared`, and core public APIs.
 - `src/shared` must remain product-feature and platform agnostic.
 - `src/app` is the composition root. It is the only layer allowed to connect features to concrete platform adapters.
 - Keep platform objects such as browser file handles and Tauri paths behind contracts. Do not put them in feature state or course domain types.
@@ -33,3 +38,4 @@ These instructions apply to this entire repository.
 - Preserve keyboard access, visible focus, semantic HTML, and reduced-motion behavior.
 - Run `pnpm check` after structural or product changes. Fix failures rather than weakening the checks.
 - Add new architecture rules to `scripts/check-boundaries.mjs` when a new dependency direction is introduced.
+- Read `docs/CONTENT-ARCHITECTURE.md` before changing content, media, lesson bindings, or exercise options.

@@ -1,4 +1,4 @@
-import type { ProjectDirectory } from "@shared/contracts/project-directory";
+import type { ProjectDirectory } from "@core/projects";
 
 export type ProjectHubState =
   | { readonly status: "idle" }

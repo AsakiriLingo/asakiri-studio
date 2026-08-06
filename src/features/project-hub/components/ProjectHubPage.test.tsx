@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import type {
   ProjectDirectory,
   ProjectDirectoryGateway,
-} from "@shared/contracts/project-directory";
+} from "@core/projects";
 import { ProjectHubPage } from "@features/project-hub/components/ProjectHubPage";
 
 const project: ProjectDirectory = {

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { ProjectDirectoryGateway } from "@shared/contracts/project-directory";
+import type { ProjectDirectoryGateway } from "@core/projects";
 import type { ProjectHubState } from "@features/project-hub/model/project-hub-state";
 
 export function useProjectHub(directoryGateway: ProjectDirectoryGateway) {

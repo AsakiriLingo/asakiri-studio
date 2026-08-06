@@ -11,6 +11,7 @@ export default defineConfig(async () => ({
   resolve: {
     alias: {
       "@app": fileURLToPath(new URL("./src/app", import.meta.url)),
+      "@core": fileURLToPath(new URL("./src/core", import.meta.url)),
       "@features": fileURLToPath(new URL("./src/features", import.meta.url)),
       "@platform": fileURLToPath(new URL("./src/platform", import.meta.url)),
       "@shared": fileURLToPath(new URL("./src/shared", import.meta.url)),

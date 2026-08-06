@@ -1,4 +1,4 @@
-import type { ProjectDirectoryGateway } from "@shared/contracts/project-directory";
+import type { ProjectDirectoryGateway } from "@core/projects";
 
 export interface AppDependencies {
   readonly projectDirectoryGateway: ProjectDirectoryGateway;
