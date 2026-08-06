@@ -1,0 +1,18 @@
+.root.root {
+  padding: 0;
+  color: var(--color-text-muted);
+}
+
+.root.root:hover:not([data-disabled]) {
+  color: var(--color-text);
+}
+
+.root.sm {
+  width: var(--control-height-sm);
+  min-width: var(--control-height-sm);
+}
+
+.root.md {
+  width: var(--control-height-md);
+  min-width: var(--control-height-md);
+}
