@@ -1,7 +1,4 @@
-import type {
-  ProjectDirectory,
-  ProjectDirectoryErrorCode,
-} from "@core/projects";
+import type { ProjectDirectory, ProjectDirectoryErrorCode } from "@core/projects";
 
 export type ProjectHubState =
   | { readonly status: "idle" }

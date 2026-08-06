@@ -1,23 +1,13 @@
 // @vitest-environment node
 
-import {
-  cp,
-  mkdir,
-  mkdtemp,
-  readFile,
-  rename,
-  rm,
-  writeFile,
-} from "node:fs/promises";
+import { cp, mkdir, mkdtemp, readFile, rename, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it } from "vitest";
 import { validateExampleCourse } from "./example-course-validator.mjs";
 
-const fixtureRoot = fileURLToPath(
-  new URL("../examples/courses/japanese-starter", import.meta.url),
-);
+const fixtureRoot = fileURLToPath(new URL("../examples/courses/japanese-starter", import.meta.url));
 const temporaryRoots = [];
 
 async function cloneFixture() {
@@ -84,13 +74,9 @@ describe("validateExampleCourse", () => {
 
   it("rejects broken explicit bindings", async () => {
     const courseRoot = await cloneFixture();
-    await mutateJson(
-      courseRoot,
-      "lessons/cat-rich-media/composition.json",
-      (composition) => {
-        composition.blocks[1].binding.itemId = "missing_image";
-      },
-    );
+    await mutateJson(courseRoot, "lessons/cat-rich-media/composition.json", (composition) => {
+      composition.blocks[1].binding.itemId = "missing_image";
+    });
 
     const result = await validateExampleCourse(courseRoot);
 
@@ -118,13 +104,9 @@ describe("validateExampleCourse", () => {
     const newPath = join(courseRoot, "content/records/ca/cat.json");
     await mkdir(dirname(newPath), { recursive: true });
     await rename(oldPath, newPath);
-    await mutateJson(
-      courseRoot,
-      "content/collections/vocabulary.json",
-      (collection) => {
-        collection.recordFiles[0] = "../records/ca/cat.json";
-      },
-    );
+    await mutateJson(courseRoot, "content/collections/vocabulary.json", (collection) => {
+      collection.recordFiles[0] = "../records/ca/cat.json";
+    });
 
     const result = await validateExampleCourse(courseRoot);
 

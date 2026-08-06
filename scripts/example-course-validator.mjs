@@ -105,16 +105,8 @@ export async function validateExampleCourse(courseRoot) {
     project.collections,
     "project.collections",
   );
-  const assetsWithFiles = await loadReferencedJson(
-    root,
-    project.assets,
-    "project.assets",
-  );
-  const lessonsWithFiles = await loadReferencedJson(
-    root,
-    project.lessons,
-    "project.lessons",
-  );
+  const assetsWithFiles = await loadReferencedJson(root, project.assets, "project.assets");
+  const lessonsWithFiles = await loadReferencedJson(root, project.lessons, "project.lessons");
 
   const recordGroups = await Promise.all(
     collectionsWithFiles.map(({ data: collection, file }) =>
@@ -155,14 +147,9 @@ export async function validateExampleCourse(courseRoot) {
         report(`${context}.${field.id} has unsupported kind: ${String(field.kind)}`);
       }
       if (!CARDINALITIES.has(field.cardinality)) {
-        report(
-          `${context}.${field.id} has unsupported cardinality: ${String(field.cardinality)}`,
-        );
+        report(`${context}.${field.id} has unsupported cardinality: ${String(field.cardinality)}`);
       }
-      if (
-        field.kind === "asset" &&
-        (!field.assetKind || !ASSET_KINDS.has(field.assetKind))
-      ) {
+      if (field.kind === "asset" && (!field.assetKind || !ASSET_KINDS.has(field.assetKind))) {
         report(`${context}.${field.id} must declare a supported assetKind`);
       }
       if (field.kind !== "asset" && "assetKind" in field) {
@@ -445,8 +432,10 @@ function validateExercise(exercise, lessonId, report) {
   if (correctIds.length === 0) report(`${lessonId} exercise must have a correct option`);
   const seenCorrectIds = new Set();
   for (const correctId of correctIds) {
-    if (!optionIds.has(correctId)) report(`${exercise.id} references missing correct option: ${correctId}`);
-    if (seenCorrectIds.has(correctId)) report(`${exercise.id} repeats correct option: ${correctId}`);
+    if (!optionIds.has(correctId))
+      report(`${exercise.id} references missing correct option: ${correctId}`);
+    if (seenCorrectIds.has(correctId))
+      report(`${exercise.id} repeats correct option: ${correctId}`);
     seenCorrectIds.add(correctId);
   }
 }

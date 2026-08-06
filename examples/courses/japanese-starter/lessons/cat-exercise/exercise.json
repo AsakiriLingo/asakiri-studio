@@ -97,8 +97,6 @@
   ],
   "evaluation": {
     "kind": "selected-options",
-    "correctOptionIds": [
-      "option_cat"
-    ]
+    "correctOptionIds": ["option_cat"]
   }
 }

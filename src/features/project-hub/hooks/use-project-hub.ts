@@ -1,8 +1,5 @@
 import { useState } from "react";
-import {
-  ProjectDirectoryError,
-  type ProjectDirectoryGateway,
-} from "@core/projects";
+import { ProjectDirectoryError, type ProjectDirectoryGateway } from "@core/projects";
 import type { ProjectHubState } from "@features/project-hub/model/project-hub-state";
 
 export function useProjectHub(directoryGateway: ProjectDirectoryGateway) {

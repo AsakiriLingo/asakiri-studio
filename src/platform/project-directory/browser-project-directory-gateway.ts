@@ -1,7 +1,4 @@
-import type {
-  ProjectDirectory,
-  ProjectDirectoryGateway,
-} from "@core/projects";
+import type { ProjectDirectory, ProjectDirectoryGateway } from "@core/projects";
 import { ProjectDirectoryError } from "@core/projects";
 
 export class BrowserProjectDirectoryGateway implements ProjectDirectoryGateway {

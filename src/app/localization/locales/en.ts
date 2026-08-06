@@ -15,8 +15,7 @@ export const enMessages = {
     chooseFolder: "Choose folder",
     openingFolder: "Opening…",
     dialogTitle: "Open course project",
-    unsupported:
-      "Local folders require a current Chromium browser or the desktop app.",
+    unsupported: "Local folders require a current Chromium browser or the desktop app.",
     errors: {
       permissionDenied: "Folder permission was denied.",
       unknown: "The project could not be opened.",

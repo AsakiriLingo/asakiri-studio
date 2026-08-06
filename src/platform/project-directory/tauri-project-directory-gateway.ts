@@ -1,8 +1,5 @@
 import { open } from "@tauri-apps/plugin-dialog";
-import type {
-  ProjectDirectory,
-  ProjectDirectoryGateway,
-} from "@core/projects";
+import type { ProjectDirectory, ProjectDirectoryGateway } from "@core/projects";
 
 export class TauriProjectDirectoryGateway implements ProjectDirectoryGateway {
   readonly isSupported = true;

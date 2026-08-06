@@ -1,5 +1,5 @@
 import { useContext } from "react";
-import { AppDependenciesContext } from "@app/providers/AppProviders";
+import { AppDependenciesContext } from "@app/providers/app-dependencies-context";
 
 export function useAppDependencies() {
   const dependencies = useContext(AppDependenciesContext);

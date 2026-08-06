@@ -2,10 +2,7 @@ import { resolve } from "node:path";
 import process from "node:process";
 import { validateExampleCourse } from "./example-course-validator.mjs";
 
-const courseRoot = resolve(
-  process.cwd(),
-  "examples/courses/japanese-starter",
-);
+const courseRoot = resolve(process.cwd(), "examples/courses/japanese-starter");
 const result = await validateExampleCourse(courseRoot);
 
 if (result.errors.length > 0) {

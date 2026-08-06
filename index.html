@@ -10,12 +10,8 @@
       (() => {
         try {
           const preference = localStorage.getItem("asakiri.theme") ?? "system";
-          const systemTheme = matchMedia("(prefers-color-scheme: dark)").matches
-            ? "dark"
-            : "light";
-          const theme = preference === "light" || preference === "dark"
-            ? preference
-            : systemTheme;
+          const systemTheme = matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+          const theme = preference === "light" || preference === "dark" ? preference : systemTheme;
           document.documentElement.dataset.theme = theme;
           document.documentElement.dataset.themePreference = preference;
         } catch {

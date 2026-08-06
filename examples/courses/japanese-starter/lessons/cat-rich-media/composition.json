@@ -9,10 +9,7 @@
       },
       "presentation": {
         "view": "vocabulary-card",
-        "showFieldIds": [
-          "field_japanese",
-          "field_english"
-        ]
+        "showFieldIds": ["field_japanese", "field_english"]
       }
     },
     {

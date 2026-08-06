@@ -1,8 +1,5 @@
 export type ProjectRuntime = "browser" | "desktop";
-export type ProjectDirectoryErrorCode =
-  | "permissionDenied"
-  | "unknown"
-  | "unsupported";
+export type ProjectDirectoryErrorCode = "permissionDenied" | "unknown" | "unsupported";
 
 export class ProjectDirectoryError extends Error {
   readonly code: ProjectDirectoryErrorCode;
@@ -28,7 +25,5 @@ export interface ProjectDirectory {
 export interface ProjectDirectoryGateway {
   readonly isSupported: boolean;
   readonly runtime: ProjectRuntime;
-  openProjectDirectory(options: {
-    readonly dialogTitle: string;
-  }): Promise<ProjectDirectory | null>;
+  openProjectDirectory(options: { readonly dialogTitle: string }): Promise<ProjectDirectory | null>;
 }

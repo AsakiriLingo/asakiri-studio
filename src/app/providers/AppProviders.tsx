@@ -1,9 +1,8 @@
-import { createContext, type PropsWithChildren } from "react";
+import type { PropsWithChildren } from "react";
 import type { AppDependencies } from "@app/providers/app-dependencies";
+import { AppDependenciesContext } from "@app/providers/app-dependencies-context";
 import { LocalizationProvider } from "@app/localization/LocalizationProvider";
 import { ThemeProvider } from "@app/theme/ThemeProvider";
-
-export const AppDependenciesContext = createContext<AppDependencies | null>(null);
 
 interface AppProvidersProps extends PropsWithChildren {
   readonly dependencies: AppDependencies;

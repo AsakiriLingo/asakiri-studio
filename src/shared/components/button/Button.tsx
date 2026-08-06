@@ -35,19 +35,12 @@ const sizeClasses: Record<ButtonSize, string> = {
 
 const rootClass = requiredStyle("root");
 
-function joinClassNames(...classNames: Array<string | undefined>) {
+function joinClassNames(...classNames: (string | undefined)[]) {
   return classNames.filter(Boolean).join(" ");
 }
 
 export const Button = forwardRef<HTMLElement, ButtonProps>(function Button(
-  {
-    className,
-    nativeButton = true,
-    size = "md",
-    type,
-    variant = "primary",
-    ...props
-  },
+  { className, nativeButton = true, size = "md", type, variant = "primary", ...props },
   ref,
 ) {
   const resolveClassName = (state: ButtonState) =>

@@ -10,7 +10,14 @@ function LocalizationConsumer() {
     <div>
       <span>{locale}</span>
       <strong>{messages.projectHub.openProjectTitle}</strong>
-      <button type="button" onClick={() => setLocale("ja")}>Use Japanese</button>
+      <button
+        type="button"
+        onClick={() => {
+          setLocale("ja");
+        }}
+      >
+        Use Japanese
+      </button>
     </div>
   );
 }
@@ -33,7 +40,9 @@ describe("LocalizationProvider", () => {
     screen.getByRole("button", { name: "Use Japanese" }).click();
 
     expect(await screen.findByText("プロジェクトを開く")).toBeVisible();
-    await waitFor(() => expect(document.documentElement.lang).toBe("ja"));
+    await waitFor(() => {
+      expect(document.documentElement.lang).toBe("ja");
+    });
     expect(window.localStorage.getItem(LOCALE_STORAGE_KEY)).toBe("ja");
   });
 });

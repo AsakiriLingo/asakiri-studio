@@ -9,9 +9,7 @@
     "defaultLocale": "en",
     "learningLocales": ["ja"]
   },
-  "collections": [
-    "content/collections/vocabulary.json"
-  ],
+  "collections": ["content/collections/vocabulary.json"],
   "assets": [
     "media/assets/cat-image/asset.json",
     "media/assets/cat-ja-audio/asset.json",
@@ -26,11 +24,7 @@
     {
       "id": "section_getting_started",
       "title": "Getting started",
-      "lessonIds": [
-        "lesson_welcome",
-        "lesson_cat_rich_media",
-        "lesson_cat_exercise"
-      ]
+      "lessonIds": ["lesson_welcome", "lesson_cat_rich_media", "lesson_cat_exercise"]
     }
   ]
 }

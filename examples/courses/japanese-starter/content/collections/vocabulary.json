@@ -51,9 +51,5 @@
       "required": false
     }
   ],
-  "recordFiles": [
-    "../records/cat.json",
-    "../records/dog.json",
-    "../records/bird.json"
-  ]
+  "recordFiles": ["../records/cat.json", "../records/dog.json", "../records/bird.json"]
 }

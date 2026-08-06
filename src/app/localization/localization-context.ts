@@ -5,8 +5,7 @@ import type { Locale } from "@app/localization/locale";
 export interface LocalizationContextValue {
   readonly locale: Locale;
   readonly messages: AppMessages;
-  setLocale(locale: Locale): void;
+  readonly setLocale: (locale: Locale) => void;
 }
 
-export const LocalizationContext =
-  createContext<LocalizationContextValue | null>(null);
+export const LocalizationContext = createContext<LocalizationContextValue | null>(null);

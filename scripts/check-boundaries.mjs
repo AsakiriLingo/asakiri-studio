@@ -70,15 +70,9 @@ function checkImport(importer, specifier) {
   }
 
   if (from.layer === "core") {
-    const isOwnCoreModule =
-      target.layer === "core" && target.coreModule === from.coreModule;
-    const isOtherCorePublicApi =
-      target.layer === "core" && target.isCorePublicApi;
-    if (
-      target.layer !== "shared" &&
-      !isOwnCoreModule &&
-      !isOtherCorePublicApi
-    ) {
+    const isOwnCoreModule = target.layer === "core" && target.coreModule === from.coreModule;
+    const isOtherCorePublicApi = target.layer === "core" && target.isCorePublicApi;
+    if (target.layer !== "shared" && !isOwnCoreModule && !isOtherCorePublicApi) {
       report("core code may depend only on shared, itself, or another core public API");
     }
   }
@@ -93,27 +87,18 @@ function checkImport(importer, specifier) {
   }
 
   if (from.layer === "features") {
-    const isOwnFeature =
-      target.layer === "features" && target.feature === from.feature;
+    const isOwnFeature = target.layer === "features" && target.feature === from.feature;
     const isCorePublicApi = target.layer === "core" && target.isCorePublicApi;
     if (target.layer !== "shared" && !isOwnFeature && !isCorePublicApi) {
       report("a feature may depend only on itself, shared, or core public APIs");
     }
   }
 
-  if (
-    target.layer === "features" &&
-    from.layer !== "features" &&
-    !target.isFeaturePublicApi
-  ) {
+  if (target.layer === "features" && from.layer !== "features" && !target.isFeaturePublicApi) {
     report("code outside a feature must import its public index");
   }
 
-  if (
-    target.layer === "core" &&
-    from.layer !== "core" &&
-    !target.isCorePublicApi
-  ) {
+  if (target.layer === "core" && from.layer !== "core" && !target.isCorePublicApi) {
     report("code outside a core module must import its public index");
   }
 
@@ -136,7 +121,8 @@ async function checkPublicIndexes(layer) {
 }
 
 const files = await collectFiles(sourceRoot);
-const staticImportPattern = /(?:import|export)\s+(?:type\s+)?(?:[\s\S]*?\s+from\s+)?["']([^"']+)["']/g;
+const staticImportPattern =
+  /(?:import|export)\s+(?:type\s+)?(?:[\s\S]*?\s+from\s+)?["']([^"']+)["']/g;
 const dynamicImportPattern = /import\(\s*["']([^"']+)["']\s*\)/g;
 
 for (const file of files) {

@@ -1,9 +1,14 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { WindowThemeGateway } from "@core/appearance";
 import { ThemeProvider } from "@app/theme/ThemeProvider";
 import { ThemeToggle } from "@app/theme/ThemeToggle";
 import { THEME_STORAGE_KEY } from "@app/theme/theme";
+import { installMatchMediaMock } from "../../test/install-match-media-mock";
+
+beforeEach(() => {
+  installMatchMediaMock();
+});
 
 afterEach(() => {
   window.localStorage.clear();
@@ -37,8 +42,6 @@ describe("ThemeToggle", () => {
     });
     expect(window.localStorage.getItem(THEME_STORAGE_KEY)).toBe("dark");
     expect(setTheme).toHaveBeenLastCalledWith("dark");
-    expect(
-      screen.getByRole("button", { name: "Switch to light mode" }),
-    ).toBeVisible();
+    expect(screen.getByRole("button", { name: "Switch to light mode" })).toBeVisible();
   });
 });

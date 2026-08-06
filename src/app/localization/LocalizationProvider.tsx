@@ -1,10 +1,4 @@
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-  type PropsWithChildren,
-} from "react";
+import { useCallback, useEffect, useMemo, useState, type PropsWithChildren } from "react";
 import { LocalizationContext } from "@app/localization/localization-context";
 import {
   DEFAULT_LOCALE,
@@ -16,15 +10,13 @@ import { messagesByLocale } from "@app/localization/locales";
 
 function readInitialLocale(): Locale {
   try {
-    const storedLocale = resolveSupportedLocale(
-      window.localStorage.getItem(LOCALE_STORAGE_KEY),
-    );
+    const storedLocale = resolveSupportedLocale(window.localStorage.getItem(LOCALE_STORAGE_KEY));
     if (storedLocale) return storedLocale;
   } catch {
     // Fall through to the browser preference.
   }
 
-  for (const browserLocale of navigator.languages ?? [navigator.language]) {
+  for (const browserLocale of navigator.languages) {
     const locale = resolveSupportedLocale(browserLocale);
     if (locale) return locale;
   }
@@ -52,9 +44,5 @@ export function LocalizationProvider({ children }: PropsWithChildren) {
     [locale, setLocale],
   );
 
-  return (
-    <LocalizationContext.Provider value={value}>
-      {children}
-    </LocalizationContext.Provider>
-  );
+  return <LocalizationContext.Provider value={value}>{children}</LocalizationContext.Provider>;
 }

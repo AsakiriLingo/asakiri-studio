@@ -1,16 +1,28 @@
 import { render, screen, waitFor } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { WindowThemeGateway } from "@core/appearance";
 import { ThemeProvider } from "@app/theme/ThemeProvider";
 import { useTheme } from "@app/theme/use-theme";
 import { THEME_STORAGE_KEY } from "@app/theme/theme";
+import { installMatchMediaMock } from "../../test/install-match-media-mock";
+
+beforeEach(() => {
+  installMatchMediaMock();
+});
 
 function ThemeConsumer() {
   const { preference, resolvedTheme, setPreference } = useTheme();
   return (
     <div>
       <span>{`${preference}:${resolvedTheme}`}</span>
-      <button type="button" onClick={() => setPreference("dark")}>Use dark</button>
+      <button
+        type="button"
+        onClick={() => {
+          setPreference("dark");
+        }}
+      >
+        Use dark
+      </button>
     </div>
   );
 }
@@ -36,10 +48,7 @@ describe("ThemeProvider", () => {
     await waitFor(() => {
       expect(document.documentElement).toHaveAttribute("data-theme", "dark");
     });
-    expect(document.documentElement).toHaveAttribute(
-      "data-theme-preference",
-      "dark",
-    );
+    expect(document.documentElement).toHaveAttribute("data-theme-preference", "dark");
     expect(window.localStorage.getItem(THEME_STORAGE_KEY)).toBe("dark");
     expect(screen.getByText("dark:dark")).toBeVisible();
     expect(setTheme).toHaveBeenLastCalledWith("dark");

@@ -34,8 +34,6 @@ describe("Button", () => {
       </Button>,
     );
 
-    expect(screen.getByRole("button", { name: "Composite action" }).tagName).toBe(
-      "DIV",
-    );
+    expect(screen.getByRole("button", { name: "Composite action" }).tagName).toBe("DIV");
   });
 });

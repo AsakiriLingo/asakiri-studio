@@ -10,13 +10,7 @@ export function isThemePreference(value: unknown): value is ThemePreference {
 }
 
 export function getSystemTheme(): ResolvedTheme {
-  if (typeof window === "undefined" || !window.matchMedia) {
-    return "light";
-  }
-
-  return window.matchMedia("(prefers-color-scheme: dark)").matches
-    ? "dark"
-    : "light";
+  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 }
 
 export function resolveTheme(

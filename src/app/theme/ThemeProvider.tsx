@@ -1,10 +1,4 @@
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-  type PropsWithChildren,
-} from "react";
+import { useCallback, useEffect, useMemo, useState, type PropsWithChildren } from "react";
 import { ThemeContext } from "@app/theme/theme-context";
 import {
   getSystemTheme,
@@ -28,22 +22,21 @@ function readStoredPreference(): ThemePreference {
   }
 }
 
-export function ThemeProvider({
-  children,
-  windowThemeGateway,
-}: ThemeProviderProps) {
-  const [preference, setPreferenceState] =
-    useState<ThemePreference>(readStoredPreference);
+export function ThemeProvider({ children, windowThemeGateway }: ThemeProviderProps) {
+  const [preference, setPreferenceState] = useState<ThemePreference>(readStoredPreference);
   const [systemTheme, setSystemTheme] = useState(getSystemTheme);
   const resolvedTheme = resolveTheme(preference, systemTheme);
 
   useEffect(() => {
-    if (!window.matchMedia) return;
     const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
-    const updateSystemTheme = () => setSystemTheme(mediaQuery.matches ? "dark" : "light");
+    const updateSystemTheme = () => {
+      setSystemTheme(mediaQuery.matches ? "dark" : "light");
+    };
     updateSystemTheme();
     mediaQuery.addEventListener("change", updateSystemTheme);
-    return () => mediaQuery.removeEventListener("change", updateSystemTheme);
+    return () => {
+      mediaQuery.removeEventListener("change", updateSystemTheme);
+    };
   }, []);
 
   useEffect(() => {

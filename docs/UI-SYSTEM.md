@@ -28,7 +28,7 @@ The shared Button supports `primary`, `secondary`, and `ghost` variants plus `sm
 `ThemeProvider` supports `system`, `light`, and `dark` preferences. It stores the preference locally and publishes both the preference and resolved theme on the root element:
 
 ```html
-<html data-theme="dark" data-theme-preference="system">
+<html data-theme="dark" data-theme-preference="system"></html>
 ```
 
 The inline bootstrap in `index.html` resolves the theme before React loads to avoid a light-theme flash. Components must react only to semantic variables, never query the preference directly for visual styling.

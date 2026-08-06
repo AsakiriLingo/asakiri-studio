@@ -1,9 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import type {
-  ProjectDirectory,
-  ProjectDirectoryGateway,
-} from "@core/projects";
+import type { ProjectDirectory, ProjectDirectoryGateway } from "@core/projects";
 import { ProjectHubPage } from "@features/project-hub/components/ProjectHubPage";
 import type { ProjectHubMessages } from "@features/project-hub/i18n/project-hub-messages";
 
@@ -81,9 +78,7 @@ describe("ProjectHubPage", () => {
     render(<ProjectHubPage directoryGateway={gateway} messages={messages} />);
     fireEvent.click(screen.getByRole("button", { name: "Choose folder" }));
 
-    expect(await screen.findByRole("alert")).toHaveTextContent(
-      "The project could not be opened.",
-    );
+    expect(await screen.findByRole("alert")).toHaveTextContent("The project could not be opened.");
     expect(screen.queryByText("Native implementation detail")).not.toBeInTheDocument();
   });
 });
