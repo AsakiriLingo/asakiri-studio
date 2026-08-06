@@ -13,12 +13,21 @@
     "isolatedModules": true,
     "noEmit": true,
     "jsx": "react-jsx",
+    "baseUrl": ".",
+    "paths": {
+      "@app/*": ["src/app/*"],
+      "@features/*": ["src/features/*"],
+      "@platform/*": ["src/platform/*"],
+      "@shared/*": ["src/shared/*"]
+    },
 
     /* Linting */
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "noFallthroughCasesInSwitch": true
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true
   },
   "include": ["src"],
   "references": [{ "path": "./tsconfig.node.json" }]

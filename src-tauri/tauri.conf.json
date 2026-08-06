@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "asakiri-studio",
+  "productName": "Asakiri Studio",
   "version": "0.1.0",
   "identifier": "com.asakiri.studio",
   "build": {
@@ -12,9 +12,11 @@
   "app": {
     "windows": [
       {
-        "title": "asakiri-studio",
-        "width": 800,
-        "height": 600
+        "title": "Asakiri Studio",
+        "width": 1280,
+        "height": 820,
+        "minWidth": 1024,
+        "minHeight": 640
       }
     ],
     "security": {
