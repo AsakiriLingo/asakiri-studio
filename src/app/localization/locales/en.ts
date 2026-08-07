@@ -6,7 +6,6 @@ export const enMessages = {
     switchToLight: "Switch to light mode",
   },
   projectHub: {
-    eyebrow: "Local-first course editor",
     title: "Your courses live on your computer.",
     introduction:
       "Open a course repository to start editing. Content and media remain project-scoped, portable, and under your control.",

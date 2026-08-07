@@ -1,0 +1,8 @@
+{
+  "date": "2026-08-07",
+  "fontStack": "Newsreader Variable + IBM Plex Sans Variable",
+  "palette": "Custom OKLCH light and dark themes anchored on unchanged Asakiri green",
+  "motion": "CSS-only, motion-cut with functional feedback",
+  "spacing": "Existing 4-point semantic scale",
+  "framework": "React 19 + Vite + Base UI + CSS Modules + Tauri"
+}

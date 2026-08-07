@@ -1,90 +1,111 @@
+/* Hallmark · genre: modern-minimal · macrostructure: Workbench · design-system: design.md
+ * designed-as-app · shape: asymmetric project entry · enrichment: none
+ * pre-emit critique: P5 H5 E5 S5 R5 V4 · slop: pass (42–49)
+ * mobile: pass (34, 49–57) · icons: pass (30)
+ */
 .projectHub {
   position: relative;
-  min-height: 100vh;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  min-height: 100svh;
   background: var(--color-canvas);
 }
 
 .headerActions {
-  position: absolute;
-  top: var(--space-4);
-  right: var(--space-5);
   display: flex;
+  align-items: flex-start;
   justify-content: flex-end;
-}
-
-.openedProjectStatus {
-  padding: var(--space-1) var(--space-2);
-  border: var(--border-hairline) solid var(--color-border);
-  border-radius: var(--radius-full);
-  color: var(--color-text-muted);
-  background: var(--color-surface-subtle);
-  font-size: var(--font-size-100);
-  font-weight: var(--font-weight-semibold);
+  min-height: var(--space-16);
+  padding-block-start: max(var(--space-3), env(safe-area-inset-top));
+  padding-inline-end: max(var(--space-4), env(safe-area-inset-right));
+  padding-inline-start: max(var(--space-4), env(safe-area-inset-left));
 }
 
 .content {
-  width: min(52.5rem, calc(100% - var(--space-12)));
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-content: start;
+  gap: var(--space-16);
+  width: min(100%, 90rem);
   margin-inline: auto;
-  padding-block: 6.5rem var(--space-16);
+  padding-block: var(--space-12) max(var(--space-16), env(safe-area-inset-bottom));
+  padding-inline-start: max(var(--space-5), env(safe-area-inset-left));
+  padding-inline-end: max(var(--space-5), env(safe-area-inset-right));
 }
 
-.eyebrow {
-  margin-bottom: var(--space-4);
-  color: var(--color-text-muted);
-  font-size: var(--font-size-200);
-  font-weight: var(--font-weight-bold);
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+.introductionBlock,
+.projectEntry,
+.projectCardCopy,
+.title {
+  min-width: 0;
+}
+
+.introductionBlock {
+  display: grid;
+  align-content: start;
+  gap: var(--space-6);
 }
 
 .title {
-  max-width: 43.75rem;
-  margin: 0 0 var(--space-5);
+  max-width: 11ch;
+  margin: 0;
   font-family: var(--font-family-display);
-  font-size: clamp(2.625rem, 6vw, 4.25rem);
+  font-size: var(--font-size-display);
+  font-style: normal;
   font-weight: var(--font-weight-regular);
-  line-height: 0.98;
-  letter-spacing: -0.045em;
+  letter-spacing: -0.04em;
+  line-height: 1.02;
+  overflow-wrap: anywhere;
+  text-wrap: balance;
 }
 
 .introduction {
-  max-width: 38.125rem;
-  margin: 0 0 var(--space-12);
+  max-width: 58ch;
+  margin: 0;
   color: var(--color-text-muted);
-  font-size: var(--font-size-500);
+  font-size: var(--font-size-400);
   line-height: 1.65;
+  text-wrap: pretty;
 }
 
-.projectCard,
-.openedProject {
-  display: flex;
-  align-items: center;
-  gap: var(--space-6);
-  border: var(--border-hairline) solid var(--color-border);
-  border-radius: var(--radius-xl);
-  background: var(--color-surface);
+.projectEntry {
+  align-self: end;
 }
 
 .projectCard {
-  justify-content: space-between;
-  padding: var(--space-7);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-8);
+  padding-block: var(--space-8);
+  border-block: var(--border-hairline) solid var(--color-border);
+}
+
+.projectCardCopy {
+  display: grid;
+  gap: var(--space-3);
 }
 
 .projectCardTitle {
-  margin: 0 0 var(--space-2);
-  font-size: var(--font-size-600);
-  letter-spacing: -0.02em;
+  margin: 0;
+  font-size: var(--font-size-500);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: -0.025em;
+  line-height: 1.2;
 }
 
 .projectCardDescription {
+  max-width: 48ch;
   margin: 0;
   color: var(--color-text-muted);
+  font-size: var(--font-size-400);
+  line-height: 1.55;
 }
 
 .notice {
-  margin: var(--space-4) var(--space-1) 0;
+  margin: var(--space-5) 0 0;
   color: var(--color-text-muted);
   font-size: var(--font-size-300);
+  line-height: 1.5;
 }
 
 .noticeError {
@@ -92,17 +113,22 @@
 }
 
 .openedProject {
-  margin-top: var(--space-5);
-  padding: var(--space-5);
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-4);
+  margin-block-start: var(--space-6);
+  padding-block-start: var(--space-5);
+  border-block-start: var(--border-hairline) solid var(--color-border);
 }
 
 .openedProjectIcon {
   display: grid;
-  width: 2.125rem;
-  height: 2.125rem;
+  width: var(--control-height-sm);
+  height: var(--control-height-sm);
   flex: 0 0 auto;
   place-items: center;
-  border-radius: var(--radius-full);
+  border-radius: var(--radius-sm);
   color: var(--color-success);
   background: var(--color-success-surface);
   font-weight: var(--font-weight-bold);
@@ -114,32 +140,61 @@
   gap: var(--space-1);
 }
 
+.openedProjectDetails strong {
+  font-size: var(--font-size-400);
+}
+
 .openedProjectDetails span {
   overflow: hidden;
   color: var(--color-text-muted);
-  font-size: var(--font-size-200);
+  font-size: var(--font-size-300);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .openedProjectStatus {
-  margin-left: auto;
   color: var(--color-success);
+  font-size: var(--font-size-300);
+  font-weight: var(--font-weight-semibold);
+  white-space: nowrap;
 }
 
-@media (max-width: 40rem) {
+@media (min-width: 40rem) {
   .headerActions {
-    top: var(--space-3);
-    right: var(--space-4);
+    min-height: var(--space-24);
+    padding-block-start: max(var(--space-5), env(safe-area-inset-top));
+    padding-inline-end: max(var(--space-8), env(safe-area-inset-right));
+    padding-inline-start: max(var(--space-8), env(safe-area-inset-left));
   }
 
   .content {
-    width: calc(100% - var(--space-8));
-    padding-top: var(--space-16);
+    padding-block-start: var(--space-16);
+    padding-inline-start: max(var(--space-8), env(safe-area-inset-left));
+    padding-inline-end: max(var(--space-8), env(safe-area-inset-right));
   }
 
   .projectCard {
-    align-items: stretch;
-    flex-direction: column;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: end;
+  }
+}
+
+@media (min-width: 60rem) {
+  .content {
+    grid-template-columns: minmax(0, 7fr) minmax(22rem, 5fr);
+    align-content: center;
+    align-items: end;
+    gap: clamp(var(--space-16), 8vw, var(--space-36));
+    padding-block: var(--space-16) var(--space-24);
+  }
+
+  .projectCard {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (min-width: 75rem) {
+  .projectCard {
+    grid-template-columns: minmax(0, 1fr) auto;
   }
 }

@@ -1,3 +1,5 @@
+@import "@fontsource-variable/newsreader";
+@import "@fontsource-variable/ibm-plex-sans";
 @import "./tokens.css";
 
 :root {
@@ -14,6 +16,11 @@
 }
 
 html,
+body {
+  overflow-x: clip;
+}
+
+html,
 body,
 #root {
   min-width: 20rem;
@@ -23,11 +30,12 @@ body,
 body {
   position: relative;
   margin: 0;
-  min-height: 100vh;
+  min-height: 100svh;
   background: var(--color-canvas);
 }
 
 #root {
+  min-height: 100svh;
   isolation: isolate;
 }
 

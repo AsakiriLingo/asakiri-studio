@@ -1,10 +1,14 @@
+/* Hallmark · component: button · genre: modern-minimal · theme: Asakiri Studio custom
+ * states: default · hover · focus · active · disabled · loading · error · success
+ * contrast: pass (40–41)
+ */
 .root {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: var(--space-2);
   flex: 0 0 auto;
-  border: 1px solid transparent;
+  border: var(--border-hairline) solid transparent;
   border-radius: var(--radius-md);
   cursor: pointer;
   font-weight: var(--font-weight-semibold);
@@ -13,24 +17,55 @@
   user-select: none;
   white-space: nowrap;
   transition:
-    color var(--duration-fast) var(--ease-standard),
-    background-color var(--duration-fast) var(--ease-standard),
-    border-color var(--duration-fast) var(--ease-standard),
-    transform var(--duration-fast) var(--ease-standard);
+    color var(--duration-normal) var(--ease-out),
+    background-color var(--duration-normal) var(--ease-out),
+    border-color var(--duration-normal) var(--ease-out),
+    transform var(--duration-fast) var(--ease-out);
 }
 
 .root:focus-visible {
   outline: 3px solid var(--color-focus-ring);
-  outline-offset: 3px;
+  outline-offset: var(--space-1);
 }
 
 .root:active:not([data-disabled]) {
-  transform: translateY(1px);
+  transform: translateY(var(--border-hairline));
 }
 
 .root[data-disabled] {
   cursor: not-allowed;
-  opacity: 0.5;
+  opacity: 0.52;
+}
+
+.root[data-loading] {
+  cursor: progress;
+}
+
+.root[data-disabled][data-loading] {
+  opacity: 1;
+}
+
+.root[data-loading]::before {
+  width: var(--size-spinner);
+  height: var(--size-spinner);
+  flex: 0 0 auto;
+  border: var(--border-spinner) solid currentColor;
+  border-inline-end-color: transparent;
+  border-radius: var(--radius-full);
+  animation: button-loading var(--duration-loader) linear infinite;
+  content: "";
+}
+
+.root[data-status="error"] {
+  border-color: var(--color-danger);
+  color: var(--color-danger);
+  background: var(--color-danger-surface);
+}
+
+.root[data-status="success"] {
+  border-color: var(--color-success);
+  color: var(--color-success);
+  background: var(--color-success-surface);
 }
 
 .primary {
@@ -38,27 +73,15 @@
   background: var(--color-brand);
 }
 
-.primary:hover:not([data-disabled]) {
-  background: var(--color-brand-hover);
-}
-
 .secondary {
-  color: var(--color-text);
   border-color: var(--color-border-strong);
+  color: var(--color-text);
   background: var(--color-surface);
-}
-
-.secondary:hover:not([data-disabled]) {
-  background: var(--color-surface-subtle);
 }
 
 .ghost {
   color: var(--color-text);
   background: transparent;
-}
-
-.ghost:hover:not([data-disabled]) {
-  background: var(--color-surface-subtle);
 }
 
 .sm {
@@ -77,4 +100,36 @@
   min-height: var(--control-height-lg);
   padding-inline: var(--space-6);
   font-size: var(--font-size-400);
+}
+
+@keyframes button-loading {
+  to {
+    transform: rotate(1turn);
+  }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .primary:hover:not([data-disabled]) {
+    background: var(--color-brand-hover);
+  }
+
+  .secondary:hover:not([data-disabled]) {
+    background: var(--color-surface-subtle);
+  }
+
+  .ghost:hover:not([data-disabled]) {
+    background: var(--color-surface-subtle);
+  }
+}
+
+@media (pointer: coarse) {
+  .sm {
+    min-height: var(--control-height-md);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .root[data-loading]::before {
+    animation-duration: calc(var(--duration-loader) * 2) !important;
+  }
 }

@@ -1,7 +1,6 @@
 import type { ProjectDirectoryErrorCode } from "@core/projects";
 
 export interface ProjectHubMessages {
-  readonly eyebrow: string;
   readonly title: string;
   readonly introduction: string;
   readonly openProjectTitle: string;

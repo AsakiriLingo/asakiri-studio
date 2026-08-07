@@ -5,7 +5,6 @@ import { ProjectHubPage } from "@features/project-hub/components/ProjectHubPage"
 import type { ProjectHubMessages } from "@features/project-hub/i18n/project-hub-messages";
 
 const messages: ProjectHubMessages = {
-  eyebrow: "Local-first course editor",
   title: "Your courses live on your computer.",
   introduction: "Open a course repository to start editing.",
   openProjectTitle: "Open a project",

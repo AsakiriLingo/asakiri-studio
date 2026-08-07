@@ -6,7 +6,6 @@ export const jaMessages = {
     switchToLight: "ライトモードに切り替える",
   },
   projectHub: {
-    eyebrow: "ローカルファーストのコースエディター",
     title: "コースはあなたのコンピューターに保存されます。",
     introduction:
       "コースのリポジトリを開いて編集を始めましょう。コンテンツとメディアはプロジェクト内に保存され、自由に持ち運べます。",

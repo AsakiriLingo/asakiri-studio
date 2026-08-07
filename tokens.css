@@ -1,0 +1,4 @@
+/* Hallmark portable token entry.
+ * The production source remains src/app/styles/tokens.css per the Studio architecture rules.
+ */
+@import "./src/app/styles/tokens.css";

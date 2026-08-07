@@ -1,10 +1,9 @@
+/* Hallmark · component: icon button · genre: modern-minimal · theme: Asakiri Studio custom
+ * states: inherited from Button · compact square control
+ */
 .root.root {
   padding: 0;
   color: var(--color-text-muted);
-}
-
-.root.root:hover:not([data-disabled]) {
-  color: var(--color-text);
 }
 
 .root.sm {
@@ -15,4 +14,17 @@
 .root.md {
   width: var(--control-height-md);
   min-width: var(--control-height-md);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .root.root:hover:not([data-disabled]) {
+    color: var(--color-text);
+  }
+}
+
+@media (pointer: coarse) {
+  .root.sm {
+    width: var(--control-height-md);
+    min-width: var(--control-height-md);
+  }
 }
