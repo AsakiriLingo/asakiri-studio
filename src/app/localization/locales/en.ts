@@ -1,6 +1,14 @@
 import type { AppMessages } from "@app/localization/messages";
 
 export const enMessages = {
+  content: {
+    collectionsLabel: "Content collections",
+    recordCount: (count: number) => `${String(count)} ${count === 1 ? "record" : "records"}`,
+    empty: {
+      title: "No content yet",
+      description: "Content collections in this project will appear here.",
+    },
+  },
   themeToggle: {
     switchToDark: "Switch to dark mode",
     switchToLight: "Switch to light mode",

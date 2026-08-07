@@ -52,6 +52,20 @@ describe("WorkspacePage", () => {
     expect(screen.getByText("Reusable project content will appear here.")).toBeVisible();
   });
 
+  it("renders the content slot in the Content area", () => {
+    render(
+      <WorkspacePage
+        contentSlot={<div>Collection list</div>}
+        messages={messages}
+        onBack={vi.fn()}
+        projectName="Course project"
+      />,
+    );
+
+    expect(screen.getByText("Collection list")).toBeVisible();
+    expect(screen.queryByText("Reusable project content will appear here.")).toBeNull();
+  });
+
   it("shows a disabled create-content action on the Content area", () => {
     render(<WorkspacePage messages={messages} onBack={vi.fn()} projectName="Course project" />);
 

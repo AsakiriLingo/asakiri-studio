@@ -12,6 +12,7 @@ interface WorkspaceOpenProps {
   readonly onBack: () => void;
   readonly session: ProjectSession;
   readonly reader?: ProjectReader;
+  readonly contentSlot?: ReactNode;
   readonly workspaceActions?: ReactNode;
 }
 
@@ -20,6 +21,7 @@ export function WorkspaceOpen({
   onBack,
   reader,
   session,
+  contentSlot,
   workspaceActions,
 }: WorkspaceOpenProps) {
   const openState = useProjectValidation(session, reader);
@@ -52,6 +54,7 @@ export function WorkspaceOpen({
 
   return (
     <WorkspacePage
+      contentSlot={contentSlot}
       messages={messages}
       onBack={onBack}
       projectName={session.name}

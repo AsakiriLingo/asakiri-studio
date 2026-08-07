@@ -9,6 +9,7 @@ interface WorkspacePageProps {
   readonly messages: WorkspaceMessages;
   readonly onBack: () => void;
   readonly projectName: string;
+  readonly contentSlot?: ReactNode;
   readonly workspaceActions?: ReactNode;
 }
 
@@ -22,6 +23,7 @@ export function WorkspacePage({
   messages,
   onBack,
   projectName,
+  contentSlot,
   workspaceActions,
 }: WorkspacePageProps) {
   const [activeArea, setActiveArea] = useState<WorkspaceArea>("content");
@@ -91,9 +93,13 @@ export function WorkspacePage({
               titleId="workspace-area-title"
               actions={activeActions}
             />
-            <div className={styles.emptyState}>
-              <p>{emptyState.description}</p>
-            </div>
+            {activeArea === "content" && contentSlot ? (
+              contentSlot
+            ) : (
+              <div className={styles.emptyState}>
+                <p>{emptyState.description}</p>
+              </div>
+            )}
           </>
         ) : (
           <div className={styles.emptyState}>

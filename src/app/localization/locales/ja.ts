@@ -1,6 +1,14 @@
 import type { AppMessages } from "@app/localization/messages";
 
 export const jaMessages = {
+  content: {
+    collectionsLabel: "コンテンツコレクション",
+    recordCount: (count: number) => `${String(count)} 件`,
+    empty: {
+      title: "コンテンツがまだありません",
+      description: "このプロジェクトのコンテンツコレクションがここに表示されます。",
+    },
+  },
   themeToggle: {
     switchToDark: "ダークモードに切り替える",
     switchToLight: "ライトモードに切り替える",
