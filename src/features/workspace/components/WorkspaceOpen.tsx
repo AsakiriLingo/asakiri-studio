@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import type { ProjectReader } from "@core/project-reading";
+import type { ContentCollectionSummary, ProjectReader } from "@core/project-reading";
 import type { ProjectSession } from "@core/projects";
 import { WorkspacePage } from "@features/workspace/components/WorkspacePage";
 import { useProjectValidation } from "@features/workspace/hooks/use-project-validation";
@@ -12,7 +12,7 @@ interface WorkspaceOpenProps {
   readonly onBack: () => void;
   readonly session: ProjectSession;
   readonly reader?: ProjectReader;
-  readonly contentSlot?: ReactNode;
+  readonly renderContent?: (collections: readonly ContentCollectionSummary[]) => ReactNode;
   readonly workspaceActions?: ReactNode;
 }
 
@@ -20,8 +20,8 @@ export function WorkspaceOpen({
   messages,
   onBack,
   reader,
+  renderContent,
   session,
-  contentSlot,
   workspaceActions,
 }: WorkspaceOpenProps) {
   const openState = useProjectValidation(session, reader);
@@ -54,7 +54,7 @@ export function WorkspaceOpen({
 
   return (
     <WorkspacePage
-      contentSlot={contentSlot}
+      contentSlot={renderContent?.(openState.collections)}
       messages={messages}
       onBack={onBack}
       projectName={session.name}

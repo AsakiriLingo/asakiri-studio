@@ -9,7 +9,7 @@ function LocalizationConsumer() {
   return (
     <div>
       <span>{locale}</span>
-      <strong>{messages.projectHub.openProjectTitle}</strong>
+      <strong>{messages.projectHub.chooseFolder}</strong>
       <button
         type="button"
         onClick={() => {
@@ -36,10 +36,10 @@ describe("LocalizationProvider", () => {
       </LocalizationProvider>,
     );
 
-    expect(screen.getByText("Open a project")).toBeVisible();
+    expect(screen.getByText("Open course")).toBeVisible();
     screen.getByRole("button", { name: "Use Japanese" }).click();
 
-    expect(await screen.findByText("プロジェクトを開く")).toBeVisible();
+    expect(await screen.findByText("コースを開く")).toBeVisible();
     await waitFor(() => {
       expect(document.documentElement.lang).toBe("ja");
     });

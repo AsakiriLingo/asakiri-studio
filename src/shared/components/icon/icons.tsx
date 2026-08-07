@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 
 export type IconName =
-  "plus" | "arrow-left" | "book" | "upload" | "image" | "teacher" | "moon" | "sun";
+  "plus" | "arrow-left" | "book" | "folder" | "upload" | "image" | "teacher" | "moon" | "sun";
 
 export const icons: Readonly<Record<IconName, ReactNode>> = {
   plus: (
@@ -20,6 +20,12 @@ export const icons: Readonly<Record<IconName, ReactNode>> = {
     <>
       <path d="M5 19.5A2.5 2.5 0 017.5 17H19.5V3.5H7.5A2.5 2.5 0 005 6v13.5z" />
       <path d="M5 19.5A2.5 2.5 0 007.5 22H19.5v-5" />
+    </>
+  ),
+  folder: (
+    <>
+      <path d="M3.5 7.5V6.75A2.25 2.25 0 015.75 4.5h4.1l2.1 2.25h6.3a2.25 2.25 0 012.25 2.25v8.25a2.25 2.25 0 01-2.25 2.25H5.75a2.25 2.25 0 01-2.25-2.25V7.5z" />
+      <path d="M3.5 8.25h17" />
     </>
   ),
   upload: (

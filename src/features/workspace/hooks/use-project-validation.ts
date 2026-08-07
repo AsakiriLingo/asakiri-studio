@@ -8,7 +8,7 @@ export function useProjectValidation(
   reader?: ProjectReader,
 ): WorkspaceOpenState {
   const [state, setState] = useState<WorkspaceOpenState>(
-    reader ? { status: "validating" } : { status: "ready" },
+    reader ? { status: "validating" } : { status: "ready", collections: [] },
   );
 
   useEffect(() => {
@@ -21,7 +21,7 @@ export function useProjectValidation(
       .then((result) => {
         if (!active) return;
         if (result.status === "ready") {
-          setState({ status: "ready" });
+          setState({ status: "ready", collections: result.data });
           return;
         }
         setState({

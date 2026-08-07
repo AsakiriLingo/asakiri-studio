@@ -63,6 +63,14 @@
   --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
   --ease-standard: var(--ease-out);
 
+  --z-base: 1;
+  --z-raised: 10;
+  --z-dropdown: 100;
+  --z-sticky: 200;
+  --z-modal: 400;
+  --z-toast: 500;
+  --z-tooltip: 600;
+
   --color-canvas: oklch(0.975 0.01 145);
   --color-surface: oklch(0.992 0.005 145);
   --color-surface-subtle: oklch(0.945 0.014 145);
@@ -74,6 +82,7 @@
   --color-brand-hover: oklch(0.37 0.105 155);
   --color-on-brand: oklch(0.98 0.008 155);
   --color-focus-ring: oklch(0.34 0.12 155);
+  --color-overlay: oklch(0.22 0.018 155 / 0.28);
   --color-danger: oklch(0.48 0.18 25);
   --color-danger-surface: oklch(0.95 0.03 25);
   --color-success: oklch(0.4 0.1 155);
@@ -93,6 +102,7 @@
   --color-brand-hover: oklch(0.37 0.105 155);
   --color-on-brand: oklch(0.98 0.008 155);
   --color-focus-ring: oklch(0.82 0.12 155);
+  --color-overlay: oklch(0.08 0.006 155 / 0.55);
   --color-danger: oklch(0.74 0.13 25);
   --color-danger-surface: oklch(0.225 0.035 25);
   --color-success: oklch(0.74 0.1 155);

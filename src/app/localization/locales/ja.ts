@@ -14,12 +14,10 @@ export const jaMessages = {
     switchToLight: "ライトモードに切り替える",
   },
   projectHub: {
-    title: "コースはあなたのコンピューターに保存されます。",
-    introduction:
-      "コースのリポジトリを開いて編集を始めましょう。コンテンツとメディアはプロジェクト内に保存され、自由に持ち運べます。",
-    openProjectTitle: "プロジェクトを開く",
-    openProjectDescription: "1つのコースリポジトリを含むフォルダーを選択してください。",
-    chooseFolder: "フォルダーを選択",
+    title: "コース",
+    introduction: "既存のコースフォルダーを開くか、このコンピューターに新しいコースを作成します。",
+    startTitle: "はじめる",
+    chooseFolder: "コースを開く",
     openingFolder: "開いています…",
     dialogTitle: "コースプロジェクトを開く",
     unsupported:
@@ -30,6 +28,26 @@ export const jaMessages = {
       unsupported: "このブラウザーではローカルプロジェクトフォルダーを利用できません。",
     },
     ready: "準備完了",
+    create: {
+      title: "コースを作成",
+      description:
+        "新しいコースを始めます。Studioがプロジェクトフォルダーを作成し、Gitを初期化します。",
+      openButton: "新しいコース",
+      nameLabel: "コース名",
+      namePlaceholder: "例：はじめての日本語",
+      createButton: "作成",
+      cancelButton: "キャンセル",
+      creating: "作成しています…",
+      dialogTitle: "コースの保存先を選択",
+      unsupported: "コースの作成にはデスクトップアプリが必要です。",
+      errors: {
+        alreadyExists: "同じ名前のフォルダーがすでに存在します。",
+        invalidName: "有効なコース名を入力してください。",
+        permissionDenied: "フォルダーへの書き込みが拒否されました。",
+        unknown: "コースを作成できませんでした。",
+        unsupported: "コースの作成にはデスクトップアプリが必要です。",
+      },
+    },
   },
   workspace: {
     navigationLabel: "プロジェクトワークスペース",

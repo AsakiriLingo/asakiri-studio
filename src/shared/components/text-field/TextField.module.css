@@ -1,0 +1,80 @@
+/* Hallmark · component: text field · genre: modern-minimal · theme: Asakiri Studio custom
+ * states: default · hover · focus · filled · disabled · error
+ */
+.root {
+  display: grid;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.label {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-300);
+  font-weight: var(--font-weight-medium);
+}
+
+.control {
+  width: 100%;
+  min-width: 0;
+  height: var(--control-height-lg);
+  padding-inline: var(--space-4);
+  border: var(--border-hairline) solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: inherit;
+  font-size: var(--font-size-400);
+  outline: 2px solid transparent;
+  outline-offset: var(--border-hairline);
+  transition:
+    background-color var(--duration-normal) var(--ease-out),
+    border-color var(--duration-normal) var(--ease-out);
+}
+
+.control::placeholder {
+  color: var(--color-text-muted);
+}
+
+.control:focus-visible {
+  border-color: var(--color-border-strong);
+  outline-color: var(--color-focus-ring);
+}
+
+.control:active:not(:disabled, [data-disabled]) {
+  border-color: var(--color-border-strong);
+}
+
+.control:disabled,
+.control[data-disabled] {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.control[data-invalid] {
+  border-color: var(--color-danger);
+}
+
+.message {
+  min-height: var(--space-6);
+}
+
+.description,
+.error {
+  margin: 0;
+  font-size: var(--font-size-300);
+  line-height: 1.5;
+}
+
+.description {
+  color: var(--color-text-muted);
+}
+
+.error {
+  color: var(--color-danger);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .control:hover:not([data-disabled]):not(:focus-visible) {
+    background: var(--color-surface-subtle);
+  }
+}

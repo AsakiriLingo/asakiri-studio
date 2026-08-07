@@ -24,8 +24,8 @@
 }
 
 .root:focus-visible {
-  outline: 3px solid var(--color-focus-ring);
-  outline-offset: var(--space-1);
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: calc(var(--space-1) / 2);
 }
 
 .root:active:not([data-disabled]) {

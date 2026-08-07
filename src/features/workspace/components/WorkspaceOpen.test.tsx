@@ -81,10 +81,19 @@ describe("WorkspaceOpen", () => {
     });
 
     render(
-      <WorkspaceOpen messages={messages} onBack={vi.fn()} reader={reader} session={session} />,
+      <WorkspaceOpen
+        messages={messages}
+        onBack={vi.fn()}
+        reader={reader}
+        renderContent={(collections) => (
+          <div>{collections.map((collection) => collection.name).join(", ")}</div>
+        )}
+        session={session}
+      />,
     );
 
     expect(await screen.findByRole("button", { name: "New content" })).toBeVisible();
+    expect(screen.getByText("Vocabulary")).toBeVisible();
   });
 
   it("shows a localized invalid state without exposing raw codes", async () => {

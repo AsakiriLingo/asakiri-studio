@@ -1,10 +1,13 @@
+import { invoke } from "@tauri-apps/api/core";
 import { open } from "@tauri-apps/plugin-dialog";
 import type { ProjectDirectory, ProjectDirectoryGateway } from "@core/projects";
+import type { ProjectLocationRegistry } from "@platform/project-location/project-location-registry";
 
 export class TauriProjectDirectoryGateway implements ProjectDirectoryGateway {
   readonly isSupported = true;
   readonly runtime = "desktop" as const;
-  readonly #paths = new Map<string, string>();
+
+  constructor(private readonly locations: ProjectLocationRegistry) {}
 
   async openProjectDirectory(options: {
     readonly dialogTitle: string;
@@ -12,6 +15,7 @@ export class TauriProjectDirectoryGateway implements ProjectDirectoryGateway {
     const path = await open({
       directory: true,
       multiple: false,
+      recursive: true,
       title: options.dialogTitle,
     });
 
@@ -20,14 +24,15 @@ export class TauriProjectDirectoryGateway implements ProjectDirectoryGateway {
     }
 
     const pathParts = path.split(/[\\/]/).filter(Boolean);
-    const name = pathParts[pathParts.length - 1] ?? path;
+    const directoryName = pathParts[pathParts.length - 1] ?? path;
+    const title = await invoke<string>("read_course_title", { path }).catch(() => directoryName);
     const id = crypto.randomUUID();
-    this.#paths.set(id, path);
+    this.locations.register(id, { runtime: "tauri", rootPath: path });
 
     return {
       id,
-      name,
-      locationLabel: name,
+      name: title,
+      locationLabel: directoryName,
       runtime: "desktop",
     };
   }

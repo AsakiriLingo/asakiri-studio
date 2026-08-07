@@ -9,7 +9,7 @@ Modern-minimal with an editorial brand register. The interface stays technical a
 ## Macrostructure family
 
 - Marketing pages: not applicable. The separate website owns marketing.
-- App pages: Workbench. Project entry screens use an asymmetric 7/5 canvas. Editing screens use a compact navigation region, a focused work surface, and a contextual inspector only when the task requires one.
+- App pages: Workbench. Project entry screens use a compact software command list with focused dialogs for input. Editing screens use a compact navigation region, a focused work surface, and a contextual inspector only when the task requires one.
 - Content pages: Long Document inside the work surface. Reading and rich-text editing favor measure and hierarchy over panels.
 
 ## Theme
@@ -79,7 +79,7 @@ Use the existing 4-point scale in `src/app/styles/tokens.css`. Components consum
 ## Per-page allowances
 
 - App pages must not use decorative enrichment. Function carries the screen.
-- Project entry may use one editorial display heading.
+- Project entry uses working-interface typography. Inputs belong in focused dialogs or task surfaces, not in the command list.
 - Dense editor screens keep display type out of controls, tables, and inspectors.
 - Rich lesson content may use content typography inside the canvas without changing application chrome.
 
