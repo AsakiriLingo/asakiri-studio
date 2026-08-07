@@ -1,5 +1,4 @@
-import { Moon02Icon, Sun03Icon } from "@hugeicons/core-free-icons";
-import { HugeiconsIcon } from "@hugeicons/react";
+import { Icon } from "@shared/components/icon";
 import { IconButton } from "@shared/components/icon-button";
 import type { ThemeToggleMessages } from "@app/theme/theme-toggle-messages";
 import { useTheme } from "@app/theme/use-theme";
@@ -20,12 +19,7 @@ export function ThemeToggle({ messages }: ThemeToggleProps) {
         setPreference(isDark ? "light" : "dark");
       }}
     >
-      <HugeiconsIcon
-        aria-hidden="true"
-        icon={isDark ? Sun03Icon : Moon02Icon}
-        size={20}
-        strokeWidth={1.75}
-      />
+      <Icon aria-hidden="true" name={isDark ? "sun" : "moon"} size={20} />
     </IconButton>
   );
 }

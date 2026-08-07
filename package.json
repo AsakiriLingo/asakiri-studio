@@ -24,8 +24,6 @@
     "@base-ui/react": "^1.7.0",
     "@fontsource-variable/ibm-plex-sans": "^5.3.0",
     "@fontsource-variable/newsreader": "^5.3.0",
-    "@hugeicons/core-free-icons": "^4.2.3",
-    "@hugeicons/react": "^1.1.9",
     "@tauri-apps/api": "^2",
     "@tauri-apps/plugin-dialog": "^2",
     "react": "^19.1.0",

@@ -12,6 +12,8 @@ Asakiri Studio builds its components on [Base UI](https://base-ui.com/react/over
 
 The shared Button supports `primary`, `secondary`, and `ghost` variants plus `sm`, `md`, and `lg` sizes. Its default is a native `type="button"` control. Loading workflows should set `disabled` and `focusableWhenDisabled` so focus does not disappear.
 
+Icons come from the [yosooi set](https://yosooi.jp/tools/icons/), inlined as local SVG data in the shared `Icon` component (`src/shared/components/icon`). Render with `<Icon name="…" size={…} />`; strokes use `currentColor`, so icons inherit text color. There are no runtime network calls to the yosooi source — new icons are fetched once (from <https://yosooi.jp/tools/icons/>) and added to `icons.tsx`.
+
 ## Styling
 
 - `src/app/styles/tokens.css` is the source of global typography, spacing, radii, control sizes, motion, colors, and surface boundaries.

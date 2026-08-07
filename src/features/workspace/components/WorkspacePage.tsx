@@ -1,16 +1,8 @@
 import { useState, type ReactNode } from "react";
-import {
-  Add01Icon,
-  ArrowLeft02Icon,
-  BookOpenTextIcon,
-  FileUploadIcon,
-  Image01Icon,
-  TeachingIcon,
-} from "@hugeicons/core-free-icons";
-import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react";
 import { WorkSurfaceHeader } from "@features/workspace/components/WorkSurfaceHeader";
 import type { WorkspaceArea, WorkspaceMessages } from "@features/workspace/i18n/workspace-messages";
 import { Button } from "@shared/components/button";
+import { Icon, type IconName } from "@shared/components/icon";
 import styles from "@features/workspace/components/WorkspacePage.module.css";
 
 interface WorkspacePageProps {
@@ -20,10 +12,10 @@ interface WorkspacePageProps {
   readonly workspaceActions?: ReactNode;
 }
 
-const areas: readonly { readonly id: WorkspaceArea; readonly icon: IconSvgElement }[] = [
-  { id: "content", icon: BookOpenTextIcon },
-  { id: "media", icon: Image01Icon },
-  { id: "lessons", icon: TeachingIcon },
+const areas: readonly { readonly id: WorkspaceArea; readonly icon: IconName }[] = [
+  { id: "content", icon: "book" },
+  { id: "media", icon: "image" },
+  { id: "lessons", icon: "teacher" },
 ];
 
 export function WorkspacePage({
@@ -38,13 +30,13 @@ export function WorkspacePage({
   const areaActions: Partial<Record<WorkspaceArea, ReactNode>> = {
     content: (
       <Button disabled focusableWhenDisabled size="sm" variant="primary">
-        <HugeiconsIcon aria-hidden="true" icon={Add01Icon} size={18} strokeWidth={1.75} />
+        <Icon aria-hidden="true" name="plus" size={18} />
         <span>{messages.contentActions.createContent}</span>
       </Button>
     ),
     media: (
       <Button disabled focusableWhenDisabled size="sm" variant="primary">
-        <HugeiconsIcon aria-hidden="true" icon={FileUploadIcon} size={18} strokeWidth={1.75} />
+        <Icon aria-hidden="true" name="upload" size={18} />
         <span>{messages.mediaActions.importMedia}</span>
       </Button>
     ),
@@ -70,7 +62,7 @@ export function WorkspacePage({
               size="sm"
               variant="ghost"
             >
-              <HugeiconsIcon aria-hidden="true" icon={area.icon} size={20} strokeWidth={1.75} />
+              <Icon aria-hidden="true" name={area.icon} size={20} />
               <span>{messages.areas[area.id]}</span>
             </Button>
           ))}
@@ -84,7 +76,7 @@ export function WorkspacePage({
             size="sm"
             variant="ghost"
           >
-            <HugeiconsIcon aria-hidden="true" icon={ArrowLeft02Icon} size={18} strokeWidth={1.75} />
+            <Icon aria-hidden="true" name="arrow-left" size={18} />
             <span>{messages.backToProjects}</span>
           </Button>
           {workspaceActions && <div className={styles.workspaceActions}>{workspaceActions}</div>}
