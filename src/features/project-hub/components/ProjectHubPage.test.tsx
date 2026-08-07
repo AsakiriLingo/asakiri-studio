@@ -28,6 +28,8 @@ const project: ProjectDirectory = {
   runtime: "desktop",
 };
 
+const onProjectOpened = vi.fn();
+
 function createGateway(
   openProjectDirectory: ProjectDirectoryGateway["openProjectDirectory"],
   isSupported = true,
@@ -39,7 +41,13 @@ describe("ProjectHubPage", () => {
   it("disables folder selection when the runtime cannot access directories", () => {
     const gateway = createGateway(vi.fn(), false);
 
-    render(<ProjectHubPage directoryGateway={gateway} messages={messages} />);
+    render(
+      <ProjectHubPage
+        directoryGateway={gateway}
+        messages={messages}
+        onProjectOpened={onProjectOpened}
+      />,
+    );
 
     expect(screen.getByRole("button", { name: "Choose folder" })).toBeDisabled();
     expect(screen.getByText(/require a current Chromium browser/i)).toBeVisible();
@@ -49,7 +57,14 @@ describe("ProjectHubPage", () => {
     const openProjectDirectory = vi.fn().mockResolvedValue(project);
     const gateway = createGateway(openProjectDirectory);
 
-    render(<ProjectHubPage directoryGateway={gateway} messages={messages} />);
+    const handleProjectOpened = vi.fn();
+    render(
+      <ProjectHubPage
+        directoryGateway={gateway}
+        messages={messages}
+        onProjectOpened={handleProjectOpened}
+      />,
+    );
     fireEvent.click(screen.getByRole("button", { name: "Choose folder" }));
 
     expect(await screen.findByText("Course project")).toBeVisible();
@@ -57,16 +72,25 @@ describe("ProjectHubPage", () => {
     expect(openProjectDirectory).toHaveBeenCalledWith({
       dialogTitle: "Open course project",
     });
+    expect(handleProjectOpened).toHaveBeenCalledWith(project);
   });
 
   it("returns to idle when the directory picker is cancelled", async () => {
     const gateway = createGateway(vi.fn().mockResolvedValue(null));
 
-    render(<ProjectHubPage directoryGateway={gateway} messages={messages} />);
+    const handleProjectOpened = vi.fn();
+    render(
+      <ProjectHubPage
+        directoryGateway={gateway}
+        messages={messages}
+        onProjectOpened={handleProjectOpened}
+      />,
+    );
     fireEvent.click(screen.getByRole("button", { name: "Choose folder" }));
 
     expect(await screen.findByRole("button", { name: "Choose folder" })).toBeEnabled();
     expect(screen.queryByText("Ready")).not.toBeInTheDocument();
+    expect(handleProjectOpened).not.toHaveBeenCalled();
   });
 
   it("localizes adapter failures without exposing raw errors", async () => {
@@ -74,7 +98,13 @@ describe("ProjectHubPage", () => {
       vi.fn().mockRejectedValue(new Error("Native implementation detail")),
     );
 
-    render(<ProjectHubPage directoryGateway={gateway} messages={messages} />);
+    render(
+      <ProjectHubPage
+        directoryGateway={gateway}
+        messages={messages}
+        onProjectOpened={onProjectOpened}
+      />,
+    );
     fireEvent.click(screen.getByRole("button", { name: "Choose folder" }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent("The project could not be opened.");

@@ -22,4 +22,22 @@ export const enMessages = {
     },
     ready: "Ready",
   },
+  workspace: {
+    navigationLabel: "Project workspace",
+    backToProjects: "Back to projects",
+    areas: {
+      content: "Content",
+      media: "Media",
+    },
+    emptyStates: {
+      content: {
+        title: "Content",
+        description: "Reusable project content will appear here.",
+      },
+      media: {
+        title: "Media",
+        description: "Project audio, images, and video will appear here.",
+      },
+    },
+  },
 } satisfies AppMessages;

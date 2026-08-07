@@ -39,6 +39,10 @@ body {
   isolation: isolate;
 }
 
+:root[data-runtime="tauri"] #root {
+  border-block-start: var(--border-hairline) solid var(--color-border);
+}
+
 button,
 input,
 textarea,

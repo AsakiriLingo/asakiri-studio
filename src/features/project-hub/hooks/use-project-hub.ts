@@ -11,11 +11,13 @@ export function useProjectHub(directoryGateway: ProjectDirectoryGateway) {
     try {
       const project = await directoryGateway.openProjectDirectory({ dialogTitle });
       setState(project ? { status: "opened", project } : { status: "idle" });
+      return project;
     } catch (error) {
       setState({
         status: "error",
         code: error instanceof ProjectDirectoryError ? error.code : "unknown",
       });
+      return null;
     }
   }
 

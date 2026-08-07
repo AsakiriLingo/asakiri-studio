@@ -1,4 +1,4 @@
-import type { ProjectDirectoryGateway } from "@core/projects";
+import type { ProjectDirectory, ProjectDirectoryGateway } from "@core/projects";
 import type { ReactNode } from "react";
 import { Button } from "@shared/components/button";
 import { useProjectHub } from "@features/project-hub/hooks/use-project-hub";
@@ -9,11 +9,22 @@ interface ProjectHubPageProps {
   readonly directoryGateway: ProjectDirectoryGateway;
   readonly headerActions?: ReactNode;
   readonly messages: ProjectHubMessages;
+  readonly onProjectOpened: (project: ProjectDirectory) => void;
 }
 
-export function ProjectHubPage({ directoryGateway, headerActions, messages }: ProjectHubPageProps) {
+export function ProjectHubPage({
+  directoryGateway,
+  headerActions,
+  messages,
+  onProjectOpened,
+}: ProjectHubPageProps) {
   const { state, openProject } = useProjectHub(directoryGateway);
   const isOpening = state.status === "opening";
+
+  async function handleOpenProject() {
+    const project = await openProject(messages.dialogTitle);
+    if (project) onProjectOpened(project);
+  }
 
   return (
     <main className={styles.projectHub}>
@@ -37,7 +48,7 @@ export function ProjectHubPage({ directoryGateway, headerActions, messages }: Pr
               aria-busy={isOpening}
               data-loading={isOpening || undefined}
               focusableWhenDisabled={isOpening}
-              onClick={() => void openProject(messages.dialogTitle)}
+              onClick={() => void handleOpenProject()}
               disabled={!directoryGateway.isSupported || isOpening}
               size="lg"
             >

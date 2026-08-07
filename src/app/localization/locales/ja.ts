@@ -23,4 +23,22 @@ export const jaMessages = {
     },
     ready: "準備完了",
   },
+  workspace: {
+    navigationLabel: "プロジェクトワークスペース",
+    backToProjects: "プロジェクト一覧に戻る",
+    areas: {
+      content: "コンテンツ",
+      media: "メディア",
+    },
+    emptyStates: {
+      content: {
+        title: "コンテンツ",
+        description: "再利用できるプロジェクトコンテンツがここに表示されます。",
+      },
+      media: {
+        title: "メディア",
+        description: "プロジェクトの音声、画像、動画がここに表示されます。",
+      },
+    },
+  },
 } satisfies AppMessages;

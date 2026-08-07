@@ -1,0 +1,170 @@
+/* Hallmark · genre: modern-minimal · macrostructure: Workbench · design-system: design.md
+ * designed-as-app · shape: compact navigation + work surface · enrichment: none
+ * pre-emit critique: P5 H5 E5 S5 R5 V4 · contrast: pass (40–41) · icons: pass (30)
+ * nav: workbench rail · slop: pass (42–49) · mobile: pass (34, 49–57)
+ */
+.workspace {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  min-height: 100svh;
+  background: var(--color-canvas);
+}
+
+.sidebar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-width: 0;
+  padding-block: max(var(--space-2), env(safe-area-inset-top)) var(--space-2);
+  padding-inline-start: max(var(--space-3), env(safe-area-inset-left));
+  padding-inline-end: max(var(--space-3), env(safe-area-inset-right));
+  border-block-end: var(--border-hairline) solid var(--color-border);
+  background: var(--color-canvas);
+}
+
+.projectName {
+  display: none;
+}
+
+.utilities,
+.workspaceActions {
+  display: flex;
+  align-items: center;
+}
+
+.navigation {
+  display: flex;
+  flex: 1 1 auto;
+  gap: var(--space-1);
+  min-width: 0;
+  overflow-x: auto;
+}
+
+.utilities {
+  flex: 0 0 auto;
+  gap: var(--space-1);
+  margin-inline-start: auto;
+}
+
+.backButton {
+  width: var(--control-height-sm);
+  padding-inline: var(--space-2);
+}
+
+.backButton span {
+  display: none;
+}
+
+.navigationItem {
+  justify-content: flex-start;
+  min-width: max-content;
+  color: var(--color-text-muted);
+  font-weight: var(--font-weight-medium);
+}
+
+.navigationItem[aria-current="page"] {
+  color: var(--color-text);
+  background: var(--color-surface-subtle);
+}
+
+.navigationItem[aria-current="page"] svg {
+  color: var(--color-brand);
+}
+
+.workSurface {
+  display: grid;
+  min-width: 0;
+  min-height: 0;
+  align-content: start;
+  padding-block: var(--space-10) max(var(--space-10), env(safe-area-inset-bottom));
+  padding-inline-start: max(var(--space-5), env(safe-area-inset-left));
+  padding-inline-end: max(var(--space-5), env(safe-area-inset-right));
+  background: var(--color-surface);
+}
+
+.emptyState {
+  display: grid;
+  gap: var(--space-3);
+  max-width: 42rem;
+}
+
+.emptyState h1,
+.emptyState p {
+  margin: 0;
+}
+
+.emptyState h1 {
+  min-width: 0;
+  font-size: var(--font-size-700);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: -0.035em;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+}
+
+.emptyState p {
+  max-width: 52ch;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-400);
+  line-height: 1.6;
+}
+
+@media (min-width: 48rem) {
+  .workspace {
+    grid-template-columns: 15rem minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr);
+  }
+
+  .sidebar {
+    flex-direction: column;
+    align-items: stretch;
+    padding-block: var(--space-4) max(var(--space-4), env(safe-area-inset-bottom));
+    padding-inline: max(var(--space-3), env(safe-area-inset-left)) var(--space-3);
+    border-block-end: 0;
+    border-inline-end: var(--border-hairline) solid var(--color-border);
+  }
+
+  .navigation {
+    flex: 0 0 auto;
+    flex-direction: column;
+    overflow-x: visible;
+  }
+
+  .projectName {
+    display: block;
+    overflow: hidden;
+    padding: var(--space-2) var(--space-3) var(--space-3);
+    font-size: var(--font-size-400);
+    font-weight: var(--font-weight-semibold);
+    line-height: 1.25;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .navigationItem {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .utilities {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    margin-block-start: auto;
+    margin-inline-start: 0;
+  }
+
+  .backButton {
+    width: 100%;
+    justify-content: flex-start;
+    padding-inline: var(--space-3);
+  }
+
+  .backButton span {
+    display: inline;
+  }
+
+  .workSurface {
+    padding: var(--space-12) max(var(--space-8), env(safe-area-inset-right))
+      max(var(--space-12), env(safe-area-inset-bottom)) var(--space-8);
+  }
+}
