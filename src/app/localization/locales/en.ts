@@ -28,6 +28,7 @@ export const enMessages = {
     areas: {
       content: "Content",
       media: "Media",
+      lessons: "Lessons",
     },
     emptyStates: {
       content: {
@@ -38,6 +39,16 @@ export const enMessages = {
         title: "Media",
         description: "Project audio, images, and video will appear here.",
       },
+      lessons: {
+        title: "Lessons",
+        description: "Course lessons and their content will appear here.",
+      },
+    },
+    contentActions: {
+      createContent: "New content",
+    },
+    mediaActions: {
+      importMedia: "Import media",
     },
   },
 } satisfies AppMessages;

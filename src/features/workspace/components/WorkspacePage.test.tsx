@@ -9,6 +9,7 @@ const messages: WorkspaceMessages = {
   areas: {
     content: "Content",
     media: "Media",
+    lessons: "Lessons",
   },
   emptyStates: {
     content: {
@@ -19,6 +20,16 @@ const messages: WorkspaceMessages = {
       title: "Media",
       description: "Project audio, images, and video will appear here.",
     },
+    lessons: {
+      title: "Lessons",
+      description: "Course lessons and their content will appear here.",
+    },
+  },
+  contentActions: {
+    createContent: "New content",
+  },
+  mediaActions: {
+    importMedia: "Import media",
   },
 };
 
@@ -33,6 +44,23 @@ describe("WorkspacePage", () => {
     expect(screen.getByText("Reusable project content will appear here.")).toBeVisible();
   });
 
+  it("shows a disabled create-content action on the Content area", () => {
+    render(<WorkspacePage messages={messages} onBack={vi.fn()} projectName="Course project" />);
+
+    const createAction = screen.getByRole("button", { name: "New content" });
+
+    expect(createAction).toBeVisible();
+    expect(createAction).toHaveAttribute("aria-disabled", "true");
+  });
+
+  it("does not show the create-content action outside the Content area", () => {
+    render(<WorkspacePage messages={messages} onBack={vi.fn()} projectName="Course project" />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Media" }));
+
+    expect(screen.queryByRole("button", { name: "New content" })).toBeNull();
+  });
+
   it("switches to the Media area", () => {
     render(<WorkspacePage messages={messages} onBack={vi.fn()} projectName="Course project" />);
 
@@ -41,6 +69,29 @@ describe("WorkspacePage", () => {
     expect(screen.getByRole("button", { name: "Media" })).toHaveAttribute("aria-current", "page");
     expect(screen.getByRole("button", { name: "Content" })).not.toHaveAttribute("aria-current");
     expect(screen.getByText("Project audio, images, and video will appear here.")).toBeVisible();
+  });
+
+  it("shows a disabled import-media action on the Media area", () => {
+    render(<WorkspacePage messages={messages} onBack={vi.fn()} projectName="Course project" />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Media" }));
+
+    const importAction = screen.getByRole("button", { name: "Import media" });
+
+    expect(importAction).toBeVisible();
+    expect(importAction).toHaveAttribute("aria-disabled", "true");
+  });
+
+  it("switches to the Lessons area", () => {
+    render(<WorkspacePage messages={messages} onBack={vi.fn()} projectName="Course project" />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Lessons" }));
+
+    expect(screen.getByRole("button", { name: "Lessons" })).toHaveAttribute("aria-current", "page");
+    expect(screen.getByRole("button", { name: "Content" })).not.toHaveAttribute("aria-current");
+    expect(screen.getByText("Course lessons and their content will appear here.")).toBeVisible();
+    expect(screen.queryByRole("button", { name: "New content" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Import media" })).toBeNull();
   });
 
   it("returns to the Project Hub", () => {

@@ -1,6 +1,14 @@
 import { useState, type ReactNode } from "react";
-import { ArrowLeft02Icon, BookOpenTextIcon, Image01Icon } from "@hugeicons/core-free-icons";
+import {
+  Add01Icon,
+  ArrowLeft02Icon,
+  BookOpenTextIcon,
+  FileUploadIcon,
+  Image01Icon,
+  TeachingIcon,
+} from "@hugeicons/core-free-icons";
 import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react";
+import { WorkSurfaceHeader } from "@features/workspace/components/WorkSurfaceHeader";
 import type { WorkspaceArea, WorkspaceMessages } from "@features/workspace/i18n/workspace-messages";
 import { Button } from "@shared/components/button";
 import styles from "@features/workspace/components/WorkspacePage.module.css";
@@ -15,6 +23,7 @@ interface WorkspacePageProps {
 const areas: readonly { readonly id: WorkspaceArea; readonly icon: IconSvgElement }[] = [
   { id: "content", icon: BookOpenTextIcon },
   { id: "media", icon: Image01Icon },
+  { id: "lessons", icon: TeachingIcon },
 ];
 
 export function WorkspacePage({
@@ -25,6 +34,22 @@ export function WorkspacePage({
 }: WorkspacePageProps) {
   const [activeArea, setActiveArea] = useState<WorkspaceArea>("content");
   const emptyState = messages.emptyStates[activeArea];
+
+  const areaActions: Partial<Record<WorkspaceArea, ReactNode>> = {
+    content: (
+      <Button disabled focusableWhenDisabled size="sm" variant="primary">
+        <HugeiconsIcon aria-hidden="true" icon={Add01Icon} size={18} strokeWidth={1.75} />
+        <span>{messages.contentActions.createContent}</span>
+      </Button>
+    ),
+    media: (
+      <Button disabled focusableWhenDisabled size="sm" variant="primary">
+        <HugeiconsIcon aria-hidden="true" icon={FileUploadIcon} size={18} strokeWidth={1.75} />
+        <span>{messages.mediaActions.importMedia}</span>
+      </Button>
+    ),
+  };
+  const activeActions = areaActions[activeArea];
 
   return (
     <main className={styles.workspace}>
@@ -67,10 +92,23 @@ export function WorkspacePage({
       </aside>
 
       <section className={styles.workSurface} aria-labelledby="workspace-area-title">
-        <div className={styles.emptyState}>
-          <h1 id="workspace-area-title">{emptyState.title}</h1>
-          <p>{emptyState.description}</p>
-        </div>
+        {activeActions ? (
+          <>
+            <WorkSurfaceHeader
+              title={emptyState.title}
+              titleId="workspace-area-title"
+              actions={activeActions}
+            />
+            <div className={styles.emptyState}>
+              <p>{emptyState.description}</p>
+            </div>
+          </>
+        ) : (
+          <div className={styles.emptyState}>
+            <h1 id="workspace-area-title">{emptyState.title}</h1>
+            <p>{emptyState.description}</p>
+          </div>
+        )}
       </section>
     </main>
   );

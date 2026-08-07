@@ -1,0 +1,29 @@
+/* Hallmark · component: work-surface header · genre: modern-minimal · theme: Asakiri Studio custom
+ * shape: in-canvas title + optional actions row · enrichment: none
+ * no shadow · no card · no breadcrumb · no eyebrow
+ */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+.title {
+  min-width: 0;
+  margin: 0;
+  color: var(--color-text);
+  font-size: var(--font-size-600);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: -0.025em;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: var(--space-2);
+}

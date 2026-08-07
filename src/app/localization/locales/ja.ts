@@ -29,6 +29,7 @@ export const jaMessages = {
     areas: {
       content: "コンテンツ",
       media: "メディア",
+      lessons: "レッスン",
     },
     emptyStates: {
       content: {
@@ -39,6 +40,16 @@ export const jaMessages = {
         title: "メディア",
         description: "プロジェクトの音声、画像、動画がここに表示されます。",
       },
+      lessons: {
+        title: "レッスン",
+        description: "コースのレッスンとその内容がここに表示されます。",
+      },
+    },
+    contentActions: {
+      createContent: "コンテンツを作成",
+    },
+    mediaActions: {
+      importMedia: "メディアを読み込む",
     },
   },
 } satisfies AppMessages;
