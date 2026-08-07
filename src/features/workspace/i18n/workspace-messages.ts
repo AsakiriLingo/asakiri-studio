@@ -1,3 +1,5 @@
+import type { ProjectValidationReason } from "@features/workspace/model/workspace-open-state";
+
 export type WorkspaceArea = "content" | "media" | "lessons";
 
 interface WorkspaceEmptyStateMessages {
@@ -15,5 +17,10 @@ export interface WorkspaceMessages {
   };
   readonly mediaActions: {
     readonly importMedia: string;
+  };
+  readonly openStates: {
+    readonly validating: string;
+    readonly invalidTitle: string;
+    readonly invalidReasons: Readonly<Record<ProjectValidationReason, string>>;
   };
 }

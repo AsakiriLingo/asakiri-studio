@@ -1,0 +1,43 @@
+/* Hallmark · genre: modern-minimal · macrostructure: Workbench · design-system: design.md
+ * shape: centered project-open lifecycle status · enrichment: none
+ * no shadow · no card · quiet validating and invalid states
+ */
+.status {
+  display: grid;
+  place-content: center;
+  min-height: 100svh;
+  padding: max(var(--space-8), env(safe-area-inset-top))
+    max(var(--space-5), env(safe-area-inset-right)) max(var(--space-8), env(safe-area-inset-bottom))
+    max(var(--space-5), env(safe-area-inset-left));
+  background: var(--color-canvas);
+}
+
+.validating {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-400);
+}
+
+.invalid {
+  display: grid;
+  gap: var(--space-3);
+  justify-items: start;
+  max-width: 42rem;
+}
+
+.invalidTitle {
+  margin: 0;
+  color: var(--color-text);
+  font-size: var(--font-size-600);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: -0.025em;
+  line-height: 1.2;
+}
+
+.invalidReason {
+  margin: 0;
+  max-width: 52ch;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-400);
+  line-height: 1.6;
+}

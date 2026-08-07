@@ -51,5 +51,15 @@ export const jaMessages = {
     mediaActions: {
       importMedia: "メディアを読み込む",
     },
+    openStates: {
+      validating: "プロジェクトを確認しています…",
+      invalidTitle: "このプロジェクトを開けませんでした。",
+      invalidReasons: {
+        unreadable:
+          "このプロジェクトのコンテンツを読み込めませんでした。プロジェクト一覧に戻ってもう一度開いてください。",
+        unknown:
+          "プロジェクトを開く際に問題が発生しました。プロジェクト一覧に戻ってもう一度お試しください。",
+      },
+    },
   },
 } satisfies AppMessages;

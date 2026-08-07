@@ -50,5 +50,15 @@ export const enMessages = {
     mediaActions: {
       importMedia: "Import media",
     },
+    openStates: {
+      validating: "Checking this project…",
+      invalidTitle: "This project could not be opened.",
+      invalidReasons: {
+        unreadable:
+          "This project's content could not be read. Return to your projects and open it again.",
+        unknown:
+          "Something went wrong while opening this project. Return to your projects and try again.",
+      },
+    },
   },
 } satisfies AppMessages;

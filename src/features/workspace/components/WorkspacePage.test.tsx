@@ -31,6 +31,14 @@ const messages: WorkspaceMessages = {
   mediaActions: {
     importMedia: "Import media",
   },
+  openStates: {
+    validating: "Checking this project…",
+    invalidTitle: "This project could not be opened.",
+    invalidReasons: {
+      unreadable: "This project's content could not be read.",
+      unknown: "Something went wrong while opening this project.",
+    },
+  },
 };
 
 describe("WorkspacePage", () => {

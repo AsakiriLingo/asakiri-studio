@@ -1,7 +1,7 @@
 import { useState } from "react";
-import type { ProjectDirectory } from "@core/projects";
+import { createProjectSession, type ProjectSession } from "@core/projects";
 import { ProjectHubPage } from "@features/project-hub";
-import { WorkspacePage } from "@features/workspace";
+import { WorkspaceOpen } from "@features/workspace";
 import { useLocalization } from "@app/localization/use-localization";
 import { useAppDependencies } from "@app/providers/use-app-dependencies";
 import { ThemeToggle } from "@app/theme/ThemeToggle";
@@ -9,18 +9,19 @@ import { ThemeToggle } from "@app/theme/ThemeToggle";
 export function App() {
   const { projectDirectoryGateway } = useAppDependencies();
   const { messages } = useLocalization();
-  const [project, setProject] = useState<ProjectDirectory | null>(null);
+  const [session, setSession] = useState<ProjectSession | null>(null);
 
   const headerActions = <ThemeToggle messages={messages.themeToggle} />;
 
-  if (project) {
+  if (session) {
     return (
-      <WorkspacePage
+      <WorkspaceOpen
+        key={session.id}
         messages={messages.workspace}
         onBack={() => {
-          setProject(null);
+          setSession(null);
         }}
-        projectName={project.name}
+        session={session}
         workspaceActions={headerActions}
       />
     );
@@ -31,7 +32,9 @@ export function App() {
       directoryGateway={projectDirectoryGateway}
       headerActions={headerActions}
       messages={messages.projectHub}
-      onProjectOpened={setProject}
+      onProjectOpened={(directory) => {
+        setSession(createProjectSession(directory));
+      }}
     />
   );
 }
