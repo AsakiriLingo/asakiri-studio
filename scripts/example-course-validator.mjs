@@ -404,39 +404,233 @@ export async function validateExampleCourse(courseRoot) {
   };
 }
 
+const EXERCISE_TYPES = new Set([
+  "multiple-choice",
+  "select-image",
+  "match-pairs",
+  "fill-blank",
+  "word-order",
+  "listening",
+  "speaking",
+]);
+
+// Bindings anywhere under a `binding` key (option bodies, fragments, accepted values)
+// are validated separately by visitExplicitBindings. These validators check structure
+// and that evaluation references resolve to IDs the exercise actually defines.
 function validateExercise(exercise, lessonId, report) {
   if (!Array.isArray(exercise.prompt)) report(`${lessonId} exercise prompt must be an array`);
-  if (!Array.isArray(exercise.options) || exercise.options.length < 2) {
-    report(`${lessonId} exercise must contain at least two options`);
+  if (typeof exercise.type !== "string" || !EXERCISE_TYPES.has(exercise.type)) {
+    report(`${lessonId} exercise has unknown type: ${String(exercise.type)}`);
     return;
   }
 
-  const optionIds = new Set();
-  for (const option of exercise.options) {
-    if (!option?.id || typeof option.id !== "string") {
-      report(`${lessonId} contains an option without a string id`);
+  switch (exercise.type) {
+    case "multiple-choice":
+    case "select-image":
+      validateSelectedOptions(exercise, lessonId, report, exercise.options);
+      break;
+    case "match-pairs":
+      validateMatchPairs(exercise, lessonId, report);
+      break;
+    case "fill-blank":
+      validateFillBlank(exercise, lessonId, report);
+      break;
+    case "word-order":
+      validateWordOrder(exercise, lessonId, report);
+      break;
+    case "listening":
+      validateListening(exercise, lessonId, report);
+      break;
+    case "speaking":
+      validateSpeaking(exercise, lessonId, report);
+      break;
+  }
+}
+
+function collectChoiceIds(items, lessonId, label, report, { min = 1 } = {}) {
+  if (!Array.isArray(items) || items.length < min) {
+    report(`${lessonId} ${label} must contain at least ${min} item(s)`);
+    return null;
+  }
+  const ids = new Set();
+  for (const item of items) {
+    if (!item?.id || typeof item.id !== "string") {
+      report(`${lessonId} ${label} contains an item without a string id`);
       continue;
     }
-    if (optionIds.has(option.id)) report(`${lessonId} contains duplicate option id: ${option.id}`);
-    optionIds.add(option.id);
-    if (!Array.isArray(option.body) || option.body.length === 0) {
-      report(`${lessonId}.${option.id}.body must contain at least one fragment`);
+    if (ids.has(item.id)) report(`${lessonId} ${label} contains duplicate id: ${item.id}`);
+    ids.add(item.id);
+    if (!Array.isArray(item.body) || item.body.length === 0) {
+      report(`${lessonId}.${item.id}.body must contain at least one fragment`);
     }
   }
+  return ids;
+}
 
-  const correctIds = exercise.evaluation?.correctOptionIds;
-  if (exercise.evaluation?.kind !== "selected-options" || !Array.isArray(correctIds)) {
+function validateIdReferences(refs, validIds, exerciseId, label, report) {
+  const seen = new Set();
+  for (const ref of refs) {
+    if (validIds && !validIds.has(ref)) report(`${exerciseId} references missing ${label}: ${ref}`);
+    if (seen.has(ref)) report(`${exerciseId} repeats ${label}: ${ref}`);
+    seen.add(ref);
+  }
+}
+
+function validateSelectedOptions(exercise, lessonId, report, options) {
+  const optionIds = collectChoiceIds(options, lessonId, "options", report, { min: 2 });
+  const evaluation = exercise.evaluation;
+  if (evaluation?.kind !== "selected-options" || !Array.isArray(evaluation.correctOptionIds)) {
     report(`${lessonId} exercise must use selected-options evaluation`);
     return;
   }
-  if (correctIds.length === 0) report(`${lessonId} exercise must have a correct option`);
-  const seenCorrectIds = new Set();
-  for (const correctId of correctIds) {
-    if (!optionIds.has(correctId))
-      report(`${exercise.id} references missing correct option: ${correctId}`);
-    if (seenCorrectIds.has(correctId))
-      report(`${exercise.id} repeats correct option: ${correctId}`);
-    seenCorrectIds.add(correctId);
+  if (
+    evaluation.select !== undefined &&
+    evaluation.select !== "one" &&
+    evaluation.select !== "many"
+  ) {
+    report(`${lessonId} evaluation.select must be "one" or "many"`);
+  }
+  if (evaluation.correctOptionIds.length === 0)
+    report(`${lessonId} exercise must have a correct option`);
+  validateIdReferences(
+    evaluation.correctOptionIds,
+    optionIds,
+    exercise.id,
+    "correct option",
+    report,
+  );
+}
+
+function validateMatchPairs(exercise, lessonId, report) {
+  const leftIds = collectChoiceIds(exercise.left, lessonId, "left", report, { min: 1 });
+  const rightIds = collectChoiceIds(exercise.right, lessonId, "right", report, { min: 1 });
+  const evaluation = exercise.evaluation;
+  if (
+    evaluation?.kind !== "matched-pairs" ||
+    !Array.isArray(evaluation.pairs) ||
+    evaluation.pairs.length === 0
+  ) {
+    report(`${lessonId} exercise must use matched-pairs evaluation`);
+    return;
+  }
+  const seenLeft = new Set();
+  for (const pair of evaluation.pairs) {
+    if (leftIds && !leftIds.has(pair?.leftId))
+      report(`${exercise.id} pair references missing left id: ${String(pair?.leftId)}`);
+    if (rightIds && !rightIds.has(pair?.rightId))
+      report(`${exercise.id} pair references missing right id: ${String(pair?.rightId)}`);
+    if (seenLeft.has(pair?.leftId))
+      report(`${exercise.id} left id appears in multiple pairs: ${pair?.leftId}`);
+    seenLeft.add(pair?.leftId);
+  }
+}
+
+function validateFillBlank(exercise, lessonId, report) {
+  const blankIds = new Set();
+  if (!Array.isArray(exercise.stem) || exercise.stem.length === 0) {
+    report(`${lessonId} fill-blank must have a stem`);
+  } else {
+    for (const segment of exercise.stem) {
+      if (segment?.kind !== "blank") continue;
+      if (!segment.id || typeof segment.id !== "string") {
+        report(`${lessonId} fill-blank has a blank without a string id`);
+      } else if (blankIds.has(segment.id)) {
+        report(`${lessonId} fill-blank has duplicate blank id: ${segment.id}`);
+      } else {
+        blankIds.add(segment.id);
+      }
+    }
+  }
+  if (blankIds.size === 0) report(`${lessonId} fill-blank must define at least one blank`);
+
+  const bankIds =
+    exercise.bank !== undefined
+      ? collectChoiceIds(exercise.bank, lessonId, "bank", report, { min: 1 })
+      : null;
+
+  const evaluation = exercise.evaluation;
+  if (evaluation?.kind !== "filled-blanks" || !Array.isArray(evaluation.blanks)) {
+    report(`${lessonId} exercise must use filled-blanks evaluation`);
+    return;
+  }
+  const answered = new Set();
+  for (const blank of evaluation.blanks) {
+    if (!blankIds.has(blank?.blankId))
+      report(`${exercise.id} answers unknown blank: ${String(blank?.blankId)}`);
+    answered.add(blank?.blankId);
+    const hasOptions = Array.isArray(blank?.correctOptionIds) && blank.correctOptionIds.length > 0;
+    const hasTyped = Array.isArray(blank?.accepted?.values) && blank.accepted.values.length > 0;
+    if (!hasOptions && !hasTyped) {
+      report(
+        `${exercise.id} blank ${String(blank?.blankId)} needs correctOptionIds or accepted values`,
+      );
+    }
+    if (hasOptions && bankIds)
+      validateIdReferences(blank.correctOptionIds, bankIds, exercise.id, "bank option", report);
+  }
+  for (const id of blankIds) {
+    if (!answered.has(id)) report(`${exercise.id} blank ${id} has no answer`);
+  }
+}
+
+function validateWordOrder(exercise, lessonId, report) {
+  const tokenIds = collectChoiceIds(exercise.tokens, lessonId, "tokens", report, { min: 1 });
+  if (exercise.distractors !== undefined) {
+    collectChoiceIds(exercise.distractors, lessonId, "distractors", report, { min: 1 });
+  }
+  const evaluation = exercise.evaluation;
+  if (
+    evaluation?.kind !== "ordered-tokens" ||
+    !Array.isArray(evaluation.correctOrder) ||
+    evaluation.correctOrder.length === 0
+  ) {
+    report(`${lessonId} exercise must use ordered-tokens evaluation`);
+    return;
+  }
+  validateIdReferences(evaluation.correctOrder, tokenIds, exercise.id, "ordered token", report);
+  if (tokenIds) {
+    const ordered = new Set(evaluation.correctOrder);
+    for (const id of tokenIds) {
+      if (!ordered.has(id)) report(`${exercise.id} answer token missing from correctOrder: ${id}`);
+    }
+  }
+}
+
+function validateListening(exercise, lessonId, report) {
+  if (!exercise.stimulus || typeof exercise.stimulus !== "object") {
+    report(`${lessonId} listening exercise must have an audio stimulus`);
+  }
+  if (exercise.answerMode !== "select" && exercise.answerMode !== "type") {
+    report(`${lessonId} listening answerMode must be "select" or "type"`);
+    return;
+  }
+  if (exercise.answerMode === "select") {
+    validateSelectedOptions(exercise, lessonId, report, exercise.options);
+    return;
+  }
+  const evaluation = exercise.evaluation;
+  if (
+    evaluation?.kind !== "typed-answer" ||
+    !Array.isArray(evaluation.accepted) ||
+    evaluation.accepted.length === 0
+  ) {
+    report(
+      `${lessonId} typed listening exercise must use typed-answer evaluation with accepted values`,
+    );
+  }
+}
+
+function validateSpeaking(exercise, lessonId, report) {
+  if (!exercise.target || typeof exercise.target !== "object") {
+    report(`${lessonId} speaking exercise must have a target phrase`);
+  }
+  const evaluation = exercise.evaluation;
+  if (evaluation?.kind !== "spoken-response") {
+    report(`${lessonId} exercise must use spoken-response evaluation`);
+    return;
+  }
+  if (!["lenient", "standard", "strict"].includes(evaluation.strictness)) {
+    report(`${lessonId} speaking strictness must be lenient, standard, or strict`);
   }
 }
 

@@ -98,31 +98,209 @@ The following illustrates domain semantics, not the final disk schema:
 
 Field IDs and item IDs are stable and independent from their visible labels. Renaming a column or item does not break references.
 
+## Modeling writing systems
+
+Alphabets and characters are content, not a separate entity. A character is a reusable record with text and asset fields, so a writing system is a collection like any other. A dedicated character entity would fragment the model and duplicate what collections already provide.
+
+A character record typically carries the glyph, a romanization, pronunciation audio, and stroke-order media:
+
+```jsonc
+// collection_hiragana field definitions (abbreviated)
+{
+  "id": "collection_hiragana",
+  "name": "Hiragana",
+  "fields": [
+    { "id": "field_char", "kind": "text", "cardinality": "one", "required": true }, // は
+    { "id": "field_romaji", "kind": "text", "cardinality": "one", "required": true }, // ha
+    { "id": "field_row", "kind": "text", "cardinality": "one" }, // h
+    { "id": "field_vowel", "kind": "text", "cardinality": "one" }, // a
+    { "id": "field_audio", "kind": "asset", "assetKind": "audio", "cardinality": "one" },
+    { "id": "field_stroke", "kind": "asset", "assetKind": "image", "cardinality": "one" },
+  ],
+}
+```
+
+Character records are bound from lessons and exercises exactly like vocabulary. The existing exercise types already cover alphabet drills: `select-image` or `listening` for recognition, `match-pairs` for character to romaji, `word-order` for building kana from a bank. Reuse also composes: a vocabulary record may bind the characters it contains, so a lesson can point out which known characters make up a new word.
+
+Three concerns are specific to writing systems, and all are expressible today:
+
+- **Order.** Canonical order (gojūon, alphabetical) is meaningful, unlike arbitrary vocabulary order. The collection's ordered record list captures it.
+- **Grid and grouping.** A syllabary is a grid of consonant rows and vowel columns. Fields such as row and vowel let a view reconstruct the grid without a bespoke structure.
+- **Relations.** Variants and derived forms (が from か, uppercase and lowercase, Arabic positional forms) are record-to-record links expressed with a `record` binding, for example a `field_base` pointing at the base character.
+
+Prefer one collection per writing system (hiragana, katakana, kanji, and so on), because field shapes differ across scripts: kanji needs readings and meanings that kana does not. This is an authoring choice, not a requirement.
+
+Anything that feels special about an alphabet, a gojūon grid, a stroke-order player, an on-screen keyboard, is presentation in the learner application or a lesson and exercise type. The characters remain ordinary records, and the specialized views query the collection.
+
 ## Exercises
 
-Exercise prompts and options are compositions. Evaluation remains separate:
+Exercise presentation and answer evaluation are different concerns, and different exercise types must not be forced into one universal answer object. Every exercise separates two things:
+
+- **Presentation**: the fragments a learner sees and the pieces they manipulate (prompt, options, tokens, pairs, blanks). These are compositions of bindings, the same as any lesson content.
+- **Evaluation**: how a response is graded. Correctness always refers to stable IDs or to accepted-value bindings, never to duplicated display values.
+
+The stable core is the small set of evaluation strategies. An exercise `type` is an authoring and interaction template layered on top, and several types can share one strategy (for example both `multiple-choice` and `select-image` grade with `selected-options`).
+
+### Shared shape
+
+Every exercise carries a common envelope plus one type-specific body.
 
 ```ts
+type ExerciseType =
+  | "multiple-choice"
+  | "select-image"
+  | "match-pairs"
+  | "fill-blank"
+  | "word-order"
+  | "listening"
+  | "speaking";
+
+interface RenderFragment {
+  readonly id: string;
+  readonly role: string; // "primary", "supporting-text", "visual", "audio", "translation", ...
+  readonly binding: Binding; // see Composition
+}
+
 interface ChoiceOption {
   readonly id: string;
   readonly body: readonly RenderFragment[];
 }
 
-interface MultipleChoiceExercise {
+interface AcceptedValue {
+  readonly binding: Binding; // usually a field such as field_alternate_answers
+}
+
+interface ExerciseBase {
+  readonly id: string;
+  readonly type: ExerciseType;
+  readonly instruction?: string;
   readonly prompt: readonly RenderFragment[];
-  readonly options: readonly ChoiceOption[];
-  readonly evaluation: {
-    readonly kind: "selected-options";
-    readonly correctOptionIds: readonly string[];
-  };
+  readonly evaluation: Evaluation;
+  readonly feedback?: ExerciseFeedback; // optional: correct / incorrect / per-option
+  readonly settings?: ExerciseSettings; // optional per-type toggles
+  readonly presentation?: { readonly layout?: "list" | "image-grid" };
 }
 ```
 
-An option can render Japanese text, English text, audio, an image, or several of them together. Correctness refers to stable option IDs rather than duplicating the displayed values.
+`ChoiceOption` is reused wherever an exercise offers addressable pieces: options, pair items, and tokens. Accepted values are wrapped so their `binding` is validated like any other binding.
 
-Typed-answer exercises use a separate evaluation strategy with accepted-value bindings and comparison rules such as case, whitespace, script, or punctuation normalization. Different exercise types should not be forced into one universal answer object.
+### Evaluation strategies
 
-Distractor queries are initially editor tooling: the author selects a pool, Studio proposes candidates, and the chosen distractors are stored explicitly. Runtime-generated distractors can be added later if the learner format gains deterministic generation rules.
+```ts
+interface NormalizationRules {
+  readonly ignoreCase?: boolean;
+  readonly ignoreWhitespace?: boolean;
+  readonly ignorePunctuation?: boolean;
+  readonly ignoreScript?: boolean; // e.g. accept kana for kanji
+}
+
+interface BlankAnswer {
+  readonly blankId: string;
+  readonly correctOptionIds?: readonly string[]; // when filled from a bank
+  readonly accepted?: {
+    // when typed
+    readonly values: readonly AcceptedValue[];
+    readonly normalize?: NormalizationRules;
+  };
+}
+
+type Evaluation =
+  | { kind: "selected-options"; select?: "one" | "many"; correctOptionIds: readonly string[] }
+  | { kind: "ordered-tokens"; correctOrder: readonly string[] } // token IDs in order
+  | { kind: "matched-pairs"; pairs: readonly { leftId: string; rightId: string }[] }
+  | { kind: "filled-blanks"; blanks: readonly BlankAnswer[] }
+  | { kind: "typed-answer"; accepted: readonly AcceptedValue[]; normalize?: NormalizationRules }
+  | { kind: "spoken-response"; strictness: "lenient" | "standard" | "strict" };
+```
+
+Accepted-value bindings usually point at a record field such as `field_alternate_answers`, so "a cat" and "cats" both pass without duplicating text in the exercise.
+
+### Exercise types
+
+| Type              | Learner does                            | Evaluation                           | Auto-graded in Studio |
+| ----------------- | --------------------------------------- | ------------------------------------ | --------------------- |
+| `multiple-choice` | picks one or more options               | `selected-options`                   | yes                   |
+| `select-image`    | hears audio, taps the matching image    | `selected-options`                   | yes                   |
+| `match-pairs`     | links each item to its partner          | `matched-pairs`                      | yes                   |
+| `fill-blank`      | fills blank(s) from a bank or by typing | `filled-blanks`                      | yes                   |
+| `word-order`      | orders tokens into a sentence           | `ordered-tokens`                     | yes                   |
+| `listening`       | hears audio, then taps or types         | `selected-options` or `typed-answer` | yes                   |
+| `speaking`        | says the phrase aloud                   | `spoken-response`                    | no, learner app only  |
+
+```ts
+interface MultipleChoiceExercise extends ExerciseBase {
+  readonly type: "multiple-choice" | "select-image";
+  readonly options: readonly ChoiceOption[];
+  readonly evaluation: Extract<Evaluation, { kind: "selected-options" }>;
+}
+
+interface MatchPairsExercise extends ExerciseBase {
+  readonly type: "match-pairs";
+  readonly left: readonly ChoiceOption[];
+  readonly right: readonly ChoiceOption[]; // extra right items are distractors
+  readonly evaluation: Extract<Evaluation, { kind: "matched-pairs" }>;
+}
+
+type BlankSegment =
+  | { readonly kind: "text"; readonly fragment: RenderFragment }
+  | { readonly kind: "blank"; readonly id: string };
+
+interface FillBlankExercise extends ExerciseBase {
+  readonly type: "fill-blank";
+  readonly stem: readonly BlankSegment[]; // the sentence with one or more blanks
+  readonly bank?: readonly ChoiceOption[]; // present in tap-to-fill mode
+  readonly translation?: RenderFragment; // optional helper
+  readonly evaluation: Extract<Evaluation, { kind: "filled-blanks" }>;
+}
+
+interface WordOrderExercise extends ExerciseBase {
+  readonly type: "word-order";
+  readonly tokens: readonly ChoiceOption[]; // answer tokens
+  readonly distractors?: readonly ChoiceOption[]; // extra tokens that must stay unused
+  readonly evaluation: Extract<Evaluation, { kind: "ordered-tokens" }>;
+}
+
+interface ListeningExercise extends ExerciseBase {
+  readonly type: "listening";
+  readonly stimulus: RenderFragment; // the audio; it is the whole question
+  readonly answerMode: "select" | "type";
+  readonly options?: readonly ChoiceOption[]; // present when answerMode is "select"
+  readonly evaluation:
+    | Extract<Evaluation, { kind: "selected-options" }>
+    | Extract<Evaluation, { kind: "typed-answer" }>;
+}
+
+interface SpeakingExercise extends ExerciseBase {
+  readonly type: "speaking";
+  readonly target: RenderFragment; // the phrase to say (word, reading, model audio)
+  readonly evaluation: Extract<Evaluation, { kind: "spoken-response" }>;
+}
+
+interface ExerciseSettings {
+  readonly slowReplay?: boolean; // listening
+  readonly allowSkip?: boolean; // listening, speaking
+  readonly showRomaji?: boolean; // speaking
+}
+
+interface ExerciseFeedback {
+  readonly correct?: readonly RenderFragment[];
+  readonly incorrect?: readonly RenderFragment[];
+  readonly perOption?: Readonly<Record<string, readonly RenderFragment[]>>;
+}
+```
+
+An option can render Japanese text, English text, audio, an image, or several together. Correctness refers to the stable IDs the exercise already defines (option, token, pair, and blank IDs), so renaming a displayed value never changes grading.
+
+### Grading location
+
+Auto-gradable types resolve entirely from authored IDs, ordering, pairs, or normalized text, so Studio can preview and grade them. `speaking` is different: it needs a microphone and on-device speech recognition, so recording and scoring run only in the learner application. Studio authors the target phrase and strictness and marks the type as graded on device; it does not record or score, and nothing is uploaded.
+
+### Notes
+
+- `select-image` is mechanically `multiple-choice` with image-valued option bodies and an audio prompt fragment. It is a distinct authoring template sharing the `selected-options` strategy, with `presentation.layout` set to `image-grid`.
+- Distractors stay explicit for every type: options, unpaired right items, and unused tokens. Distractor queries remain editor tooling: the author selects a pool, Studio proposes candidates, and the chosen distractors are stored explicitly. Runtime-generated distractors can be added later if the learner format gains deterministic generation rules.
+- Typed grading (typed `listening`, typed `fill-blank`) uses accepted-value bindings plus `NormalizationRules` for case, whitespace, script, or punctuation, rather than duplicating text.
+- The existing `japanese-starter` fixture uses `multiple-choice` and remains valid unchanged.
 
 ## Reference lifecycle
 
