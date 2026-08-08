@@ -1,0 +1,9 @@
+{
+  "id": "lesson_cat_word_order",
+  "type": "exercise",
+  "title": "Build the sentence",
+  "content": {
+    "kind": "exercise",
+    "file": "exercise.json"
+  }
+}

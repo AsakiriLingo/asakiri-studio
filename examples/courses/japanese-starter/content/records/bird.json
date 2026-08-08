@@ -10,6 +10,17 @@
       "kind": "text",
       "value": "bird"
     },
+    "field_images": {
+      "kind": "list",
+      "items": [
+        {
+          "id": "image_bird_primary",
+          "kind": "asset",
+          "label": "Bird illustration",
+          "assetId": "asset_bird_image"
+        }
+      ]
+    },
     "field_tags": {
       "kind": "list",
       "items": [

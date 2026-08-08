@@ -37,11 +37,11 @@ describe("validateExampleCourse", () => {
 
     expect(result.errors).toEqual([]);
     expect(result.summary).toEqual({
-      assets: 3,
-      collections: 1,
-      lessons: 3,
-      placeholderAssets: 2,
-      records: 3,
+      assets: 6,
+      collections: 2,
+      lessons: 9,
+      placeholderAssets: 5,
+      records: 12,
     });
   });
 
@@ -111,6 +111,6 @@ describe("validateExampleCourse", () => {
     const result = await validateExampleCourse(courseRoot);
 
     expect(result.errors).toEqual([]);
-    expect(result.summary.records).toBe(3);
+    expect(result.summary.records).toBe(12);
   });
 });

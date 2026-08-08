@@ -1,0 +1,25 @@
+{
+  "id": "exercise_cat_speak",
+  "type": "speaking",
+  "instruction": "Say this word in Japanese.",
+  "settings": { "showRomaji": true, "allowSkip": true },
+  "prompt": [
+    {
+      "id": "prompt_speak_intro",
+      "role": "primary",
+      "binding": {
+        "kind": "literal",
+        "value": { "type": "text", "text": "Say this word in Japanese. Graded on device." }
+      }
+    }
+  ],
+  "target": {
+    "id": "speak_target",
+    "role": "primary",
+    "binding": { "kind": "field", "recordId": "record_cat", "fieldId": "field_japanese" }
+  },
+  "evaluation": {
+    "kind": "spoken-response",
+    "strictness": "standard"
+  }
+}

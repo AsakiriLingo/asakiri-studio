@@ -1,0 +1,9 @@
+{
+  "id": "lesson_cat_select_image",
+  "type": "exercise",
+  "title": "Tap the picture for 猫",
+  "content": {
+    "kind": "exercise",
+    "file": "exercise.json"
+  }
+}

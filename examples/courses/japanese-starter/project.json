@@ -5,26 +5,51 @@
   "project": {
     "id": "course_japanese_starter",
     "title": "Japanese Starter",
-    "description": "A small fixture showing reusable content across lessons and exercises.",
+    "description": "A small fixture showing reusable content across lessons and every exercise type.",
     "defaultLocale": "en",
     "learningLocales": ["ja"]
   },
-  "collections": ["content/collections/vocabulary.json"],
+  "collections": ["content/collections/vocabulary.json", "content/collections/hiragana.json"],
   "assets": [
     "media/assets/cat-image/asset.json",
     "media/assets/cat-ja-audio/asset.json",
-    "media/assets/cat-en-audio/asset.json"
+    "media/assets/cat-en-audio/asset.json",
+    "media/assets/dog-image/asset.json",
+    "media/assets/bird-image/asset.json",
+    "media/assets/hiragana-a-audio/asset.json"
   ],
   "lessons": [
     "lessons/welcome/lesson.json",
     "lessons/cat-rich-media/lesson.json",
-    "lessons/cat-exercise/lesson.json"
+    "lessons/cat-exercise/lesson.json",
+    "lessons/hiragana-vowels-match/lesson.json",
+    "lessons/cat-select-image/lesson.json",
+    "lessons/cat-fill-blank/lesson.json",
+    "lessons/cat-word-order/lesson.json",
+    "lessons/cat-listen/lesson.json",
+    "lessons/cat-speak/lesson.json"
   ],
   "outline": [
     {
       "id": "section_getting_started",
       "title": "Getting started",
       "lessonIds": ["lesson_welcome", "lesson_cat_rich_media", "lesson_cat_exercise"]
+    },
+    {
+      "id": "section_hiragana",
+      "title": "Hiragana",
+      "lessonIds": ["lesson_hiragana_vowels_match"]
+    },
+    {
+      "id": "section_practice",
+      "title": "Practice every exercise type",
+      "lessonIds": [
+        "lesson_cat_select_image",
+        "lesson_cat_fill_blank",
+        "lesson_cat_word_order",
+        "lesson_cat_listen",
+        "lesson_cat_speak"
+      ]
     }
   ]
 }

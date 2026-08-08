@@ -1,0 +1,12 @@
+{
+  "id": "asset_bird_image",
+  "kind": "image",
+  "label": "Bird illustration",
+  "availability": "placeholder",
+  "file": null,
+  "expectedFile": "original.svg",
+  "mimeType": "image/svg+xml",
+  "metadata": {
+    "alt": "A simple illustration of a bird"
+  }
+}

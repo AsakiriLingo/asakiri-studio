@@ -1,0 +1,12 @@
+{
+  "id": "asset_dog_image",
+  "kind": "image",
+  "label": "Dog illustration",
+  "availability": "placeholder",
+  "file": null,
+  "expectedFile": "original.svg",
+  "mimeType": "image/svg+xml",
+  "metadata": {
+    "alt": "A simple illustration of a dog"
+  }
+}

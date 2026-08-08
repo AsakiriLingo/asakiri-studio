@@ -10,6 +10,17 @@
       "kind": "text",
       "value": "dog"
     },
+    "field_images": {
+      "kind": "list",
+      "items": [
+        {
+          "id": "image_dog_primary",
+          "kind": "asset",
+          "label": "Dog illustration",
+          "assetId": "asset_dog_image"
+        }
+      ]
+    },
     "field_tags": {
       "kind": "list",
       "items": [

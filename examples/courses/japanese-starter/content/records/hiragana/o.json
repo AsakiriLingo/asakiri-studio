@@ -1,0 +1,10 @@
+{
+  "id": "record_hiragana_o",
+  "collectionId": "collection_hiragana",
+  "fields": {
+    "field_char": { "kind": "text", "value": "お" },
+    "field_romaji": { "kind": "text", "value": "o" },
+    "field_row": { "kind": "text", "value": "vowel" },
+    "field_vowel": { "kind": "text", "value": "o" }
+  }
+}

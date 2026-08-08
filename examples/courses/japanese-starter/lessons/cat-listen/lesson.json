@@ -1,0 +1,9 @@
+{
+  "id": "lesson_cat_listen",
+  "type": "exercise",
+  "title": "Type what you hear",
+  "content": {
+    "kind": "exercise",
+    "file": "exercise.json"
+  }
+}

@@ -1,0 +1,129 @@
+{
+  "id": "exercise_hiragana_vowels_match",
+  "type": "match-pairs",
+  "instruction": "Match each hiragana vowel to its romaji.",
+  "prompt": [
+    {
+      "id": "prompt_match_intro",
+      "role": "primary",
+      "binding": {
+        "kind": "literal",
+        "value": { "type": "text", "text": "Tap a character, then its romaji." }
+      }
+    }
+  ],
+  "left": [
+    {
+      "id": "left_a",
+      "body": [
+        {
+          "id": "left_a_char",
+          "role": "primary",
+          "binding": { "kind": "field", "recordId": "record_hiragana_a", "fieldId": "field_char" }
+        }
+      ]
+    },
+    {
+      "id": "left_i",
+      "body": [
+        {
+          "id": "left_i_char",
+          "role": "primary",
+          "binding": { "kind": "field", "recordId": "record_hiragana_i", "fieldId": "field_char" }
+        }
+      ]
+    },
+    {
+      "id": "left_u",
+      "body": [
+        {
+          "id": "left_u_char",
+          "role": "primary",
+          "binding": { "kind": "field", "recordId": "record_hiragana_u", "fieldId": "field_char" }
+        }
+      ]
+    },
+    {
+      "id": "left_e",
+      "body": [
+        {
+          "id": "left_e_char",
+          "role": "primary",
+          "binding": { "kind": "field", "recordId": "record_hiragana_e", "fieldId": "field_char" }
+        }
+      ]
+    },
+    {
+      "id": "left_o",
+      "body": [
+        {
+          "id": "left_o_char",
+          "role": "primary",
+          "binding": { "kind": "field", "recordId": "record_hiragana_o", "fieldId": "field_char" }
+        }
+      ]
+    }
+  ],
+  "right": [
+    {
+      "id": "right_a",
+      "body": [
+        {
+          "id": "right_a_romaji",
+          "role": "primary",
+          "binding": { "kind": "field", "recordId": "record_hiragana_a", "fieldId": "field_romaji" }
+        }
+      ]
+    },
+    {
+      "id": "right_i",
+      "body": [
+        {
+          "id": "right_i_romaji",
+          "role": "primary",
+          "binding": { "kind": "field", "recordId": "record_hiragana_i", "fieldId": "field_romaji" }
+        }
+      ]
+    },
+    {
+      "id": "right_u",
+      "body": [
+        {
+          "id": "right_u_romaji",
+          "role": "primary",
+          "binding": { "kind": "field", "recordId": "record_hiragana_u", "fieldId": "field_romaji" }
+        }
+      ]
+    },
+    {
+      "id": "right_e",
+      "body": [
+        {
+          "id": "right_e_romaji",
+          "role": "primary",
+          "binding": { "kind": "field", "recordId": "record_hiragana_e", "fieldId": "field_romaji" }
+        }
+      ]
+    },
+    {
+      "id": "right_o",
+      "body": [
+        {
+          "id": "right_o_romaji",
+          "role": "primary",
+          "binding": { "kind": "field", "recordId": "record_hiragana_o", "fieldId": "field_romaji" }
+        }
+      ]
+    }
+  ],
+  "evaluation": {
+    "kind": "matched-pairs",
+    "pairs": [
+      { "leftId": "left_a", "rightId": "right_a" },
+      { "leftId": "left_i", "rightId": "right_i" },
+      { "leftId": "left_u", "rightId": "right_u" },
+      { "leftId": "left_e", "rightId": "right_e" },
+      { "leftId": "left_o", "rightId": "right_o" }
+    ]
+  }
+}

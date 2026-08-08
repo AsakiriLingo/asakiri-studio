@@ -1,0 +1,70 @@
+{
+  "id": "exercise_cat_select_image",
+  "type": "select-image",
+  "instruction": "Listen, then tap the matching picture.",
+  "presentation": { "layout": "image-grid" },
+  "prompt": [
+    {
+      "id": "prompt_select_audio",
+      "role": "audio",
+      "binding": {
+        "kind": "item",
+        "recordId": "record_cat",
+        "fieldId": "field_pronunciations",
+        "itemId": "pronunciation_cat_ja"
+      }
+    }
+  ],
+  "options": [
+    {
+      "id": "option_image_cat",
+      "body": [
+        {
+          "id": "option_image_cat_visual",
+          "role": "visual",
+          "binding": {
+            "kind": "item",
+            "recordId": "record_cat",
+            "fieldId": "field_images",
+            "itemId": "image_cat_primary"
+          }
+        }
+      ]
+    },
+    {
+      "id": "option_image_dog",
+      "body": [
+        {
+          "id": "option_image_dog_visual",
+          "role": "visual",
+          "binding": {
+            "kind": "item",
+            "recordId": "record_dog",
+            "fieldId": "field_images",
+            "itemId": "image_dog_primary"
+          }
+        }
+      ]
+    },
+    {
+      "id": "option_image_bird",
+      "body": [
+        {
+          "id": "option_image_bird_visual",
+          "role": "visual",
+          "binding": {
+            "kind": "item",
+            "recordId": "record_bird",
+            "fieldId": "field_images",
+            "itemId": "image_bird_primary"
+          }
+        }
+      ]
+    }
+  ],
+  "evaluation": {
+    "kind": "selected-options",
+    "select": "one",
+    "correctOptionIds": ["option_image_cat"]
+  }
+}

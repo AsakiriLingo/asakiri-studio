@@ -1,0 +1,83 @@
+{
+  "id": "exercise_cat_word_order",
+  "type": "word-order",
+  "instruction": "Put the tiles in order to say \"This is a cat.\"",
+  "prompt": [
+    {
+      "id": "prompt_word_order",
+      "role": "primary",
+      "binding": {
+        "kind": "literal",
+        "value": { "type": "text", "text": "Build this sentence: \"This is a cat.\"" }
+      }
+    }
+  ],
+  "tokens": [
+    {
+      "id": "token_kore",
+      "body": [
+        {
+          "id": "token_kore_text",
+          "role": "primary",
+          "binding": { "kind": "literal", "value": { "type": "text", "text": "これ" } }
+        }
+      ]
+    },
+    {
+      "id": "token_wa",
+      "body": [
+        {
+          "id": "token_wa_text",
+          "role": "primary",
+          "binding": { "kind": "field", "recordId": "record_hiragana_ha", "fieldId": "field_char" }
+        }
+      ]
+    },
+    {
+      "id": "token_neko",
+      "body": [
+        {
+          "id": "token_neko_text",
+          "role": "primary",
+          "binding": { "kind": "field", "recordId": "record_cat", "fieldId": "field_japanese" }
+        }
+      ]
+    },
+    {
+      "id": "token_desu",
+      "body": [
+        {
+          "id": "token_desu_text",
+          "role": "primary",
+          "binding": { "kind": "literal", "value": { "type": "text", "text": "です" } }
+        }
+      ]
+    }
+  ],
+  "distractors": [
+    {
+      "id": "distractor_ka",
+      "body": [
+        {
+          "id": "distractor_ka_text",
+          "role": "primary",
+          "binding": { "kind": "field", "recordId": "record_hiragana_ka", "fieldId": "field_char" }
+        }
+      ]
+    },
+    {
+      "id": "distractor_inu",
+      "body": [
+        {
+          "id": "distractor_inu_text",
+          "role": "primary",
+          "binding": { "kind": "field", "recordId": "record_dog", "fieldId": "field_japanese" }
+        }
+      ]
+    }
+  ],
+  "evaluation": {
+    "kind": "ordered-tokens",
+    "correctOrder": ["token_kore", "token_wa", "token_neko", "token_desu"]
+  }
+}

@@ -1,0 +1,63 @@
+{
+  "id": "collection_hiragana",
+  "name": "Hiragana",
+  "description": "A writing-system collection: each record is one hiragana character, reused across lessons and drills.",
+  "fields": [
+    {
+      "id": "field_char",
+      "name": "Character",
+      "kind": "text",
+      "cardinality": "one",
+      "locale": "ja",
+      "required": true
+    },
+    {
+      "id": "field_romaji",
+      "name": "Romaji",
+      "kind": "text",
+      "cardinality": "one",
+      "required": true
+    },
+    {
+      "id": "field_row",
+      "name": "Row",
+      "kind": "text",
+      "cardinality": "one",
+      "required": false
+    },
+    {
+      "id": "field_vowel",
+      "name": "Vowel",
+      "kind": "text",
+      "cardinality": "one",
+      "required": false
+    },
+    {
+      "id": "field_audio",
+      "name": "Pronunciation",
+      "kind": "asset",
+      "assetKind": "audio",
+      "cardinality": "many",
+      "required": false
+    },
+    {
+      "id": "field_stroke",
+      "name": "Stroke order",
+      "kind": "asset",
+      "assetKind": "image",
+      "cardinality": "many",
+      "required": false
+    }
+  ],
+  "recordFiles": [
+    "../records/hiragana/a.json",
+    "../records/hiragana/i.json",
+    "../records/hiragana/u.json",
+    "../records/hiragana/e.json",
+    "../records/hiragana/o.json",
+    "../records/hiragana/ka.json",
+    "../records/hiragana/ko.json",
+    "../records/hiragana/ne.json",
+    "../records/hiragana/ha.json"
+  ]
+}

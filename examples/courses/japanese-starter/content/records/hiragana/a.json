@@ -1,0 +1,22 @@
+{
+  "id": "record_hiragana_a",
+  "collectionId": "collection_hiragana",
+  "fields": {
+    "field_char": { "kind": "text", "value": "あ" },
+    "field_romaji": { "kind": "text", "value": "a" },
+    "field_row": { "kind": "text", "value": "vowel" },
+    "field_vowel": { "kind": "text", "value": "a" },
+    "field_audio": {
+      "kind": "list",
+      "items": [
+        {
+          "id": "pronunciation_hiragana_a",
+          "kind": "asset",
+          "label": "あ — pronunciation",
+          "locale": "ja",
+          "assetId": "asset_hiragana_a_audio"
+        }
+      ]
+    }
+  }
+}

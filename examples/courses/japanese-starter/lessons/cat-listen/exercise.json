@@ -1,0 +1,47 @@
+{
+  "id": "exercise_cat_listen",
+  "type": "listening",
+  "instruction": "Play the audio and type the English word.",
+  "answerMode": "type",
+  "settings": { "slowReplay": true, "allowSkip": true },
+  "prompt": [
+    {
+      "id": "prompt_listen_intro",
+      "role": "primary",
+      "binding": { "kind": "literal", "value": { "type": "text", "text": "Type what you hear." } }
+    }
+  ],
+  "stimulus": {
+    "id": "listen_stimulus",
+    "role": "audio",
+    "binding": {
+      "kind": "item",
+      "recordId": "record_cat",
+      "fieldId": "field_pronunciations",
+      "itemId": "pronunciation_cat_ja"
+    }
+  },
+  "evaluation": {
+    "kind": "typed-answer",
+    "normalize": { "ignoreCase": true, "ignoreWhitespace": true },
+    "accepted": [
+      { "binding": { "kind": "field", "recordId": "record_cat", "fieldId": "field_english" } },
+      {
+        "binding": {
+          "kind": "item",
+          "recordId": "record_cat",
+          "fieldId": "field_alternate_answers",
+          "itemId": "answer_cat_with_article"
+        }
+      },
+      {
+        "binding": {
+          "kind": "item",
+          "recordId": "record_cat",
+          "fieldId": "field_alternate_answers",
+          "itemId": "answer_cat_plural"
+        }
+      }
+    ]
+  }
+}

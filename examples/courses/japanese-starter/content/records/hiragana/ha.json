@@ -1,0 +1,10 @@
+{
+  "id": "record_hiragana_ha",
+  "collectionId": "collection_hiragana",
+  "fields": {
+    "field_char": { "kind": "text", "value": "は" },
+    "field_romaji": { "kind": "text", "value": "ha" },
+    "field_row": { "kind": "text", "value": "h" },
+    "field_vowel": { "kind": "text", "value": "a" }
+  }
+}

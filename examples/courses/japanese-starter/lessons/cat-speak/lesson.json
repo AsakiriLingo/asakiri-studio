@@ -1,0 +1,9 @@
+{
+  "id": "lesson_cat_speak",
+  "type": "exercise",
+  "title": "Say it aloud",
+  "content": {
+    "kind": "exercise",
+    "file": "exercise.json"
+  }
+}

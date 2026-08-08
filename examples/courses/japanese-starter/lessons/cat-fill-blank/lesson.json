@@ -1,0 +1,9 @@
+{
+  "id": "lesson_cat_fill_blank",
+  "type": "exercise",
+  "title": "Complete the sentence",
+  "content": {
+    "kind": "exercise",
+    "file": "exercise.json"
+  }
+}
