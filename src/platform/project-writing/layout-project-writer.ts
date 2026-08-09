@@ -28,15 +28,42 @@ export function createLayoutProjectWriter(resolve: ResolveProjectFileAccess): Pr
           return { status: "failed", code: "unknown" };
         }
         // Preserve every other manifest key (collections, assets, lessons,
-        // outline, format) and replace only the project block.
+        // outline, format) and merge over the existing project block so
+        // unknown project keys survive too.
+        const existingProject = isRecord(parsed.project) ? parsed.project : {};
         const next = {
           ...parsed,
           project: {
+            ...existingProject,
             id: project.id,
             title: project.title,
+            subtitle: project.subtitle,
             description: project.description,
             defaultLocale: project.defaultLocale,
             learningLocales: [...project.learningLocales],
+            level: project.level,
+            estimatedLength: project.estimatedLength,
+            license: project.license,
+            copyrightHolder: project.copyrightHolder,
+            copyrightYear: project.copyrightYear,
+            coverAssetId: project.coverAssetId,
+            contributors: project.contributors.map((item) => ({
+              id: item.id,
+              name: item.name,
+              role: item.role,
+              links: [...item.links],
+            })),
+            funding: project.funding.map((item) => ({
+              id: item.id,
+              platform: item.platform,
+              url: item.url,
+            })),
+            sponsors: project.sponsors.map((item) => ({
+              id: item.id,
+              name: item.name,
+              tier: item.tier,
+              url: item.url,
+            })),
           },
         };
         await files.writeTextFile(MANIFEST_PATH, `${JSON.stringify(next, null, 2)}\n`);

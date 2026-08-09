@@ -10,11 +10,14 @@ import type {
 } from "@core/course/content";
 import type { Composition, CompositionBlock, CompositionBlockType } from "@core/course/composition";
 import type {
+  Contributor,
   Course,
   CourseProject,
   CourseSources,
+  FundingLink,
   LoadedCourse,
   OutlineSection,
+  Sponsor,
 } from "@core/course/course";
 import { partSourceKey } from "@core/course/course";
 import type { TiptapDocument, TiptapMark, TiptapNode } from "@core/course/document";
@@ -62,6 +65,16 @@ function obj(value: unknown, context: string): Record<string, unknown> {
 function str(value: unknown, context: string): string {
   if (typeof value !== "string") fail(`${context} must be a string`);
   return value;
+}
+
+function strOr(value: unknown, fallback = ""): string {
+  return typeof value === "string" ? value : fallback;
+}
+
+function strListOr(value: unknown): string[] {
+  return Array.isArray(value)
+    ? value.filter((item): item is string => typeof item === "string")
+    : [];
 }
 
 function bool(value: unknown, context: string): boolean {
@@ -544,14 +557,53 @@ function parseAsset(value: unknown, context: string): Asset {
   };
 }
 
+function parseContributor(value: unknown): Contributor {
+  const data = isObject(value) ? value : {};
+  return {
+    id: strOr(data.id),
+    name: strOr(data.name),
+    role: strOr(data.role),
+    links: strListOr(data.links),
+  };
+}
+
+function parseFundingLink(value: unknown): FundingLink {
+  const data = isObject(value) ? value : {};
+  return { id: strOr(data.id), platform: strOr(data.platform), url: strOr(data.url) };
+}
+
+function parseSponsor(value: unknown): Sponsor {
+  const data = isObject(value) ? value : {};
+  return {
+    id: strOr(data.id),
+    name: strOr(data.name),
+    tier: strOr(data.tier),
+    url: strOr(data.url),
+  };
+}
+
+function parseList<T>(value: unknown, parseItem: (item: unknown) => T): T[] {
+  return Array.isArray(value) ? value.map(parseItem) : [];
+}
+
 function parseProject(value: unknown, context: string): CourseProject {
   const data = obj(value, context);
   return {
     id: str(data.id, `${context}.id`),
     title: str(data.title, `${context}.title`),
+    subtitle: strOr(data.subtitle),
     description: str(data.description, `${context}.description`),
     defaultLocale: str(data.defaultLocale, `${context}.defaultLocale`),
     learningLocales: strArr(data.learningLocales, `${context}.learningLocales`),
+    level: strOr(data.level),
+    estimatedLength: strOr(data.estimatedLength),
+    license: strOr(data.license),
+    copyrightHolder: strOr(data.copyrightHolder),
+    copyrightYear: strOr(data.copyrightYear),
+    coverAssetId: typeof data.coverAssetId === "string" ? data.coverAssetId : null,
+    contributors: parseList(data.contributors, parseContributor),
+    funding: parseList(data.funding, parseFundingLink),
+    sponsors: parseList(data.sponsors, parseSponsor),
   };
 }
 

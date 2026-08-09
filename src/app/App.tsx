@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useState, type ReactNode } from "react";
 import type {
   ContentRecord,
   Course,
@@ -8,6 +8,7 @@ import type {
 } from "@core/course";
 import { partSourceKey } from "@core/course";
 import type { ProjectReadErrorCode } from "@core/project-reading";
+import type { GitStatus } from "@core/project-system";
 import type { ProjectWriteResult } from "@core/project-writing";
 import { createProjectSession, type ProjectDirectory } from "@core/projects";
 import { I18nProvider, getMessages, type Locale } from "@shared/i18n";
@@ -118,6 +119,19 @@ export function App() {
     setSection(target);
     setOpenLessonId(null);
   };
+
+  const revealFolder = useCallback(() => {
+    if (project) {
+      void services.system.revealFolder(createProjectSession(project));
+    }
+  }, [project, services]);
+
+  const readGitStatus = useCallback((): Promise<GitStatus> => {
+    if (!project) {
+      return Promise.resolve({ initialized: false, commitCount: 0, clean: true });
+    }
+    return services.system.readGitStatus(createProjectSession(project));
+  }, [project, services]);
 
   const saveProject = async (nextProject: CourseProject): Promise<ProjectWriteResult> => {
     if (!project) {
@@ -281,7 +295,13 @@ export function App() {
           />
         ) : course ? (
           section === "details" ? (
-            <CourseDetails course={course} location={projectLocation} onSaveProject={saveProject} />
+            <CourseDetails
+              course={course}
+              location={projectLocation}
+              onSaveProject={saveProject}
+              onRevealFolder={revealFolder}
+              onReadGitStatus={readGitStatus}
+            />
           ) : section === "content" ? (
             <CourseContent course={course} onSaveRecord={saveRecord} />
           ) : section === "media" ? (

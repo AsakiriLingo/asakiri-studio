@@ -88,6 +88,19 @@
   min-width: 0;
 }
 
+.rowFields {
+  display: grid;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+@media (min-width: 48rem) {
+  .rowFields {
+    grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+    align-items: center;
+  }
+}
+
 .contributorHead,
 .sponsorHead {
   display: flex;
@@ -199,11 +212,13 @@
 }
 
 .settingName {
+  display: block;
   font-size: var(--font-size-300);
   font-weight: var(--font-weight-bold);
 }
 
 .settingDetail {
+  display: block;
   margin-top: var(--space-1);
   color: var(--color-text-muted);
   font-size: var(--font-size-100);

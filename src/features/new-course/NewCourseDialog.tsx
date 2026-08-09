@@ -77,7 +77,6 @@ export function NewCourseDialog({ onCancel, createCourse, onCreated }: NewCourse
           </Field>
           <Callout icon="folder">
             <strong>{messages.newCourse.calloutTitle}</strong>
-            <br />
             {messages.newCourse.calloutBody}
           </Callout>
           {error === null ? null : <p className={styles.error}>{error}</p>}

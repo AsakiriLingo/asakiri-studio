@@ -1,7 +1,8 @@
-import { useState, type ReactNode } from "react";
-import type { Course, CourseProject } from "@core/course";
+import { useEffect, useState, type ReactNode } from "react";
+import type { Contributor, Course, CourseProject, FundingLink, Sponsor } from "@core/course";
+import type { GitStatus } from "@core/project-system";
 import type { ProjectWriteResult } from "@core/project-writing";
-import { useMessages } from "@shared/i18n";
+import { useMessages, type StudioMessages } from "@shared/i18n";
 import { Button } from "@shared/components/button";
 import { Callout } from "@shared/components/callout";
 import { Field, TextArea, TextInput } from "@shared/components/form";
@@ -10,9 +11,17 @@ import { Icon } from "@shared/components/icon";
 import { IconButton } from "@shared/components/icon-button";
 import { PanelHeader } from "@shared/components/panel";
 import { Status } from "@shared/components/status";
-import { Tag, type TagVariant } from "@shared/components/tag";
 import { WorkHeader, WorkInner } from "@shared/components/work-surface";
 import styles from "@features/course-details/CourseDetails.module.css";
+
+type SaveState = "idle" | "saving" | "saved" | "failed";
+
+const LICENSE_CODES = ["by", "bySa", "byNc", "byNcSa", "cc0", "arr"] as const;
+type LicenseCode = (typeof LICENSE_CODES)[number];
+
+function isLicenseCode(value: string): value is LicenseCode {
+  return (LICENSE_CODES as readonly string[]).includes(value);
+}
 
 function joinClassNames(...classNames: (string | undefined)[]) {
   return classNames.filter(Boolean).join(" ");
@@ -22,13 +31,13 @@ function recordItems(record: Readonly<Record<string, string>>): SelectOption[] {
   return Object.entries(record).map(([value, label]) => ({ value, label }));
 }
 
-function localeName(code: string): string {
-  if (!code) return "";
-  try {
-    return new Intl.DisplayNames(["en"], { type: "language" }).of(code) ?? code;
-  } catch {
-    return code;
-  }
+function initials(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "?";
+  return parts
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() ?? "")
+    .join("");
 }
 
 function SectionGroup({
@@ -50,118 +59,244 @@ function SectionGroup({
   );
 }
 
-function AssetLink({ href, label }: { readonly href: string; readonly label: string }) {
+function ContributorRow({
+  contributor,
+  messages,
+  onChange,
+  onRemove,
+}: {
+  readonly contributor: Contributor;
+  readonly messages: StudioMessages;
+  readonly onChange: (changes: Partial<Contributor>) => void;
+  readonly onRemove: () => void;
+}) {
+  const t = messages.details;
   return (
-    <a className={styles.assetRef} href={href} target="_blank" rel="noreferrer">
-      <Icon name="external" size={16} />
-      {label}
-    </a>
-  );
-}
-
-function RowActions({ removeLabel }: { readonly removeLabel: string }) {
-  const messages = useMessages();
-  return (
-    <span className={styles.inlineActions}>
-      <Button variant="ghost">{messages.common.edit}</Button>
-      <IconButton aria-label={removeLabel}>
+    <div className={styles.contributorRow}>
+      <span className={styles.contributorAvatar} aria-hidden="true">
+        {initials(contributor.name)}
+      </span>
+      <span className={styles.contributorMain}>
+        <span className={styles.rowFields}>
+          <TextInput
+            aria-label={t.nameLabel}
+            defaultValue={contributor.name}
+            placeholder={t.namePlaceholder}
+            autoComplete="off"
+            onBlur={(event) => {
+              if (event.currentTarget.value !== contributor.name) {
+                onChange({ name: event.currentTarget.value });
+              }
+            }}
+          />
+          <Select
+            aria-label={t.roleLabel}
+            items={recordItems(t.roles)}
+            value={contributor.role}
+            onValueChange={(role) => {
+              onChange({ role });
+            }}
+          />
+          <TextInput
+            aria-label={t.linkLabel}
+            defaultValue={contributor.links.join(", ")}
+            placeholder={t.linksPlaceholder}
+            autoComplete="off"
+            onBlur={(event) => {
+              onChange({
+                links: event.currentTarget.value
+                  .split(",")
+                  .map((link) => link.trim())
+                  .filter(Boolean),
+              });
+            }}
+          />
+        </span>
+      </span>
+      <IconButton
+        aria-label={messages.common.remove(contributor.name || t.contributorsTitle)}
+        onClick={onRemove}
+      >
         <Icon name="trash" size={18} />
       </IconButton>
-    </span>
+    </div>
   );
 }
 
-interface Contributor {
-  readonly initials: string;
-  readonly name: string;
-  readonly role: string;
-  readonly roleVariant: TagVariant;
-  readonly links: readonly string[];
+function FundingRow({
+  entry,
+  messages,
+  onChange,
+  onRemove,
+}: {
+  readonly entry: FundingLink;
+  readonly messages: StudioMessages;
+  readonly onChange: (changes: Partial<FundingLink>) => void;
+  readonly onRemove: () => void;
+}) {
+  const t = messages.details;
+  return (
+    <div className={styles.fundingRow}>
+      <span className={styles.fundingBadge}>
+        <Icon name="heart" size={18} />
+      </span>
+      <span className={styles.fundingMain}>
+        <span className={styles.rowFields}>
+          <Select
+            aria-label={t.platformLabel}
+            items={recordItems(t.platforms)}
+            value={entry.platform}
+            onValueChange={(platform) => {
+              onChange({ platform });
+            }}
+          />
+          <TextInput
+            aria-label={t.linkLabel}
+            type="url"
+            defaultValue={entry.url}
+            placeholder={t.urlPlaceholder}
+            autoComplete="off"
+            onBlur={(event) => {
+              if (event.currentTarget.value !== entry.url) {
+                onChange({ url: event.currentTarget.value });
+              }
+            }}
+          />
+        </span>
+      </span>
+      <IconButton aria-label={messages.common.remove(t.fundingTitle)} onClick={onRemove}>
+        <Icon name="trash" size={18} />
+      </IconButton>
+    </div>
+  );
 }
 
-const CONTRIBUTORS: readonly Contributor[] = [
-  {
-    initials: "AS",
-    name: "Alok Singh",
-    role: "Author",
-    roleVariant: "accent",
-    links: ["github.com/aloksingh", "aloksingh.dev"],
-  },
-  {
-    initials: "KI",
-    name: "Kenji Ito",
-    role: "Translator",
-    roleVariant: "default",
-    links: ["kenji-ito.example"],
-  },
-  {
-    initials: "HS",
-    name: "Hana Suzuki",
-    role: "Voice",
-    roleVariant: "default",
-    links: ["hanasuzuki.example", "soundcloud.com/hanasuzuki"],
-  },
-  {
-    initials: "MT",
-    name: "Mei Tanaka",
-    role: "Illustrator",
-    roleVariant: "default",
-    links: ["dribbble.com/meitanaka", "instagram.com/mei.draws"],
-  },
-];
-
-const FUNDING: readonly { readonly name: string; readonly url: string }[] = [
-  { name: "GitHub Sponsors", url: "github.com/sponsors/aloksingh" },
-  { name: "Ko-fi", url: "ko-fi.com/aloksingh" },
-  { name: "Open Collective", url: "opencollective.com/asakiri" },
-];
-
-interface Sponsor {
-  readonly file: string;
-  readonly name: string;
-  readonly tier: string;
-  readonly tierVariant: TagVariant;
-  readonly url: string;
+function SponsorRow({
+  sponsor,
+  messages,
+  onChange,
+  onRemove,
+}: {
+  readonly sponsor: Sponsor;
+  readonly messages: StudioMessages;
+  readonly onChange: (changes: Partial<Sponsor>) => void;
+  readonly onRemove: () => void;
+}) {
+  const t = messages.details;
+  return (
+    <div className={styles.sponsorRow}>
+      <span className={styles.sponsorLogo}>
+        <Icon name="image" size={18} />
+      </span>
+      <span className={styles.sponsorMain}>
+        <span className={styles.rowFields}>
+          <TextInput
+            aria-label={t.organizationLabel}
+            defaultValue={sponsor.name}
+            placeholder={t.orgPlaceholder}
+            autoComplete="off"
+            onBlur={(event) => {
+              if (event.currentTarget.value !== sponsor.name) {
+                onChange({ name: event.currentTarget.value });
+              }
+            }}
+          />
+          <Select
+            aria-label={t.tierLabel}
+            items={recordItems(t.tiers)}
+            value={sponsor.tier}
+            onValueChange={(tier) => {
+              onChange({ tier });
+            }}
+          />
+          <TextInput
+            aria-label={t.linkLabel}
+            type="url"
+            defaultValue={sponsor.url}
+            placeholder={t.urlPlaceholder}
+            autoComplete="off"
+            onBlur={(event) => {
+              if (event.currentTarget.value !== sponsor.url) {
+                onChange({ url: event.currentTarget.value });
+              }
+            }}
+          />
+        </span>
+      </span>
+      <IconButton
+        aria-label={messages.common.remove(sponsor.name || t.sponsorsTitle)}
+        onClick={onRemove}
+      >
+        <Icon name="trash" size={18} />
+      </IconButton>
+    </div>
+  );
 }
-
-const SPONSORS: readonly Sponsor[] = [
-  {
-    file: "nihongo.svg",
-    name: "The Nihongo Foundation",
-    tier: "Gold",
-    tierVariant: "accent",
-    url: "nihongo-foundation.example",
-  },
-  {
-    file: "sakura.svg",
-    name: "Sakura Press",
-    tier: "Supporter",
-    tierVariant: "default",
-    url: "sakurapress.example",
-  },
-];
-
-type SaveState = "idle" | "saving" | "saved" | "failed";
 
 export interface CourseDetailsProps {
   readonly course: Course;
   readonly location: string;
   readonly onSaveProject: (project: CourseProject) => Promise<ProjectWriteResult>;
+  readonly onRevealFolder: () => void;
+  readonly onReadGitStatus: () => Promise<GitStatus>;
 }
 
-export function CourseDetails({ course, location, onSaveProject }: CourseDetailsProps) {
+export function CourseDetails({
+  course,
+  location,
+  onSaveProject,
+  onRevealFolder,
+  onReadGitStatus,
+}: CourseDetailsProps) {
   const messages = useMessages();
   const t = messages.details;
   const { project } = course;
-  const taught = project.learningLocales[0] ?? "";
   const [saveState, setSaveState] = useState<SaveState>("idle");
+  const [git, setGit] = useState<GitStatus | null>(null);
 
-  const saveField = async (field: "title" | "description", value: string) => {
-    if (value === project[field]) return;
+  useEffect(() => {
+    let cancelled = false;
+    void onReadGitStatus().then((status) => {
+      if (!cancelled) setGit(status);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [onReadGitStatus]);
+
+  const save = (next: CourseProject) => {
     setSaveState("saving");
-    const result = await onSaveProject({ ...project, [field]: value });
-    setSaveState(result.status === "saved" ? "saved" : "failed");
+    void onSaveProject(next).then((result) => {
+      setSaveState(result.status === "saved" ? "saved" : "failed");
+    });
   };
+  const patch = (changes: Partial<CourseProject>) => {
+    save({ ...project, ...changes });
+  };
+  const patchField = (
+    field:
+      | "title"
+      | "subtitle"
+      | "description"
+      | "estimatedLength"
+      | "copyrightHolder"
+      | "copyrightYear",
+    value: string,
+  ) => {
+    if (value !== project[field]) patch({ [field]: value });
+  };
+
+  const imageAssets = course.assets.filter((asset) => asset.kind === "image");
+  const coverAsset = imageAssets.find((asset) => asset.id === project.coverAssetId) ?? null;
+  const coverItems: SelectOption[] = imageAssets.map((asset) => ({
+    value: asset.id,
+    label: asset.file ?? asset.label,
+  }));
+
+  const primaryCollection = course.collections[0];
+  const recordCount = primaryCollection
+    ? course.records.filter((record) => record.collectionId === primaryCollection.id).length
+    : 0;
 
   const statusLabel =
     saveState === "saving"
@@ -169,20 +304,6 @@ export function CourseDetails({ course, location, onSaveProject }: CourseDetails
       : saveState === "failed"
         ? messages.common.saveFailed
         : messages.common.savedLocally;
-
-  const levelItems: SelectOption[] = [
-    { value: "a1", label: t.levelA1 },
-    { value: "a2", label: t.levelA2 },
-    { value: "b1", label: t.levelB1 },
-  ];
-  const licenseItems: SelectOption[] = [
-    { value: "by", label: t.licenses.by },
-    { value: "bySa", label: t.licenses.bySa },
-    { value: "byNc", label: t.licenses.byNc },
-    { value: "byNcSa", label: t.licenses.byNcSa },
-    { value: "cc0", label: t.licenses.cc0 },
-    { value: "arr", label: t.licenses.arr },
-  ];
 
   return (
     <WorkInner>
@@ -207,15 +328,18 @@ export function CourseDetails({ course, location, onSaveProject }: CourseDetails
                 defaultValue={project.title}
                 autoComplete="off"
                 onBlur={(event) => {
-                  void saveField("title", event.currentTarget.value);
+                  patchField("title", event.currentTarget.value);
                 }}
               />
             </Field>
             <Field label={t.fieldSubtitle} help={t.fieldSubtitleHelp}>
               <TextInput
                 name="subtitle"
-                defaultValue="Your first words and sentences"
+                defaultValue={project.subtitle}
                 autoComplete="off"
+                onBlur={(event) => {
+                  patchField("subtitle", event.currentTarget.value);
+                }}
               />
             </Field>
             <Field label={t.fieldDescription} help={t.fieldDescriptionHelp}>
@@ -224,7 +348,7 @@ export function CourseDetails({ course, location, onSaveProject }: CourseDetails
                 rows={3}
                 defaultValue={project.description}
                 onBlur={(event) => {
-                  void saveField("description", event.currentTarget.value);
+                  patchField("description", event.currentTarget.value);
                 }}
               />
             </Field>
@@ -240,22 +364,51 @@ export function CourseDetails({ course, location, onSaveProject }: CourseDetails
             <Field label={t.fieldTaught} help={t.fieldTaughtHelp}>
               <TextInput
                 name="target-language"
-                defaultValue={localeName(taught)}
+                defaultValue={project.learningLocales[0] ?? ""}
                 autoComplete="off"
+                onBlur={(event) => {
+                  const value = event.currentTarget.value;
+                  if (value !== (project.learningLocales[0] ?? "")) {
+                    patch({ learningLocales: [value, ...project.learningLocales.slice(1)] });
+                  }
+                }}
               />
             </Field>
             <Field label={t.fieldExplained} help={t.fieldExplainedHelp}>
               <TextInput
                 name="source-language"
-                defaultValue={localeName(project.defaultLocale)}
+                defaultValue={project.defaultLocale}
                 autoComplete="off"
+                onBlur={(event) => {
+                  if (event.currentTarget.value !== project.defaultLocale) {
+                    patch({ defaultLocale: event.currentTarget.value });
+                  }
+                }}
               />
             </Field>
             <Field label={t.fieldLevel} help={t.fieldLevelHelp}>
-              <Select name="level" defaultValue="a1" aria-label={t.fieldLevel} items={levelItems} />
+              <Select
+                aria-label={t.fieldLevel}
+                items={[
+                  { value: "a1", label: t.levelA1 },
+                  { value: "a2", label: t.levelA2 },
+                  { value: "b1", label: t.levelB1 },
+                ]}
+                value={project.level}
+                onValueChange={(level) => {
+                  patch({ level });
+                }}
+              />
             </Field>
             <Field label={t.fieldLength} help={t.fieldLengthHelp}>
-              <TextInput name="length" defaultValue="2 units · 3 lessons" autoComplete="off" />
+              <TextInput
+                name="length"
+                defaultValue={project.estimatedLength}
+                autoComplete="off"
+                onBlur={(event) => {
+                  patchField("estimatedLength", event.currentTarget.value);
+                }}
+              />
             </Field>
           </div>
         </SectionGroup>
@@ -265,10 +418,27 @@ export function CourseDetails({ course, location, onSaveProject }: CourseDetails
             <div className={styles.inlineActions}>
               <span className={styles.assetRef}>
                 <Icon name="image" size={16} />
-                cover-torii.jpg
+                {coverAsset ? (coverAsset.file ?? coverAsset.label) : t.noCover}
               </span>
-              <Button variant="secondary">{t.chooseMedia}</Button>
-              <Button variant="ghost">{t.remove}</Button>
+              <Select
+                aria-label={t.chooseMedia}
+                items={coverItems}
+                placeholder={t.chooseMedia}
+                value={project.coverAssetId ?? ""}
+                onValueChange={(assetId) => {
+                  patch({ coverAssetId: assetId || null });
+                }}
+              />
+              {project.coverAssetId === null ? null : (
+                <Button
+                  variant="ghost"
+                  onClick={() => {
+                    patch({ coverAssetId: null });
+                  }}
+                >
+                  {t.remove}
+                </Button>
+              )}
             </div>
           </div>
         </SectionGroup>
@@ -278,57 +448,37 @@ export function CourseDetails({ course, location, onSaveProject }: CourseDetails
           titleId="contributors-title"
           description={t.contributorsDescription}
         >
-          {CONTRIBUTORS.map((person) => (
-            <div key={person.name} className={styles.contributorRow}>
-              <span className={styles.contributorAvatar} aria-hidden="true">
-                {person.initials}
-              </span>
-              <span className={styles.contributorMain}>
-                <span className={styles.contributorHead}>
-                  <span className={styles.rowTitle}>{person.name}</span>
-                  <Tag variant={person.roleVariant}>{person.role}</Tag>
-                </span>
-                <span className={styles.contributorLinks}>
-                  {person.links.map((link) => (
-                    <AssetLink key={link} href={`https://${link}`} label={link} />
-                  ))}
-                  <button className={styles.linkAdd} type="button">
-                    <Icon name="plus" size={14} />
-                    {messages.common.addLink}
-                  </button>
-                </span>
-              </span>
-              <RowActions removeLabel={messages.common.remove(person.name)} />
-            </div>
+          {project.contributors.map((contributor) => (
+            <ContributorRow
+              key={contributor.id}
+              contributor={contributor}
+              messages={messages}
+              onChange={(changes) => {
+                patch({
+                  contributors: project.contributors.map((item) =>
+                    item.id === contributor.id ? { ...item, ...changes } : item,
+                  ),
+                });
+              }}
+              onRemove={() => {
+                patch({
+                  contributors: project.contributors.filter((item) => item.id !== contributor.id),
+                });
+              }}
+            />
           ))}
-          <div className={styles.contributorAdd}>
-            <button className={styles.avatarAdd} type="button" aria-label={t.addPhoto}>
-              <Icon name="image" size={18} />
-            </button>
-            <Field label={t.roleLabel}>
-              <Select
-                name="contributor-role"
-                defaultValue="author"
-                aria-label={t.roleLabel}
-                items={recordItems(t.roles)}
-              />
-            </Field>
-            <Field label={t.nameLabel}>
-              <TextInput
-                name="contributor-name"
-                placeholder={t.namePlaceholder}
-                autoComplete="off"
-              />
-            </Field>
-            <Field label={t.linkLabel}>
-              <TextInput
-                name="contributor-link"
-                type="url"
-                placeholder={t.urlPlaceholder}
-                autoComplete="off"
-              />
-            </Field>
-            <Button variant="secondary">
+          <div className={styles.detailBody}>
+            <Button
+              variant="secondary"
+              onClick={() => {
+                patch({
+                  contributors: [
+                    ...project.contributors,
+                    { id: crypto.randomUUID(), name: "", role: "author", links: [] },
+                  ],
+                });
+              }}
+            >
               <Icon name="plus" size={18} />
               {messages.common.add}
             </Button>
@@ -340,36 +490,35 @@ export function CourseDetails({ course, location, onSaveProject }: CourseDetails
           titleId="funding-title"
           description={t.fundingDescription}
         >
-          {FUNDING.map((entry) => (
-            <div key={entry.name} className={styles.fundingRow}>
-              <span className={styles.fundingBadge}>
-                <Icon name="heart" size={18} />
-              </span>
-              <span className={styles.fundingMain}>
-                <span className={styles.rowTitle}>{entry.name}</span>
-                <AssetLink href={`https://${entry.url}`} label={entry.url} />
-              </span>
-              <RowActions removeLabel={messages.common.remove(entry.name)} />
-            </div>
+          {project.funding.map((entry) => (
+            <FundingRow
+              key={entry.id}
+              entry={entry}
+              messages={messages}
+              onChange={(changes) => {
+                patch({
+                  funding: project.funding.map((item) =>
+                    item.id === entry.id ? { ...item, ...changes } : item,
+                  ),
+                });
+              }}
+              onRemove={() => {
+                patch({ funding: project.funding.filter((item) => item.id !== entry.id) });
+              }}
+            />
           ))}
-          <div className={styles.fundingAdd}>
-            <Field label={t.platformLabel}>
-              <Select
-                name="funding-platform"
-                defaultValue="githubSponsors"
-                aria-label={t.platformLabel}
-                items={recordItems(t.platforms)}
-              />
-            </Field>
-            <Field label={t.linkLabel}>
-              <TextInput
-                name="funding-link"
-                type="url"
-                placeholder={t.urlPlaceholder}
-                autoComplete="off"
-              />
-            </Field>
-            <Button variant="secondary">
+          <div className={styles.detailBody}>
+            <Button
+              variant="secondary"
+              onClick={() => {
+                patch({
+                  funding: [
+                    ...project.funding,
+                    { id: crypto.randomUUID(), platform: "githubSponsors", url: "" },
+                  ],
+                });
+              }}
+            >
               <Icon name="plus" size={18} />
               {messages.common.add}
             </Button>
@@ -381,46 +530,35 @@ export function CourseDetails({ course, location, onSaveProject }: CourseDetails
           titleId="sponsors-title"
           description={t.sponsorsDescription}
         >
-          {SPONSORS.map((sponsor) => (
-            <div key={sponsor.name} className={styles.sponsorRow}>
-              <span className={styles.sponsorLogo}>
-                <Icon name="image" size={18} />
-                <span className={styles.file}>{sponsor.file}</span>
-              </span>
-              <span className={styles.sponsorMain}>
-                <span className={styles.sponsorHead}>
-                  <span className={styles.rowTitle}>{sponsor.name}</span>
-                  <Tag variant={sponsor.tierVariant}>{sponsor.tier}</Tag>
-                </span>
-                <AssetLink href={`https://${sponsor.url}`} label={sponsor.url} />
-              </span>
-              <RowActions removeLabel={messages.common.remove(sponsor.name)} />
-            </div>
+          {project.sponsors.map((sponsor) => (
+            <SponsorRow
+              key={sponsor.id}
+              sponsor={sponsor}
+              messages={messages}
+              onChange={(changes) => {
+                patch({
+                  sponsors: project.sponsors.map((item) =>
+                    item.id === sponsor.id ? { ...item, ...changes } : item,
+                  ),
+                });
+              }}
+              onRemove={() => {
+                patch({ sponsors: project.sponsors.filter((item) => item.id !== sponsor.id) });
+              }}
+            />
           ))}
-          <div className={styles.sponsorAdd}>
-            <button className={styles.logoAdd} type="button" aria-label={t.addLogo}>
-              <Icon name="image" size={18} />
-            </button>
-            <Field label={t.organizationLabel}>
-              <TextInput name="sponsor-name" placeholder={t.orgPlaceholder} autoComplete="off" />
-            </Field>
-            <Field label={t.linkLabel}>
-              <TextInput
-                name="sponsor-link"
-                type="url"
-                placeholder={t.urlPlaceholder}
-                autoComplete="off"
-              />
-            </Field>
-            <Field label={t.tierLabel}>
-              <Select
-                name="sponsor-tier"
-                defaultValue="gold"
-                aria-label={t.tierLabel}
-                items={recordItems(t.tiers)}
-              />
-            </Field>
-            <Button variant="secondary">
+          <div className={styles.detailBody}>
+            <Button
+              variant="secondary"
+              onClick={() => {
+                patch({
+                  sponsors: [
+                    ...project.sponsors,
+                    { id: crypto.randomUUID(), name: "", tier: "gold", url: "" },
+                  ],
+                });
+              }}
+            >
               <Icon name="plus" size={18} />
               {messages.common.add}
             </Button>
@@ -435,28 +573,41 @@ export function CourseDetails({ course, location, onSaveProject }: CourseDetails
           <div className={joinClassNames(styles.formGrid, styles.two, styles.detailBody)}>
             <Field label={t.licenseLabel} className={styles.spanAll} help={t.licenseHelp}>
               <Select
-                name="license"
-                defaultValue="bySa"
                 aria-label={t.licenseLabel}
-                items={licenseItems}
+                items={LICENSE_CODES.map((code) => ({ value: code, label: t.licenses[code] }))}
+                value={project.license}
+                onValueChange={(license) => {
+                  patch({ license });
+                }}
               />
             </Field>
             <Field label={t.copyrightHolder}>
-              <TextInput name="copyright-holder" defaultValue="Alok Singh" autoComplete="off" />
+              <TextInput
+                name="copyright-holder"
+                defaultValue={project.copyrightHolder}
+                autoComplete="off"
+                onBlur={(event) => {
+                  patchField("copyrightHolder", event.currentTarget.value);
+                }}
+              />
             </Field>
             <Field label={t.yearLabel}>
               <TextInput
                 name="copyright-year"
-                defaultValue="2026"
+                defaultValue={project.copyrightYear}
                 inputMode="numeric"
                 autoComplete="off"
+                onBlur={(event) => {
+                  patchField("copyrightYear", event.currentTarget.value);
+                }}
               />
             </Field>
-            <Callout icon="details" className={styles.spanAll}>
-              <strong>{t.licenseCalloutStrong}</strong>
-              <br />
-              {t.licenseCalloutBody}
-            </Callout>
+            {isLicenseCode(project.license) ? (
+              <Callout icon="details" className={styles.spanAll}>
+                <strong>{t.licenses[project.license]}</strong>
+                {t.licenseSummaries[project.license]}
+              </Callout>
+            ) : null}
           </div>
         </SectionGroup>
 
@@ -470,29 +621,33 @@ export function CourseDetails({ course, location, onSaveProject }: CourseDetails
               <span className={styles.settingName}>{t.folder}</span>
               <span className={joinClassNames(styles.settingDetail, styles.mono)}>{location}</span>
             </span>
-            <Button variant="ghost">{messages.common.reveal}</Button>
+            <Button variant="ghost" onClick={onRevealFolder}>
+              {messages.common.reveal}
+            </Button>
           </div>
           <div className={styles.settingRow}>
             <span>
               <span className={styles.settingName}>{t.versionControl}</span>
-              <span className={styles.settingDetail}>{t.gitDetail}</span>
+              <span className={styles.settingDetail}>
+                {git === null ? "" : git.initialized ? t.gitInitialized(git.commitCount) : t.noGit}
+              </span>
             </span>
-            <Status>{t.clean}</Status>
+            {git?.initialized ? (
+              git.clean ? (
+                <Status>{t.clean}</Status>
+              ) : (
+                <Status tone="warning">{t.uncommitted}</Status>
+              )
+            ) : null}
           </div>
           <div className={styles.settingRow}>
             <span>
               <span className={styles.settingName}>{t.contentRecords}</span>
               <span className={styles.settingDetail}>
-                {t.recordSummary(
-                  course.records.filter(
-                    (record) => record.collectionId === (course.collections[0]?.id ?? ""),
-                  ).length,
-                  course.collections[0]?.name ?? t.noCollections,
-                )}{" "}
-                · {t.mediaFiles(course.assets.length)}
+                {t.recordSummary(recordCount, primaryCollection?.name ?? t.noCollections)} ·{" "}
+                {t.mediaFiles(course.assets.length)}
               </span>
             </span>
-            <Button variant="ghost">{t.openContent}</Button>
           </div>
         </SectionGroup>
       </div>

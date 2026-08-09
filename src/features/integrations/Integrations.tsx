@@ -157,7 +157,6 @@ export function Integrations({ isDark, onBack, onToggleTheme, onToggleLocale }: 
         <div className={styles.stack}>
           <Callout icon="integrations">
             <strong>{t.calloutTitle}</strong>
-            <br />
             {t.calloutBody}
           </Callout>
 

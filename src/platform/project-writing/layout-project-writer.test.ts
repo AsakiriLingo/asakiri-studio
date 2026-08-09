@@ -11,9 +11,19 @@ const SESSION: ProjectSession = { id: "s1", name: "Japanese Starter" };
 const PROJECT: CourseProject = {
   id: "course_japanese",
   title: "Renamed Course",
+  subtitle: "First words",
   description: "A new description.",
   defaultLocale: "en",
   learningLocales: ["ja", "ko"],
+  level: "a1",
+  estimatedLength: "2 units",
+  license: "bySa",
+  copyrightHolder: "Alok Singh",
+  copyrightYear: "2026",
+  coverAssetId: null,
+  contributors: [{ id: "c1", name: "Alok Singh", role: "author", links: ["example.com"] }],
+  funding: [{ id: "f1", platform: "githubSponsors", url: "github.com/sponsors/x" }],
+  sponsors: [{ id: "s1", name: "Nihongo", tier: "gold", url: "nihongo.example" }],
 };
 
 const MANIFEST = JSON.stringify({
@@ -62,9 +72,18 @@ describe("layout project writer", () => {
       project: {
         id: "course_japanese",
         title: "Renamed Course",
+        subtitle: "First words",
         description: "A new description.",
         defaultLocale: "en",
         learningLocales: ["ja", "ko"],
+        level: "a1",
+        license: "bySa",
+        copyrightHolder: "Alok Singh",
+        copyrightYear: "2026",
+        coverAssetId: null,
+        contributors: [{ id: "c1", name: "Alok Singh", role: "author", links: ["example.com"] }],
+        funding: [{ id: "f1", platform: "githubSponsors", url: "github.com/sponsors/x" }],
+        sponsors: [{ id: "s1", name: "Nihongo", tier: "gold", url: "nihongo.example" }],
       },
       collections: ["content/collections/vocabulary.json"],
       assets: ["media/assets/cat/asset.json"],

@@ -141,6 +141,75 @@ pub fn write_course_file(
 }
 
 #[tauri::command]
+pub fn reveal_path(path: String) -> Result<(), String> {
+    if !Path::new(&path).exists() {
+        return Err("notFound".to_string());
+    }
+
+    #[cfg(target_os = "macos")]
+    let program = "open";
+    #[cfg(target_os = "windows")]
+    let program = "explorer";
+    #[cfg(all(unix, not(target_os = "macos")))]
+    let program = "xdg-open";
+
+    Command::new(program)
+        .arg(&path)
+        .spawn()
+        .map(|_| ())
+        .map_err(|_| "unknown".to_string())
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GitStatus {
+    pub initialized: bool,
+    pub commit_count: u32,
+    pub clean: bool,
+}
+
+#[tauri::command]
+pub fn git_status(path: String) -> GitStatus {
+    let dir = Path::new(&path);
+    let is_repo = Command::new("git")
+        .args(["rev-parse", "--is-inside-work-tree"])
+        .current_dir(dir)
+        .output()
+        .map(|output| output.status.success())
+        .unwrap_or(false);
+
+    if !is_repo {
+        return GitStatus {
+            initialized: false,
+            commit_count: 0,
+            clean: true,
+        };
+    }
+
+    let commit_count = Command::new("git")
+        .args(["rev-list", "--count", "HEAD"])
+        .current_dir(dir)
+        .output()
+        .ok()
+        .and_then(|output| String::from_utf8(output.stdout).ok())
+        .and_then(|text| text.trim().parse::<u32>().ok())
+        .unwrap_or(0);
+
+    let clean = Command::new("git")
+        .args(["status", "--porcelain"])
+        .current_dir(dir)
+        .output()
+        .map(|output| output.stdout.is_empty())
+        .unwrap_or(false);
+
+    GitStatus {
+        initialized: true,
+        commit_count,
+        clean,
+    }
+}
+
+#[tauri::command]
 pub fn read_course_title(path: String) -> Result<String, String> {
     let manifest_text =
         fs::read_to_string(Path::new(&path).join("project.json")).map_err(|_| "unknown")?;

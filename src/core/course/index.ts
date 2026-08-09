@@ -38,6 +38,9 @@ export type {
 export type { PartContent, Part, Lesson } from "@core/course/lesson";
 export type {
   CourseProject,
+  Contributor,
+  FundingLink,
+  Sponsor,
   OutlineSection,
   Course,
   CourseSources,

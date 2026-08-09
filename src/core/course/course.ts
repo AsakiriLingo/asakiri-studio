@@ -2,12 +2,42 @@ import type { Collection, ContentRecord } from "@core/course/content";
 import type { Lesson } from "@core/course/lesson";
 import type { Asset } from "@core/course/media";
 
+export interface Contributor {
+  readonly id: string;
+  readonly name: string;
+  readonly role: string;
+  readonly links: readonly string[];
+}
+
+export interface FundingLink {
+  readonly id: string;
+  readonly platform: string;
+  readonly url: string;
+}
+
+export interface Sponsor {
+  readonly id: string;
+  readonly name: string;
+  readonly tier: string;
+  readonly url: string;
+}
+
 export interface CourseProject {
   readonly id: string;
   readonly title: string;
+  readonly subtitle: string;
   readonly description: string;
   readonly defaultLocale: string;
   readonly learningLocales: readonly string[];
+  readonly level: string;
+  readonly estimatedLength: string;
+  readonly license: string;
+  readonly copyrightHolder: string;
+  readonly copyrightYear: string;
+  readonly coverAssetId: string | null;
+  readonly contributors: readonly Contributor[];
+  readonly funding: readonly FundingLink[];
+  readonly sponsors: readonly Sponsor[];
 }
 
 export interface OutlineSection {
