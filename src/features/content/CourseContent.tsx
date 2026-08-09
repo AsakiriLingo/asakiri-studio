@@ -12,6 +12,7 @@ import type {
 import type { ProjectWriteResult } from "@core/project-writing";
 import { useMessages } from "@shared/i18n";
 import { Button } from "@shared/components/button";
+import { useConfirm } from "@shared/components/confirm-dialog";
 import { DataTable } from "@shared/components/data-table";
 import { Field, TextInput } from "@shared/components/form";
 import { Icon } from "@shared/components/icon";
@@ -281,6 +282,7 @@ export function CourseContent({
 }: CourseContentProps) {
   const messages = useMessages();
   const t = messages.content;
+  const confirm = useConfirm();
   const [selectedId, setSelectedId] = useState(course.collections[0]?.id ?? "");
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "failed">("idle");
   const [creatingCollection, setCreatingCollection] = useState(false);
@@ -313,7 +315,13 @@ export function CourseContent({
     persist(onSaveRecord({ ...record, fields: { ...record.fields, [fieldId]: value } }));
   };
 
-  const removeRecord = (recordId: string) => {
+  const removeRecord = async (recordId: string) => {
+    const ok = await confirm({
+      title: t.confirmDeleteRecordTitle,
+      description: t.confirmDeleteRecordBody,
+      confirmLabel: t.deleteRecord,
+    });
+    if (!ok) return;
     persist(onDeleteRecord(recordId));
   };
 
@@ -399,11 +407,17 @@ export function CourseContent({
     });
   };
 
-  const removeFieldDef = (fieldId: string) => {
+  const removeFieldDef = async (fieldId: string) => {
     if (!collection) return;
+    const field = collection.fields.find((entry) => entry.id === fieldId);
+    const ok = await confirm({
+      title: t.confirmDeleteFieldTitle,
+      description: field ? t.confirmDeleteFieldBody(field.name) : undefined,
+    });
+    if (!ok) return;
     saveCollection({
       ...collection,
-      fields: collection.fields.filter((field) => field.id !== fieldId),
+      fields: collection.fields.filter((entry) => entry.id !== fieldId),
     });
   };
 
@@ -464,7 +478,7 @@ export function CourseContent({
               aria-label={messages.content.deleteRecord}
               size="sm"
               onClick={() => {
-                removeRecordRef.current(row.original.id);
+                void removeRecordRef.current(row.original.id);
               }}
             >
               <Icon name="trash" size={18} />
@@ -727,7 +741,7 @@ export function CourseContent({
                   aria-label={messages.common.remove(field.name)}
                   size="sm"
                   onClick={() => {
-                    removeFieldDef(field.id);
+                    void removeFieldDef(field.id);
                   }}
                 >
                   <Icon name="trash" size={18} />
@@ -743,11 +757,18 @@ export function CourseContent({
           </div>
           <div className={styles.dialogActions}>
             <Button
-              variant="ghost"
-              className={styles.dangerAction}
+              variant="danger"
               onClick={() => {
-                setShowingSettings(false);
-                persist(onDeleteCollection(collection.id));
+                void (async () => {
+                  const ok = await confirm({
+                    title: t.confirmDeleteCollectionTitle,
+                    description: t.confirmDeleteCollectionBody(collection.name),
+                    confirmLabel: t.deleteCollection,
+                  });
+                  if (!ok) return;
+                  setShowingSettings(false);
+                  persist(onDeleteCollection(collection.id));
+                })();
               }}
             >
               {t.deleteCollection}

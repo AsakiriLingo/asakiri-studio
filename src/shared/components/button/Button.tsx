@@ -6,7 +6,7 @@ import {
 } from "@base-ui/react/button";
 import styles from "@shared/components/button/Button.module.css";
 
-export type ButtonVariant = "primary" | "secondary" | "ghost";
+export type ButtonVariant = "primary" | "secondary" | "ghost" | "danger";
 export type ButtonSize = "sm" | "md" | "lg";
 
 export interface ButtonProps extends Omit<BaseButtonProps, "className"> {
@@ -25,6 +25,7 @@ const variantClasses: Record<ButtonVariant, string> = {
   primary: requiredStyle("primary"),
   secondary: requiredStyle("secondary"),
   ghost: requiredStyle("ghost"),
+  danger: requiredStyle("danger"),
 };
 
 const sizeClasses: Record<ButtonSize, string> = {

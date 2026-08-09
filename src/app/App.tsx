@@ -13,6 +13,7 @@ import type { GitStatus } from "@core/project-system";
 import type { ProjectWriteResult } from "@core/project-writing";
 import { createProjectSession, type ProjectDirectory } from "@core/projects";
 import { I18nProvider, getMessages, type Locale } from "@shared/i18n";
+import { ConfirmProvider } from "@shared/components/confirm-dialog";
 import { StartScreen } from "@features/start";
 import { NewCourseDialog } from "@features/new-course";
 import { Integrations } from "@features/integrations";
@@ -489,7 +490,11 @@ export function App() {
     );
   }
 
-  return <I18nProvider locale={locale}>{renderView()}</I18nProvider>;
+  return (
+    <I18nProvider locale={locale}>
+      <ConfirmProvider>{renderView()}</ConfirmProvider>
+    </I18nProvider>
+  );
 }
 
 function WorkspaceMessage({ title, body }: { readonly title: string; readonly body: string }) {

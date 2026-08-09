@@ -84,6 +84,12 @@
   background: transparent;
 }
 
+.danger {
+  border-color: var(--color-danger);
+  color: var(--color-on-danger);
+  background: var(--color-danger);
+}
+
 .sm {
   min-height: var(--control-height-sm);
   padding-inline: var(--space-3);
@@ -119,6 +125,11 @@
 
   .ghost:hover:not([data-disabled]) {
     background: var(--color-surface-subtle);
+  }
+
+  .danger:hover:not([data-disabled]) {
+    border-color: var(--color-danger-hover);
+    background: var(--color-danger-hover);
   }
 }
 

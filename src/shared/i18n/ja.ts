@@ -9,6 +9,7 @@ export const jaMessages = {
     cancel: "キャンセル",
     edit: "編集",
     add: "追加",
+    delete: "削除",
     save: "保存",
     saved: "保存済み",
     saving: "保存中…",
@@ -279,6 +280,14 @@ export const jaMessages = {
     collectionSettings: "コレクション設定",
     editRecord: "レコードを編集",
     deleteRecord: "レコードを削除",
+    confirmDeleteCollectionTitle: "このコレクションを削除しますか？",
+    confirmDeleteCollectionBody: (name: string) =>
+      `コレクション「${name}」とそのフィールド定義を削除します。この操作は元に戻せません。`,
+    confirmDeleteRecordTitle: "このレコードを削除しますか？",
+    confirmDeleteRecordBody: "レコードファイルを完全に削除します。この操作は元に戻せません。",
+    confirmDeleteFieldTitle: "このフィールドを削除しますか？",
+    confirmDeleteFieldBody: (name: string) =>
+      `「${name}」を削除すると、コレクション内のすべてのレコードからこのフィールドと値が削除されます。`,
   },
 
   media: {

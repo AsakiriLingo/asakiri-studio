@@ -7,6 +7,7 @@ export const enMessages = {
     cancel: "Cancel",
     edit: "Edit",
     add: "Add",
+    delete: "Delete",
     save: "Save",
     saved: "Saved",
     saving: "Saving…",
@@ -276,6 +277,14 @@ export const enMessages = {
     collectionSettings: "Collection settings",
     editRecord: "Edit record",
     deleteRecord: "Delete record",
+    confirmDeleteCollectionTitle: "Delete this collection?",
+    confirmDeleteCollectionBody: (name: string) =>
+      `This removes the collection “${name}” and its field definitions. This cannot be undone.`,
+    confirmDeleteRecordTitle: "Delete this record?",
+    confirmDeleteRecordBody: "This permanently removes the record file. This cannot be undone.",
+    confirmDeleteFieldTitle: "Delete this field?",
+    confirmDeleteFieldBody: (name: string) =>
+      `Deleting “${name}” removes this field and its values from every record in the collection.`,
   },
 
   media: {

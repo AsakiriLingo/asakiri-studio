@@ -188,10 +188,6 @@
   gap: var(--space-1);
 }
 
-.dangerAction {
-  color: var(--color-danger);
-}
-
 .dialogActions {
   display: flex;
   justify-content: flex-end;
