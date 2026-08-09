@@ -1,4 +1,4 @@
-import type { Course } from "@core/course";
+import type { LoadedCourse } from "@core/course";
 import type { ProjectSession } from "@core/projects";
 
 export interface ContentCollectionSummary {
@@ -17,5 +17,5 @@ export interface ProjectReader {
   listContentCollections(
     session: ProjectSession,
   ): Promise<ProjectReadResult<readonly ContentCollectionSummary[]>>;
-  readCourse(session: ProjectSession): Promise<ProjectReadResult<Course>>;
+  readCourse(session: ProjectSession): Promise<ProjectReadResult<LoadedCourse>>;
 }

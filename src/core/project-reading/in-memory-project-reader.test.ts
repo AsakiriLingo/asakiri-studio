@@ -55,7 +55,12 @@ describe("createInMemoryProjectReader", () => {
   it("returns the seeded course for a known session", async () => {
     const reader = createInMemoryProjectReader({ courseBySession: { "project-1": course } });
 
-    expect(await reader.readCourse(session)).toEqual({ status: "ready", data: course });
+    const result = await reader.readCourse(session);
+
+    expect(result.status).toBe("ready");
+    if (result.status === "ready") {
+      expect(result.data.course).toEqual(course);
+    }
   });
 
   it("fails as unavailable when no course is seeded", async () => {

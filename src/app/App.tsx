@@ -1,6 +1,14 @@
 import { useEffect, useState, type ReactNode } from "react";
-import type { Course } from "@core/course";
+import type {
+  ContentRecord,
+  Course,
+  CourseProject,
+  CourseSources,
+  TiptapDocument,
+} from "@core/course";
+import { partSourceKey } from "@core/course";
 import type { ProjectReadErrorCode } from "@core/project-reading";
+import type { ProjectWriteResult } from "@core/project-writing";
 import { createProjectSession, type ProjectDirectory } from "@core/projects";
 import { I18nProvider, getMessages, type Locale } from "@shared/i18n";
 import { StartScreen } from "@features/start";
@@ -32,7 +40,7 @@ type View = "start" | "new-course" | "integrations" | "workspace";
 
 type CourseState =
   | { readonly status: "loading" }
-  | { readonly status: "ready"; readonly course: Course }
+  | { readonly status: "ready"; readonly course: Course; readonly sources: CourseSources }
   | { readonly status: "failed"; readonly code: ProjectReadErrorCode };
 
 export function App() {
@@ -65,7 +73,7 @@ export function App() {
       if (cancelled) return;
       setCourseState(
         result.status === "ready"
-          ? { status: "ready", course: result.data }
+          ? { status: "ready", course: result.data.course, sources: result.data.sources }
           : { status: "failed", code: result.code },
       );
     });
@@ -109,6 +117,91 @@ export function App() {
   const navigate = (target: WorkspaceSection) => {
     setSection(target);
     setOpenLessonId(null);
+  };
+
+  const saveProject = async (nextProject: CourseProject): Promise<ProjectWriteResult> => {
+    if (!project) {
+      return { status: "failed", code: "unavailable" };
+    }
+    const session = createProjectSession(project);
+    const result = await services.writer.updateProject(session, nextProject);
+    if (result.status === "saved") {
+      setCourseState((current) =>
+        current?.status === "ready"
+          ? { ...current, course: { ...current.course, project: nextProject } }
+          : current,
+      );
+    }
+    return result;
+  };
+
+  const saveRecord = async (record: ContentRecord): Promise<ProjectWriteResult> => {
+    if (!project || courseState?.status !== "ready") {
+      return { status: "failed", code: "unavailable" };
+    }
+    const path = courseState.sources.records[record.id];
+    if (path === undefined) {
+      return { status: "failed", code: "unavailable" };
+    }
+    const session = createProjectSession(project);
+    const result = await services.writer.updateRecord(session, path, record);
+    if (result.status === "saved") {
+      setCourseState((current) =>
+        current?.status === "ready"
+          ? {
+              ...current,
+              course: {
+                ...current.course,
+                records: current.course.records.map((entry) =>
+                  entry.id === record.id ? record : entry,
+                ),
+              },
+            }
+          : current,
+      );
+    }
+    return result;
+  };
+
+  const savePartDocument = async (
+    lessonId: string,
+    partId: string,
+    document: TiptapDocument,
+  ): Promise<ProjectWriteResult> => {
+    if (!project || courseState?.status !== "ready") {
+      return { status: "failed", code: "unavailable" };
+    }
+    const path = courseState.sources.parts[partSourceKey(lessonId, partId)];
+    if (path === undefined) {
+      return { status: "failed", code: "unavailable" };
+    }
+    const session = createProjectSession(project);
+    const result = await services.writer.updatePartDocument(session, path, document);
+    if (result.status === "saved") {
+      setCourseState((current) =>
+        current?.status === "ready"
+          ? {
+              ...current,
+              course: {
+                ...current.course,
+                lessons: current.course.lessons.map((lesson) =>
+                  lesson.id !== lessonId
+                    ? lesson
+                    : {
+                        ...lesson,
+                        parts: lesson.parts.map((part) =>
+                          part.id === partId && part.content.kind === "tiptap"
+                            ? { ...part, content: { kind: "tiptap", document } }
+                            : part,
+                        ),
+                      },
+                ),
+              },
+            }
+          : current,
+      );
+    }
+    return result;
   };
 
   function renderView(): ReactNode {
@@ -188,9 +281,9 @@ export function App() {
           />
         ) : course ? (
           section === "details" ? (
-            <CourseDetails course={course} location={projectLocation} />
+            <CourseDetails course={course} location={projectLocation} onSaveProject={saveProject} />
           ) : section === "content" ? (
-            <CourseContent course={course} />
+            <CourseContent course={course} onSaveRecord={saveRecord} />
           ) : section === "media" ? (
             <CourseMedia course={course} />
           ) : openLesson ? (
@@ -200,6 +293,9 @@ export function App() {
               onBackToStructure={() => {
                 setOpenLessonId(null);
               }}
+              onSaveDocument={(partId, document) =>
+                savePartDocument(openLesson.id, partId, document)
+              }
             />
           ) : (
             <CourseStructure

@@ -11,6 +11,8 @@ export const jaMessages = {
     add: "追加",
     save: "保存",
     saved: "保存済み",
+    saving: "保存中…",
+    saveFailed: "保存に失敗しました",
     savedLocally: "ローカルに保存済み",
     reveal: "表示",
     on: "オン",

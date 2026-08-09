@@ -4,7 +4,7 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { CourseParseError, parseCourse } from "@core/course";
+import { CourseParseError, parseCourse, parseCourseWithSources } from "@core/course";
 import type { CourseFileReader, PartContent } from "@core/course";
 
 const fixtureRoot = fileURLToPath(
@@ -35,6 +35,17 @@ describe("parseCourse", () => {
     expect(course.lessons).toHaveLength(3);
     expect(course.lessons.flatMap((lesson) => lesson.parts)).toHaveLength(9);
     expect(course.outline).toHaveLength(2);
+  });
+
+  it("retains project-relative source paths for each entity", async () => {
+    const { sources } = await parseCourseWithSources(diskReader(fixtureRoot));
+
+    expect(sources.project).toBe("project.json");
+    expect(sources.records.record_cat).toBe("content/records/cat.json");
+    expect(sources.collections.collection_vocabulary).toBe("content/collections/vocabulary.json");
+    expect(sources.assets.asset_cat_image).toBe("media/assets/cat-image/asset.json");
+    expect(sources.lessons.lesson_meet_neko).toBe("lessons/meet-neko/lesson.json");
+    expect(Object.keys(sources.parts).length).toBeGreaterThan(0);
   });
 
   it("resolves record fields into typed values", async () => {

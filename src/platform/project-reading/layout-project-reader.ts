@@ -1,5 +1,5 @@
-import type { Course } from "@core/course";
-import { parseCourse } from "@core/course";
+import type { LoadedCourse } from "@core/course";
+import { parseCourseWithSources } from "@core/course";
 import type {
   ContentCollectionSummary,
   ProjectReader,
@@ -67,14 +67,14 @@ export function createLayoutProjectReader(
         return { status: "failed", code: "unavailable" };
       }
     },
-    async readCourse(session): Promise<ProjectReadResult<Course>> {
+    async readCourse(session): Promise<ProjectReadResult<LoadedCourse>> {
       const files = resolveFileReader(session);
       if (!files) {
         return { status: "failed", code: "unavailable" };
       }
 
       try {
-        return { status: "ready", data: await parseCourse(files) };
+        return { status: "ready", data: await parseCourseWithSources(files) };
       } catch {
         return { status: "failed", code: "unavailable" };
       }

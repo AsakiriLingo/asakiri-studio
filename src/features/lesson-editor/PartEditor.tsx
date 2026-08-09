@@ -1,6 +1,7 @@
-import { useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import type { JSONContent } from "@tiptap/react";
-import type { Part } from "@core/course";
+import type { Part, TiptapDocument } from "@core/course";
+import type { ProjectWriteResult } from "@core/project-writing";
 import { useMessages } from "@shared/i18n";
 import { Button } from "@shared/components/button";
 import { Field, TextArea } from "@shared/components/form";
@@ -195,11 +196,36 @@ const RICH_TEXT_SEED: JSONContent = {
   ],
 };
 
-function RichTextEditor({ initial }: { readonly initial?: JSONContent | undefined }) {
+function RichTextEditor({
+  initial,
+  onPersist,
+}: {
+  readonly initial?: JSONContent | undefined;
+  readonly onPersist?: ((document: JSONContent) => void) | undefined;
+}) {
   const messages = useMessages();
   const [document, setDocument] = useState<JSONContent>(initial ?? RICH_TEXT_SEED);
+  const timer = useRef<number | null>(null);
+
+  useEffect(
+    () => () => {
+      if (timer.current !== null) window.clearTimeout(timer.current);
+    },
+    [],
+  );
+
+  const handleChange = (next: JSONContent) => {
+    setDocument(next);
+    if (!onPersist) return;
+    // Debounce so typing does not write on every keystroke.
+    if (timer.current !== null) window.clearTimeout(timer.current);
+    timer.current = window.setTimeout(() => {
+      onPersist(next);
+    }, 700);
+  };
+
   return (
-    <RichEditor value={document} onChange={setDocument} ariaLabel={messages.lesson.richTextAria} />
+    <RichEditor value={document} onChange={handleChange} ariaLabel={messages.lesson.richTextAria} />
   );
 }
 
@@ -556,15 +582,22 @@ function SpeakEditor() {
   );
 }
 
-function EditorBody({ part }: { readonly part: Part }) {
+function EditorBody({
+  part,
+  onPersist,
+}: {
+  readonly part: Part;
+  readonly onPersist?: ((document: JSONContent) => void) | undefined;
+}) {
   const messages = useMessages();
   const t = messages.lesson;
   const kind = partKind(part.content);
-  const initial =
-    part.content.kind === "tiptap" ? (part.content.document as unknown as JSONContent) : undefined;
+  const isTiptap = part.content.kind === "tiptap";
+  const initial = isTiptap ? (part.content.document as unknown as JSONContent) : undefined;
   switch (kind) {
     case "rich-text":
-      return <RichTextEditor initial={initial} />;
+      // Only real tiptap parts persist; composition placeholders do not.
+      return <RichTextEditor initial={initial} onPersist={isTiptap ? onPersist : undefined} />;
     case "select-image":
       return (
         <OptionEditor
@@ -598,12 +631,37 @@ function EditorBody({ part }: { readonly part: Part }) {
   }
 }
 
-export function PartEditor({ part }: { readonly part: Part }) {
+type SaveState = "idle" | "saving" | "saved" | "failed";
+
+export interface PartEditorProps {
+  readonly part: Part;
+  readonly onSaveDocument: (
+    partId: string,
+    document: TiptapDocument,
+  ) => Promise<ProjectWriteResult>;
+}
+
+export function PartEditor({ part, onSaveDocument }: PartEditorProps) {
   const messages = useMessages();
   const t = messages.lesson;
   const kind = partKind(part.content);
   const tabLabels =
     kind === "rich-text" ? [t.tabWrite, t.tabReferences] : [t.tabOptions, t.tabFeedback];
+  const [saveState, setSaveState] = useState<SaveState>("idle");
+
+  const persist = (document: JSONContent) => {
+    setSaveState("saving");
+    void onSaveDocument(part.id, document as unknown as TiptapDocument).then((result) => {
+      setSaveState(result.status === "saved" ? "saved" : "failed");
+    });
+  };
+
+  const statusLabel =
+    saveState === "saving"
+      ? messages.common.saving
+      : saveState === "failed"
+        ? messages.common.saveFailed
+        : messages.common.saved;
 
   return (
     <section className={styles.editorArea} aria-label={t.editorAria}>
@@ -612,10 +670,10 @@ export function PartEditor({ part }: { readonly part: Part }) {
           <span className={styles.partName}>{part.title}</span>
           <span className={styles.rowDetail}>{t.partHeading(t.kind[kind])}</span>
         </span>
-        <Status>{messages.common.saved}</Status>
+        <Status tone={saveState === "failed" ? "warning" : "default"}>{statusLabel}</Status>
       </div>
       <Tabs labels={tabLabels} />
-      <EditorBody part={part} />
+      <EditorBody key={part.id} part={part} onPersist={persist} />
     </section>
   );
 }

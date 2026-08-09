@@ -1,11 +1,13 @@
 import { useMemo, useState, type ReactNode } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
 import type { Asset, Collection, ContentRecord, Course, RecordFieldValue } from "@core/course";
+import type { ProjectWriteResult } from "@core/project-writing";
 import { useMessages } from "@shared/i18n";
 import { Button } from "@shared/components/button";
 import { DataTable } from "@shared/components/data-table";
 import { Icon } from "@shared/components/icon";
 import { PanelHeader } from "@shared/components/panel";
+import { Status } from "@shared/components/status";
 import { Tag } from "@shared/components/tag";
 import { WorkHeader, WorkInner } from "@shared/components/work-surface";
 import styles from "@features/content/CourseContent.module.css";
@@ -92,15 +94,19 @@ function fieldSummary(collection: Collection): string {
   return collection.fields.map((field) => field.name).join(", ");
 }
 
+type SaveState = "idle" | "saving" | "saved" | "failed";
+
 export interface CourseContentProps {
   readonly course: Course;
+  readonly onSaveRecord: (record: ContentRecord) => Promise<ProjectWriteResult>;
 }
 
-export function CourseContent({ course }: CourseContentProps) {
+export function CourseContent({ course, onSaveRecord }: CourseContentProps) {
   const messages = useMessages();
   const t = messages.content;
   const [records, setRecords] = useState<readonly ContentRecord[]>(course.records);
   const [selectedId, setSelectedId] = useState(course.collections[0]?.id ?? "");
+  const [saveState, setSaveState] = useState<SaveState>("idle");
 
   const collection =
     course.collections.find((entry) => entry.id === selectedId) ?? course.collections[0] ?? null;
@@ -131,14 +137,27 @@ export function CourseContent({ course }: CourseContentProps) {
   const handleEditCell = (rowIndex: number, columnId: string, value: string) => {
     const target = displayRecords[rowIndex];
     if (!target) return;
-    setRecords((current) =>
-      current.map((record) =>
-        record.id === target.id
-          ? { ...record, fields: { ...record.fields, [columnId]: { kind: "text", value } } }
-          : record,
-      ),
-    );
+    const updated: ContentRecord = {
+      ...target,
+      fields: { ...target.fields, [columnId]: { kind: "text", value } },
+    };
+    setRecords((current) => current.map((record) => (record.id === updated.id ? updated : record)));
+    setSaveState("saving");
+    void onSaveRecord(updated).then((result) => {
+      setSaveState(result.status === "saved" ? "saved" : "failed");
+    });
   };
+
+  const saveStatus =
+    saveState === "idle" ? null : (
+      <Status tone={saveState === "failed" ? "warning" : "default"}>
+        {saveState === "saving"
+          ? messages.common.saving
+          : saveState === "failed"
+            ? messages.common.saveFailed
+            : messages.common.savedLocally}
+      </Status>
+    );
 
   return (
     <WorkInner>
@@ -187,6 +206,8 @@ export function CourseContent({ course }: CourseContentProps) {
               title={collection.name}
               titleId="collection-title"
               description={t.records(displayRecords.length)}
+              actions={saveStatus}
+              spread
             />
             <DataTable
               columns={columns}

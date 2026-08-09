@@ -1,5 +1,6 @@
-import type { ReactNode } from "react";
-import type { Course } from "@core/course";
+import { useState, type ReactNode } from "react";
+import type { Course, CourseProject } from "@core/course";
+import type { ProjectWriteResult } from "@core/project-writing";
 import { useMessages } from "@shared/i18n";
 import { Button } from "@shared/components/button";
 import { Callout } from "@shared/components/callout";
@@ -140,16 +141,34 @@ const SPONSORS: readonly Sponsor[] = [
   },
 ];
 
+type SaveState = "idle" | "saving" | "saved" | "failed";
+
 export interface CourseDetailsProps {
   readonly course: Course;
   readonly location: string;
+  readonly onSaveProject: (project: CourseProject) => Promise<ProjectWriteResult>;
 }
 
-export function CourseDetails({ course, location }: CourseDetailsProps) {
+export function CourseDetails({ course, location, onSaveProject }: CourseDetailsProps) {
   const messages = useMessages();
   const t = messages.details;
   const { project } = course;
   const taught = project.learningLocales[0] ?? "";
+  const [saveState, setSaveState] = useState<SaveState>("idle");
+
+  const saveField = async (field: "title" | "description", value: string) => {
+    if (value === project[field]) return;
+    setSaveState("saving");
+    const result = await onSaveProject({ ...project, [field]: value });
+    setSaveState(result.status === "saved" ? "saved" : "failed");
+  };
+
+  const statusLabel =
+    saveState === "saving"
+      ? messages.common.saving
+      : saveState === "failed"
+        ? messages.common.saveFailed
+        : messages.common.savedLocally;
 
   const levelItems: SelectOption[] = [
     { value: "a1", label: t.levelA1 },
@@ -170,7 +189,9 @@ export function CourseDetails({ course, location }: CourseDetailsProps) {
       <WorkHeader
         title={t.title}
         description={t.description}
-        actions={<Status>{messages.common.savedLocally}</Status>}
+        actions={
+          <Status tone={saveState === "failed" ? "warning" : "default"}>{statusLabel}</Status>
+        }
       />
 
       <div className={styles.settingsStack}>
@@ -181,7 +202,14 @@ export function CourseDetails({ course, location }: CourseDetailsProps) {
         >
           <div className={joinClassNames(styles.formGrid, styles.detailBody)}>
             <Field label={t.fieldTitle} help={t.fieldTitleHelp}>
-              <TextInput name="title" defaultValue={project.title} autoComplete="off" />
+              <TextInput
+                name="title"
+                defaultValue={project.title}
+                autoComplete="off"
+                onBlur={(event) => {
+                  void saveField("title", event.currentTarget.value);
+                }}
+              />
             </Field>
             <Field label={t.fieldSubtitle} help={t.fieldSubtitleHelp}>
               <TextInput
@@ -191,7 +219,14 @@ export function CourseDetails({ course, location }: CourseDetailsProps) {
               />
             </Field>
             <Field label={t.fieldDescription} help={t.fieldDescriptionHelp}>
-              <TextArea name="description" rows={3} defaultValue={project.description} />
+              <TextArea
+                name="description"
+                rows={3}
+                defaultValue={project.description}
+                onBlur={(event) => {
+                  void saveField("description", event.currentTarget.value);
+                }}
+              />
             </Field>
           </div>
         </SectionGroup>

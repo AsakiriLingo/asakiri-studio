@@ -9,6 +9,8 @@ export const enMessages = {
     add: "Add",
     save: "Save",
     saved: "Saved",
+    saving: "Saving…",
+    saveFailed: "Save failed",
     savedLocally: "Saved locally",
     reveal: "Reveal",
     on: "On",

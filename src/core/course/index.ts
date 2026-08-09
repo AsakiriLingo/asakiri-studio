@@ -36,8 +36,15 @@ export type {
   Exercise,
 } from "@core/course/exercise";
 export type { PartContent, Part, Lesson } from "@core/course/lesson";
-export type { CourseProject, OutlineSection, Course } from "@core/course/course";
+export type {
+  CourseProject,
+  OutlineSection,
+  Course,
+  CourseSources,
+  LoadedCourse,
+} from "@core/course/course";
+export { partSourceKey } from "@core/course/course";
 export type { CourseFileReader } from "@core/course/parse-course";
-export { parseCourse, CourseParseError } from "@core/course/parse-course";
+export { parseCourse, parseCourseWithSources, CourseParseError } from "@core/course/parse-course";
 export type { ResolvedValue, BindingResolver } from "@core/course/resolve-binding";
 export { createBindingResolver } from "@core/course/resolve-binding";

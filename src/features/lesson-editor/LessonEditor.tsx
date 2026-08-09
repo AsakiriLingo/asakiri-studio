@@ -1,5 +1,6 @@
 import { useState } from "react";
-import type { Course, Lesson } from "@core/course";
+import type { Course, Lesson, TiptapDocument } from "@core/course";
+import type { ProjectWriteResult } from "@core/project-writing";
 import { useMessages } from "@shared/i18n";
 import { Button } from "@shared/components/button";
 import { Icon } from "@shared/components/icon";
@@ -23,9 +24,18 @@ export interface LessonEditorProps {
   readonly course: Course;
   readonly lesson: Lesson;
   readonly onBackToStructure: () => void;
+  readonly onSaveDocument: (
+    partId: string,
+    document: TiptapDocument,
+  ) => Promise<ProjectWriteResult>;
 }
 
-export function LessonEditor({ course, lesson, onBackToStructure }: LessonEditorProps) {
+export function LessonEditor({
+  course,
+  lesson,
+  onBackToStructure,
+  onSaveDocument,
+}: LessonEditorProps) {
   const messages = useMessages();
   const t = messages.lesson;
   const parts = lesson.parts;
@@ -99,7 +109,7 @@ export function LessonEditor({ course, lesson, onBackToStructure }: LessonEditor
             </div>
           </aside>
 
-          <PartEditor part={selectedPart} />
+          <PartEditor part={selectedPart} onSaveDocument={onSaveDocument} />
           <PartPreview part={selectedPart} />
         </div>
       )}

@@ -1,9 +1,18 @@
-import type { Course } from "@core/course";
+import type { Course, CourseSources } from "@core/course";
 import type {
   ContentCollectionSummary,
   ProjectReadErrorCode,
   ProjectReader,
 } from "@core/project-reading/project-reader";
+
+const EMPTY_SOURCES: CourseSources = {
+  project: "project.json",
+  collections: {},
+  records: {},
+  assets: {},
+  lessons: {},
+  parts: {},
+};
 
 export interface InMemoryProjectReaderSeed {
   readonly contentCollectionsBySession?: Readonly<
@@ -32,7 +41,7 @@ export function createInMemoryProjectReader(seed: InMemoryProjectReaderSeed = {}
       if (!course) {
         return Promise.resolve({ status: "failed", code: "unavailable" });
       }
-      return Promise.resolve({ status: "ready", data: course });
+      return Promise.resolve({ status: "ready", data: { course, sources: EMPTY_SOURCES } });
     },
   };
 }

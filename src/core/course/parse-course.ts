@@ -9,7 +9,14 @@ import type {
   RecordFieldValue,
 } from "@core/course/content";
 import type { Composition, CompositionBlock, CompositionBlockType } from "@core/course/composition";
-import type { Course, CourseProject, OutlineSection } from "@core/course/course";
+import type {
+  Course,
+  CourseProject,
+  CourseSources,
+  LoadedCourse,
+  OutlineSection,
+} from "@core/course/course";
+import { partSourceKey } from "@core/course/course";
 import type { TiptapDocument, TiptapMark, TiptapNode } from "@core/course/document";
 import type {
   BlankAnswer,
@@ -577,7 +584,7 @@ async function parsePart(
   value: unknown,
   lessonPath: string,
   index: number,
-): Promise<Part> {
+): Promise<{ part: Part; bodyPath: string }> {
   const context = `${lessonPath} parts[${String(index)}]`;
   const data = obj(value, context);
   const content = obj(data.content, `${context}.content`);
@@ -585,26 +592,38 @@ async function parsePart(
   const bodyPath = resolvePath(lessonPath, str(content.file, `${context}.content.file`));
   const body = await readJson(files, bodyPath);
   return {
-    id: str(data.id, `${context}.id`),
-    title: str(data.title, `${context}.title`),
-    content: parsePartContent(contentKind, body, bodyPath),
+    part: {
+      id: str(data.id, `${context}.id`),
+      title: str(data.title, `${context}.title`),
+      content: parsePartContent(contentKind, body, bodyPath),
+    },
+    bodyPath,
   };
 }
 
-async function parseLesson(files: CourseFileReader, lessonPath: string): Promise<Lesson> {
+async function parseLesson(
+  files: CourseFileReader,
+  lessonPath: string,
+): Promise<{ lesson: Lesson; partPaths: Record<string, string> }> {
   const data = obj(await readJson(files, lessonPath), `lesson ${lessonPath}`);
   const parts: Part[] = [];
+  const partPaths: Record<string, string> = {};
   for (const [index, part] of arr(data.parts, `${lessonPath} parts`).entries()) {
-    parts.push(await parsePart(files, part, lessonPath, index));
+    const { part: parsed, bodyPath } = await parsePart(files, part, lessonPath, index);
+    parts.push(parsed);
+    partPaths[parsed.id] = bodyPath;
   }
   return {
-    id: str(data.id, `${lessonPath} id`),
-    title: str(data.title, `${lessonPath} title`),
-    parts,
+    lesson: {
+      id: str(data.id, `${lessonPath} id`),
+      title: str(data.title, `${lessonPath} title`),
+      parts,
+    },
+    partPaths,
   };
 }
 
-export async function parseCourse(files: CourseFileReader): Promise<Course> {
+export async function parseCourseWithSources(files: CourseFileReader): Promise<LoadedCourse> {
   const manifest = obj(await readJson(files, MANIFEST_PATH), MANIFEST_PATH);
   const project = parseProject(manifest.project, `${MANIFEST_PATH} project`);
   const collectionPaths = strArr(manifest.collections, `${MANIFEST_PATH} collections`).map((path) =>
@@ -620,24 +639,52 @@ export async function parseCourse(files: CourseFileReader): Promise<Course> {
 
   const collections: Collection[] = [];
   const records: ContentRecord[] = [];
+  const collectionSources: Record<string, string> = {};
+  const recordSources: Record<string, string> = {};
   for (const collectionPath of collectionPaths) {
     const parsed = parseCollection(await readJson(files, collectionPath), collectionPath);
     collections.push(parsed.collection);
+    collectionSources[parsed.collection.id] = collectionPath;
     for (const recordFile of parsed.recordFiles) {
       const recordPath = resolvePath(collectionPath, recordFile);
-      records.push(parseRecord(await readJson(files, recordPath), recordPath));
+      const record = parseRecord(await readJson(files, recordPath), recordPath);
+      records.push(record);
+      recordSources[record.id] = recordPath;
     }
   }
 
   const assets: Asset[] = [];
+  const assetSources: Record<string, string> = {};
   for (const assetPath of assetPaths) {
-    assets.push(parseAsset(await readJson(files, assetPath), assetPath));
+    const asset = parseAsset(await readJson(files, assetPath), assetPath);
+    assets.push(asset);
+    assetSources[asset.id] = assetPath;
   }
 
   const lessons: Lesson[] = [];
+  const lessonSources: Record<string, string> = {};
+  const partSources: Record<string, string> = {};
   for (const lessonPath of lessonPaths) {
-    lessons.push(await parseLesson(files, lessonPath));
+    const { lesson, partPaths } = await parseLesson(files, lessonPath);
+    lessons.push(lesson);
+    lessonSources[lesson.id] = lessonPath;
+    for (const [partId, bodyPath] of Object.entries(partPaths)) {
+      partSources[partSourceKey(lesson.id, partId)] = bodyPath;
+    }
   }
 
-  return { project, collections, records, assets, lessons, outline };
+  const course: Course = { project, collections, records, assets, lessons, outline };
+  const sources: CourseSources = {
+    project: MANIFEST_PATH,
+    collections: collectionSources,
+    records: recordSources,
+    assets: assetSources,
+    lessons: lessonSources,
+    parts: partSources,
+  };
+  return { course, sources };
+}
+
+export async function parseCourse(files: CourseFileReader): Promise<Course> {
+  return (await parseCourseWithSources(files)).course;
 }

@@ -81,10 +81,13 @@ describe("createLayoutProjectReader readCourse", () => {
 
     expect(result.status).toBe("ready");
     if (result.status === "ready") {
-      expect(result.data.project.id).toBe("course_x");
-      expect(result.data.collections).toHaveLength(1);
-      expect(result.data.records).toHaveLength(1);
-      expect(result.data.lessons).toHaveLength(1);
+      expect(result.data.course.project.id).toBe("course_x");
+      expect(result.data.course.collections).toHaveLength(1);
+      expect(result.data.course.records).toHaveLength(1);
+      expect(result.data.course.lessons).toHaveLength(1);
+      expect(result.data.sources.records.record_cat).toBe("content/records/cat.json");
+      expect(result.data.sources.lessons.lesson_intro).toBe("lessons/intro.json");
+      expect(result.data.sources.parts["lesson_intro::part_intro"]).toBe("lessons/intro.doc.json");
     }
   });
 

@@ -113,6 +113,33 @@ pub fn create_course(parent_path: String, name: String) -> Result<CreatedCourse,
     })
 }
 
+fn resolve_course_path(root_path: &str, relative_path: &str) -> Option<std::path::PathBuf> {
+    let mut target = Path::new(root_path).to_path_buf();
+    for segment in relative_path.split('/') {
+        if segment.is_empty() || segment == "." || segment == ".." || segment.contains('\\') {
+            return None;
+        }
+        target.push(segment);
+    }
+    Some(target)
+}
+
+#[tauri::command]
+pub fn write_course_file(
+    root_path: String,
+    relative_path: String,
+    contents: String,
+) -> Result<(), String> {
+    let target =
+        resolve_course_path(&root_path, &relative_path).ok_or_else(|| "invalidPath".to_string())?;
+
+    if let Some(parent) = target.parent() {
+        fs::create_dir_all(parent).map_err(|_| "unknown".to_string())?;
+    }
+    fs::write(&target, contents).map_err(|_| "unknown".to_string())?;
+    Ok(())
+}
+
 #[tauri::command]
 pub fn read_course_title(path: String) -> Result<String, String> {
     let manifest_text =
@@ -128,7 +155,53 @@ pub fn read_course_title(path: String) -> Result<String, String> {
 
 #[cfg(test)]
 mod tests {
-    use super::{slugify, validate_directory_name};
+    use super::{resolve_course_path, slugify, validate_directory_name, write_course_file};
+
+    #[test]
+    fn writes_a_nested_file_and_creates_parent_dirs() {
+        let root = std::env::temp_dir().join(format!("asakiri_write_{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&root);
+
+        let result = write_course_file(
+            root.to_string_lossy().into_owned(),
+            "content/records/new.json".to_string(),
+            "{\"id\":\"x\"}".to_string(),
+        );
+
+        assert_eq!(result, Ok(()));
+        let written = std::fs::read_to_string(root.join("content/records/new.json")).unwrap();
+        assert_eq!(written, "{\"id\":\"x\"}");
+        let _ = std::fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn refuses_to_write_outside_the_course_directory() {
+        let root = std::env::temp_dir().join(format!("asakiri_guard_{}", std::process::id()));
+        let result =
+            write_course_file(root.to_string_lossy().into_owned(), "../escape.json".to_string(), "{}".to_string());
+
+        assert_eq!(result, Err("invalidPath".to_string()));
+        assert!(!root.join("../escape.json").exists());
+    }
+
+    #[test]
+    fn resolves_a_project_relative_path_under_the_root() {
+        let resolved = resolve_course_path("/courses/japanese", "content/records/cat.json");
+        assert_eq!(
+            resolved,
+            Some(std::path::PathBuf::from(
+                "/courses/japanese/content/records/cat.json"
+            ))
+        );
+    }
+
+    #[test]
+    fn rejects_paths_that_escape_the_course_directory() {
+        assert_eq!(resolve_course_path("/courses/japanese", "../secrets.json"), None);
+        assert_eq!(resolve_course_path("/courses/japanese", "a/../../b.json"), None);
+        assert_eq!(resolve_course_path("/courses/japanese", "a\\b.json"), None);
+        assert_eq!(resolve_course_path("/courses/japanese", ""), None);
+    }
 
     #[test]
     fn preserves_course_name_for_the_directory() {
