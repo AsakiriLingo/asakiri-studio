@@ -37,7 +37,8 @@ export type IconName =
   | "heart"
   | "mic"
   | "audio"
-  | "video";
+  | "video"
+  | "language";
 
 export const icons: Readonly<Record<IconName, ReactNode>> = {
   arrow: <path d="m9 18 6-6-6-6" />,
@@ -52,6 +53,12 @@ export const icons: Readonly<Record<IconName, ReactNode>> = {
   grip: (
     <>
       <path d="M9 5h.01M15 5h.01M9 12h.01M15 12h.01M9 19h.01M15 19h.01" />
+    </>
+  ),
+  language: (
+    <>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M3 12h18M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18" />
     </>
   ),
   details: (

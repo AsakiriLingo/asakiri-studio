@@ -7,6 +7,11 @@
   gap: var(--space-8);
 }
 
+.empty {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-300);
+}
+
 .unitBlock {
   min-width: 0;
   border-block: var(--border-hairline) solid var(--color-border);

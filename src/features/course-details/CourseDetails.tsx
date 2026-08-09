@@ -1,8 +1,10 @@
 import type { ReactNode } from "react";
+import type { Course } from "@core/course";
+import { useMessages } from "@shared/i18n";
 import { Button } from "@shared/components/button";
 import { Callout } from "@shared/components/callout";
 import { Field, TextArea, TextInput } from "@shared/components/form";
-import { Select } from "@shared/components/select";
+import { Select, type SelectOption } from "@shared/components/select";
 import { Icon } from "@shared/components/icon";
 import { IconButton } from "@shared/components/icon-button";
 import { PanelHeader } from "@shared/components/panel";
@@ -15,8 +17,17 @@ function joinClassNames(...classNames: (string | undefined)[]) {
   return classNames.filter(Boolean).join(" ");
 }
 
-function toItems(labels: readonly string[]) {
-  return labels.map((label) => ({ value: label, label }));
+function recordItems(record: Readonly<Record<string, string>>): SelectOption[] {
+  return Object.entries(record).map(([value, label]) => ({ value, label }));
+}
+
+function localeName(code: string): string {
+  if (!code) return "";
+  try {
+    return new Intl.DisplayNames(["en"], { type: "language" }).of(code) ?? code;
+  } catch {
+    return code;
+  }
 }
 
 function SectionGroup({
@@ -48,9 +59,10 @@ function AssetLink({ href, label }: { readonly href: string; readonly label: str
 }
 
 function RowActions({ removeLabel }: { readonly removeLabel: string }) {
+  const messages = useMessages();
   return (
     <span className={styles.inlineActions}>
-      <Button variant="ghost">Edit</Button>
+      <Button variant="ghost">{messages.common.edit}</Button>
       <IconButton aria-label={removeLabel}>
         <Icon name="trash" size={18} />
       </IconButton>
@@ -128,99 +140,108 @@ const SPONSORS: readonly Sponsor[] = [
   },
 ];
 
-export function CourseDetails() {
+export interface CourseDetailsProps {
+  readonly course: Course;
+  readonly location: string;
+}
+
+export function CourseDetails({ course, location }: CourseDetailsProps) {
+  const messages = useMessages();
+  const t = messages.details;
+  const { project } = course;
+  const taught = project.learningLocales[0] ?? "";
+
+  const levelItems: SelectOption[] = [
+    { value: "a1", label: t.levelA1 },
+    { value: "a2", label: t.levelA2 },
+    { value: "b1", label: t.levelB1 },
+  ];
+  const licenseItems: SelectOption[] = [
+    { value: "by", label: t.licenses.by },
+    { value: "bySa", label: t.licenses.bySa },
+    { value: "byNc", label: t.licenses.byNc },
+    { value: "byNcSa", label: t.licenses.byNcSa },
+    { value: "cc0", label: t.licenses.cc0 },
+    { value: "arr", label: t.licenses.arr },
+  ];
+
   return (
     <WorkInner>
       <WorkHeader
-        title="Course details"
-        description="The course-level metadata learners see first. Everything here is saved to this project folder."
-        actions={<Status>Saved locally</Status>}
+        title={t.title}
+        description={t.description}
+        actions={<Status>{messages.common.savedLocally}</Status>}
       />
 
       <div className={styles.settingsStack}>
         <SectionGroup
-          title="Overview"
+          title={t.overviewTitle}
           titleId="overview-title"
-          description="Shown on the course card and cover."
+          description={t.overviewDescription}
         >
           <div className={joinClassNames(styles.formGrid, styles.detailBody)}>
-            <Field
-              label="Course title"
-              help="Separate from the folder name — you can rename it any time."
-            >
-              <TextInput name="title" defaultValue="Japanese Starter" autoComplete="off" />
+            <Field label={t.fieldTitle} help={t.fieldTitleHelp}>
+              <TextInput name="title" defaultValue={project.title} autoComplete="off" />
             </Field>
-            <Field label="Subtitle" help="One short line under the title.">
+            <Field label={t.fieldSubtitle} help={t.fieldSubtitleHelp}>
               <TextInput
                 name="subtitle"
                 defaultValue="Your first words and sentences"
                 autoComplete="off"
               />
             </Field>
-            <Field
-              label="Description"
-              help="Markdown is supported. Appears on the course landing page."
-            >
-              <TextArea
-                name="description"
-                rows={3}
-                defaultValue="A gentle introduction to Japanese. Meet everyday words in context, then practise them with images, matching, and short sentences."
-              />
+            <Field label={t.fieldDescription} help={t.fieldDescriptionHelp}>
+              <TextArea name="description" rows={3} defaultValue={project.description} />
             </Field>
           </div>
         </SectionGroup>
 
         <SectionGroup
-          title="Language"
+          title={t.languageTitle}
           titleId="language-title"
-          description="Controls fonts, audio direction, and default reading aids."
+          description={t.languageDescription}
         >
           <div className={joinClassNames(styles.formGrid, styles.two, styles.detailBody)}>
-            <Field label="Language taught" help="The language learners are studying.">
-              <TextInput name="target-language" defaultValue="Japanese" autoComplete="off" />
-            </Field>
-            <Field label="Explained in" help="The language used for instructions and meanings.">
-              <TextInput name="source-language" defaultValue="English" autoComplete="off" />
-            </Field>
-            <Field label="Level" help="Shown as a badge on the course.">
-              <Select
-                name="level"
-                defaultValue="a1"
-                aria-label="Level"
-                items={[
-                  { value: "a1", label: "Beginner · A1" },
-                  { value: "a2", label: "Elementary · A2" },
-                  { value: "b1", label: "Intermediate · B1" },
-                ]}
+            <Field label={t.fieldTaught} help={t.fieldTaughtHelp}>
+              <TextInput
+                name="target-language"
+                defaultValue={localeName(taught)}
+                autoComplete="off"
               />
             </Field>
-            <Field label="Estimated length" help="A rough guide for learners browsing.">
+            <Field label={t.fieldExplained} help={t.fieldExplainedHelp}>
+              <TextInput
+                name="source-language"
+                defaultValue={localeName(project.defaultLocale)}
+                autoComplete="off"
+              />
+            </Field>
+            <Field label={t.fieldLevel} help={t.fieldLevelHelp}>
+              <Select name="level" defaultValue="a1" aria-label={t.fieldLevel} items={levelItems} />
+            </Field>
+            <Field label={t.fieldLength} help={t.fieldLengthHelp}>
               <TextInput name="length" defaultValue="2 units · 3 lessons" autoComplete="off" />
             </Field>
           </div>
         </SectionGroup>
 
-        <SectionGroup
-          title="Cover image"
-          titleId="cover-title"
-          description="Pulled from project media or an image integration."
-        >
+        <SectionGroup title={t.coverTitle} titleId="cover-title" description={t.coverDescription}>
           <div className={styles.detailBody}>
             <div className={styles.inlineActions}>
               <span className={styles.assetRef}>
                 <Icon name="image" size={16} />
                 cover-torii.jpg
               </span>
-              <Button variant="secondary">Choose media</Button>
-              <Button variant="ghost">Remove</Button>
+              <Button variant="secondary">{t.chooseMedia}</Button>
+              <Button variant="ghost">{t.remove}</Button>
             </div>
           </div>
         </SectionGroup>
 
         <SectionGroup
-          title="Contributors"
+          title={t.contributorsTitle}
           titleId="contributors-title"
-          description="Credited on the course page. Add a link for each person."
+          description={t.contributorsDescription}
         >
           {CONTRIBUTORS.map((person) => (
             <div key={person.name} className={styles.contributorRow}>
@@ -238,56 +259,51 @@ export function CourseDetails() {
                   ))}
                   <button className={styles.linkAdd} type="button">
                     <Icon name="plus" size={14} />
-                    Add link
+                    {messages.common.addLink}
                   </button>
                 </span>
               </span>
-              <RowActions removeLabel={`Remove ${person.name}`} />
+              <RowActions removeLabel={messages.common.remove(person.name)} />
             </div>
           ))}
           <div className={styles.contributorAdd}>
-            <button className={styles.avatarAdd} type="button" aria-label="Add photo">
+            <button className={styles.avatarAdd} type="button" aria-label={t.addPhoto}>
               <Icon name="image" size={18} />
             </button>
-            <Field label="Role">
+            <Field label={t.roleLabel}>
               <Select
                 name="contributor-role"
-                defaultValue="Author"
-                aria-label="Role"
-                items={toItems([
-                  "Author",
-                  "Co-author",
-                  "Translator",
-                  "Voice",
-                  "Illustrator",
-                  "Editor",
-                  "Reviewer",
-                  "Contributor",
-                ])}
+                defaultValue="author"
+                aria-label={t.roleLabel}
+                items={recordItems(t.roles)}
               />
             </Field>
-            <Field label="Name">
-              <TextInput name="contributor-name" placeholder="Full name" autoComplete="off" />
+            <Field label={t.nameLabel}>
+              <TextInput
+                name="contributor-name"
+                placeholder={t.namePlaceholder}
+                autoComplete="off"
+              />
             </Field>
-            <Field label="Link">
+            <Field label={t.linkLabel}>
               <TextInput
                 name="contributor-link"
                 type="url"
-                placeholder="https://…"
+                placeholder={t.urlPlaceholder}
                 autoComplete="off"
               />
             </Field>
             <Button variant="secondary">
               <Icon name="plus" size={18} />
-              Add
+              {messages.common.add}
             </Button>
           </div>
         </SectionGroup>
 
         <SectionGroup
-          title="Funding & support"
+          title={t.fundingTitle}
           titleId="funding-title"
-          description="Support links for the authors, shown on the course page."
+          description={t.fundingDescription}
         >
           {FUNDING.map((entry) => (
             <div key={entry.name} className={styles.fundingRow}>
@@ -298,46 +314,37 @@ export function CourseDetails() {
                 <span className={styles.rowTitle}>{entry.name}</span>
                 <AssetLink href={`https://${entry.url}`} label={entry.url} />
               </span>
-              <RowActions removeLabel={`Remove ${entry.name}`} />
+              <RowActions removeLabel={messages.common.remove(entry.name)} />
             </div>
           ))}
           <div className={styles.fundingAdd}>
-            <Field label="Platform">
+            <Field label={t.platformLabel}>
               <Select
                 name="funding-platform"
-                defaultValue="GitHub Sponsors"
-                aria-label="Platform"
-                items={toItems([
-                  "GitHub Sponsors",
-                  "Ko-fi",
-                  "Patreon",
-                  "Open Collective",
-                  "Buy Me a Coffee",
-                  "Liberapay",
-                  "PayPal",
-                  "Custom URL",
-                ])}
+                defaultValue="githubSponsors"
+                aria-label={t.platformLabel}
+                items={recordItems(t.platforms)}
               />
             </Field>
-            <Field label="Link">
+            <Field label={t.linkLabel}>
               <TextInput
                 name="funding-link"
                 type="url"
-                placeholder="https://…"
+                placeholder={t.urlPlaceholder}
                 autoComplete="off"
               />
             </Field>
             <Button variant="secondary">
               <Icon name="plus" size={18} />
-              Add
+              {messages.common.add}
             </Button>
           </div>
         </SectionGroup>
 
         <SectionGroup
-          title="Sponsors"
+          title={t.sponsorsTitle}
           titleId="sponsors-title"
-          description="Organizations that backed this course, credited with a logo."
+          description={t.sponsorsDescription}
         >
           {SPONSORS.map((sponsor) => (
             <div key={sponsor.name} className={styles.sponsorRow}>
@@ -352,71 +359,57 @@ export function CourseDetails() {
                 </span>
                 <AssetLink href={`https://${sponsor.url}`} label={sponsor.url} />
               </span>
-              <RowActions removeLabel={`Remove ${sponsor.name}`} />
+              <RowActions removeLabel={messages.common.remove(sponsor.name)} />
             </div>
           ))}
           <div className={styles.sponsorAdd}>
-            <button className={styles.logoAdd} type="button" aria-label="Add logo">
+            <button className={styles.logoAdd} type="button" aria-label={t.addLogo}>
               <Icon name="image" size={18} />
             </button>
-            <Field label="Organization">
-              <TextInput name="sponsor-name" placeholder="Name" autoComplete="off" />
+            <Field label={t.organizationLabel}>
+              <TextInput name="sponsor-name" placeholder={t.orgPlaceholder} autoComplete="off" />
             </Field>
-            <Field label="Link">
+            <Field label={t.linkLabel}>
               <TextInput
                 name="sponsor-link"
                 type="url"
-                placeholder="https://…"
+                placeholder={t.urlPlaceholder}
                 autoComplete="off"
               />
             </Field>
-            <Field label="Tier">
+            <Field label={t.tierLabel}>
               <Select
                 name="sponsor-tier"
-                defaultValue="Gold"
-                aria-label="Tier"
-                items={toItems(["Gold", "Silver", "Bronze", "Supporter"])}
+                defaultValue="gold"
+                aria-label={t.tierLabel}
+                items={recordItems(t.tiers)}
               />
             </Field>
             <Button variant="secondary">
               <Icon name="plus" size={18} />
-              Add
+              {messages.common.add}
             </Button>
           </div>
         </SectionGroup>
 
         <SectionGroup
-          title="License"
+          title={t.licenseTitle}
           titleId="license-title"
-          description="How others may reuse this course and its content."
+          description={t.licenseDescription}
         >
           <div className={joinClassNames(styles.formGrid, styles.two, styles.detailBody)}>
-            <Field
-              label="License"
-              className={styles.spanAll}
-              help="Applies to the course text and structure. Media may carry its own license."
-            >
+            <Field label={t.licenseLabel} className={styles.spanAll} help={t.licenseHelp}>
               <Select
                 name="license"
-                defaultValue="by-sa"
-                aria-label="License"
-                items={[
-                  { value: "by", label: "CC BY 4.0 · Attribution" },
-                  { value: "by-sa", label: "CC BY-SA 4.0 · Attribution-ShareAlike" },
-                  { value: "by-nc", label: "CC BY-NC 4.0 · Attribution-NonCommercial" },
-                  {
-                    value: "by-nc-sa",
-                    label: "CC BY-NC-SA 4.0 · Attribution-NonCommercial-ShareAlike",
-                  },
-                  { value: "cc0", label: "CC0 1.0 · Public domain" },
-                  { value: "arr", label: "All rights reserved" },
-                ]}
+                defaultValue="bySa"
+                aria-label={t.licenseLabel}
+                items={licenseItems}
               />
             </Field>
-            <Field label="Copyright holder">
+            <Field label={t.copyrightHolder}>
               <TextInput name="copyright-holder" defaultValue="Alok Singh" autoComplete="off" />
             </Field>
-            <Field label="Year">
+            <Field label={t.yearLabel}>
               <TextInput
                 name="copyright-year"
                 defaultValue="2026"
@@ -425,42 +418,46 @@ export function CourseDetails() {
               />
             </Field>
             <Callout icon="details" className={styles.spanAll}>
-              <strong>CC BY-SA 4.0.</strong>
+              <strong>{t.licenseCalloutStrong}</strong>
               <br />
-              Learners and other authors may share and adapt the course, even commercially, as long
-              as they credit the contributors above and release their version under the same
-              license.
+              {t.licenseCalloutBody}
             </Callout>
           </div>
         </SectionGroup>
 
         <SectionGroup
-          title="Project"
+          title={t.projectTitle}
           titleId="project-title"
-          description="Where and how this course is stored."
+          description={t.projectDescription}
         >
           <div className={styles.settingRow}>
             <span>
-              <span className={styles.settingName}>Folder</span>
-              <span className={joinClassNames(styles.settingDetail, styles.mono)}>
-                ~/Courses/Japanese Starter
+              <span className={styles.settingName}>{t.folder}</span>
+              <span className={joinClassNames(styles.settingDetail, styles.mono)}>{location}</span>
+            </span>
+            <Button variant="ghost">{messages.common.reveal}</Button>
+          </div>
+          <div className={styles.settingRow}>
+            <span>
+              <span className={styles.settingName}>{t.versionControl}</span>
+              <span className={styles.settingDetail}>{t.gitDetail}</span>
+            </span>
+            <Status>{t.clean}</Status>
+          </div>
+          <div className={styles.settingRow}>
+            <span>
+              <span className={styles.settingName}>{t.contentRecords}</span>
+              <span className={styles.settingDetail}>
+                {t.recordSummary(
+                  course.records.filter(
+                    (record) => record.collectionId === (course.collections[0]?.id ?? ""),
+                  ).length,
+                  course.collections[0]?.name ?? t.noCollections,
+                )}{" "}
+                · {t.mediaFiles(course.assets.length)}
               </span>
             </span>
-            <Button variant="ghost">Reveal</Button>
-          </div>
-          <div className={styles.settingRow}>
-            <span>
-              <span className={styles.settingName}>Version control</span>
-              <span className={styles.settingDetail}>Git initialized · 12 commits</span>
-            </span>
-            <Status>Clean</Status>
-          </div>
-          <div className={styles.settingRow}>
-            <span>
-              <span className={styles.settingName}>Content records</span>
-              <span className={styles.settingDetail}>6 in Vocabulary · 3 media files</span>
-            </span>
-            <Button variant="ghost">Open content</Button>
+            <Button variant="ghost">{t.openContent}</Button>
           </div>
         </SectionGroup>
       </div>

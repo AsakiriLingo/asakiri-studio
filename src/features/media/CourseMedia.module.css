@@ -2,6 +2,12 @@
   border-block: var(--border-hairline) solid var(--color-border);
 }
 
+.empty {
+  padding: var(--space-4);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-300);
+}
+
 .row {
   display: grid;
   grid-template-columns: var(--control-height-md) minmax(0, 1fr) auto;

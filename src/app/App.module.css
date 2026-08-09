@@ -1,0 +1,14 @@
+.message {
+  max-width: 36rem;
+  padding: var(--space-8);
+}
+
+.messageTitle {
+  margin-bottom: var(--space-2);
+  font-size: var(--font-size-600);
+  font-weight: var(--font-weight-bold);
+}
+
+.messageBody {
+  color: var(--color-text-muted);
+}

@@ -1,84 +1,99 @@
+import { useMemo } from "react";
+import type { Asset, ContentRecord, Course } from "@core/course";
+import { useMessages } from "@shared/i18n";
 import { Button } from "@shared/components/button";
-import { Icon, type IconName } from "@shared/components/icon";
+import { Icon } from "@shared/components/icon";
 import { PanelHeader } from "@shared/components/panel";
 import { Status } from "@shared/components/status";
 import { WorkHeader, WorkInner } from "@shared/components/work-surface";
 import styles from "@features/media/CourseMedia.module.css";
 
-interface MediaFile {
-  readonly id: string;
-  readonly name: string;
-  readonly kind: "Image" | "Audio" | "Video";
-  readonly icon: IconName;
-  readonly mime: string;
-  readonly usedBy: string;
+function referencedAssetIds(record: ContentRecord): string[] {
+  const ids: string[] = [];
+  for (const value of Object.values(record.fields)) {
+    if (value.kind === "asset") {
+      ids.push(value.assetId);
+    } else if (value.kind === "list") {
+      for (const item of value.items) {
+        if (item.kind === "asset") ids.push(item.assetId);
+      }
+    }
+  }
+  return ids;
 }
 
-const FILES: readonly MediaFile[] = [
-  {
-    id: "cat-png",
-    name: "cat.png",
-    kind: "Image",
-    icon: "image",
-    mime: "image/png",
-    usedBy: "Used by Vocabulary: 猫",
-  },
-  {
-    id: "neko-ja-mp3",
-    name: "neko-ja.mp3",
-    kind: "Audio",
-    icon: "audio",
-    mime: "audio/mpeg",
-    usedBy: "Used by Vocabulary: 猫",
-  },
-  {
-    id: "cat-en-mp3",
-    name: "cat-en.mp3",
-    kind: "Audio",
-    icon: "audio",
-    mime: "audio/mpeg",
-    usedBy: "Used by Vocabulary: 猫",
-  },
-];
+export interface CourseMediaProps {
+  readonly course: Course;
+}
 
-export function CourseMedia() {
+export function CourseMedia({ course }: CourseMediaProps) {
+  const messages = useMessages();
+  const t = messages.media;
+
+  const kindLabel: Record<Asset["kind"], string> = {
+    audio: t.kindAudio,
+    image: t.kindImage,
+    video: t.kindVideo,
+  };
+
+  const usage = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const record of course.records) {
+      for (const assetId of referencedAssetIds(record)) {
+        counts.set(assetId, (counts.get(assetId) ?? 0) + 1);
+      }
+    }
+    return counts;
+  }, [course.records]);
+
   return (
     <WorkInner>
       <WorkHeader
-        title="Media"
-        description="Manage the local images, audio, and video that content records and lessons reference."
+        title={t.title}
+        description={t.description}
         actions={
           <Button>
             <Icon name="plus" size={18} />
-            Import media
+            {t.importMedia}
           </Button>
         }
       />
 
       <section aria-labelledby="media-title">
         <PanelHeader
-          title="Project media"
+          title={t.projectMedia}
           titleId="media-title"
-          description="3 files · stored inside this project"
+          description={t.storedInside(t.files(course.assets.length))}
         />
-        <div className={styles.list}>
-          {FILES.map((file) => (
-            <div key={file.id} className={styles.row}>
-              <span className={styles.kind}>
-                <Icon name={file.icon} size={18} />
-              </span>
-              <span>
-                <span className={styles.rowTitle}>{file.name}</span>
-                <span className={styles.meta}>
-                  <span>{file.kind}</span>
-                  <span>{file.mime}</span>
-                  <span>{file.usedBy}</span>
-                </span>
-              </span>
-              <Status>Available</Status>
-            </div>
-          ))}
-        </div>
+        {course.assets.length === 0 ? (
+          <p className={styles.empty}>{t.empty}</p>
+        ) : (
+          <div className={styles.list}>
+            {course.assets.map((asset) => {
+              const uses = usage.get(asset.id) ?? 0;
+              return (
+                <div key={asset.id} className={styles.row}>
+                  <span className={styles.kind}>
+                    <Icon name={asset.kind} size={18} />
+                  </span>
+                  <span>
+                    <span className={styles.rowTitle}>
+                      {asset.file ?? asset.expectedFile ?? asset.label}
+                    </span>
+                    <span className={styles.meta}>
+                      <span>{kindLabel[asset.kind]}</span>
+                      <span>{asset.mimeType}</span>
+                      <span>{uses === 0 ? t.notReferenced : t.usedBy(uses)}</span>
+                    </span>
+                  </span>
+                  <Status tone={asset.availability === "ready" ? "default" : "warning"}>
+                    {asset.availability === "ready" ? t.available : t.placeholder}
+                  </Status>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </section>
     </WorkInner>
   );

@@ -1,7 +1,9 @@
 import type { ReactNode } from "react";
+import type { Part } from "@core/course";
+import { useMessages } from "@shared/i18n";
 import { Icon } from "@shared/components/icon";
 import { Status } from "@shared/components/status";
-import type { LessonPart, PartKind } from "@features/lesson-editor/parts";
+import { partKind, type PartKind } from "@features/lesson-editor/parts";
 import styles from "@features/lesson-editor/LessonEditor.module.css";
 
 function joinClassNames(...classNames: (string | undefined)[]) {
@@ -282,21 +284,24 @@ function PreviewBody({ kind }: { readonly kind: PartKind }) {
   }
 }
 
-export function PartPreview({ part }: { readonly part: LessonPart }) {
-  const runsOnDevice = part.kind === "speak";
+export function PartPreview({ part }: { readonly part: Part }) {
+  const messages = useMessages();
+  const t = messages.lesson;
+  const kind = partKind(part.content);
+  const runsOnDevice = kind === "speak";
   return (
-    <aside className={styles.previewPane} aria-label="Learner preview">
+    <aside className={styles.previewPane} aria-label={t.previewAria}>
       <div className={styles.previewSurface}>
         <div className={styles.previewHeader}>
-          <span>Learner preview</span>
+          <span>{t.learnerPreview}</span>
           {runsOnDevice ? (
-            <Status tone="warning">Runs on device</Status>
+            <Status tone="warning">{t.runsOnDevice}</Status>
           ) : (
-            <Status>Current part</Status>
+            <Status>{t.currentPart}</Status>
           )}
         </div>
         <div className={styles.previewBody}>
-          <PreviewBody kind={part.kind} />
+          <PreviewBody kind={kind} />
         </div>
       </div>
     </aside>

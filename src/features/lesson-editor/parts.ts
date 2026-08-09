@@ -1,3 +1,5 @@
+import type { PartContent } from "@core/course";
+
 export type PartKind =
   | "rich-text"
   | "select-image"
@@ -8,69 +10,24 @@ export type PartKind =
   | "listen"
   | "speak";
 
-export interface LessonPart {
-  readonly id: string;
-  readonly name: string;
-  readonly outlineDetail: string;
-  readonly headingDetail: string;
-  readonly kind: PartKind;
+export function partKind(content: PartContent): PartKind {
+  if (content.kind === "tiptap" || content.kind === "composition") {
+    return "rich-text";
+  }
+  switch (content.exercise.type) {
+    case "multiple-choice":
+      return "multiple-choice";
+    case "select-image":
+      return "select-image";
+    case "match-pairs":
+      return "match-pairs";
+    case "fill-blank":
+      return "fill-blank";
+    case "word-order":
+      return "word-order";
+    case "listening":
+      return "listen";
+    case "speaking":
+      return "speak";
+  }
 }
-
-export const LESSON_PARTS: readonly LessonPart[] = [
-  {
-    id: "introduction",
-    name: "Introduction",
-    outlineDetail: "Rich text",
-    headingDetail: "Rich text part",
-    kind: "rich-text",
-  },
-  {
-    id: "new-words",
-    name: "New words",
-    outlineDetail: "Select image",
-    headingDetail: "Select the image part",
-    kind: "select-image",
-  },
-  {
-    id: "multiple-choice",
-    name: "Multiple choice",
-    outlineDetail: "Multiple choice",
-    headingDetail: "Multiple choice part",
-    kind: "multiple-choice",
-  },
-  {
-    id: "match-words",
-    name: "Match the words",
-    outlineDetail: "Match pairs",
-    headingDetail: "Match pairs part",
-    kind: "match-pairs",
-  },
-  {
-    id: "fill-blank",
-    name: "Fill in the blank",
-    outlineDetail: "Fill blank",
-    headingDetail: "Fill blank part",
-    kind: "fill-blank",
-  },
-  {
-    id: "build-sentence",
-    name: "Build the sentence",
-    outlineDetail: "Word order",
-    headingDetail: "Word order part",
-    kind: "word-order",
-  },
-  {
-    id: "listening",
-    name: "Listening",
-    outlineDetail: "Listen & tap",
-    headingDetail: "Listen & tap part",
-    kind: "listen",
-  },
-  {
-    id: "speaking",
-    name: "Speaking",
-    outlineDetail: "Speak aloud",
-    headingDetail: "Speak aloud part",
-    kind: "speak",
-  },
-];

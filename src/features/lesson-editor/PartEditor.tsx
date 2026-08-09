@@ -1,14 +1,16 @@
 import { useState, type ReactNode } from "react";
 import type { JSONContent } from "@tiptap/react";
+import type { Part } from "@core/course";
+import { useMessages } from "@shared/i18n";
 import { Button } from "@shared/components/button";
 import { Field, TextArea } from "@shared/components/form";
 import { Icon } from "@shared/components/icon";
 import { PanelHeader } from "@shared/components/panel";
 import { RichEditor } from "@shared/components/rich-editor";
-import { Select, type SelectOption } from "@shared/components/select";
+import { Select } from "@shared/components/select";
 import { Status } from "@shared/components/status";
 import { Tag } from "@shared/components/tag";
-import type { LessonPart, PartKind } from "@features/lesson-editor/parts";
+import { partKind } from "@features/lesson-editor/parts";
 import styles from "@features/lesson-editor/LessonEditor.module.css";
 
 function joinClassNames(...classNames: (string | undefined)[]) {
@@ -16,9 +18,10 @@ function joinClassNames(...classNames: (string | undefined)[]) {
 }
 
 function Tabs({ labels }: { readonly labels: readonly string[] }) {
+  const messages = useMessages();
   const [selected, setSelected] = useState(0);
   return (
-    <div className={styles.lessonType} role="tablist" aria-label="Part editor modes">
+    <div className={styles.lessonType} role="tablist" aria-label={messages.lesson.editorModesAria}>
       {labels.map((label, index) => (
         <button
           key={label}
@@ -53,28 +56,31 @@ function PromptField({
   );
 }
 
-const CORRECT_ROLE_ITEMS: readonly SelectOption[] = [
-  { value: "correct", label: "Correct" },
-  { value: "distractor", label: "Distractor" },
-];
-
-const ANSWER_ROLE_ITEMS: readonly SelectOption[] = [
-  { value: "answer", label: "Answer" },
-  { value: "distractor", label: "Distractor" },
-];
-
+// Example content only; roleKind selects which localized role options to show.
 interface OptionData {
   readonly index: ReactNode;
   readonly title: string;
   readonly mono?: string;
   readonly detail?: string;
   readonly values: readonly string[];
-  readonly roleItems?: readonly SelectOption[];
+  readonly roleKind?: "correct" | "answer";
   readonly role?: string;
   readonly trailing?: ReactNode;
 }
 
 function OptionRow({ option }: { readonly option: OptionData }) {
+  const messages = useMessages();
+  const t = messages.lesson;
+  const roleItems =
+    option.roleKind === "answer"
+      ? [
+          { value: "answer", label: t.roleAnswer },
+          { value: "distractor", label: t.roleDistractor },
+        ]
+      : [
+          { value: "correct", label: t.roleCorrect },
+          { value: "distractor", label: t.roleDistractor },
+        ];
   return (
     <div className={styles.optionRow}>
       <span className={styles.optionIndex}>{option.index}</span>
@@ -94,13 +100,13 @@ function OptionRow({ option }: { readonly option: OptionData }) {
           </span>
         )}
       </span>
-      {option.roleItems === undefined ? (
+      {option.roleKind === undefined ? (
         option.trailing
       ) : (
         <Select
           className={styles.roleSelect}
-          aria-label={`Role for ${option.title}`}
-          items={option.roleItems}
+          aria-label={t.roleFor(option.title)}
+          items={roleItems}
           defaultValue={option.role}
         />
       )}
@@ -135,13 +141,14 @@ function Panel({
 }
 
 function SettingRow({ name, detail }: { readonly name: string; readonly detail: string }) {
+  const messages = useMessages();
   return (
     <div className={styles.settingRow}>
       <span>
         <span className={styles.settingName}>{name}</span>
         <span className={styles.settingDetail}>{detail}</span>
       </span>
-      <Tag variant="accent">On</Tag>
+      <Tag variant="accent">{messages.common.on}</Tag>
     </div>
   );
 }
@@ -188,9 +195,12 @@ const RICH_TEXT_SEED: JSONContent = {
   ],
 };
 
-function RichTextEditor() {
-  const [document, setDocument] = useState<JSONContent>(RICH_TEXT_SEED);
-  return <RichEditor value={document} onChange={setDocument} ariaLabel="Rich text part content" />;
+function RichTextEditor({ initial }: { readonly initial?: JSONContent | undefined }) {
+  const messages = useMessages();
+  const [document, setDocument] = useState<JSONContent>(initial ?? RICH_TEXT_SEED);
+  return (
+    <RichEditor value={document} onChange={setDocument} ariaLabel={messages.lesson.richTextAria} />
+  );
 }
 
 const MULTIPLE_CHOICE_OPTIONS: readonly OptionData[] = [
@@ -199,7 +209,7 @@ const MULTIPLE_CHOICE_OPTIONS: readonly OptionData[] = [
     title: "Vocabulary / 猫",
     mono: "option_cat",
     values: ["猫", "Cat", "Japanese audio", "English audio", "Image"],
-    roleItems: CORRECT_ROLE_ITEMS,
+    roleKind: "correct",
     role: "correct",
   },
   {
@@ -207,7 +217,7 @@ const MULTIPLE_CHOICE_OPTIONS: readonly OptionData[] = [
     title: "Vocabulary / 犬",
     mono: "option_dog",
     values: ["犬", "Dog"],
-    roleItems: CORRECT_ROLE_ITEMS,
+    roleKind: "correct",
     role: "distractor",
   },
   {
@@ -215,7 +225,7 @@ const MULTIPLE_CHOICE_OPTIONS: readonly OptionData[] = [
     title: "Vocabulary / 鳥",
     mono: "option_bird",
     values: ["鳥", "Bird"],
-    roleItems: CORRECT_ROLE_ITEMS,
+    roleKind: "correct",
     role: "distractor",
   },
 ];
@@ -226,7 +236,7 @@ const IMAGE_OPTIONS: readonly OptionData[] = [
     title: "Vocabulary / 猫",
     mono: "option_cat",
     values: ["Image · cat.png", "猫", "Japanese audio"],
-    roleItems: CORRECT_ROLE_ITEMS,
+    roleKind: "correct",
     role: "correct",
   },
   {
@@ -234,7 +244,7 @@ const IMAGE_OPTIONS: readonly OptionData[] = [
     title: "Vocabulary / 犬",
     mono: "option_dog",
     values: ["Image · dog.png", "犬"],
-    roleItems: CORRECT_ROLE_ITEMS,
+    roleKind: "correct",
     role: "distractor",
   },
   {
@@ -242,7 +252,7 @@ const IMAGE_OPTIONS: readonly OptionData[] = [
     title: "Vocabulary / 鳥",
     mono: "option_bird",
     values: ["Image · bird.png", "鳥"],
-    roleItems: CORRECT_ROLE_ITEMS,
+    roleKind: "correct",
     role: "distractor",
   },
   {
@@ -250,7 +260,7 @@ const IMAGE_OPTIONS: readonly OptionData[] = [
     title: "Vocabulary / 魚",
     mono: "option_fish",
     values: ["Image · fish.png", "魚"],
-    roleItems: CORRECT_ROLE_ITEMS,
+    roleKind: "correct",
     role: "distractor",
   },
 ];
@@ -261,7 +271,7 @@ const FILL_BLANK_OPTIONS: readonly OptionData[] = [
     title: "Vocabulary / 猫",
     mono: "option_cat",
     values: ["猫", "Cat"],
-    roleItems: ANSWER_ROLE_ITEMS,
+    roleKind: "answer",
     role: "answer",
   },
   {
@@ -269,7 +279,7 @@ const FILL_BLANK_OPTIONS: readonly OptionData[] = [
     title: "Vocabulary / 犬",
     mono: "option_dog",
     values: ["犬", "Dog"],
-    roleItems: ANSWER_ROLE_ITEMS,
+    roleKind: "answer",
     role: "distractor",
   },
   {
@@ -277,7 +287,7 @@ const FILL_BLANK_OPTIONS: readonly OptionData[] = [
     title: "Vocabulary / 鳥",
     mono: "option_bird",
     values: ["鳥", "Bird"],
-    roleItems: ANSWER_ROLE_ITEMS,
+    roleKind: "answer",
     role: "distractor",
   },
 ];
@@ -289,7 +299,7 @@ const LISTEN_WORD_BANK: readonly OptionData[] = [
     title: "Vocabulary / 魚",
     mono: "option_fish",
     values: ["魚", "Fish"],
-    roleItems: ANSWER_ROLE_ITEMS,
+    roleKind: "answer",
     role: "distractor",
   },
 ];
@@ -307,18 +317,17 @@ function OptionEditor({
   panelTitle,
   panelDescription,
   options,
-  promptLabel = "Prompt",
 }: {
   readonly prompt: string;
   readonly help: string;
   readonly panelTitle: string;
   readonly panelDescription: string;
   readonly options: readonly OptionData[];
-  readonly promptLabel?: string;
 }) {
+  const messages = useMessages();
   return (
     <div className={styles.formGrid}>
-      <PromptField label={promptLabel} value={prompt} help={help} />
+      <PromptField label={messages.lesson.prompt} value={prompt} help={help} />
       <Panel title={panelTitle} description={panelDescription}>
         <div className={styles.optionList}>
           {options.map((option) => (
@@ -331,14 +340,16 @@ function OptionEditor({
 }
 
 function MatchEditor() {
+  const messages = useMessages();
+  const t = messages.lesson;
   return (
     <div className={styles.formGrid}>
       <PromptField
-        label="Prompt"
+        label={t.prompt}
         value="Match each word to its meaning."
         help="Learners tap a Japanese word, then its English meaning. Pairs are shuffled on each attempt."
       />
-      <Panel title="Pairs" description="Each pair links two values from one content record.">
+      <Panel title={t.exercise.pairsTitle} description={t.exercise.pairsDesc}>
         <div className={styles.pairList}>
           {MATCH_PAIRS.map((pair) => (
             <div key={pair.ja} className={styles.pairRow}>
@@ -363,7 +374,7 @@ function MatchEditor() {
         <div className={styles.tokenList}>
           <Button variant="ghost">
             <Icon name="plus" size={18} />
-            Add pair
+            {t.addPair}
           </Button>
         </div>
       </Panel>
@@ -372,22 +383,21 @@ function MatchEditor() {
 }
 
 function FillBlankEditor() {
+  const messages = useMessages();
+  const t = messages.lesson;
   return (
     <div className={styles.formGrid}>
       <PromptField
-        label="Sentence"
+        label={t.exercise.sentenceLabel}
         value="これは {{猫}} です。"
         help="Wrap the answer in {{ }} to make the blank. The word inside references Vocabulary / 猫."
       />
       <PromptField
-        label="Translation shown as help"
+        label={t.exercise.translationLabel}
         value="This is a cat."
         help="Optional. Displayed under the sentence while the learner answers."
       />
-      <Panel
-        title="Word bank"
-        description="The answer plus distractors. Order is shuffled for the learner."
-      >
+      <Panel title={t.exercise.wordBankTitle} description={t.exercise.wordBankFillDesc}>
         <div className={styles.optionList}>
           {FILL_BLANK_OPTIONS.map((option) => (
             <OptionRow key={option.mono} option={option} />
@@ -399,17 +409,16 @@ function FillBlankEditor() {
 }
 
 function WordOrderEditor() {
+  const messages = useMessages();
+  const t = messages.lesson;
   return (
     <div className={styles.formGrid}>
       <PromptField
-        label="Prompt"
+        label={t.prompt}
         value={'Build this sentence: "This is a cat."'}
         help="Learners tap the word tiles in the correct order to build the answer."
       />
-      <Panel
-        title="Answer order"
-        description="The correct sequence. Tiles are shuffled for the learner."
-      >
+      <Panel title={t.exercise.answerOrderTitle} description={t.exercise.answerOrderDesc}>
         <div className={styles.tokenList}>
           {["これ", "は", "猫", "です"].map((token, index) => (
             <span key={token} className={styles.token}>
@@ -421,16 +430,13 @@ function WordOrderEditor() {
           ))}
         </div>
       </Panel>
-      <Panel
-        title="Distractor tiles"
-        description="Extra tiles mixed into the bank to raise the challenge."
-      >
+      <Panel title={t.exercise.distractorTilesTitle} description={t.exercise.distractorTilesDesc}>
         <div className={styles.tokenList}>
           <span className={styles.token}>犬</span>
           <span className={styles.token}>か</span>
           <Button variant="ghost">
             <Icon name="plus" size={18} />
-            Add tile
+            {t.addTile}
           </Button>
         </div>
       </Panel>
@@ -439,17 +445,16 @@ function WordOrderEditor() {
 }
 
 function ListenEditor() {
+  const messages = useMessages();
+  const t = messages.lesson;
   return (
     <div className={styles.formGrid}>
       <PromptField
-        label="Prompt"
+        label={t.prompt}
         value="Tap the word you hear."
         help="No text is shown until the learner answers — the audio is the whole question."
       />
-      <Panel
-        title="Audio"
-        description="Upload a recording or pull one from Tatoeba. No device-generated audio."
-      >
+      <Panel title={t.exercise.audioTitle} description={t.exercise.audioDesc}>
         <div className={styles.optionList}>
           <OptionRow
             option={{
@@ -457,33 +462,33 @@ function ListenEditor() {
               title: "neko-ja.mp3",
               detail: "Uploaded · Vocabulary / 猫",
               values: ["0:01", "audio/mpeg"],
-              trailing: <SpeakButton>Play</SpeakButton>,
+              trailing: <SpeakButton>{messages.common.play}</SpeakButton>,
             }}
           />
         </div>
         <div className={styles.tokenList}>
           <Button variant="ghost">
             <Icon name="plus" size={18} />
-            Upload audio
+            {t.uploadAudio}
           </Button>
           <Button variant="ghost">
             <Icon name="content" size={18} />
-            Get from Tatoeba
+            {t.getFromTatoeba}
           </Button>
         </div>
       </Panel>
-      <Field label="Answer mode" help="Tap chooses from a word bank; type checks free text.">
+      <Field label={t.answerModeLabel} help={t.answerModeHelp}>
         <Select
           name="answer-mode"
           defaultValue="tap"
-          aria-label="Answer mode"
+          aria-label={t.answerModeLabel}
           items={[
-            { value: "tap", label: "Tap the word" },
-            { value: "type", label: "Type what you hear" },
+            { value: "tap", label: t.answerModeTap },
+            { value: "type", label: t.answerModeType },
           ]}
         />
       </Field>
-      <Panel title="Word bank" description="The answer plus distractors, shuffled for the learner.">
+      <Panel title={t.exercise.wordBankTitle} description={t.exercise.wordBankListenDesc}>
         <div className={styles.optionList}>
           {LISTEN_WORD_BANK.map((option) => (
             <OptionRow key={option.mono} option={option} />
@@ -491,36 +496,33 @@ function ListenEditor() {
         </div>
       </Panel>
       <div className={styles.settingGroup}>
-        <SettingRow name="Slow replay" detail="Offer a 0.5× playback button." />
-        <SettingRow name="Allow skip" detail="Let learners skip in a quiet place." />
+        <SettingRow name={t.settingSlowReplay} detail={t.settingSlowReplayDetail} />
+        <SettingRow name={t.settingAllowSkip} detail={t.settingAllowSkipDetail} />
       </div>
     </div>
   );
 }
 
 function SpeakEditor() {
+  const messages = useMessages();
+  const t = messages.lesson;
   return (
     <>
       <div className={styles.callout}>
         <Icon name="mic" size={18} />
         <span>
-          <strong>Graded in the learner app.</strong>
+          <strong>{t.speakCalloutStrong}</strong>
           <br />
-          Speaking needs a microphone and on-device speech recognition, so recording and scoring
-          can&rsquo;t run here in Studio. This editor sets what learners say and how strictly
-          it&rsquo;s matched.
+          {t.speakCalloutBody}
         </span>
       </div>
       <div className={styles.formGrid}>
         <PromptField
-          label="Prompt"
+          label={t.prompt}
           value="Say this word in Japanese."
           help="Shown above the phrase while the learner speaks."
         />
-        <Panel
-          title="Phrase to speak"
-          description="What the learner should say. The audio is the model pronunciation."
-        >
+        <Panel title={t.exercise.phraseTitle} description={t.exercise.phraseDesc}>
           <div className={styles.optionList}>
             <OptionRow
               option={{
@@ -528,46 +530,48 @@ function SpeakEditor() {
                 title: "Vocabulary / 猫",
                 detail: "Target · reads “neko”",
                 values: ["猫", "neko", "Model audio · neko-ja.mp3"],
-                trailing: <SpeakButton>Play</SpeakButton>,
+                trailing: <SpeakButton>{messages.common.play}</SpeakButton>,
               }}
             />
           </div>
         </Panel>
-        <Field
-          label="Match strictness"
-          help="How closely on-device recognition must match to pass."
-        >
+        <Field label={t.strictnessLabel} help={t.strictnessHelp}>
           <Select
             name="strictness"
             defaultValue="standard"
-            aria-label="Match strictness"
+            aria-label={t.strictnessLabel}
             items={[
-              { value: "lenient", label: "Lenient — accept close attempts" },
-              { value: "standard", label: "Standard" },
-              { value: "strict", label: "Strict — require accurate pronunciation" },
+              { value: "lenient", label: t.strictnessLenient },
+              { value: "standard", label: t.strictnessStandard },
+              { value: "strict", label: t.strictnessStrict },
             ]}
           />
         </Field>
         <div className={styles.settingGroup}>
-          <SettingRow name="Show romaji" detail="Display &ldquo;neko&rdquo; under the phrase." />
-          <SettingRow name="Allow skip" detail="Let learners without a mic continue." />
+          <SettingRow name={t.settingShowRomaji} detail={t.settingShowRomajiDetail} />
+          <SettingRow name={t.settingAllowSkip} detail={t.settingAllowSkipMicDetail} />
         </div>
       </div>
     </>
   );
 }
 
-function EditorBody({ kind }: { readonly kind: PartKind }) {
+function EditorBody({ part }: { readonly part: Part }) {
+  const messages = useMessages();
+  const t = messages.lesson;
+  const kind = partKind(part.content);
+  const initial =
+    part.content.kind === "tiptap" ? (part.content.document as unknown as JSONContent) : undefined;
   switch (kind) {
     case "rich-text":
-      return <RichTextEditor />;
+      return <RichTextEditor initial={initial} />;
     case "select-image":
       return (
         <OptionEditor
           prompt="Tap the picture for 猫."
           help="Learners hear the Japanese audio, then choose the matching image. Introduces the word before it is tested."
-          panelTitle="Image options"
-          panelDescription="Each option shows its content image and word. Exactly one is correct."
+          panelTitle={t.exercise.imageOptionsTitle}
+          panelDescription={t.exercise.imageOptionsDesc}
           options={IMAGE_OPTIONS}
         />
       );
@@ -576,8 +580,8 @@ function EditorBody({ kind }: { readonly kind: PartKind }) {
         <OptionEditor
           prompt="Choose the meaning of 猫."
           help="The prompt references Vocabulary / 猫 / Japanese."
-          panelTitle="Answer options"
-          panelDescription="Each option keeps a stable ID and may expose several values."
+          panelTitle={t.exercise.answerOptionsTitle}
+          panelDescription={t.exercise.answerOptionsDesc}
           options={MULTIPLE_CHOICE_OPTIONS}
         />
       );
@@ -594,20 +598,24 @@ function EditorBody({ kind }: { readonly kind: PartKind }) {
   }
 }
 
-export function PartEditor({ part }: { readonly part: LessonPart }) {
-  const tabLabels = part.kind === "rich-text" ? ["Write", "References"] : ["Options", "Feedback"];
+export function PartEditor({ part }: { readonly part: Part }) {
+  const messages = useMessages();
+  const t = messages.lesson;
+  const kind = partKind(part.content);
+  const tabLabels =
+    kind === "rich-text" ? [t.tabWrite, t.tabReferences] : [t.tabOptions, t.tabFeedback];
 
   return (
-    <section className={styles.editorArea} aria-label="Selected lesson part editor">
+    <section className={styles.editorArea} aria-label={t.editorAria}>
       <div className={styles.partHeading}>
         <span>
-          <span className={styles.partName}>{part.name}</span>
-          <span className={styles.rowDetail}>{part.headingDetail}</span>
+          <span className={styles.partName}>{part.title}</span>
+          <span className={styles.rowDetail}>{t.partHeading(t.kind[kind])}</span>
         </span>
-        <Status>Saved</Status>
+        <Status>{messages.common.saved}</Status>
       </div>
       <Tabs labels={tabLabels} />
-      <EditorBody kind={part.kind} />
+      <EditorBody part={part} />
     </section>
   );
 }

@@ -1,3 +1,4 @@
+import { useMessages } from "@shared/i18n";
 import { Button } from "@shared/components/button";
 import { Callout } from "@shared/components/callout";
 import { PasswordInput } from "@shared/components/form";
@@ -9,152 +10,115 @@ import { Tag, type TagVariant } from "@shared/components/tag";
 import { WorkHeader } from "@shared/components/work-surface";
 import styles from "@features/integrations/Integrations.module.css";
 
-interface MetaTag {
-  readonly label: string;
-  readonly variant: TagVariant;
-}
+type MetaKey = "images" | "byok" | "sentences" | "freeCcBy" | "ai" | "active";
+type ProviderId = "unsplash" | "pixabay" | "tatoeba" | "anthropic" | "openai" | "gemini";
+type GroupId = "images" | "sentences" | "ai";
 
-interface KeyField {
-  readonly value?: string;
-  readonly placeholder?: string;
-  readonly buttonLabel: string;
-  readonly ariaLabel: string;
-}
-
-interface Provider {
+interface ProviderDef {
+  readonly id: ProviderId;
   readonly icon: IconName;
   readonly name: string;
-  readonly detail: string;
-  readonly meta: readonly MetaTag[];
-  readonly statusLabel: string;
+  readonly meta: readonly { readonly key: MetaKey; readonly variant: TagVariant }[];
+  readonly statusKey: "connected" | "notConnected" | "enabled";
   readonly statusTone: StatusTone;
-  readonly action?: string;
-  readonly key?: KeyField;
+  readonly actionKey?: "disconnect" | "connect" | "disable";
+  readonly key?: { readonly value?: string };
 }
 
-interface Group {
-  readonly id: string;
-  readonly title: string;
-  readonly description: string;
-  readonly providers: readonly Provider[];
+interface GroupDef {
+  readonly id: GroupId;
+  readonly providers: readonly ProviderDef[];
 }
 
-const GROUPS: readonly Group[] = [
+// Provider identity only; all display text comes from the message catalog.
+const GROUPS: readonly GroupDef[] = [
   {
     id: "images",
-    title: "Images",
-    description: "Search photos to attach to vocabulary and covers.",
     providers: [
       {
+        id: "unsplash",
         icon: "image",
         name: "Unsplash",
-        detail: "Royalty-free photography. Good for lesson covers and real objects.",
         meta: [
-          { label: "Images", variant: "default" },
-          { label: "BYOK", variant: "default" },
+          { key: "images", variant: "default" },
+          { key: "byok", variant: "default" },
         ],
-        statusLabel: "Connected",
+        statusKey: "connected",
         statusTone: "default",
-        action: "Disconnect",
-        key: {
-          value: "ak-live-8f2c4d9b6a1e",
-          buttonLabel: "Update",
-          ariaLabel: "Unsplash access key",
-        },
+        actionKey: "disconnect",
+        key: { value: "ak-live-8f2c4d9b6a1e" },
       },
       {
+        id: "pixabay",
         icon: "image",
         name: "Pixabay",
-        detail: "Photos plus simple illustrations and clip-art style images.",
         meta: [
-          { label: "Images", variant: "default" },
-          { label: "BYOK", variant: "default" },
+          { key: "images", variant: "default" },
+          { key: "byok", variant: "default" },
         ],
-        statusLabel: "Not connected",
+        statusKey: "notConnected",
         statusTone: "warning",
-        key: {
-          placeholder: "Paste your Pixabay API key",
-          buttonLabel: "Connect",
-          ariaLabel: "Pixabay API key",
-        },
+        key: {},
       },
     ],
   },
   {
     id: "sentences",
-    title: "Example sentences",
-    description: "Pull real sentences with translations into exercises.",
     providers: [
       {
+        id: "tatoeba",
         icon: "content",
         name: "Tatoeba",
-        detail:
-          "Community sentence bank with translations. No key required — attribution is added automatically.",
         meta: [
-          { label: "Sentences", variant: "default" },
-          { label: "Free · CC-BY", variant: "default" },
+          { key: "sentences", variant: "default" },
+          { key: "freeCcBy", variant: "default" },
         ],
-        statusLabel: "Enabled",
+        statusKey: "enabled",
         statusTone: "default",
-        action: "Disable",
+        actionKey: "disable",
       },
     ],
   },
   {
     id: "ai",
-    title: "AI · bring your own key",
-    description:
-      "Draft translations, hints, and example sentences. Choose one provider; requests use your key and account.",
     providers: [
       {
+        id: "anthropic",
         icon: "sparkles",
         name: "Anthropic · Claude",
-        detail: "Strong at natural translations and learner-friendly explanations.",
         meta: [
-          { label: "AI", variant: "default" },
-          { label: "BYOK", variant: "default" },
-          { label: "Active", variant: "accent" },
+          { key: "ai", variant: "default" },
+          { key: "byok", variant: "default" },
+          { key: "active", variant: "accent" },
         ],
-        statusLabel: "Connected",
+        statusKey: "connected",
         statusTone: "default",
-        action: "Disconnect",
-        key: {
-          value: "sk-ant-4a2f9c7e1d6b",
-          buttonLabel: "Update",
-          ariaLabel: "Anthropic API key",
-        },
+        actionKey: "disconnect",
+        key: { value: "sk-ant-4a2f9c7e1d6b" },
       },
       {
+        id: "openai",
         icon: "sparkles",
         name: "OpenAI",
-        detail: "GPT models for drafting content and alternate phrasings.",
         meta: [
-          { label: "AI", variant: "default" },
-          { label: "BYOK", variant: "default" },
+          { key: "ai", variant: "default" },
+          { key: "byok", variant: "default" },
         ],
-        statusLabel: "Not connected",
+        statusKey: "notConnected",
         statusTone: "warning",
-        key: {
-          placeholder: "Paste your OpenAI API key",
-          buttonLabel: "Connect",
-          ariaLabel: "OpenAI API key",
-        },
+        key: {},
       },
       {
+        id: "gemini",
         icon: "sparkles",
         name: "Google · Gemini",
-        detail: "Gemini models, including fast low-cost options for bulk drafts.",
         meta: [
-          { label: "AI", variant: "default" },
-          { label: "BYOK", variant: "default" },
+          { key: "ai", variant: "default" },
+          { key: "byok", variant: "default" },
         ],
-        statusLabel: "Not connected",
+        statusKey: "notConnected",
         statusTone: "warning",
-        key: {
-          placeholder: "Paste your Google AI API key",
-          buttonLabel: "Connect",
-          ariaLabel: "Google AI API key",
-        },
+        key: {},
       },
     ],
   },
@@ -164,64 +128,67 @@ export interface IntegrationsProps {
   readonly isDark: boolean;
   readonly onBack: () => void;
   readonly onToggleTheme: () => void;
+  readonly onToggleLocale: () => void;
 }
 
-export function Integrations({ isDark, onBack, onToggleTheme }: IntegrationsProps) {
+export function Integrations({ isDark, onBack, onToggleTheme, onToggleLocale }: IntegrationsProps) {
+  const messages = useMessages();
+  const t = messages.integrations;
+
   return (
     <main className={styles.hub}>
       <div className={styles.tools}>
-        <IconButton aria-label="Back to Start" onClick={onBack}>
+        <IconButton aria-label={messages.common.backToStart} onClick={onBack}>
           <Icon name="back" size={18} />
         </IconButton>
+        <IconButton aria-label={messages.switchLanguage} onClick={onToggleLocale}>
+          <Icon name="language" size={18} />
+        </IconButton>
         <IconButton
-          aria-label={isDark ? "Use light theme" : "Use dark theme"}
+          aria-label={isDark ? messages.common.useLightTheme : messages.common.useDarkTheme}
           onClick={onToggleTheme}
         >
           <Icon name={isDark ? "sun" : "moon"} size={18} />
         </IconButton>
       </div>
       <div className={styles.inner}>
-        <WorkHeader
-          title="Integrations"
-          description="App-level connections shared by every course on this device. Optional — Studio works fully offline without them."
-        />
+        <WorkHeader title={t.title} description={t.description} />
 
         <div className={styles.stack}>
           <Callout icon="integrations">
-            <strong>Keys stay on this device.</strong>
+            <strong>{t.calloutTitle}</strong>
             <br />
-            API keys are saved to your Studio app settings, not to any course folder, and are never
-            uploaded. Every course you open reuses the same connections.
+            {t.calloutBody}
           </Callout>
 
           {GROUPS.map((group) => (
             <section key={group.id} className={styles.group} aria-labelledby={`${group.id}-title`}>
               <PanelHeader
-                title={group.title}
+                title={t.groups[group.id].title}
                 titleId={`${group.id}-title`}
-                description={group.description}
+                description={t.groups[group.id].description}
               />
               {group.providers.map((provider) => (
-                <div key={provider.name} className={styles.row}>
+                <div key={provider.id} className={styles.row}>
                   <div className={styles.main}>
                     <span className={styles.badge}>
                       <Icon name={provider.icon} size={18} />
                     </span>
                     <span>
                       <span className={styles.name}>{provider.name}</span>{" "}
-                      <span className={styles.detail}>{provider.detail}</span>
+                      <span className={styles.detail}>{t.providers[provider.id]}</span>
                       <span className={styles.meta}>
                         {provider.meta.map((tag) => (
-                          <Tag key={tag.label} variant={tag.variant}>
-                            {tag.label}
+                          <Tag key={tag.key} variant={tag.variant}>
+                            {t.meta[tag.key]}
                           </Tag>
                         ))}
                       </span>
                     </span>
                     <span className={styles.actions}>
-                      <Status tone={provider.statusTone}>{provider.statusLabel}</Status>
-                      {provider.action === undefined ? null : (
-                        <Button variant="ghost">{provider.action}</Button>
+                      <Status tone={provider.statusTone}>{t.status[provider.statusKey]}</Status>
+                      {provider.actionKey === undefined ? null : (
+                        <Button variant="ghost">{t.action[provider.actionKey]}</Button>
                       )}
                     </span>
                   </div>
@@ -229,12 +196,16 @@ export function Integrations({ isDark, onBack, onToggleTheme }: IntegrationsProp
                     <div className={styles.key}>
                       <PasswordInput
                         className={styles.keyInput}
-                        aria-label={provider.key.ariaLabel}
+                        aria-label={t.keyAria(provider.name)}
                         defaultValue={provider.key.value ?? ""}
-                        placeholder={provider.key.placeholder ?? ""}
+                        placeholder={
+                          provider.key.value === undefined ? t.keyPlaceholder(provider.name) : ""
+                        }
                         readOnly={provider.key.value !== undefined}
                       />
-                      <Button variant="secondary">{provider.key.buttonLabel}</Button>
+                      <Button variant="secondary">
+                        {provider.key.value === undefined ? t.action.connect : t.action.update}
+                      </Button>
                     </div>
                   )}
                 </div>

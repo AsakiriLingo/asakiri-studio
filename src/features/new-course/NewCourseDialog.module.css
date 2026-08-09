@@ -45,3 +45,9 @@
   gap: var(--space-2);
   border-top: var(--border-hairline) solid var(--color-border);
 }
+
+.error {
+  margin: 0;
+  color: var(--color-danger);
+  font-size: var(--font-size-300);
+}

@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { useMessages } from "@shared/i18n";
 import { Icon, type IconName } from "@shared/components/icon";
 import { IconButton } from "@shared/components/icon-button";
 import styles from "@features/workspace-shell/WorkspaceShell.module.css";
@@ -11,13 +12,6 @@ interface NavLink {
   readonly icon: IconName;
 }
 
-const NAV_LINKS: readonly NavLink[] = [
-  { key: "details", label: "Course details", icon: "details" },
-  { key: "content", label: "Content", icon: "content" },
-  { key: "media", label: "Media", icon: "media" },
-  { key: "lessons", label: "Lessons", icon: "lessons" },
-];
-
 export interface WorkspaceShellProps {
   readonly projectName: string;
   readonly projectLocation: string;
@@ -26,6 +20,7 @@ export interface WorkspaceShellProps {
   readonly onNavigate: (section: WorkspaceSection) => void;
   readonly onBack: () => void;
   readonly onToggleTheme: () => void;
+  readonly onToggleLocale: () => void;
   readonly children: ReactNode;
 }
 
@@ -37,28 +32,41 @@ export function WorkspaceShell({
   onNavigate,
   onBack,
   onToggleTheme,
+  onToggleLocale,
   children,
 }: WorkspaceShellProps) {
+  const messages = useMessages();
+
+  const navLinks: readonly NavLink[] = [
+    { key: "details", label: messages.workspace.navDetails, icon: "details" },
+    { key: "content", label: messages.workspace.navContent, icon: "content" },
+    { key: "media", label: messages.workspace.navMedia, icon: "media" },
+    { key: "lessons", label: messages.workspace.navLessons, icon: "lessons" },
+  ];
+
   return (
     <div className={styles.workspace}>
-      <aside className={styles.sidebar} aria-label="Project workspace">
+      <aside className={styles.sidebar} aria-label={messages.workspace.projectAria}>
         <div className={styles.projectIdentity}>
           <span className={styles.projectName}>{projectName}</span>
           <span className={styles.projectLocation}>{projectLocation}</span>
         </div>
         <div className={styles.utilities}>
-          <IconButton aria-label="Back to Start" onClick={onBack}>
+          <IconButton aria-label={messages.common.backToStart} onClick={onBack}>
             <Icon name="back" size={18} />
           </IconButton>
+          <IconButton aria-label={messages.switchLanguage} onClick={onToggleLocale}>
+            <Icon name="language" size={18} />
+          </IconButton>
           <IconButton
-            aria-label={isDark ? "Use light theme" : "Use dark theme"}
+            aria-label={isDark ? messages.common.useLightTheme : messages.common.useDarkTheme}
             onClick={onToggleTheme}
           >
             <Icon name={isDark ? "sun" : "moon"} size={18} />
           </IconButton>
         </div>
-        <nav className={styles.nav} aria-label="Course areas">
-          {NAV_LINKS.map((link) => (
+        <nav className={styles.nav} aria-label={messages.workspace.areasAria}>
+          {navLinks.map((link) => (
             <button
               key={link.key}
               type="button"
@@ -73,7 +81,7 @@ export function WorkspaceShell({
             </button>
           ))}
         </nav>
-        <div className={styles.status}>Saved locally</div>
+        <div className={styles.status}>{messages.common.savedLocally}</div>
       </aside>
       <main className={styles.workSurface}>{children}</main>
     </div>
