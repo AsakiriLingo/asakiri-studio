@@ -11,6 +11,11 @@ node_modules
 dist
 dist-ssr
 *.local
+.env
+.env.*
+!.env.example
+.backups/
+converted-courses/
 
 # Editor directories and files
 .vscode/*

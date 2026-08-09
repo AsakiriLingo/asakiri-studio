@@ -141,6 +141,18 @@ pub fn write_course_file(
 }
 
 #[tauri::command]
+pub fn delete_course_file(root_path: String, relative_path: String) -> Result<(), String> {
+    let target =
+        resolve_course_path(&root_path, &relative_path).ok_or_else(|| "invalidPath".to_string())?;
+
+    match fs::remove_file(&target) {
+        Ok(()) => Ok(()),
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(()),
+        Err(_) => Err("unknown".to_string()),
+    }
+}
+
+#[tauri::command]
 pub fn reveal_path(path: String) -> Result<(), String> {
     if !Path::new(&path).exists() {
         return Err("notFound".to_string());
@@ -224,7 +236,33 @@ pub fn read_course_title(path: String) -> Result<String, String> {
 
 #[cfg(test)]
 mod tests {
-    use super::{resolve_course_path, slugify, validate_directory_name, write_course_file};
+    use super::{
+        delete_course_file, resolve_course_path, slugify, validate_directory_name, write_course_file,
+    };
+
+    #[test]
+    fn deletes_a_file_and_treats_missing_as_success() {
+        let root = std::env::temp_dir().join(format!("asakiri_delete_{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&root);
+        let root_string = root.to_string_lossy().into_owned();
+
+        write_course_file(root_string.clone(), "content/records/x.json".to_string(), "{}".to_string())
+            .unwrap();
+        assert!(root.join("content/records/x.json").exists());
+
+        assert_eq!(
+            delete_course_file(root_string.clone(), "content/records/x.json".to_string()),
+            Ok(())
+        );
+        assert!(!root.join("content/records/x.json").exists());
+        // Deleting again (now missing) still succeeds.
+        assert_eq!(
+            delete_course_file(root_string, "content/records/x.json".to_string()),
+            Ok(())
+        );
+
+        let _ = std::fs::remove_dir_all(&root);
+    }
 
     #[test]
     fn writes_a_nested_file_and_creates_parent_dirs() {

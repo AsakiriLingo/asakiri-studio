@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { ContentRecord, CourseProject, TiptapDocument } from "@core/course";
+import type { Collection, ContentRecord, CourseProject, TiptapDocument } from "@core/course";
 import type { ProjectSession } from "@core/projects";
 import {
   createLayoutProjectWriter,
@@ -52,6 +52,10 @@ function fileAccess(files: Map<string, string>): ProjectFileAccess {
     },
     writeTextFile(path, contents) {
       files.set(path, contents);
+      return Promise.resolve();
+    },
+    deleteFile(path) {
+      files.delete(path);
       return Promise.resolve();
     },
   };
@@ -155,5 +159,108 @@ describe("layout project writer", () => {
     expect(result).toEqual({ status: "saved" });
     const written: unknown = JSON.parse(files.get(path) ?? "");
     expect(written).toEqual(document);
+  });
+
+  it("creates a record file and links it into the collection", async () => {
+    const collectionPath = "content/collections/vocabulary.json";
+    const files = new Map([
+      [
+        collectionPath,
+        JSON.stringify({
+          id: "vocabulary",
+          name: "Vocabulary",
+          fields: [],
+          recordFiles: ["../records/cat.json"],
+        }),
+      ],
+    ]);
+    const writer = createLayoutProjectWriter(() => fileAccess(files));
+
+    const record: ContentRecord = {
+      id: "record_dog",
+      collectionId: "vocabulary",
+      fields: { english: { kind: "text", value: "Dog" } },
+    };
+    const result = await writer.createRecord(
+      SESSION,
+      collectionPath,
+      "content/records/record_dog.json",
+      record,
+    );
+
+    expect(result).toEqual({ status: "saved" });
+    const recordWritten: unknown = JSON.parse(files.get("content/records/record_dog.json") ?? "");
+    expect(recordWritten).toMatchObject({
+      id: "record_dog",
+      collectionId: "vocabulary",
+      fields: { english: { kind: "text", value: "Dog" } },
+    });
+    const collectionWritten: unknown = JSON.parse(files.get(collectionPath) ?? "");
+    expect(collectionWritten).toMatchObject({
+      recordFiles: ["../records/cat.json", "../records/record_dog.json"],
+    });
+  });
+
+  it("deletes a record and unlinks it from the collection", async () => {
+    const collectionPath = "content/collections/vocabulary.json";
+    const recordPath = "content/records/cat.json";
+    const files = new Map([
+      [
+        collectionPath,
+        JSON.stringify({
+          id: "vocabulary",
+          name: "Vocabulary",
+          fields: [],
+          recordFiles: ["../records/cat.json", "../records/dog.json"],
+        }),
+      ],
+      [recordPath, JSON.stringify({ id: "record_cat", collectionId: "vocabulary", fields: {} })],
+    ]);
+    const writer = createLayoutProjectWriter(() => fileAccess(files));
+
+    const result = await writer.deleteRecord(SESSION, collectionPath, recordPath);
+
+    expect(result).toEqual({ status: "saved" });
+    expect(files.has(recordPath)).toBe(false);
+    const collectionWritten: unknown = JSON.parse(files.get(collectionPath) ?? "");
+    expect(collectionWritten).toMatchObject({ recordFiles: ["../records/dog.json"] });
+  });
+
+  it("creates a collection and links it into the manifest", async () => {
+    const files = new Map([
+      [
+        "project.json",
+        JSON.stringify({
+          format: "asakiri-course",
+          collections: ["content/collections/vocabulary.json"],
+        }),
+      ],
+    ]);
+    const writer = createLayoutProjectWriter(() => fileAccess(files));
+
+    const collection: Collection = {
+      id: "hiragana",
+      name: "Hiragana",
+      fields: [
+        { id: "field_kana", name: "Kana", kind: "text", cardinality: "one", required: true },
+      ],
+    };
+    const collectionPath = "content/collections/hiragana.json";
+    const result = await writer.createCollection(SESSION, collectionPath, collection);
+
+    expect(result).toEqual({ status: "saved" });
+    const written: unknown = JSON.parse(files.get(collectionPath) ?? "");
+    expect(written).toMatchObject({
+      id: "hiragana",
+      name: "Hiragana",
+      recordFiles: [],
+      fields: [
+        { id: "field_kana", name: "Kana", kind: "text", cardinality: "one", required: true },
+      ],
+    });
+    const manifest: unknown = JSON.parse(files.get("project.json") ?? "");
+    expect(manifest).toMatchObject({
+      collections: ["content/collections/vocabulary.json", "content/collections/hiragana.json"],
+    });
   });
 });

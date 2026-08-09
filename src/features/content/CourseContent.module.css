@@ -42,26 +42,168 @@
 
 .rowTitle {
   display: block;
-  overflow: hidden;
+  overflow-wrap: anywhere;
   font-size: var(--font-size-300);
   font-weight: var(--font-weight-bold);
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .rowDetail {
   display: block;
-  overflow: hidden;
+  overflow-wrap: anywhere;
   margin-top: var(--space-1);
   color: var(--color-text-muted);
   font-size: var(--font-size-100);
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .count {
   color: var(--color-text-muted);
   font-variant-numeric: tabular-nums;
+}
+
+.addBar {
+  padding: var(--space-3) var(--space-4);
+}
+
+.tableToolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-bottom: var(--border-hairline) solid var(--color-border);
+}
+
+.collectionBar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+  padding: var(--space-4);
+  border-bottom: var(--border-hairline) solid var(--color-border);
+}
+
+.nameInput {
+  flex: 1 1 12rem;
+}
+
+.barSpacer {
+  flex: 1 1 auto;
+}
+
+.descriptionBar {
+  padding: var(--space-3) var(--space-4);
+  border-bottom: var(--border-hairline) solid var(--color-border);
+}
+
+.cellInput {
+  width: 100%;
+  min-width: 6rem;
+}
+
+.cellEditor {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.removableChip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 2px var(--space-2);
+  border: var(--border-hairline) solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-text);
+  font-size: var(--font-size-100);
+}
+
+.fieldRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-3);
+  align-items: center;
+  padding: var(--space-3) 0;
+  border-bottom: var(--border-hairline) solid var(--color-border);
+}
+
+.fieldNameInput {
+  flex: 1 1 12rem;
+}
+
+.fieldTypeSelect {
+  flex: 1 1 8rem;
+}
+
+.fieldCardSelect {
+  flex: 1 1 11rem;
+}
+
+.fieldRow:last-child {
+  border-bottom: 0;
+}
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal);
+  display: grid;
+  place-items: center;
+  padding: var(--space-4);
+  background: rgb(0 0 0 / 45%);
+}
+
+.dialog {
+  width: min(100%, 26rem);
+  border: var(--border-hairline) solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+}
+
+.dialogWide {
+  width: min(100%, 46rem);
+}
+
+.dialogHeader {
+  padding: var(--space-5);
+  border-bottom: var(--border-hairline) solid var(--color-border);
+}
+
+.dialogTitle {
+  margin: 0;
+  font-size: var(--font-size-500);
+  font-weight: var(--font-weight-bold);
+}
+
+.dialogBody {
+  display: grid;
+  gap: var(--space-4);
+  max-height: min(60vh, 34rem);
+  overflow-y: auto;
+  padding: var(--space-5);
+}
+
+.rowActions {
+  display: inline-flex;
+  gap: var(--space-1);
+}
+
+.dangerAction {
+  color: var(--color-danger);
+}
+
+.dialogActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  padding: var(--space-5);
+  border-top: var(--border-hairline) solid var(--color-border);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .removableChip:hover {
+    border-color: var(--color-text-muted);
+  }
 }
 
 .muted {
@@ -99,7 +241,7 @@
 
 @media (min-width: 48rem) {
   .layout {
-    grid-template-columns: minmax(12rem, 0.35fr) minmax(0, 1fr);
+    grid-template-columns: minmax(11rem, 0.24fr) minmax(0, 1fr);
   }
 
   .collectionList {

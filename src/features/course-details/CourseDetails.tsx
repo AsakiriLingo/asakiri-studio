@@ -14,8 +14,6 @@ import { Status } from "@shared/components/status";
 import { WorkHeader, WorkInner } from "@shared/components/work-surface";
 import styles from "@features/course-details/CourseDetails.module.css";
 
-type SaveState = "idle" | "saving" | "saved" | "failed";
-
 const LICENSE_CODES = ["by", "bySa", "byNc", "byNcSa", "cc0", "arr"] as const;
 type LicenseCode = (typeof LICENSE_CODES)[number];
 
@@ -251,7 +249,6 @@ export function CourseDetails({
   const messages = useMessages();
   const t = messages.details;
   const { project } = course;
-  const [saveState, setSaveState] = useState<SaveState>("idle");
   const [git, setGit] = useState<GitStatus | null>(null);
 
   useEffect(() => {
@@ -265,10 +262,7 @@ export function CourseDetails({
   }, [onReadGitStatus]);
 
   const save = (next: CourseProject) => {
-    setSaveState("saving");
-    void onSaveProject(next).then((result) => {
-      setSaveState(result.status === "saved" ? "saved" : "failed");
-    });
+    void onSaveProject(next);
   };
   const patch = (changes: Partial<CourseProject>) => {
     save({ ...project, ...changes });
@@ -298,22 +292,9 @@ export function CourseDetails({
     ? course.records.filter((record) => record.collectionId === primaryCollection.id).length
     : 0;
 
-  const statusLabel =
-    saveState === "saving"
-      ? messages.common.saving
-      : saveState === "failed"
-        ? messages.common.saveFailed
-        : messages.common.savedLocally;
-
   return (
     <WorkInner>
-      <WorkHeader
-        title={t.title}
-        description={t.description}
-        actions={
-          <Status tone={saveState === "failed" ? "warning" : "default"}>{statusLabel}</Status>
-        }
-      />
+      <WorkHeader title={t.title} description={t.description} />
 
       <div className={styles.settingsStack}>
         <SectionGroup

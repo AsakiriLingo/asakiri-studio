@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import type {
+  Collection,
   ContentRecord,
   Course,
   CourseProject,
@@ -177,6 +178,156 @@ export function App() {
     return result;
   };
 
+  const addRecord = async (record: ContentRecord): Promise<ProjectWriteResult> => {
+    if (!project || courseState?.status !== "ready") {
+      return { status: "failed", code: "unavailable" };
+    }
+    const collectionPath = courseState.sources.collections[record.collectionId];
+    if (collectionPath === undefined) {
+      return { status: "failed", code: "unavailable" };
+    }
+    const recordPath = `content/records/${record.id}.json`;
+    const session = createProjectSession(project);
+    const result = await services.writer.createRecord(session, collectionPath, recordPath, record);
+    if (result.status === "saved") {
+      setCourseState((current) =>
+        current?.status === "ready"
+          ? {
+              ...current,
+              course: { ...current.course, records: [...current.course.records, record] },
+              sources: {
+                ...current.sources,
+                records: { ...current.sources.records, [record.id]: recordPath },
+              },
+            }
+          : current,
+      );
+    }
+    return result;
+  };
+
+  const deleteRecord = async (recordId: string): Promise<ProjectWriteResult> => {
+    if (!project || courseState?.status !== "ready") {
+      return { status: "failed", code: "unavailable" };
+    }
+    const recordPath = courseState.sources.records[recordId];
+    const record = courseState.course.records.find((entry) => entry.id === recordId);
+    if (recordPath === undefined || !record) {
+      return { status: "failed", code: "unavailable" };
+    }
+    const collectionPath = courseState.sources.collections[record.collectionId];
+    if (collectionPath === undefined) {
+      return { status: "failed", code: "unavailable" };
+    }
+    const session = createProjectSession(project);
+    const result = await services.writer.deleteRecord(session, collectionPath, recordPath);
+    if (result.status === "saved") {
+      setCourseState((current) =>
+        current?.status === "ready"
+          ? {
+              ...current,
+              course: {
+                ...current.course,
+                records: current.course.records.filter((entry) => entry.id !== recordId),
+              },
+            }
+          : current,
+      );
+    }
+    return result;
+  };
+
+  const addCollection = async (collection: Collection): Promise<ProjectWriteResult> => {
+    if (!project || courseState?.status !== "ready") {
+      return { status: "failed", code: "unavailable" };
+    }
+    const collectionPath = `content/collections/${collection.id}.json`;
+    const session = createProjectSession(project);
+    const result = await services.writer.createCollection(session, collectionPath, collection);
+    if (result.status === "saved") {
+      setCourseState((current) =>
+        current?.status === "ready"
+          ? {
+              ...current,
+              course: {
+                ...current.course,
+                collections: [...current.course.collections, collection],
+              },
+              sources: {
+                ...current.sources,
+                collections: { ...current.sources.collections, [collection.id]: collectionPath },
+              },
+            }
+          : current,
+      );
+    }
+    return result;
+  };
+
+  const updateCollection = async (collection: Collection): Promise<ProjectWriteResult> => {
+    if (!project || courseState?.status !== "ready") {
+      return { status: "failed", code: "unavailable" };
+    }
+    const collectionPath = courseState.sources.collections[collection.id];
+    if (collectionPath === undefined) {
+      return { status: "failed", code: "unavailable" };
+    }
+    const session = createProjectSession(project);
+    const result = await services.writer.updateCollection(session, collectionPath, collection);
+    if (result.status === "saved") {
+      setCourseState((current) =>
+        current?.status === "ready"
+          ? {
+              ...current,
+              course: {
+                ...current.course,
+                collections: current.course.collections.map((entry) =>
+                  entry.id === collection.id ? collection : entry,
+                ),
+              },
+            }
+          : current,
+      );
+    }
+    return result;
+  };
+
+  const deleteCollection = async (collectionId: string): Promise<ProjectWriteResult> => {
+    if (!project || courseState?.status !== "ready") {
+      return { status: "failed", code: "unavailable" };
+    }
+    const collectionPath = courseState.sources.collections[collectionId];
+    if (collectionPath === undefined) {
+      return { status: "failed", code: "unavailable" };
+    }
+    const recordIds = courseState.course.records
+      .filter((entry) => entry.collectionId === collectionId)
+      .map((entry) => entry.id);
+    const recordPaths = recordIds
+      .map((id) => courseState.sources.records[id])
+      .filter((path): path is string => path !== undefined);
+    const session = createProjectSession(project);
+    const result = await services.writer.deleteCollection(session, collectionPath, recordPaths);
+    if (result.status === "saved") {
+      const removed = new Set(recordIds);
+      setCourseState((current) =>
+        current?.status === "ready"
+          ? {
+              ...current,
+              course: {
+                ...current.course,
+                collections: current.course.collections.filter(
+                  (entry) => entry.id !== collectionId,
+                ),
+                records: current.course.records.filter((entry) => !removed.has(entry.id)),
+              },
+            }
+          : current,
+      );
+    }
+    return result;
+  };
+
   const savePartDocument = async (
     lessonId: string,
     partId: string,
@@ -303,7 +454,15 @@ export function App() {
               onReadGitStatus={readGitStatus}
             />
           ) : section === "content" ? (
-            <CourseContent course={course} onSaveRecord={saveRecord} />
+            <CourseContent
+              course={course}
+              onSaveRecord={saveRecord}
+              onAddRecord={addRecord}
+              onDeleteRecord={deleteRecord}
+              onAddCollection={addCollection}
+              onUpdateCollection={updateCollection}
+              onDeleteCollection={deleteCollection}
+            />
           ) : section === "media" ? (
             <CourseMedia course={course} />
           ) : openLesson ? (

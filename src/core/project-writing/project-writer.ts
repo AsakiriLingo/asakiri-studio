@@ -1,4 +1,4 @@
-import type { ContentRecord, CourseProject, TiptapDocument } from "@core/course";
+import type { Collection, ContentRecord, CourseProject, TiptapDocument } from "@core/course";
 import type { ProjectSession } from "@core/projects";
 
 export type ProjectWriteErrorCode = "unavailable" | "unknown";
@@ -31,5 +31,36 @@ export interface ProjectWriter {
     session: ProjectSession,
     path: string,
     document: TiptapDocument,
+  ): Promise<ProjectWriteResult>;
+  /** Writes a new record file and links it into its collection's recordFiles. */
+  createRecord(
+    session: ProjectSession,
+    collectionPath: string,
+    recordPath: string,
+    record: ContentRecord,
+  ): Promise<ProjectWriteResult>;
+  /** Removes a record from its collection's recordFiles and deletes the file. */
+  deleteRecord(
+    session: ProjectSession,
+    collectionPath: string,
+    recordPath: string,
+  ): Promise<ProjectWriteResult>;
+  /** Writes a new collection file and links it into project.json collections. */
+  createCollection(
+    session: ProjectSession,
+    collectionPath: string,
+    collection: Collection,
+  ): Promise<ProjectWriteResult>;
+  /** Unlinks a collection from project.json and deletes it and its records. */
+  deleteCollection(
+    session: ProjectSession,
+    collectionPath: string,
+    recordPaths: readonly string[],
+  ): Promise<ProjectWriteResult>;
+  /** Rewrites a collection's name, description, and fields, keeping its records. */
+  updateCollection(
+    session: ProjectSession,
+    collectionPath: string,
+    collection: Collection,
   ): Promise<ProjectWriteResult>;
 }

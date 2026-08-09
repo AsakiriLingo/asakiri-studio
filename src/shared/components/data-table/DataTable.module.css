@@ -15,7 +15,8 @@
   padding: var(--space-3) var(--space-4);
   border-bottom: var(--border-hairline) solid var(--color-border);
   text-align: left;
-  vertical-align: middle;
+  vertical-align: top;
+  overflow-wrap: anywhere;
 }
 
 .table th {
@@ -34,6 +35,7 @@
 }
 
 .input {
+  display: block;
   width: 100%;
   padding: var(--space-1) var(--space-2);
   border: var(--border-hairline) solid transparent;
@@ -41,6 +43,9 @@
   background: transparent;
   color: inherit;
   font: inherit;
+  line-height: 1.4;
+  resize: none;
+  overflow: hidden;
   outline: 2px solid transparent;
   outline-offset: 1px;
 }
@@ -55,4 +60,24 @@
   .input:hover:not(:focus-visible) {
     border-color: var(--color-border);
   }
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-4);
+  border-top: var(--border-hairline) solid var(--color-border);
+}
+
+.pageInfo {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-100);
+  font-variant-numeric: tabular-nums;
+}
+
+.pageControls {
+  display: inline-flex;
+  gap: var(--space-2);
 }

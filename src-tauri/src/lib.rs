@@ -9,6 +9,7 @@ pub fn run() {
             course::create_course,
             course::read_course_title,
             course::write_course_file,
+            course::delete_course_file,
             course::reveal_path,
             course::git_status
         ])
