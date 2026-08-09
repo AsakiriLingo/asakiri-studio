@@ -1,0 +1,55 @@
+.list {
+  border-block: var(--border-hairline) solid var(--color-border);
+}
+
+.row {
+  display: grid;
+  grid-template-columns: var(--control-height-md) minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-4);
+  min-height: 4.5rem;
+  padding: var(--space-3) var(--space-4);
+  border-bottom: var(--border-hairline) solid var(--color-border);
+}
+
+.row:last-child {
+  border-bottom: 0;
+}
+
+.kind {
+  display: grid;
+  place-items: center;
+  width: var(--control-height-md);
+  height: var(--control-height-md);
+  border-radius: var(--radius-sm);
+  background: var(--color-canvas);
+  color: var(--color-brand);
+}
+
+:root[data-theme="dark"] .kind {
+  color: var(--color-text-muted);
+}
+
+.rowTitle {
+  display: block;
+  overflow: hidden;
+  font-size: var(--font-size-300);
+  font-weight: var(--font-weight-bold);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  margin-top: var(--space-1);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-100);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .row:hover {
+    background: var(--color-canvas);
+  }
+}

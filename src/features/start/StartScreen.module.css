@@ -1,0 +1,95 @@
+.hub {
+  min-height: 100svh;
+  padding: max(var(--space-4), env(safe-area-inset-top))
+    max(var(--space-4), env(safe-area-inset-right)) max(var(--space-8), env(safe-area-inset-bottom))
+    max(var(--space-4), env(safe-area-inset-left));
+  background: var(--color-surface);
+}
+
+.tools {
+  display: flex;
+  gap: var(--space-1);
+  justify-content: flex-end;
+}
+
+.main {
+  width: min(100%, 46rem);
+  margin: clamp(3rem, 12vh, 8rem) auto 0;
+}
+
+.title {
+  margin: 0 0 var(--space-6);
+  font-size: var(--font-size-600);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: -0.025em;
+}
+
+.list {
+  border-block: var(--border-hairline) solid var(--color-border);
+}
+
+.row {
+  display: grid;
+  grid-template-columns: var(--control-height-md) minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  min-height: 4rem;
+  padding: var(--space-2) var(--space-3);
+  border: 0;
+  border-bottom: var(--border-hairline) solid var(--color-border);
+  background: transparent;
+  color: var(--color-text);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background-color var(--duration-normal) var(--ease-out),
+    transform var(--duration-fast) var(--ease-out);
+}
+
+.row:last-child {
+  border-bottom: 0;
+}
+
+.row:active {
+  transform: translateY(var(--border-hairline));
+}
+
+.row:focus-visible {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: calc(var(--space-1) / -2);
+}
+
+.icon {
+  display: grid;
+  place-items: center;
+  color: var(--color-brand);
+}
+
+.name {
+  display: block;
+  font-size: var(--font-size-400);
+  font-weight: var(--font-weight-bold);
+}
+
+.detail {
+  display: block;
+  overflow: hidden;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-300);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.note {
+  max-width: 58ch;
+  margin: var(--space-4) 0 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-300);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .row:hover {
+    background: var(--color-surface-subtle);
+  }
+}

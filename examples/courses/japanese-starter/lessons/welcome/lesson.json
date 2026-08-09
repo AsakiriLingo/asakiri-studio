@@ -1,9 +1,0 @@
-{
-  "id": "lesson_welcome",
-  "type": "rich-text",
-  "title": "Meet your first word",
-  "content": {
-    "kind": "tiptap",
-    "file": "document.json"
-  }
-}

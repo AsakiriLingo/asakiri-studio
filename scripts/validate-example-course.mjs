@@ -10,8 +10,8 @@ if (result.errors.length > 0) {
   result.errors.forEach((error) => console.error(`- ${error}`));
   process.exitCode = 1;
 } else {
-  const { assets, collections, lessons, placeholderAssets, records } = result.summary;
+  const { assets, collections, lessons, parts, placeholderAssets, records } = result.summary;
   console.log(
-    `Example course passed: ${collections} collection, ${records} records, ${assets} assets (${placeholderAssets} placeholders), ${lessons} lessons.`,
+    `Example course passed: ${collections} collection, ${records} records, ${assets} assets (${placeholderAssets} placeholders), ${lessons} lessons, ${parts} parts.`,
   );
 }

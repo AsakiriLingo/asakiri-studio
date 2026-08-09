@@ -1,9 +1,0 @@
-{
-  "id": "lesson_cat_rich_media",
-  "type": "rich-media",
-  "title": "Cat in words, sound, and image",
-  "content": {
-    "kind": "composition",
-    "file": "composition.json"
-  }
-}

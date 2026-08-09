@@ -1,0 +1,115 @@
+.hub {
+  min-height: 100svh;
+  padding: max(var(--space-4), env(safe-area-inset-top))
+    max(var(--space-4), env(safe-area-inset-right)) max(var(--space-8), env(safe-area-inset-bottom))
+    max(var(--space-4), env(safe-area-inset-left));
+  background: var(--color-surface);
+}
+
+.tools {
+  display: flex;
+  gap: var(--space-1);
+  justify-content: space-between;
+}
+
+.inner {
+  width: min(100%, 52rem);
+  margin: clamp(var(--space-6), 6vh, var(--space-12)) auto 0;
+}
+
+.stack {
+  display: grid;
+  gap: var(--space-8);
+}
+
+.group {
+  border-block: var(--border-hairline) solid var(--color-border);
+}
+
+.row {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border-bottom: var(--border-hairline) solid var(--color-border);
+}
+
+.row:last-child {
+  border-bottom: 0;
+}
+
+.main {
+  display: grid;
+  grid-template-columns: var(--control-height-md) minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.badge {
+  display: grid;
+  place-items: center;
+  width: var(--control-height-md);
+  height: var(--control-height-md);
+  border-radius: var(--radius-sm);
+  background: var(--color-canvas);
+  color: var(--color-brand);
+}
+
+.name {
+  font-size: var(--font-size-300);
+  font-weight: var(--font-weight-bold);
+}
+
+.detail {
+  margin-top: var(--space-1);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-100);
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.key {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  padding-left: calc(var(--control-height-md) + var(--space-4));
+}
+
+.keyInput {
+  flex: 1 1 16rem;
+  min-height: var(--control-height-md);
+  padding-inline: var(--space-3);
+  border: var(--border-hairline) solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  outline: 2px solid transparent;
+  outline-offset: 1px;
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-300);
+}
+
+.keyInput:focus-visible {
+  border-color: var(--color-text-muted);
+  outline-color: var(--color-focus-ring);
+}
+
+.keyInput::placeholder {
+  color: var(--color-text-muted);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .keyInput:hover {
+    background: var(--color-canvas);
+  }
+}

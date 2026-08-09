@@ -24,8 +24,8 @@ record is about the middle row.
 
 ## The major / minor / patch rule
 
-Learner progress is keyed by the stable IDs the course already uses (record, lesson, field,
-and outline-section IDs; see [CONTENT-ARCHITECTURE.md](CONTENT-ARCHITECTURE.md)). That gives an
+Learner progress is keyed by the stable IDs the course already uses (unit, lesson, part, record,
+field, and item IDs; see [CONTENT-ARCHITECTURE.md](CONTENT-ARCHITECTURE.md)). That gives an
 unambiguous line for what "breaking" means:
 
 - **MINOR** (`1.1.0` to `1.2.0`) — additive, all existing IDs stay valid. A learner mid-course

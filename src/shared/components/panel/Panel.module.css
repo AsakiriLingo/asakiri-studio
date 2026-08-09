@@ -1,0 +1,24 @@
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 3.25rem;
+  padding: var(--space-3) var(--space-4);
+  border-bottom: var(--border-hairline) solid var(--color-border);
+}
+
+.spread {
+  justify-content: space-between;
+}
+
+.title {
+  margin: 0;
+  font-size: var(--font-size-300);
+  font-weight: var(--font-weight-bold);
+}
+
+.description {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-100);
+}

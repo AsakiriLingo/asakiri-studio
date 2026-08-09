@@ -1,0 +1,47 @@
+.page {
+  display: grid;
+  min-height: 100svh;
+  place-items: center;
+  padding: var(--space-4);
+  background: var(--color-canvas);
+}
+
+.card {
+  width: min(100%, 32rem);
+  border: var(--border-hairline) solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+}
+
+.header,
+.body,
+.actions {
+  padding: var(--space-5);
+}
+
+.header {
+  border-bottom: var(--border-hairline) solid var(--color-border);
+}
+
+.title {
+  margin: 0;
+  font-size: var(--font-size-500);
+}
+
+.description {
+  margin: var(--space-2) 0 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-300);
+}
+
+.body {
+  display: grid;
+  gap: var(--space-5);
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  border-top: var(--border-hairline) solid var(--color-border);
+}

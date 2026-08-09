@@ -1,0 +1,139 @@
+.layout {
+  display: grid;
+  border-block: var(--border-hairline) solid var(--color-border);
+}
+
+.layout > * {
+  min-width: 0;
+}
+
+.collectionList {
+  align-self: start;
+  border-bottom: var(--border-hairline) solid var(--color-border);
+}
+
+.list {
+  border-block: 0;
+}
+
+.listRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-4);
+  width: 100%;
+  overflow: hidden;
+  min-height: 3.5rem;
+  align-items: center;
+  padding: var(--space-3) var(--space-4);
+  border: 0;
+  border-bottom: var(--border-hairline) solid var(--color-border);
+  background: transparent;
+  color: var(--color-text);
+  text-align: left;
+}
+
+.listRow:last-child {
+  border-bottom: 0;
+}
+
+.listRow.selected {
+  background: var(--color-surface-subtle);
+}
+
+.rowTitle {
+  display: block;
+  overflow: hidden;
+  font-size: var(--font-size-300);
+  font-weight: var(--font-weight-bold);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rowDetail {
+  display: block;
+  overflow: hidden;
+  margin-top: var(--space-1);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-100);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.count {
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.tableWrap {
+  min-width: 0;
+  overflow: auto;
+  border-block: 0;
+}
+
+.table {
+  width: 100%;
+  min-width: 44rem;
+  border-collapse: collapse;
+  font-size: var(--font-size-300);
+}
+
+.table th,
+.table td {
+  padding: var(--space-3) var(--space-4);
+  border-bottom: var(--border-hairline) solid var(--color-border);
+  text-align: left;
+  vertical-align: middle;
+}
+
+.table th {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-100);
+  font-weight: var(--font-weight-bold);
+}
+
+.table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.primaryCell {
+  font-size: var(--font-size-400);
+  font-weight: var(--font-weight-bold);
+}
+
+.muted {
+  color: var(--color-text-muted);
+}
+
+.assetRef {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-100);
+}
+
+.assetRef svg {
+  color: var(--color-brand);
+}
+
+:root[data-theme="dark"] .assetRef svg {
+  color: var(--color-text-muted);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .listRow:hover {
+    background: var(--color-canvas);
+  }
+}
+
+@media (min-width: 48rem) {
+  .layout {
+    grid-template-columns: minmax(12rem, 0.35fr) minmax(0, 1fr);
+  }
+
+  .collectionList {
+    height: 100%;
+    border-right: var(--border-hairline) solid var(--color-border);
+    border-bottom: 0;
+  }
+}

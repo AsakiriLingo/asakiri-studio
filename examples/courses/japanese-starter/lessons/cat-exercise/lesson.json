@@ -1,9 +1,0 @@
-{
-  "id": "lesson_cat_exercise",
-  "type": "exercise",
-  "title": "Choose the matching word",
-  "content": {
-    "kind": "exercise",
-    "file": "exercise.json"
-  }
-}

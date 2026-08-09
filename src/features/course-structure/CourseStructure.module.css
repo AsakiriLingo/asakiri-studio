@@ -1,0 +1,131 @@
+.inner {
+  max-width: 72rem;
+}
+
+.unitStack {
+  display: grid;
+  gap: var(--space-8);
+}
+
+.unitBlock {
+  min-width: 0;
+  border-block: var(--border-hairline) solid var(--color-border);
+}
+
+.unitHeader {
+  display: grid;
+  grid-template-columns: var(--control-height-sm) 2rem minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 4rem;
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-canvas);
+}
+
+.unitHeader > .addLesson {
+  grid-column: 3;
+  justify-self: start;
+}
+
+.unitName {
+  display: block;
+  overflow: hidden;
+  font-size: var(--font-size-300);
+  font-weight: var(--font-weight-bold);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lessonOrder {
+  border-top: var(--border-hairline) solid var(--color-border);
+}
+
+.orderedRow {
+  display: grid;
+  grid-template-columns: var(--control-height-sm) 2rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+  min-height: 3.75rem;
+  padding: var(--space-2) var(--space-3);
+  border-bottom: var(--border-hairline) solid var(--color-border);
+}
+
+.orderedRow:last-child {
+  border-bottom: 0;
+}
+
+.orderedMain {
+  display: block;
+  min-width: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  background: transparent;
+  color: var(--color-text);
+  text-align: start;
+}
+
+.rowTitle {
+  display: block;
+  overflow: hidden;
+  font-size: var(--font-size-300);
+  font-weight: var(--font-weight-bold);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rowDetail {
+  display: block;
+  overflow: hidden;
+  margin-top: var(--space-1);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-100);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.orderIndex {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-100);
+  font-variant-numeric: tabular-nums;
+}
+
+.reorderHandle {
+  display: inline-grid;
+  width: var(--control-height-sm);
+  height: var(--control-height-sm);
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: grab;
+}
+
+.reorderHandle:active {
+  cursor: grabbing;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .reorderHandle:hover {
+    background: var(--color-surface-subtle);
+    color: var(--color-text);
+  }
+
+  .orderedRow:hover {
+    background: var(--color-canvas);
+  }
+}
+
+@media (min-width: 48rem) {
+  .unitHeader {
+    grid-template-columns: var(--control-height-sm) 2rem minmax(0, 1fr) auto;
+  }
+
+  .unitHeader > .addLesson {
+    grid-column: auto;
+    justify-self: end;
+  }
+}

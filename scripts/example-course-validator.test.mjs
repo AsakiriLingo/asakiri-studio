@@ -39,7 +39,8 @@ describe("validateExampleCourse", () => {
     expect(result.summary).toEqual({
       assets: 6,
       collections: 2,
-      lessons: 9,
+      lessons: 3,
+      parts: 9,
       placeholderAssets: 5,
       records: 12,
     });
@@ -74,9 +75,13 @@ describe("validateExampleCourse", () => {
 
   it("rejects broken explicit bindings", async () => {
     const courseRoot = await cloneFixture();
-    await mutateJson(courseRoot, "lessons/cat-rich-media/composition.json", (composition) => {
-      composition.blocks[1].binding.itemId = "missing_image";
-    });
+    await mutateJson(
+      courseRoot,
+      "lessons/meet-neko/parts/in-media/composition.json",
+      (composition) => {
+        composition.blocks[1].binding.itemId = "missing_image";
+      },
+    );
 
     const result = await validateExampleCourse(courseRoot);
 

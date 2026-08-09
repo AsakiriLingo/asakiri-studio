@@ -112,6 +112,8 @@ export function createBindingResolver(course: Course): BindingResolver {
                 reason: `item ${binding.recordId}.${binding.fieldId}.${binding.itemId}`,
               };
         }
+        default:
+          return { kind: "missing", reason: "unsupported binding" };
       }
     },
   };

@@ -1,0 +1,31 @@
+{
+  "id": "lesson_practice_neko",
+  "title": "Practice 猫",
+  "parts": [
+    {
+      "id": "part_select_image",
+      "title": "Tap the picture for 猫",
+      "content": { "kind": "exercise", "file": "parts/select-image/exercise.json" }
+    },
+    {
+      "id": "part_fill_blank",
+      "title": "Complete the sentence",
+      "content": { "kind": "exercise", "file": "parts/fill-blank/exercise.json" }
+    },
+    {
+      "id": "part_word_order",
+      "title": "Build the sentence",
+      "content": { "kind": "exercise", "file": "parts/word-order/exercise.json" }
+    },
+    {
+      "id": "part_listen",
+      "title": "Type what you hear",
+      "content": { "kind": "exercise", "file": "parts/listen/exercise.json" }
+    },
+    {
+      "id": "part_speak",
+      "title": "Say it aloud",
+      "content": { "kind": "exercise", "file": "parts/speak/exercise.json" }
+    }
+  ]
+}

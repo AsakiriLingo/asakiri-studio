@@ -1,46 +1,123 @@
-import { useState } from "react";
-import { createProjectSession, type ProjectSession } from "@core/projects";
-import { ContentCollectionList } from "@features/content";
-import { ProjectHubPage } from "@features/project-hub";
-import { WorkspaceOpen } from "@features/workspace";
-import { useLocalization } from "@app/localization/use-localization";
-import { useAppDependencies } from "@app/providers/use-app-dependencies";
-import { ThemeToggle } from "@app/theme/ThemeToggle";
+import { useEffect, useState } from "react";
+import { StartScreen } from "@features/start";
+import { NewCourseDialog } from "@features/new-course";
+import { Integrations } from "@features/integrations";
+import { WorkspaceShell, type WorkspaceSection } from "@features/workspace-shell";
+import { CourseStructure } from "@features/course-structure";
+import { CourseContent } from "@features/content";
+import { CourseMedia } from "@features/media";
+import { CourseDetails } from "@features/course-details";
+import { LessonEditor } from "@features/lesson-editor";
+
+function initialDark(): boolean {
+  const saved = localStorage.getItem("asakiri-theme");
+  if (saved === "dark") return true;
+  if (saved === "light") return false;
+  return window.matchMedia("(prefers-color-scheme: dark)").matches;
+}
+
+type View = "start" | "new-course" | "integrations" | "workspace";
 
 export function App() {
-  const { projectCreationGateway, projectDirectoryGateway, projectReader } = useAppDependencies();
-  const { messages } = useLocalization();
-  const [session, setSession] = useState<ProjectSession | null>(null);
+  const [isDark, setIsDark] = useState(initialDark);
+  const [view, setView] = useState<View>("start");
+  const [section, setSection] = useState<WorkspaceSection>("lessons");
+  const [lessonOpen, setLessonOpen] = useState(false);
 
-  const headerActions = <ThemeToggle messages={messages.themeToggle} />;
+  useEffect(() => {
+    document.documentElement.dataset.theme = isDark ? "dark" : "light";
+    localStorage.setItem("asakiri-theme", isDark ? "dark" : "light");
+  }, [isDark]);
 
-  if (session) {
+  const toggleTheme = () => {
+    setIsDark((value) => !value);
+  };
+
+  const openWorkspace = (target: WorkspaceSection) => {
+    setSection(target);
+    setLessonOpen(false);
+    setView("workspace");
+  };
+
+  const navigate = (target: WorkspaceSection) => {
+    setSection(target);
+    setLessonOpen(false);
+  };
+
+  if (view === "start") {
     return (
-      <WorkspaceOpen
-        key={session.id}
-        messages={messages.workspace}
-        onBack={() => {
-          setSession(null);
+      <StartScreen
+        isDark={isDark}
+        onNewCourse={() => {
+          setView("new-course");
         }}
-        reader={projectReader}
-        renderContent={(collections) => (
-          <ContentCollectionList collections={collections} messages={messages.content} />
-        )}
-        session={session}
-        workspaceActions={headerActions}
+        onOpenCourse={() => {
+          openWorkspace("lessons");
+        }}
+        onIntegrations={() => {
+          setView("integrations");
+        }}
+        onToggleTheme={toggleTheme}
+      />
+    );
+  }
+
+  if (view === "new-course") {
+    return (
+      <NewCourseDialog
+        onCancel={() => {
+          setView("start");
+        }}
+        onChooseFolder={() => {
+          openWorkspace("details");
+        }}
+      />
+    );
+  }
+
+  if (view === "integrations") {
+    return (
+      <Integrations
+        isDark={isDark}
+        onBack={() => {
+          setView("start");
+        }}
+        onToggleTheme={toggleTheme}
       />
     );
   }
 
   return (
-    <ProjectHubPage
-      creationGateway={projectCreationGateway}
-      directoryGateway={projectDirectoryGateway}
-      headerActions={headerActions}
-      messages={messages.projectHub}
-      onProjectOpened={(directory) => {
-        setSession(createProjectSession(directory));
+    <WorkspaceShell
+      projectName="Japanese Starter"
+      projectLocation="~/Courses/Japanese Starter"
+      active={section}
+      isDark={isDark}
+      onNavigate={navigate}
+      onBack={() => {
+        setView("start");
       }}
-    />
+      onToggleTheme={toggleTheme}
+    >
+      {section === "details" ? (
+        <CourseDetails />
+      ) : section === "content" ? (
+        <CourseContent />
+      ) : section === "media" ? (
+        <CourseMedia />
+      ) : lessonOpen ? (
+        <LessonEditor
+          onBackToStructure={() => {
+            setLessonOpen(false);
+          }}
+        />
+      ) : (
+        <CourseStructure
+          onOpenLesson={() => {
+            setLessonOpen(true);
+          }}
+        />
+      )}
+    </WorkspaceShell>
   );
 }

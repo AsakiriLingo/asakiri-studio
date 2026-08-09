@@ -5,7 +5,7 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { CourseParseError, parseCourse } from "@core/course";
-import type { CourseFileReader, LessonContent } from "@core/course";
+import type { CourseFileReader, PartContent } from "@core/course";
 
 const fixtureRoot = fileURLToPath(
   new URL("../../../examples/courses/japanese-starter", import.meta.url),
@@ -16,8 +16,8 @@ function diskReader(root: string): CourseFileReader {
 }
 
 function isExerciseContent(
-  content: LessonContent,
-): content is Extract<LessonContent, { kind: "exercise" }> {
+  content: PartContent,
+): content is Extract<PartContent, { kind: "exercise" }> {
   return content.kind === "exercise";
 }
 
@@ -32,8 +32,9 @@ describe("parseCourse", () => {
     ]);
     expect(course.records).toHaveLength(12);
     expect(course.assets).toHaveLength(6);
-    expect(course.lessons).toHaveLength(9);
-    expect(course.outline).toHaveLength(3);
+    expect(course.lessons).toHaveLength(3);
+    expect(course.lessons.flatMap((lesson) => lesson.parts)).toHaveLength(9);
+    expect(course.outline).toHaveLength(2);
   });
 
   it("resolves record fields into typed values", async () => {
@@ -47,7 +48,8 @@ describe("parseCourse", () => {
   it("parses every exercise type", async () => {
     const course = await parseCourse(diskReader(fixtureRoot));
     const types = course.lessons
-      .map((lesson) => lesson.content)
+      .flatMap((lesson) => lesson.parts)
+      .map((part) => part.content)
       .filter(isExerciseContent)
       .map((content) => content.exercise.type);
 
@@ -94,9 +96,14 @@ describe("parseCourse", () => {
           return Promise.resolve(
             JSON.stringify({
               id: "lesson_broken",
-              type: "exercise",
               title: "Broken",
-              content: { kind: "exercise", file: "broken.exercise.json" },
+              parts: [
+                {
+                  id: "part_broken",
+                  title: "Broken",
+                  content: { kind: "exercise", file: "broken.exercise.json" },
+                },
+              ],
             }),
           );
         }

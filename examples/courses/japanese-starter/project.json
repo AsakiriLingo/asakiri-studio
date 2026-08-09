@@ -19,37 +19,20 @@
     "media/assets/hiragana-a-audio/asset.json"
   ],
   "lessons": [
-    "lessons/welcome/lesson.json",
-    "lessons/cat-rich-media/lesson.json",
-    "lessons/cat-exercise/lesson.json",
-    "lessons/hiragana-vowels-match/lesson.json",
-    "lessons/cat-select-image/lesson.json",
-    "lessons/cat-fill-blank/lesson.json",
-    "lessons/cat-word-order/lesson.json",
-    "lessons/cat-listen/lesson.json",
-    "lessons/cat-speak/lesson.json"
+    "lessons/meet-neko/lesson.json",
+    "lessons/practice-neko/lesson.json",
+    "lessons/hiragana-vowels/lesson.json"
   ],
   "outline": [
     {
       "id": "section_getting_started",
       "title": "Getting started",
-      "lessonIds": ["lesson_welcome", "lesson_cat_rich_media", "lesson_cat_exercise"]
+      "lessonIds": ["lesson_meet_neko", "lesson_practice_neko"]
     },
     {
       "id": "section_hiragana",
       "title": "Hiragana",
-      "lessonIds": ["lesson_hiragana_vowels_match"]
-    },
-    {
-      "id": "section_practice",
-      "title": "Practice every exercise type",
-      "lessonIds": [
-        "lesson_cat_select_image",
-        "lesson_cat_fill_blank",
-        "lesson_cat_word_order",
-        "lesson_cat_listen",
-        "lesson_cat_speak"
-      ]
+      "lessonIds": ["lesson_hiragana_vowels"]
     }
   ]
 }

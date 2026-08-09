@@ -62,9 +62,14 @@ describe("createLayoutProjectReader readCourse", () => {
     }),
     "lessons/intro.json": JSON.stringify({
       id: "lesson_intro",
-      type: "rich-text",
       title: "Intro",
-      content: { kind: "tiptap", file: "intro.doc.json" },
+      parts: [
+        {
+          id: "part_intro",
+          title: "Intro",
+          content: { kind: "tiptap", file: "intro.doc.json" },
+        },
+      ],
     }),
     "lessons/intro.doc.json": JSON.stringify({ type: "doc", content: [] }),
   };

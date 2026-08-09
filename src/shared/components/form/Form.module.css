@@ -1,0 +1,58 @@
+.field {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.label {
+  font-size: var(--font-size-300);
+  font-weight: var(--font-weight-bold);
+}
+
+.help {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-100);
+}
+
+.input,
+.textarea,
+.select {
+  width: 100%;
+  border: var(--border-hairline) solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  outline: 2px solid transparent;
+  outline-offset: 1px;
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.input,
+.select {
+  min-height: var(--control-height-md);
+  padding-inline: var(--space-3) calc(var(--space-6) + var(--space-2));
+}
+
+.textarea {
+  min-height: 7rem;
+  padding: var(--space-3);
+  resize: vertical;
+}
+
+.input:focus-visible,
+.textarea:focus-visible,
+.select:focus-visible {
+  border-color: var(--color-text-muted);
+  outline-color: var(--color-focus-ring);
+}
+
+.input::placeholder,
+.textarea::placeholder {
+  color: var(--color-text-muted);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .input:hover,
+  .textarea:hover,
+  .select:hover {
+    background: var(--color-canvas);
+  }
+}

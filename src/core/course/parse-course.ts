@@ -28,7 +28,7 @@ import type {
   SpokenResponseEvaluation,
   TypedAnswerEvaluation,
 } from "@core/course/exercise";
-import type { Lesson, LessonContent, LessonType } from "@core/course/lesson";
+import type { Lesson, Part, PartContent } from "@core/course/lesson";
 import type { Asset, AssetAvailability, AssetKind } from "@core/course/media";
 
 export interface CourseFileReader {
@@ -559,7 +559,7 @@ function parseOutline(value: unknown, context: string): OutlineSection[] {
   });
 }
 
-function parseLessonContent(kind: string, body: unknown, context: string): LessonContent {
+function parsePartContent(kind: string, body: unknown, context: string): PartContent {
   if (kind === "tiptap") {
     return { kind, document: parseTiptapDocument(body, context) };
   }
@@ -572,17 +572,35 @@ function parseLessonContent(kind: string, body: unknown, context: string): Lesso
   return fail(`${context} has unsupported content kind: ${kind}`);
 }
 
-async function parseLesson(files: CourseFileReader, lessonPath: string): Promise<Lesson> {
-  const data = obj(await readJson(files, lessonPath), `lesson ${lessonPath}`);
-  const content = obj(data.content, `${lessonPath} content`);
-  const contentKind = str(content.kind, `${lessonPath} content.kind`);
-  const bodyPath = resolvePath(lessonPath, str(content.file, `${lessonPath} content.file`));
+async function parsePart(
+  files: CourseFileReader,
+  value: unknown,
+  lessonPath: string,
+  index: number,
+): Promise<Part> {
+  const context = `${lessonPath} parts[${String(index)}]`;
+  const data = obj(value, context);
+  const content = obj(data.content, `${context}.content`);
+  const contentKind = str(content.kind, `${context}.content.kind`);
+  const bodyPath = resolvePath(lessonPath, str(content.file, `${context}.content.file`));
   const body = await readJson(files, bodyPath);
   return {
+    id: str(data.id, `${context}.id`),
+    title: str(data.title, `${context}.title`),
+    content: parsePartContent(contentKind, body, bodyPath),
+  };
+}
+
+async function parseLesson(files: CourseFileReader, lessonPath: string): Promise<Lesson> {
+  const data = obj(await readJson(files, lessonPath), `lesson ${lessonPath}`);
+  const parts: Part[] = [];
+  for (const [index, part] of arr(data.parts, `${lessonPath} parts`).entries()) {
+    parts.push(await parsePart(files, part, lessonPath, index));
+  }
+  return {
     id: str(data.id, `${lessonPath} id`),
-    type: str(data.type, `${lessonPath} type`) as LessonType,
     title: str(data.title, `${lessonPath} title`),
-    content: parseLessonContent(contentKind, body, bodyPath),
+    parts,
   };
 }
 

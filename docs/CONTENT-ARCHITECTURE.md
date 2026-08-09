@@ -132,6 +132,16 @@ Prefer one collection per writing system (hiragana, katakana, kanji, and so on),
 
 Anything that feels special about an alphabet, a gojūon grid, a stroke-order player, an on-screen keyboard, is presentation in the learner application or a lesson and exercise type. The characters remain ordinary records, and the specialized views query the collection.
 
+## Course structure
+
+A course is organized as units, lessons, and parts:
+
+- A **unit** groups lessons. Units form the course outline; each names an ordered list of lesson IDs.
+- A **lesson** is an ordered list of **parts**. It is a heading learners move through and holds no content of its own.
+- A **part** is the unit of content. Each part is one of: a rich-text document (Tiptap), a rich-media composition, or an exercise (one of the exercise types below).
+
+The content kinds (rich-text, rich-media, exercise) classify a _part_, not a lesson. A single lesson typically mixes parts, for example a rich-text introduction followed by several exercises.
+
 ## Exercises
 
 Exercise presentation and answer evaluation are different concerns, and different exercise types must not be forced into one universal answer object. Every exercise separates two things:

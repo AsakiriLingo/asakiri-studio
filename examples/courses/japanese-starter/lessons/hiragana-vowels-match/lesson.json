@@ -1,9 +1,0 @@
-{
-  "id": "lesson_hiragana_vowels_match",
-  "type": "exercise",
-  "title": "Match the hiragana vowels",
-  "content": {
-    "kind": "exercise",
-    "file": "exercise.json"
-  }
-}

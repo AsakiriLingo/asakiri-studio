@@ -51,6 +51,9 @@
   --control-height-lg: 3rem;
   --size-spinner: 0.875rem;
 
+  --sidebar-width: 13.5rem;
+  --content-max: 88rem;
+
   --border-hairline: 1px;
   --border-spinner: 0.125rem;
 
@@ -85,6 +88,8 @@
   --color-overlay: oklch(0.22 0.018 155 / 0.28);
   --color-danger: oklch(0.48 0.18 25);
   --color-danger-surface: oklch(0.95 0.03 25);
+  --color-warning: oklch(0.47 0.11 75);
+  --color-warning-subtle: oklch(0.94 0.04 80);
   --color-success: oklch(0.4 0.1 155);
   --color-success-surface: oklch(0.93 0.035 155);
 }
@@ -105,6 +110,8 @@
   --color-overlay: oklch(0.08 0.006 155 / 0.55);
   --color-danger: oklch(0.74 0.13 25);
   --color-danger-surface: oklch(0.225 0.035 25);
+  --color-warning: oklch(0.78 0.1 75);
+  --color-warning-subtle: oklch(0.26 0.025 80);
   --color-success: oklch(0.74 0.1 155);
   --color-success-surface: oklch(0.225 0.03 155);
 }

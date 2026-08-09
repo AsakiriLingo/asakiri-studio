@@ -9,10 +9,10 @@ The fixture demonstrates:
 - a Hiragana collection modeling a writing system as ordinary records (character, romaji, row, vowel, audio);
 - scalar fields and independently referenceable repeated media items;
 - media assets stored separately from semantic content;
-- a normal Tiptap rich-text lesson;
-- a rich-media lesson referencing the same Cat record and its individual media;
+- the unit / lesson / part hierarchy: the outline groups lessons into units, and each lesson is an ordered list of parts;
+- a rich-text part (Tiptap), a rich-media part (composition referencing the Cat record and its media), and exercise parts;
 - an explicit literal binding representing content detached from a live record;
-- one lesson for every exercise type, each composing content bindings:
+- a part for every exercise type, each composing content bindings:
   - `multiple-choice` (Choose the matching word);
   - `select-image` (audio prompt, image options across Cat, Dog, Bird);
   - `match-pairs` (hiragana characters to romaji);
@@ -21,6 +21,8 @@ The fixture demonstrates:
   - `listening` in type mode (`typed-answer` against the Cat alternate answers);
   - `speaking` (`spoken-response`, graded on device, not in Studio);
 - answer evaluation based on stable IDs and accepted-value bindings rather than duplicated values.
+
+The three lessons live in two units: "Getting started" (Meet 猫, Practice 猫) and "Hiragana" (Hiragana vowels). Each `lesson.json` lists its parts, and every part points to its own content file under `parts/`.
 
 The Cat image is a real local SVG. Japanese and English audio entries are marked `placeholder` with an expected filename, so the fixture can model missing-media behavior without checking in fake audio. Assets marked `ready` must have a real local file; `pnpm check:example` enforces this.
 

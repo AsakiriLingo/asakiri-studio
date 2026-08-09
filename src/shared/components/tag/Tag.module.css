@@ -1,0 +1,28 @@
+.root {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.5rem;
+  padding-inline: var(--space-2);
+  border: var(--border-hairline) solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-100);
+  white-space: nowrap;
+}
+
+.accent {
+  border-color: transparent;
+  background: var(--color-surface-subtle);
+  color: var(--color-brand);
+}
+
+.warning {
+  border-color: transparent;
+  background: var(--color-warning-subtle);
+  color: var(--color-warning);
+}
+
+:root[data-theme="dark"] .accent {
+  border-color: var(--color-brand);
+  color: var(--color-text);
+}

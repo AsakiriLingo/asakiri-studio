@@ -2,16 +2,19 @@ import type { Composition } from "@core/course/composition";
 import type { TiptapDocument } from "@core/course/document";
 import type { Exercise } from "@core/course/exercise";
 
-export type LessonType = "rich-text" | "rich-media" | "exercise";
-
-export type LessonContent =
+export type PartContent =
   | { readonly kind: "tiptap"; readonly document: TiptapDocument }
   | { readonly kind: "composition"; readonly composition: Composition }
   | { readonly kind: "exercise"; readonly exercise: Exercise };
 
+export interface Part {
+  readonly id: string;
+  readonly title: string;
+  readonly content: PartContent;
+}
+
 export interface Lesson {
   readonly id: string;
-  readonly type: LessonType;
   readonly title: string;
-  readonly content: LessonContent;
+  readonly parts: readonly Part[];
 }

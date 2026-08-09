@@ -1,0 +1,250 @@
+.settingsStack {
+  display: grid;
+  gap: var(--space-8);
+  max-width: 48rem;
+}
+
+.settingGroup {
+  border-block: var(--border-hairline) solid var(--color-border);
+}
+
+.detailBody {
+  padding: var(--space-5) var(--space-4);
+}
+
+.formGrid {
+  display: grid;
+  gap: var(--space-5);
+}
+
+.spanAll {
+  grid-column: 1 / -1;
+}
+
+.inlineActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.assetRef {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-100);
+}
+
+.assetRef svg {
+  color: var(--color-brand);
+}
+
+.mono {
+  font-family: var(--font-family-mono);
+}
+
+.file {
+  font-family: var(--font-family-mono);
+  font-size: 0.625rem;
+}
+
+/* Contributors / funding / sponsors */
+.contributorRow,
+.fundingRow,
+.sponsorRow {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border-bottom: var(--border-hairline) solid var(--color-border);
+}
+
+.rowTitle {
+  display: block;
+  font-size: var(--font-size-300);
+  font-weight: var(--font-weight-bold);
+}
+
+.contributorAvatar {
+  display: grid;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  overflow: hidden;
+  border-radius: 50%;
+  background: var(--color-surface-subtle);
+  color: var(--color-text);
+  font-size: var(--font-size-100);
+  font-weight: var(--font-weight-bold);
+}
+
+.contributorMain,
+.fundingMain,
+.sponsorMain {
+  display: grid;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.contributorHead,
+.sponsorHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.contributorLinks {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-4);
+}
+
+.linkAdd {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-height: 1.5rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-100);
+  font-weight: var(--font-weight-bold);
+}
+
+.linkAdd svg {
+  width: 0.9rem;
+  height: 0.9rem;
+}
+
+.fundingBadge {
+  display: grid;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-subtle);
+  color: var(--color-brand);
+}
+
+.sponsorLogo {
+  display: grid;
+  place-items: center;
+  gap: 2px;
+  width: 4.5rem;
+  height: 3rem;
+  border: var(--border-hairline) solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-canvas);
+  color: var(--color-text-muted);
+}
+
+.sponsorLogo svg {
+  color: var(--color-brand);
+}
+
+.contributorAdd,
+.fundingAdd,
+.sponsorAdd {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border-top: var(--border-hairline) solid var(--color-border);
+  background: var(--color-canvas);
+}
+
+.avatarAdd {
+  display: grid;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  padding: 0;
+  border: var(--border-hairline) dashed var(--color-border-strong);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--color-text-muted);
+  justify-self: start;
+}
+
+.logoAdd {
+  display: grid;
+  place-items: center;
+  width: 4.5rem;
+  height: 3rem;
+  padding: 0;
+  border: var(--border-hairline) dashed var(--color-border-strong);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-text-muted);
+  justify-self: start;
+}
+
+/* Project settings rows */
+.settingRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-4);
+  min-height: 4rem;
+  padding: var(--space-3) var(--space-4);
+  border-bottom: var(--border-hairline) solid var(--color-border);
+}
+
+.settingRow:last-child {
+  border-bottom: 0;
+}
+
+.settingName {
+  font-size: var(--font-size-300);
+  font-weight: var(--font-weight-bold);
+}
+
+.settingDetail {
+  margin-top: var(--space-1);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-100);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .linkAdd:hover {
+    color: var(--color-text);
+  }
+
+  .avatarAdd:hover,
+  .logoAdd:hover {
+    border-color: var(--color-text-muted);
+    color: var(--color-text);
+  }
+}
+
+@media (min-width: 48rem) {
+  .formGrid.two {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .contributorAdd {
+    grid-template-columns:
+      auto minmax(8rem, 0.6fr) minmax(0, 1fr) minmax(0, 1fr)
+      auto;
+    align-items: end;
+    gap: var(--space-2) var(--space-3);
+  }
+
+  .fundingAdd {
+    grid-template-columns: minmax(9rem, 0.7fr) minmax(0, 1fr) auto;
+    align-items: end;
+    gap: var(--space-2) var(--space-3);
+  }
+
+  .sponsorAdd {
+    grid-template-columns:
+      auto minmax(0, 1fr) minmax(0, 1fr) minmax(7rem, 0.5fr)
+      auto;
+    align-items: end;
+    gap: var(--space-2) var(--space-3);
+  }
+}

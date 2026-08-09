@@ -35,7 +35,7 @@ export type {
   SpeakingExercise,
   Exercise,
 } from "@core/course/exercise";
-export type { LessonType, LessonContent, Lesson } from "@core/course/lesson";
+export type { PartContent, Part, Lesson } from "@core/course/lesson";
 export type { CourseProject, OutlineSection, Course } from "@core/course/course";
 export type { CourseFileReader } from "@core/course/parse-course";
 export { parseCourse, CourseParseError } from "@core/course/parse-course";

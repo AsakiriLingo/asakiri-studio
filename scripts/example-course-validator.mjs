@@ -364,32 +364,45 @@ export async function validateExampleCourse(courseRoot) {
     }
   }
 
-  const expectedContentKinds = new Map([
-    ["exercise", "exercise"],
-    ["rich-media", "composition"],
-    ["rich-text", "tiptap"],
-  ]);
+  const CONTENT_KINDS = new Set(["tiptap", "composition", "exercise"]);
+  let parts = 0;
 
   for (const [lessonId, { data: lesson, file }] of lessons) {
     if (!outlinedLessonIds.has(lessonId)) report(`lesson is not in the outline: ${lessonId}`);
-    const expectedContentKind = expectedContentKinds.get(lesson.type);
-    if (!expectedContentKind) {
-      report(`${lessonId} has unsupported lesson type: ${String(lesson.type)}`);
-    } else if (lesson.content?.kind !== expectedContentKind) {
-      report(`${lessonId} must use content kind: ${expectedContentKind}`);
+    if (!Array.isArray(lesson.parts) || lesson.parts.length === 0) {
+      report(`${lessonId} must contain at least one part`);
+      continue;
     }
 
-    const contentPath = resolveInsideCourse(
-      dirname(file),
-      lesson.content?.file,
-      `${lessonId}.content.file`,
-    );
-    if (!contentPath) continue;
-    const content = await readJson(contentPath);
-    if (!content) continue;
-    visitExplicitBindings(content, `lesson ${lessonId}`);
+    const partIds = new Set();
+    for (const part of lesson.parts) {
+      if (!part?.id || typeof part.id !== "string") {
+        report(`${lessonId} contains a part without a string id`);
+        continue;
+      }
+      if (partIds.has(part.id)) report(`${lessonId} contains duplicate part id: ${part.id}`);
+      partIds.add(part.id);
+      parts += 1;
 
-    if (lesson.content.kind === "exercise") validateExercise(content, lessonId, report);
+      const partId = `${lessonId}.${part.id}`;
+      const contentKind = part.content?.kind;
+      if (!CONTENT_KINDS.has(contentKind)) {
+        report(`${partId} has unsupported content kind: ${String(contentKind)}`);
+        continue;
+      }
+
+      const contentPath = resolveInsideCourse(
+        dirname(file),
+        part.content?.file,
+        `${partId}.content.file`,
+      );
+      if (!contentPath) continue;
+      const content = await readJson(contentPath);
+      if (!content) continue;
+      visitExplicitBindings(content, partId);
+
+      if (contentKind === "exercise") validateExercise(content, partId, report);
+    }
   }
 
   return {
@@ -398,6 +411,7 @@ export async function validateExampleCourse(courseRoot) {
       assets: assets.size,
       collections: collections.size,
       lessons: lessons.size,
+      parts,
       placeholderAssets,
       records: records.size,
     },

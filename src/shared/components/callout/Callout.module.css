@@ -1,0 +1,18 @@
+.root {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: var(--border-hairline) solid var(--color-border);
+  background: var(--color-canvas);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-300);
+}
+
+.root strong {
+  color: var(--color-text);
+}
+
+.root svg {
+  color: var(--color-brand);
+}
