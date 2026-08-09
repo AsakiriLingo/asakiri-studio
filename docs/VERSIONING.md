@@ -13,11 +13,11 @@ releases, and the registry are the author's Git workflow plus the website, consi
 
 The most important rule: do not conflate these.
 
-| Version                 | Lives on                    | Bumps when                          | Consumers            |
-| ----------------------- | --------------------------- | ----------------------------------- | -------------------- |
-| `formatVersion`         | every persisted file        | the on-disk file **layout** changes | Studio, migrations   |
-| course release version  | Git tag + `project.json`    | the course **content** changes      | authors, learners, registry |
-| app version             | `package.json`, `tauri.conf.json` | Studio ships                  | nobody downstream    |
+| Version                | Lives on                          | Bumps when                          | Consumers                   |
+| ---------------------- | --------------------------------- | ----------------------------------- | --------------------------- |
+| `formatVersion`        | every persisted file              | the on-disk file **layout** changes | Studio, migrations          |
+| course release version | Git tag + `project.json`          | the course **content** changes      | authors, learners, registry |
+| app version            | `package.json`, `tauri.conf.json` | Studio ships                        | nobody downstream           |
 
 A course can move `1.0.0` to `5.0.0` while `formatVersion` never moves, and vice versa. This
 record is about the middle row.
@@ -38,7 +38,7 @@ unambiguous line for what "breaking" means:
 - **PATCH** (`1.2.0` to `1.2.1`) — typos, metadata, a broken media file swapped for a working
   one. No new learning.
 
-The test for major vs minor is one question: *does this invalidate progress keyed by ID?* If no,
+The test for major vs minor is one question: _does this invalidate progress keyed by ID?_ If no,
 it is at most minor.
 
 ### Compatibility contract
@@ -62,7 +62,10 @@ Add a `release` block to `project.json`, independent of `formatVersion`:
   "formatVersion": "0.1",
   "project": { "id": "course_japanese_starter", "title": "Japanese Starter", "...": "..." },
   "release": { "version": "1.2.0", "releasedAt": "2026-08-09", "channel": "stable" },
-  "collections": [], "assets": [], "lessons": [], "outline": []
+  "collections": [],
+  "assets": [],
+  "lessons": [],
+  "outline": []
 }
 ```
 
@@ -91,15 +94,23 @@ format, with a **Breaking** subsection that justifies each major bump in learner
 
 ```markdown
 ## [2.0.0] - 2026-09-01
+
 ### Changed (breaking)
+
 - Reordered the outline and renamed lesson IDs. Progress from 1.x does not carry over.
+
 ### Added
+
 - Rebuilt chapter 1 around spaced-repetition exercises.
 
 ## [1.2.0] - 2026-08-09
+
 ### Added
+
 - Chapter 4: particles, 8 lessons.
+
 ### Fixed
+
 - Corrected the answer key in "Greetings" exercise 3.
 ```
 

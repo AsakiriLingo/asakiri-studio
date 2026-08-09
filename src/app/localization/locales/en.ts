@@ -20,11 +20,9 @@ export const enMessages = {
     chooseFolder: "Open course",
     openingFolder: "Opening…",
     dialogTitle: "Open course project",
-    unsupported: "Local folders require a current Chromium browser or the desktop app.",
     errors: {
       permissionDenied: "Folder permission was denied.",
       unknown: "The project could not be opened.",
-      unsupported: "This browser cannot access local project folders.",
     },
     ready: "Ready",
     create: {
@@ -37,13 +35,11 @@ export const enMessages = {
       cancelButton: "Cancel",
       creating: "Creating…",
       dialogTitle: "Choose where to save the course",
-      unsupported: "Creating a course requires the desktop app.",
       errors: {
         alreadyExists: "A folder with that name already exists here.",
         invalidName: "Enter a valid course name.",
         permissionDenied: "Permission to write to that folder was denied.",
         unknown: "The course could not be created.",
-        unsupported: "Creating a course requires the desktop app.",
       },
     },
   },

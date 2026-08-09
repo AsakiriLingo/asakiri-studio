@@ -22,9 +22,6 @@ function toErrorCode(error: unknown): ProjectCreationErrorCode {
 }
 
 export class TauriProjectCreationGateway implements ProjectCreationGateway {
-  readonly isSupported = true;
-  readonly runtime = "desktop" as const;
-
   constructor(private readonly locations: ProjectLocationRegistry) {}
 
   async createCourse(request: {
@@ -53,13 +50,12 @@ export class TauriProjectCreationGateway implements ProjectCreationGateway {
     }
 
     const id = crypto.randomUUID();
-    this.locations.register(id, { runtime: "tauri", rootPath: created.path });
+    this.locations.register(id, { rootPath: created.path });
 
     return {
       id,
       name: created.name,
       locationLabel: created.name,
-      runtime: "desktop",
     };
   }
 }

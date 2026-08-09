@@ -4,9 +4,6 @@ import type { ProjectDirectory, ProjectDirectoryGateway } from "@core/projects";
 import type { ProjectLocationRegistry } from "@platform/project-location/project-location-registry";
 
 export class TauriProjectDirectoryGateway implements ProjectDirectoryGateway {
-  readonly isSupported = true;
-  readonly runtime = "desktop" as const;
-
   constructor(private readonly locations: ProjectLocationRegistry) {}
 
   async openProjectDirectory(options: {
@@ -27,13 +24,12 @@ export class TauriProjectDirectoryGateway implements ProjectDirectoryGateway {
     const directoryName = pathParts[pathParts.length - 1] ?? path;
     const title = await invoke<string>("read_course_title", { path }).catch(() => directoryName);
     const id = crypto.randomUUID();
-    this.locations.register(id, { runtime: "tauri", rootPath: path });
+    this.locations.register(id, { rootPath: path });
 
     return {
       id,
       name: title,
       locationLabel: directoryName,
-      runtime: "desktop",
     };
   }
 }

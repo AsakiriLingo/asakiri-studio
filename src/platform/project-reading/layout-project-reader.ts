@@ -1,3 +1,5 @@
+import type { Course } from "@core/course";
+import { parseCourse } from "@core/course";
 import type {
   ContentCollectionSummary,
   ProjectReader,
@@ -46,7 +48,6 @@ export function createLayoutProjectReader(
   resolveFileReader: ResolveProjectFileReader,
 ): ProjectReader {
   return {
-    isSupported: true,
     async listContentCollections(
       session,
     ): Promise<ProjectReadResult<readonly ContentCollectionSummary[]>> {
@@ -62,6 +63,18 @@ export function createLayoutProjectReader(
           summaries.push(parseCollectionSummary(await files.readTextFile(path)));
         }
         return { status: "ready", data: summaries };
+      } catch {
+        return { status: "failed", code: "unavailable" };
+      }
+    },
+    async readCourse(session): Promise<ProjectReadResult<Course>> {
+      const files = resolveFileReader(session);
+      if (!files) {
+        return { status: "failed", code: "unavailable" };
+      }
+
+      try {
+        return { status: "ready", data: await parseCourse(files) };
       } catch {
         return { status: "failed", code: "unavailable" };
       }

@@ -1,5 +1,4 @@
-export type ProjectRuntime = "browser" | "desktop";
-export type ProjectDirectoryErrorCode = "permissionDenied" | "unknown" | "unsupported";
+export type ProjectDirectoryErrorCode = "permissionDenied" | "unknown";
 
 export class ProjectDirectoryError extends Error {
   readonly code: ProjectDirectoryErrorCode;
@@ -15,15 +14,12 @@ export interface ProjectDirectory {
   readonly id: string;
   readonly name: string;
   readonly locationLabel: string;
-  readonly runtime: ProjectRuntime;
 }
 
 /**
  * Product-facing port for selecting a course project. Platform-specific
- * handles and absolute paths remain private to concrete adapters.
+ * paths remain private to concrete adapters.
  */
 export interface ProjectDirectoryGateway {
-  readonly isSupported: boolean;
-  readonly runtime: ProjectRuntime;
   openProjectDirectory(options: { readonly dialogTitle: string }): Promise<ProjectDirectory | null>;
 }

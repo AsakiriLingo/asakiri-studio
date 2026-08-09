@@ -7,7 +7,6 @@ export interface ProjectHubMessages {
   readonly chooseFolder: string;
   readonly openingFolder: string;
   readonly dialogTitle: string;
-  readonly unsupported: string;
   readonly errors: Readonly<Record<ProjectDirectoryErrorCode, string>>;
   readonly ready: string;
   readonly create: {
@@ -20,7 +19,6 @@ export interface ProjectHubMessages {
     readonly cancelButton: string;
     readonly creating: string;
     readonly dialogTitle: string;
-    readonly unsupported: string;
     readonly errors: Readonly<Record<ProjectCreationErrorCode, string>>;
   };
 }

@@ -56,9 +56,9 @@ describe("WorkspaceOpen", () => {
 
   it("shows the validating state while the reader is pending", () => {
     const pendingReader: ProjectReader = {
-      isSupported: true,
       listContentCollections: (): ReturnType<ProjectReader["listContentCollections"]> =>
         new Promise(() => undefined),
+      readCourse: (): ReturnType<ProjectReader["readCourse"]> => new Promise(() => undefined),
     };
 
     render(

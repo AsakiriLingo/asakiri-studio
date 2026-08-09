@@ -8,7 +8,6 @@ describe("createProjectSession", () => {
       id: "project-1",
       name: "Japanese Starter",
       locationLabel: "Documents / courses",
-      runtime: "desktop",
     };
 
     const session = createProjectSession(directory);

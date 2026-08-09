@@ -8,7 +8,7 @@ const session: ProjectSession = { id: "project-1", name: "Japanese Starter" };
 describe("createProjectReader", () => {
   it("reads the selected Tauri project through its registered location", async () => {
     const locations = new ProjectLocationRegistry();
-    locations.register(session.id, { runtime: "tauri", rootPath: "/courses/Japanese Starter" });
+    locations.register(session.id, { rootPath: "/courses/Japanese Starter" });
     const files: Readonly<Record<string, string>> = {
       "/courses/Japanese Starter/project.json": JSON.stringify({
         collections: ["content/collections/vocabulary.json"],

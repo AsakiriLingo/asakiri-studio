@@ -1,7 +1,7 @@
-import type { ProjectDirectory, ProjectRuntime } from "@core/projects/project-directory";
+import type { ProjectDirectory } from "@core/projects/project-directory";
 
 export type ProjectCreationErrorCode =
-  "alreadyExists" | "invalidName" | "permissionDenied" | "unknown" | "unsupported";
+  "alreadyExists" | "invalidName" | "permissionDenied" | "unknown";
 
 export class ProjectCreationError extends Error {
   readonly code: ProjectCreationErrorCode;
@@ -14,8 +14,6 @@ export class ProjectCreationError extends Error {
 }
 
 export interface ProjectCreationGateway {
-  readonly isSupported: boolean;
-  readonly runtime: ProjectRuntime;
   createCourse(request: {
     readonly name: string;
     readonly dialogTitle: string;

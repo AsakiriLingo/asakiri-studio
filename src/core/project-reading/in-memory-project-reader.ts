@@ -1,3 +1,4 @@
+import type { Course } from "@core/course";
 import type {
   ContentCollectionSummary,
   ProjectReadErrorCode,
@@ -5,24 +6,33 @@ import type {
 } from "@core/project-reading/project-reader";
 
 export interface InMemoryProjectReaderSeed {
-  readonly isSupported?: boolean;
   readonly contentCollectionsBySession?: Readonly<
     Record<string, readonly ContentCollectionSummary[]>
   >;
+  readonly courseBySession?: Readonly<Record<string, Course>>;
   readonly failWithCode?: ProjectReadErrorCode;
 }
 
 export function createInMemoryProjectReader(seed: InMemoryProjectReaderSeed = {}): ProjectReader {
-  const { contentCollectionsBySession = {}, failWithCode, isSupported = true } = seed;
+  const { contentCollectionsBySession = {}, courseBySession = {}, failWithCode } = seed;
 
   return {
-    isSupported,
     listContentCollections(session) {
       if (failWithCode) {
         return Promise.resolve({ status: "failed", code: failWithCode });
       }
       const data = contentCollectionsBySession[session.id] ?? [];
       return Promise.resolve({ status: "ready", data });
+    },
+    readCourse(session) {
+      if (failWithCode) {
+        return Promise.resolve({ status: "failed", code: failWithCode });
+      }
+      const course = courseBySession[session.id];
+      if (!course) {
+        return Promise.resolve({ status: "failed", code: "unavailable" });
+      }
+      return Promise.resolve({ status: "ready", data: course });
     },
   };
 }

@@ -16,11 +16,9 @@ const messages: ProjectHubMessages = {
   chooseFolder: "Choose folder",
   openingFolder: "Opening…",
   dialogTitle: "Open course project",
-  unsupported: "Local folders require a current Chromium browser.",
   errors: {
     permissionDenied: "Folder permission was denied.",
     unknown: "The project could not be opened.",
-    unsupported: "This browser cannot access local project folders.",
   },
   ready: "Ready",
   create: {
@@ -33,13 +31,11 @@ const messages: ProjectHubMessages = {
     cancelButton: "Cancel",
     creating: "Creating…",
     dialogTitle: "Choose where to save the course",
-    unsupported: "Creating a course requires the desktop app.",
     errors: {
       alreadyExists: "A folder with that name already exists here.",
       invalidName: "Enter a valid course name.",
       permissionDenied: "Permission to write to that folder was denied.",
       unknown: "The course could not be created.",
-      unsupported: "Creating a course requires the desktop app.",
     },
   },
 };
@@ -48,23 +44,20 @@ const project: ProjectDirectory = {
   id: "course-project",
   name: "Course project",
   locationLabel: "course-project",
-  runtime: "desktop",
 };
 
 const onProjectOpened = vi.fn();
 
 function createGateway(
   openProjectDirectory: ProjectDirectoryGateway["openProjectDirectory"],
-  isSupported = true,
 ): ProjectDirectoryGateway {
-  return { isSupported, openProjectDirectory, runtime: "desktop" };
+  return { openProjectDirectory };
 }
 
 function createCreationGateway(
   createCourse: ProjectCreationGateway["createCourse"] = vi.fn(),
-  isSupported = true,
 ): ProjectCreationGateway {
-  return { isSupported, createCourse, runtime: "desktop" };
+  return { createCourse };
 }
 
 describe("ProjectHubPage", () => {
@@ -90,20 +83,6 @@ describe("ProjectHubPage", () => {
     await waitFor(() => {
       expect(screen.queryByRole("dialog", { name: "Create a course" })).not.toBeInTheDocument();
     });
-  });
-
-  it("disables folder selection when the runtime cannot access directories", () => {
-    render(
-      <ProjectHubPage
-        creationGateway={createCreationGateway()}
-        directoryGateway={createGateway(vi.fn(), false)}
-        messages={messages}
-        onProjectOpened={onProjectOpened}
-      />,
-    );
-
-    expect(screen.getByRole("button", { name: "Choose folder" })).toBeDisabled();
-    expect(screen.getByText(/require a current Chromium browser/i)).toBeVisible();
   });
 
   it("shows a selected project", async () => {
@@ -164,7 +143,6 @@ describe("ProjectHubPage", () => {
       id: "new-course",
       name: "New Course",
       locationLabel: "New Course",
-      runtime: "desktop",
     };
     const createCourse = vi.fn().mockResolvedValue(created);
     const handleProjectOpened = vi.fn();
@@ -189,20 +167,6 @@ describe("ProjectHubPage", () => {
       name: "New Course",
       dialogTitle: "Choose where to save the course",
     });
-  });
-
-  it("disables course creation when the runtime cannot create projects", () => {
-    render(
-      <ProjectHubPage
-        creationGateway={createCreationGateway(vi.fn(), false)}
-        directoryGateway={createGateway(vi.fn())}
-        messages={messages}
-        onProjectOpened={vi.fn()}
-      />,
-    );
-
-    expect(screen.getByRole("button", { name: "Create course" })).toBeDisabled();
-    expect(screen.getByText("Creating a course requires the desktop app.")).toBeVisible();
   });
 
   it("localizes creation failures without exposing raw errors", async () => {

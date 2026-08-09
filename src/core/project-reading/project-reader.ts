@@ -1,3 +1,4 @@
+import type { Course } from "@core/course";
 import type { ProjectSession } from "@core/projects";
 
 export interface ContentCollectionSummary {
@@ -13,8 +14,8 @@ export type ProjectReadResult<T> =
   | { readonly status: "failed"; readonly code: ProjectReadErrorCode };
 
 export interface ProjectReader {
-  readonly isSupported: boolean;
   listContentCollections(
     session: ProjectSession,
   ): Promise<ProjectReadResult<readonly ContentCollectionSummary[]>>;
+  readCourse(session: ProjectSession): Promise<ProjectReadResult<Course>>;
 }

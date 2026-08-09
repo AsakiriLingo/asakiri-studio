@@ -76,12 +76,7 @@ export function ProjectHubPage({
             <Dialog.Root open={isCreateDialogOpen} onOpenChange={changeCreateDialog}>
               <Dialog.Trigger
                 render={
-                  <Button
-                    className={styles.command}
-                    disabled={!creationGateway.isSupported}
-                    size="sm"
-                    variant="ghost"
-                  >
+                  <Button className={styles.command} size="sm" variant="ghost">
                     <Icon aria-hidden="true" name="plus" size={18} />
                     <span>{messages.create.openButton}</span>
                   </Button>
@@ -157,7 +152,7 @@ export function ProjectHubPage({
               aria-busy={isOpening}
               className={styles.command}
               data-loading={isOpening || undefined}
-              disabled={!directoryGateway.isSupported || isOpening}
+              disabled={isOpening}
               focusableWhenDisabled={isOpening}
               onClick={() => void handleOpenProject()}
               size="sm"
@@ -169,18 +164,6 @@ export function ProjectHubPage({
           </div>
 
           <div className={styles.statusList}>
-            {!creationGateway.isSupported && (
-              <p className={styles.notice} role="status">
-                {messages.create.unsupported}
-              </p>
-            )}
-
-            {!directoryGateway.isSupported && (
-              <p className={styles.notice} role="status">
-                {messages.unsupported}
-              </p>
-            )}
-
             {state.status === "error" && (
               <p
                 className={[styles.notice, styles.noticeError].filter(Boolean).join(" ")}

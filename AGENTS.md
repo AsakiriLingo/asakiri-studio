@@ -10,7 +10,7 @@ These instructions apply to this entire repository.
 
 ## Product constraints
 
-- Asakiri Studio is a desktop-first, local-first course editor delivered as a Chromium web app and a Tauri desktop app.
+- Asakiri Studio is a local-first course editor delivered as a Tauri desktop app. The React frontend runs inside the Tauri webview; there is no standalone web build.
 - One course lives in one project directory. Content and media are project-scoped and remain local.
 - Use a content-first domain model with context-first authoring: reusable records can be created in Content or inline from lessons and exercises.
 - Content records, media assets, and lesson/exercise compositions are separate concepts. Compositions reference stable IDs; never embed binary data or absolute paths.
@@ -25,10 +25,10 @@ These instructions apply to this entire repository.
 - Put only stable cross-feature product concepts and platform-facing ports in focused modules under `src/core/<module>`.
 - Every core module exposes a narrow public API through `index.ts`. Do not use `core` as a generic dumping ground.
 - Features may import their own internals, core public APIs, and `src/shared`; they must not import `app`, `platform`, another feature's internals, or core internals.
-- `src/platform` contains browser/Tauri adapters and may import only `platform`, `shared`, and core public APIs.
+- `src/platform` contains Tauri adapters and may import only `platform`, `shared`, and core public APIs.
 - `src/shared` must remain product-feature and platform agnostic.
 - `src/app` is the composition root. It is the only layer allowed to connect features to concrete platform adapters.
-- Keep platform objects such as browser file handles and Tauri paths behind contracts. Do not put them in feature state or course domain types.
+- Keep platform objects such as Tauri paths behind contracts. Do not put them in feature state or course domain types.
 - Prefer small, composable React components. Forward refs and native HTML props in reusable controls; avoid boolean-prop and configuration-object component APIs.
 - Build accessible component behavior on Base UI. Preserve its `render` composition API, state attributes, native props, and refs.
 - Style reusable components and features with CSS Modules. Keep global CSS limited to tokens, resets, root behavior, and accessibility preferences.

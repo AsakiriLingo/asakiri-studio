@@ -20,12 +20,9 @@ export const jaMessages = {
     chooseFolder: "コースを開く",
     openingFolder: "開いています…",
     dialogTitle: "コースプロジェクトを開く",
-    unsupported:
-      "ローカルフォルダーを利用するには、最新のChromiumブラウザーまたはデスクトップアプリが必要です。",
     errors: {
       permissionDenied: "フォルダーへのアクセスが拒否されました。",
       unknown: "プロジェクトを開けませんでした。",
-      unsupported: "このブラウザーではローカルプロジェクトフォルダーを利用できません。",
     },
     ready: "準備完了",
     create: {
@@ -39,13 +36,11 @@ export const jaMessages = {
       cancelButton: "キャンセル",
       creating: "作成しています…",
       dialogTitle: "コースの保存先を選択",
-      unsupported: "コースの作成にはデスクトップアプリが必要です。",
       errors: {
         alreadyExists: "同じ名前のフォルダーがすでに存在します。",
         invalidName: "有効なコース名を入力してください。",
         permissionDenied: "フォルダーへの書き込みが拒否されました。",
         unknown: "コースを作成できませんでした。",
-        unsupported: "コースの作成にはデスクトップアプリが必要です。",
       },
     },
   },

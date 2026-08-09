@@ -1,8 +1,24 @@
 import { describe, expect, it } from "vitest";
+import type { Course } from "@core/course";
 import { createInMemoryProjectReader } from "@core/project-reading/in-memory-project-reader";
 import type { ProjectSession } from "@core/projects";
 
 const session: ProjectSession = { id: "project-1", name: "Japanese Starter" };
+
+const course: Course = {
+  project: {
+    id: "course_japanese_starter",
+    title: "Japanese Starter",
+    description: "",
+    defaultLocale: "en",
+    learningLocales: ["ja"],
+  },
+  collections: [],
+  records: [],
+  assets: [],
+  lessons: [],
+  outline: [],
+};
 
 describe("createInMemoryProjectReader", () => {
   it("returns the seeded content collections for a known session", async () => {
@@ -36,8 +52,15 @@ describe("createInMemoryProjectReader", () => {
     expect(result).toEqual({ status: "failed", code: "unavailable" });
   });
 
-  it("reports capability from the seed", () => {
-    expect(createInMemoryProjectReader().isSupported).toBe(true);
-    expect(createInMemoryProjectReader({ isSupported: false }).isSupported).toBe(false);
+  it("returns the seeded course for a known session", async () => {
+    const reader = createInMemoryProjectReader({ courseBySession: { "project-1": course } });
+
+    expect(await reader.readCourse(session)).toEqual({ status: "ready", data: course });
+  });
+
+  it("fails as unavailable when no course is seeded", async () => {
+    const reader = createInMemoryProjectReader();
+
+    expect(await reader.readCourse(session)).toEqual({ status: "failed", code: "unavailable" });
   });
 });

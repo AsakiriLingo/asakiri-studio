@@ -3,7 +3,6 @@ import { createRoot } from "react-dom/client";
 import { App } from "@app/App";
 import { AppProviders } from "@app/providers/AppProviders";
 import { createAppDependencies } from "@app/providers/create-app-dependencies";
-import { getRuntimeKind } from "@platform/runtime/runtime";
 import "@app/styles/global.css";
 
 const rootElement = document.getElementById("root");
@@ -13,7 +12,6 @@ if (!rootElement) {
 }
 
 const dependencies = createAppDependencies();
-document.documentElement.dataset.runtime = getRuntimeKind();
 
 createRoot(rootElement).render(
   <StrictMode>
