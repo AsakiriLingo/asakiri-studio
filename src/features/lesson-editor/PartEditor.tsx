@@ -3,7 +3,7 @@ import { Button } from "@shared/components/button";
 import { Field, TextArea } from "@shared/components/form";
 import { Icon } from "@shared/components/icon";
 import { PanelHeader } from "@shared/components/panel";
-import { Select } from "@shared/components/select";
+import { Select, type SelectOption } from "@shared/components/select";
 import { Status } from "@shared/components/status";
 import { Tag } from "@shared/components/tag";
 import type { LessonPart, PartKind } from "@features/lesson-editor/parts";
@@ -51,13 +51,25 @@ function PromptField({
   );
 }
 
+const CORRECT_ROLE_ITEMS: readonly SelectOption[] = [
+  { value: "correct", label: "Correct" },
+  { value: "distractor", label: "Distractor" },
+];
+
+const ANSWER_ROLE_ITEMS: readonly SelectOption[] = [
+  { value: "answer", label: "Answer" },
+  { value: "distractor", label: "Distractor" },
+];
+
 interface OptionData {
   readonly index: ReactNode;
   readonly title: string;
   readonly mono?: string;
   readonly detail?: string;
   readonly values: readonly string[];
-  readonly trailing: ReactNode;
+  readonly roleItems?: readonly SelectOption[];
+  readonly role?: string;
+  readonly trailing?: ReactNode;
 }
 
 function OptionRow({ option }: { readonly option: OptionData }) {
@@ -80,7 +92,16 @@ function OptionRow({ option }: { readonly option: OptionData }) {
           </span>
         )}
       </span>
-      {option.trailing}
+      {option.roleItems === undefined ? (
+        option.trailing
+      ) : (
+        <Select
+          className={styles.roleSelect}
+          aria-label={`Role for ${option.title}`}
+          items={option.roleItems}
+          defaultValue={option.role}
+        />
+      )}
     </div>
   );
 }
@@ -122,10 +143,6 @@ function SettingRow({ name, detail }: { readonly name: string; readonly detail: 
     </div>
   );
 }
-
-const correctTag = <Tag variant="accent">Correct</Tag>;
-const answerTag = <Tag variant="accent">Answer</Tag>;
-const distractorTag = <Tag>Distractor</Tag>;
 
 function RichTextEditor() {
   return (
@@ -193,21 +210,24 @@ const MULTIPLE_CHOICE_OPTIONS: readonly OptionData[] = [
     title: "Vocabulary / 猫",
     mono: "option_cat",
     values: ["猫", "Cat", "Japanese audio", "English audio", "Image"],
-    trailing: correctTag,
+    roleItems: CORRECT_ROLE_ITEMS,
+    role: "correct",
   },
   {
     index: "B",
     title: "Vocabulary / 犬",
     mono: "option_dog",
     values: ["犬", "Dog"],
-    trailing: distractorTag,
+    roleItems: CORRECT_ROLE_ITEMS,
+    role: "distractor",
   },
   {
     index: "C",
     title: "Vocabulary / 鳥",
     mono: "option_bird",
     values: ["鳥", "Bird"],
-    trailing: distractorTag,
+    roleItems: CORRECT_ROLE_ITEMS,
+    role: "distractor",
   },
 ];
 
@@ -217,28 +237,32 @@ const IMAGE_OPTIONS: readonly OptionData[] = [
     title: "Vocabulary / 猫",
     mono: "option_cat",
     values: ["Image · cat.png", "猫", "Japanese audio"],
-    trailing: correctTag,
+    roleItems: CORRECT_ROLE_ITEMS,
+    role: "correct",
   },
   {
     index: "B",
     title: "Vocabulary / 犬",
     mono: "option_dog",
     values: ["Image · dog.png", "犬"],
-    trailing: distractorTag,
+    roleItems: CORRECT_ROLE_ITEMS,
+    role: "distractor",
   },
   {
     index: "C",
     title: "Vocabulary / 鳥",
     mono: "option_bird",
     values: ["Image · bird.png", "鳥"],
-    trailing: distractorTag,
+    roleItems: CORRECT_ROLE_ITEMS,
+    role: "distractor",
   },
   {
     index: "D",
     title: "Vocabulary / 魚",
     mono: "option_fish",
     values: ["Image · fish.png", "魚"],
-    trailing: distractorTag,
+    roleItems: CORRECT_ROLE_ITEMS,
+    role: "distractor",
   },
 ];
 
@@ -248,34 +272,36 @@ const FILL_BLANK_OPTIONS: readonly OptionData[] = [
     title: "Vocabulary / 猫",
     mono: "option_cat",
     values: ["猫", "Cat"],
-    trailing: answerTag,
+    roleItems: ANSWER_ROLE_ITEMS,
+    role: "answer",
   },
   {
     index: "B",
     title: "Vocabulary / 犬",
     mono: "option_dog",
     values: ["犬", "Dog"],
-    trailing: distractorTag,
+    roleItems: ANSWER_ROLE_ITEMS,
+    role: "distractor",
   },
   {
     index: "C",
     title: "Vocabulary / 鳥",
     mono: "option_bird",
     values: ["鳥", "Bird"],
-    trailing: distractorTag,
+    roleItems: ANSWER_ROLE_ITEMS,
+    role: "distractor",
   },
 ];
 
 const LISTEN_WORD_BANK: readonly OptionData[] = [
-  ...FILL_BLANK_OPTIONS.slice(0, 3).map((option) =>
-    option.index === "A" ? { ...option, trailing: answerTag } : option,
-  ),
+  ...FILL_BLANK_OPTIONS.slice(0, 3),
   {
     index: "D",
     title: "Vocabulary / 魚",
     mono: "option_fish",
     values: ["魚", "Fish"],
-    trailing: distractorTag,
+    roleItems: ANSWER_ROLE_ITEMS,
+    role: "distractor",
   },
 ];
 

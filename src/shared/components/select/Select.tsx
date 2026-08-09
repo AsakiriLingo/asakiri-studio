@@ -13,12 +13,12 @@ export interface SelectOption {
 
 export interface SelectProps {
   readonly items: readonly SelectOption[];
-  readonly name?: string;
-  readonly defaultValue?: string;
-  readonly value?: string;
-  readonly onValueChange?: (value: string) => void;
-  readonly placeholder?: string;
-  readonly "aria-label"?: string;
+  readonly name?: string | undefined;
+  readonly defaultValue?: string | undefined;
+  readonly value?: string | undefined;
+  readonly onValueChange?: ((value: string) => void) | undefined;
+  readonly placeholder?: string | undefined;
+  readonly "aria-label"?: string | undefined;
   readonly className?: string | undefined;
 }
 
