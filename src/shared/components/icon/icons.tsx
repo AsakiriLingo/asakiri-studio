@@ -38,6 +38,7 @@ export type IconName =
   | "mic"
   | "audio"
   | "video"
+  | "search"
   | "language";
 
 export const icons: Readonly<Record<IconName, ReactNode>> = {
@@ -186,6 +187,12 @@ export const icons: Readonly<Record<IconName, ReactNode>> = {
     <>
       <rect x="3" y="5" width="14" height="14" rx="2" />
       <path d="m17 10 4-2v8l-4-2z" />
+    </>
+  ),
+  search: (
+    <>
+      <circle cx="11" cy="11" r="7" />
+      <path d="m21 21-4.3-4.3" />
     </>
   ),
   integrations: (

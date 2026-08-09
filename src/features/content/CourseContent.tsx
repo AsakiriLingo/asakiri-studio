@@ -560,6 +560,7 @@ export function CourseContent({
               columns={columns}
               data={displayRecords}
               ariaLabel={t.recordsAria(collection.name)}
+              searchable
               onEditCell={handleEditCell}
             />
           </section>

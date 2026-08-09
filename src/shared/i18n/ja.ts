@@ -20,6 +20,10 @@ export const jaMessages = {
     next: "次へ",
     pageOf: (current: number, total: number) =>
       `${String(total)} ページ中 ${String(current)} ページ`,
+    search: "検索",
+    searchPlaceholder: "検索…",
+    noResults: "一致する項目がありません",
+    sortBy: (column: string) => `${column}で並べ替え`,
     reveal: "表示",
     on: "オン",
     play: "再生",

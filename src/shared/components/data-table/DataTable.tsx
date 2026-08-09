@@ -1,15 +1,20 @@
-import { memo, useEffect, useRef } from "react";
+import { memo, useEffect, useMemo, useRef, useState } from "react";
 import {
   flexRender,
   getCoreRowModel,
+  getFilteredRowModel,
   getPaginationRowModel,
+  getSortedRowModel,
   useReactTable,
   type Cell,
   type ColumnDef,
   type RowData,
+  type SortingState,
 } from "@tanstack/react-table";
 import { useMessages } from "@shared/i18n";
 import { Button } from "@shared/components/button";
+import { Icon } from "@shared/components/icon";
+import { TextInput } from "@shared/components/form";
 import styles from "@shared/components/data-table/DataTable.module.css";
 
 const PAGE_SIZE = 10;
@@ -31,6 +36,23 @@ declare module "@tanstack/react-table" {
 function grow(element: HTMLTextAreaElement) {
   element.style.height = "auto";
   element.style.height = `${String(element.scrollHeight)}px`;
+}
+
+type SortDirection = false | "asc" | "desc";
+
+function ariaSort(sorted: SortDirection): "none" | "ascending" | "descending" {
+  if (sorted === "asc") return "ascending";
+  if (sorted === "desc") return "descending";
+  return "none";
+}
+
+// The chevron points down for descending; rotated up for ascending; dimmed when
+// the column is sortable but not the active sort.
+function joinSortIcon(sorted: SortDirection): string {
+  const classNames = [styles.sortIcon];
+  if (sorted) classNames.push(styles.sortIconActive);
+  if (sorted === "asc") classNames.push(styles.sortIconAsc);
+  return classNames.join(" ");
 }
 
 function EditableCell<TData>({ cell }: { readonly cell: Cell<TData, unknown> }) {
@@ -83,16 +105,31 @@ export interface DataTableProps<TData> {
   readonly columns: ColumnDef<TData>[];
   readonly data: readonly TData[];
   readonly ariaLabel?: string;
+  readonly searchable?: boolean;
   readonly onEditCell?: (rowIndex: number, columnId: string, value: string) => void;
 }
 
-function DataTableInner<TData>({ columns, data, ariaLabel, onEditCell }: DataTableProps<TData>) {
+function DataTableInner<TData>({
+  columns,
+  data,
+  ariaLabel,
+  searchable,
+  onEditCell,
+}: DataTableProps<TData>) {
   const messages = useMessages();
+  const [globalFilter, setGlobalFilter] = useState("");
+  const [sorting, setSorting] = useState<SortingState>([]);
+  const rows = useMemo(() => [...data], [data]);
   // eslint-disable-next-line react-hooks/incompatible-library -- TanStack Table returns non-memoizable functions; React Compiler safely skips this component.
   const table = useReactTable({
-    data: [...data],
+    data: rows,
     columns,
+    state: { globalFilter, sorting },
+    onGlobalFilterChange: setGlobalFilter,
+    onSortingChange: setSorting,
     getCoreRowModel: getCoreRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    getSortedRowModel: getSortedRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     // Keep the current page while editing a cell (editing changes the data).
     autoResetPageIndex: false,
@@ -101,40 +138,96 @@ function DataTableInner<TData>({ columns, data, ariaLabel, onEditCell }: DataTab
   });
 
   const pageCount = table.getPageCount();
+  const columnCount = table.getVisibleFlatColumns().length;
+  const hasRows = table.getRowModel().rows.length > 0;
 
   return (
     <div className={styles.wrap}>
+      {searchable ? (
+        <div className={styles.toolbar}>
+          <span className={styles.search}>
+            <Icon name="search" size={16} className={styles.searchIcon} />
+            <TextInput
+              type="search"
+              className={styles.searchInput}
+              value={globalFilter}
+              placeholder={messages.common.searchPlaceholder}
+              aria-label={messages.common.search}
+              autoComplete="off"
+              onChange={(event) => {
+                setGlobalFilter(event.currentTarget.value);
+                table.setPageIndex(0);
+              }}
+            />
+          </span>
+        </div>
+      ) : null}
       <table className={styles.table} aria-label={ariaLabel}>
         <thead>
           {table.getHeaderGroups().map((headerGroup) => (
             <tr key={headerGroup.id}>
-              {headerGroup.headers.map((header) => (
-                <th key={header.id} scope="col">
-                  {header.isPlaceholder
-                    ? null
-                    : flexRender(header.column.columnDef.header, header.getContext())}
-                </th>
-              ))}
+              {headerGroup.headers.map((header) => {
+                if (header.isPlaceholder) return <th key={header.id} scope="col" />;
+                const content = flexRender(header.column.columnDef.header, header.getContext());
+                if (!header.column.getCanSort()) {
+                  return (
+                    <th key={header.id} scope="col">
+                      {content}
+                    </th>
+                  );
+                }
+                const sorted = header.column.getIsSorted();
+                const label =
+                  typeof header.column.columnDef.header === "string"
+                    ? header.column.columnDef.header
+                    : header.column.id;
+                return (
+                  <th key={header.id} scope="col" aria-sort={ariaSort(sorted)}>
+                    <button
+                      type="button"
+                      className={styles.sortHeader}
+                      aria-label={messages.common.sortBy(label)}
+                      onClick={header.column.getToggleSortingHandler()}
+                    >
+                      {content}
+                      <Icon
+                        name="chevron-down"
+                        size={14}
+                        className={joinSortIcon(sorted)}
+                        aria-hidden
+                      />
+                    </button>
+                  </th>
+                );
+              })}
             </tr>
           ))}
         </thead>
         <tbody>
-          {table.getRowModel().rows.map((row) => (
-            <tr key={row.id}>
-              {row.getVisibleCells().map((cell) => (
-                <td
-                  key={cell.id}
-                  className={cell.column.columnDef.meta?.primary ? styles.primary : undefined}
-                >
-                  {cell.column.columnDef.meta?.editable && onEditCell ? (
-                    <EditableCell cell={cell} />
-                  ) : (
-                    flexRender(cell.column.columnDef.cell, cell.getContext())
-                  )}
-                </td>
-              ))}
+          {hasRows ? (
+            table.getRowModel().rows.map((row) => (
+              <tr key={row.id}>
+                {row.getVisibleCells().map((cell) => (
+                  <td
+                    key={cell.id}
+                    className={cell.column.columnDef.meta?.primary ? styles.primary : undefined}
+                  >
+                    {cell.column.columnDef.meta?.editable && onEditCell ? (
+                      <EditableCell cell={cell} />
+                    ) : (
+                      flexRender(cell.column.columnDef.cell, cell.getContext())
+                    )}
+                  </td>
+                ))}
+              </tr>
+            ))
+          ) : (
+            <tr>
+              <td colSpan={columnCount} className={styles.emptyRow}>
+                {messages.common.noResults}
+              </td>
             </tr>
-          ))}
+          )}
         </tbody>
       </table>
       {pageCount > 1 ? (
