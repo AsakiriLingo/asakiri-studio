@@ -1,0 +1,85 @@
+.outline {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  margin: 0;
+}
+
+.unit {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.unitHeader {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+}
+
+.unitName {
+  margin: 0;
+  font-size: var(--font-size-500);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: -0.02em;
+}
+
+.lessonList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-0);
+  margin: 0;
+  padding: 0;
+  border-block: var(--border-hairline) solid var(--color-border);
+  list-style: none;
+}
+
+.lessonList li + li {
+  border-block-start: var(--border-hairline) solid var(--color-border);
+}
+
+.lesson {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  min-height: var(--control-height-md);
+  padding: var(--space-3);
+}
+
+.orderIndex {
+  flex: 0 0 auto;
+  color: var(--color-text-muted);
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: var(--font-size-200);
+  font-variant-numeric: tabular-nums;
+}
+
+.lessonTitle {
+  flex: 1 1 auto;
+  min-width: 0;
+  color: var(--color-text);
+  font-size: var(--font-size-400);
+  overflow-wrap: anywhere;
+}
+
+.lessonType {
+  flex: 0 0 auto;
+  padding-inline: var(--space-2);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-200);
+  text-transform: lowercase;
+}
+
+.empty {
+  display: grid;
+  gap: var(--space-2);
+  max-width: 42rem;
+}
+
+.empty p {
+  margin: 0;
+  max-width: 52ch;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-400);
+  line-height: 1.6;
+}

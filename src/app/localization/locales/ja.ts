@@ -72,6 +72,14 @@ export const jaMessages = {
     mediaActions: {
       importMedia: "メディアを読み込む",
     },
+    outline: {
+      empty: "このコースのアウトラインにはまだレッスンがありません。",
+      lessonTypes: {
+        "rich-text": "読み物",
+        "rich-media": "メディア",
+        exercise: "練習問題",
+      },
+    },
     openStates: {
       validating: "プロジェクトを確認しています…",
       invalidTitle: "このプロジェクトを開けませんでした。",

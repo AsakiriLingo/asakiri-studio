@@ -1,3 +1,4 @@
+import type { LessonType } from "@core/course";
 import type { ProjectValidationReason } from "@features/workspace/model/workspace-open-state";
 
 export type WorkspaceArea = "content" | "media" | "lessons";
@@ -17,6 +18,10 @@ export interface WorkspaceMessages {
   };
   readonly mediaActions: {
     readonly importMedia: string;
+  };
+  readonly outline: {
+    readonly empty: string;
+    readonly lessonTypes: Readonly<Record<LessonType, string>>;
   };
   readonly openStates: {
     readonly validating: string;

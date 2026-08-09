@@ -10,6 +10,7 @@ interface WorkspacePageProps {
   readonly onBack: () => void;
   readonly projectName: string;
   readonly contentSlot?: ReactNode;
+  readonly lessonsSlot?: ReactNode;
   readonly workspaceActions?: ReactNode;
 }
 
@@ -24,10 +25,16 @@ export function WorkspacePage({
   onBack,
   projectName,
   contentSlot,
+  lessonsSlot,
   workspaceActions,
 }: WorkspacePageProps) {
   const [activeArea, setActiveArea] = useState<WorkspaceArea>("content");
   const emptyState = messages.emptyStates[activeArea];
+  const slots: Partial<Record<WorkspaceArea, ReactNode>> = {
+    content: contentSlot,
+    lessons: lessonsSlot,
+  };
+  const activeSlot = slots[activeArea];
 
   const areaActions: Partial<Record<WorkspaceArea, ReactNode>> = {
     content: (
@@ -93,13 +100,16 @@ export function WorkspacePage({
               titleId="workspace-area-title"
               actions={activeActions}
             />
-            {activeArea === "content" && contentSlot ? (
-              contentSlot
-            ) : (
+            {activeSlot ?? (
               <div className={styles.emptyState}>
                 <p>{emptyState.description}</p>
               </div>
             )}
+          </>
+        ) : activeSlot ? (
+          <>
+            <WorkSurfaceHeader title={emptyState.title} titleId="workspace-area-title" />
+            {activeSlot}
           </>
         ) : (
           <div className={styles.emptyState}>

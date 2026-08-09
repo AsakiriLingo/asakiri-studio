@@ -1,5 +1,6 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
+import type { Course } from "@core/course";
 import { createInMemoryProjectReader, type ProjectReader } from "@core/project-reading";
 import type { ProjectSession } from "@core/projects";
 import { WorkspaceOpen } from "@features/workspace/components/WorkspaceOpen";
@@ -32,6 +33,14 @@ const messages: WorkspaceMessages = {
   },
   mediaActions: {
     importMedia: "Import media",
+  },
+  outline: {
+    empty: "This course has no lessons in its outline yet.",
+    lessonTypes: {
+      "rich-text": "reading",
+      "rich-media": "media",
+      exercise: "exercise",
+    },
   },
   openStates: {
     validating: "Checking this project…",
@@ -94,6 +103,43 @@ describe("WorkspaceOpen", () => {
 
     expect(await screen.findByRole("button", { name: "New content" })).toBeVisible();
     expect(screen.getByText("Vocabulary")).toBeVisible();
+  });
+
+  it("renders the course outline in the Lessons area", async () => {
+    const course: Course = {
+      project: {
+        id: "course_x",
+        title: "Course project",
+        description: "",
+        defaultLocale: "en",
+        learningLocales: ["ja"],
+      },
+      collections: [],
+      records: [],
+      assets: [],
+      lessons: [
+        {
+          id: "lesson_welcome",
+          type: "rich-text",
+          title: "Welcome to Japanese",
+          content: { kind: "tiptap", document: { type: "doc" } },
+        },
+      ],
+      outline: [{ id: "section_start", title: "Getting started", lessonIds: ["lesson_welcome"] }],
+    };
+    const reader = createInMemoryProjectReader({
+      contentCollectionsBySession: { "project-1": [] },
+      courseBySession: { "project-1": course },
+    });
+
+    render(
+      <WorkspaceOpen messages={messages} onBack={vi.fn()} reader={reader} session={session} />,
+    );
+
+    fireEvent.click(await screen.findByRole("button", { name: "Lessons" }));
+
+    const unit = await screen.findByRole("region", { name: "Getting started" });
+    expect(within(unit).getByText("Welcome to Japanese")).toBeVisible();
   });
 
   it("shows a localized invalid state without exposing raw codes", async () => {

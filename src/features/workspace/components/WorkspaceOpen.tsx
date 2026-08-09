@@ -1,7 +1,9 @@
 import type { ReactNode } from "react";
 import type { ContentCollectionSummary, ProjectReader } from "@core/project-reading";
 import type { ProjectSession } from "@core/projects";
+import { OutlineView } from "@features/workspace/components/OutlineView";
 import { WorkspacePage } from "@features/workspace/components/WorkspacePage";
+import { useCourse } from "@features/workspace/hooks/use-course";
 import { useProjectValidation } from "@features/workspace/hooks/use-project-validation";
 import type { WorkspaceMessages } from "@features/workspace/i18n/workspace-messages";
 import { Button } from "@shared/components/button";
@@ -25,6 +27,7 @@ export function WorkspaceOpen({
   workspaceActions,
 }: WorkspaceOpenProps) {
   const openState = useProjectValidation(session, reader);
+  const courseState = useCourse(session, reader);
 
   if (openState.status === "validating") {
     return (
@@ -52,9 +55,19 @@ export function WorkspaceOpen({
     );
   }
 
+  const lessonsSlot =
+    courseState.status === "ready" ? (
+      <OutlineView
+        lessons={courseState.course.lessons}
+        messages={messages.outline}
+        outline={courseState.course.outline}
+      />
+    ) : undefined;
+
   return (
     <WorkspacePage
       contentSlot={renderContent?.(openState.collections)}
+      lessonsSlot={lessonsSlot}
       messages={messages}
       onBack={onBack}
       projectName={session.name}

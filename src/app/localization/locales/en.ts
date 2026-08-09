@@ -71,6 +71,14 @@ export const enMessages = {
     mediaActions: {
       importMedia: "Import media",
     },
+    outline: {
+      empty: "This course has no lessons in its outline yet.",
+      lessonTypes: {
+        "rich-text": "reading",
+        "rich-media": "media",
+        exercise: "exercise",
+      },
+    },
     openStates: {
       validating: "Checking this project…",
       invalidTitle: "This project could not be opened.",
