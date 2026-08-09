@@ -39,8 +39,17 @@ body {
   isolation: isolate;
 }
 
-:root[data-runtime="tauri"] #root {
-  border-block-start: var(--border-hairline) solid var(--color-border);
+/* Pinned to the viewport (not #root) so the line under the native title bar
+   stays put while content scrolls. */
+:root[data-runtime="tauri"] body::before {
+  content: "";
+  position: fixed;
+  inset-block-start: 0;
+  inset-inline: 0;
+  height: var(--border-hairline);
+  background: var(--color-border);
+  z-index: var(--z-sticky);
+  pointer-events: none;
 }
 
 button,
