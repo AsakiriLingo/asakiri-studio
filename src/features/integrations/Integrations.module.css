@@ -85,31 +85,10 @@
   padding-left: calc(var(--control-height-md) + var(--space-4));
 }
 
+/* Layout + mono modifiers over the shared form input base. */
 .keyInput {
   flex: 1 1 16rem;
-  min-height: var(--control-height-md);
   padding-inline: var(--space-3);
-  border: var(--border-hairline) solid var(--color-border-strong);
-  border-radius: var(--radius-md);
-  outline: 2px solid transparent;
-  outline-offset: 1px;
-  background: var(--color-surface);
-  color: var(--color-text);
   font-family: var(--font-family-mono);
   font-size: var(--font-size-300);
-}
-
-.keyInput:focus-visible {
-  border-color: var(--color-text-muted);
-  outline-color: var(--color-focus-ring);
-}
-
-.keyInput::placeholder {
-  color: var(--color-text-muted);
-}
-
-@media (hover: hover) and (pointer: fine) {
-  .keyInput:hover {
-    background: var(--color-canvas);
-  }
 }

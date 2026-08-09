@@ -1,9 +1,4 @@
-import type {
-  InputHTMLAttributes,
-  ReactNode,
-  SelectHTMLAttributes,
-  TextareaHTMLAttributes,
-} from "react";
+import type { InputHTMLAttributes, ReactNode, TextareaHTMLAttributes } from "react";
 import styles from "@shared/components/form/Form.module.css";
 
 function joinClassNames(...classNames: (string | undefined)[]) {
@@ -27,20 +22,32 @@ export function Field({ label, children, help, className }: FieldProps) {
   );
 }
 
-export type TextInputProps = Omit<InputHTMLAttributes<HTMLInputElement>, "className">;
-
-export function TextInput(props: TextInputProps) {
-  return <input className={styles.input} {...props} />;
+export interface TextInputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, "className"> {
+  readonly className?: string | undefined;
 }
 
-export type TextAreaProps = Omit<TextareaHTMLAttributes<HTMLTextAreaElement>, "className">;
-
-export function TextArea(props: TextAreaProps) {
-  return <textarea className={styles.textarea} {...props} />;
+export function TextInput({ className, type = "text", ...props }: TextInputProps) {
+  return <input type={type} className={joinClassNames(styles.input, className)} {...props} />;
 }
 
-export type SelectProps = Omit<SelectHTMLAttributes<HTMLSelectElement>, "className">;
+export interface PasswordInputProps extends Omit<
+  InputHTMLAttributes<HTMLInputElement>,
+  "className" | "type"
+> {
+  readonly className?: string | undefined;
+}
 
-export function Select(props: SelectProps) {
-  return <select className={styles.select} {...props} />;
+export function PasswordInput({ className, ...props }: PasswordInputProps) {
+  return <input type="password" className={joinClassNames(styles.input, className)} {...props} />;
+}
+
+export interface TextAreaProps extends Omit<
+  TextareaHTMLAttributes<HTMLTextAreaElement>,
+  "className"
+> {
+  readonly className?: string | undefined;
+}
+
+export function TextArea({ className, ...props }: TextAreaProps) {
+  return <textarea className={joinClassNames(styles.textarea, className)} {...props} />;
 }

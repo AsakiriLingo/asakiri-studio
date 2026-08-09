@@ -1,5 +1,6 @@
 import { Button } from "@shared/components/button";
 import { Callout } from "@shared/components/callout";
+import { PasswordInput } from "@shared/components/form";
 import { Icon, type IconName } from "@shared/components/icon";
 import { IconButton } from "@shared/components/icon-button";
 import { PanelHeader } from "@shared/components/panel";
@@ -226,9 +227,8 @@ export function Integrations({ isDark, onBack, onToggleTheme }: IntegrationsProp
                   </div>
                   {provider.key === undefined ? null : (
                     <div className={styles.key}>
-                      <input
+                      <PasswordInput
                         className={styles.keyInput}
-                        type="password"
                         aria-label={provider.key.ariaLabel}
                         defaultValue={provider.key.value ?? ""}
                         placeholder={provider.key.placeholder ?? ""}

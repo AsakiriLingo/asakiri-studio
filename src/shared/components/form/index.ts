@@ -1,7 +1,7 @@
-export { Field, TextInput, TextArea, Select } from "@shared/components/form/Form";
+export { Field, TextInput, PasswordInput, TextArea } from "@shared/components/form/Form";
 export type {
   FieldProps,
   TextInputProps,
+  PasswordInputProps,
   TextAreaProps,
-  SelectProps,
 } from "@shared/components/form/Form";

@@ -4,6 +4,8 @@ export type IconName =
   | "plus"
   | "arrow-left"
   | "arrow"
+  | "chevron-down"
+  | "check"
   | "back"
   | "book"
   | "folder"
@@ -31,6 +33,8 @@ export type IconName =
 
 export const icons: Readonly<Record<IconName, ReactNode>> = {
   arrow: <path d="m9 18 6-6-6-6" />,
+  "chevron-down": <path d="m6 9 6 6 6-6" />,
+  check: <path d="M20 6 9 17l-5-5" />,
   back: (
     <>
       <path d="m15 18-6-6 6-6" />

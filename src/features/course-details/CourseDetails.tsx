@@ -1,7 +1,8 @@
 import type { ReactNode } from "react";
 import { Button } from "@shared/components/button";
 import { Callout } from "@shared/components/callout";
-import { Field, Select, TextArea, TextInput } from "@shared/components/form";
+import { Field, TextArea, TextInput } from "@shared/components/form";
+import { Select } from "@shared/components/select";
 import { Icon } from "@shared/components/icon";
 import { IconButton } from "@shared/components/icon-button";
 import { PanelHeader } from "@shared/components/panel";
@@ -12,6 +13,10 @@ import styles from "@features/course-details/CourseDetails.module.css";
 
 function joinClassNames(...classNames: (string | undefined)[]) {
   return classNames.filter(Boolean).join(" ");
+}
+
+function toItems(labels: readonly string[]) {
+  return labels.map((label) => ({ value: label, label }));
 }
 
 function SectionGroup({
@@ -178,11 +183,16 @@ export function CourseDetails() {
               <TextInput name="source-language" defaultValue="English" autoComplete="off" />
             </Field>
             <Field label="Level" help="Shown as a badge on the course.">
-              <Select name="level" defaultValue="a1">
-                <option value="a1">Beginner · A1</option>
-                <option value="a2">Elementary · A2</option>
-                <option value="b1">Intermediate · B1</option>
-              </Select>
+              <Select
+                name="level"
+                defaultValue="a1"
+                aria-label="Level"
+                items={[
+                  { value: "a1", label: "Beginner · A1" },
+                  { value: "a2", label: "Elementary · A2" },
+                  { value: "b1", label: "Intermediate · B1" },
+                ]}
+              />
             </Field>
             <Field label="Estimated length" help="A rough guide for learners browsing.">
               <TextInput name="length" defaultValue="2 units · 3 lessons" autoComplete="off" />
@@ -240,8 +250,11 @@ export function CourseDetails() {
               <Icon name="image" size={18} />
             </button>
             <Field label="Role">
-              <Select name="contributor-role" defaultValue="Author">
-                {[
+              <Select
+                name="contributor-role"
+                defaultValue="Author"
+                aria-label="Role"
+                items={toItems([
                   "Author",
                   "Co-author",
                   "Translator",
@@ -250,12 +263,8 @@ export function CourseDetails() {
                   "Editor",
                   "Reviewer",
                   "Contributor",
-                ].map((role) => (
-                  <option key={role} value={role}>
-                    {role}
-                  </option>
-                ))}
-              </Select>
+                ])}
+              />
             </Field>
             <Field label="Name">
               <TextInput name="contributor-name" placeholder="Full name" autoComplete="off" />
@@ -294,8 +303,11 @@ export function CourseDetails() {
           ))}
           <div className={styles.fundingAdd}>
             <Field label="Platform">
-              <Select name="funding-platform" defaultValue="GitHub Sponsors">
-                {[
+              <Select
+                name="funding-platform"
+                defaultValue="GitHub Sponsors"
+                aria-label="Platform"
+                items={toItems([
                   "GitHub Sponsors",
                   "Ko-fi",
                   "Patreon",
@@ -304,12 +316,8 @@ export function CourseDetails() {
                   "Liberapay",
                   "PayPal",
                   "Custom URL",
-                ].map((platform) => (
-                  <option key={platform} value={platform}>
-                    {platform}
-                  </option>
-                ))}
-              </Select>
+                ])}
+              />
             </Field>
             <Field label="Link">
               <TextInput
@@ -363,13 +371,12 @@ export function CourseDetails() {
               />
             </Field>
             <Field label="Tier">
-              <Select name="sponsor-tier" defaultValue="Gold">
-                {["Gold", "Silver", "Bronze", "Supporter"].map((tier) => (
-                  <option key={tier} value={tier}>
-                    {tier}
-                  </option>
-                ))}
-              </Select>
+              <Select
+                name="sponsor-tier"
+                defaultValue="Gold"
+                aria-label="Tier"
+                items={toItems(["Gold", "Silver", "Bronze", "Supporter"])}
+              />
             </Field>
             <Button variant="secondary">
               <Icon name="plus" size={18} />
@@ -389,16 +396,22 @@ export function CourseDetails() {
               className={styles.spanAll}
               help="Applies to the course text and structure. Media may carry its own license."
             >
-              <Select name="license" defaultValue="by-sa">
-                <option value="by">CC BY 4.0 · Attribution</option>
-                <option value="by-sa">CC BY-SA 4.0 · Attribution-ShareAlike</option>
-                <option value="by-nc">CC BY-NC 4.0 · Attribution-NonCommercial</option>
-                <option value="by-nc-sa">
-                  CC BY-NC-SA 4.0 · Attribution-NonCommercial-ShareAlike
-                </option>
-                <option value="cc0">CC0 1.0 · Public domain</option>
-                <option value="arr">All rights reserved</option>
-              </Select>
+              <Select
+                name="license"
+                defaultValue="by-sa"
+                aria-label="License"
+                items={[
+                  { value: "by", label: "CC BY 4.0 · Attribution" },
+                  { value: "by-sa", label: "CC BY-SA 4.0 · Attribution-ShareAlike" },
+                  { value: "by-nc", label: "CC BY-NC 4.0 · Attribution-NonCommercial" },
+                  {
+                    value: "by-nc-sa",
+                    label: "CC BY-NC-SA 4.0 · Attribution-NonCommercial-ShareAlike",
+                  },
+                  { value: "cc0", label: "CC0 1.0 · Public domain" },
+                  { value: "arr", label: "All rights reserved" },
+                ]}
+              />
             </Field>
             <Field label="Copyright holder">
               <TextInput name="copyright-holder" defaultValue="Alok Singh" autoComplete="off" />

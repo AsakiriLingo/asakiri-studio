@@ -1,7 +1,9 @@
 import { useState, type ReactNode } from "react";
 import { Button } from "@shared/components/button";
+import { Field, TextArea } from "@shared/components/form";
 import { Icon } from "@shared/components/icon";
 import { PanelHeader } from "@shared/components/panel";
+import { Select } from "@shared/components/select";
 import { Status } from "@shared/components/status";
 import { Tag } from "@shared/components/tag";
 import type { LessonPart, PartKind } from "@features/lesson-editor/parts";
@@ -33,7 +35,7 @@ function Tabs({ labels }: { readonly labels: readonly string[] }) {
   );
 }
 
-function Field({
+function PromptField({
   label,
   value,
   help,
@@ -43,11 +45,9 @@ function Field({
   readonly help: string;
 }) {
   return (
-    <label className={styles.field}>
-      <span className={styles.fieldLabel}>{label}</span>
-      <textarea className={styles.textarea} defaultValue={value} rows={2} />
-      <span className={styles.fieldHelp}>{help}</span>
-    </label>
+    <Field label={label} help={help}>
+      <TextArea defaultValue={value} rows={2} />
+    </Field>
   );
 }
 
@@ -303,7 +303,7 @@ function OptionEditor({
 }) {
   return (
     <div className={styles.formGrid}>
-      <Field label={promptLabel} value={prompt} help={help} />
+      <PromptField label={promptLabel} value={prompt} help={help} />
       <Panel title={panelTitle} description={panelDescription}>
         <div className={styles.optionList}>
           {options.map((option) => (
@@ -318,7 +318,7 @@ function OptionEditor({
 function MatchEditor() {
   return (
     <div className={styles.formGrid}>
-      <Field
+      <PromptField
         label="Prompt"
         value="Match each word to its meaning."
         help="Learners tap a Japanese word, then its English meaning. Pairs are shuffled on each attempt."
@@ -359,12 +359,12 @@ function MatchEditor() {
 function FillBlankEditor() {
   return (
     <div className={styles.formGrid}>
-      <Field
+      <PromptField
         label="Sentence"
         value="これは {{猫}} です。"
         help="Wrap the answer in {{ }} to make the blank. The word inside references Vocabulary / 猫."
       />
-      <Field
+      <PromptField
         label="Translation shown as help"
         value="This is a cat."
         help="Optional. Displayed under the sentence while the learner answers."
@@ -386,7 +386,7 @@ function FillBlankEditor() {
 function WordOrderEditor() {
   return (
     <div className={styles.formGrid}>
-      <Field
+      <PromptField
         label="Prompt"
         value={'Build this sentence: "This is a cat."'}
         help="Learners tap the word tiles in the correct order to build the answer."
@@ -426,7 +426,7 @@ function WordOrderEditor() {
 function ListenEditor() {
   return (
     <div className={styles.formGrid}>
-      <Field
+      <PromptField
         label="Prompt"
         value="Tap the word you hear."
         help="No text is shown until the learner answers — the audio is the whole question."
@@ -457,16 +457,17 @@ function ListenEditor() {
           </Button>
         </div>
       </Panel>
-      <label className={styles.field}>
-        <span className={styles.fieldLabel}>Answer mode</span>
-        <select className={styles.select} name="answer-mode" defaultValue="tap">
-          <option value="tap">Tap the word</option>
-          <option value="type">Type what you hear</option>
-        </select>
-        <span className={styles.fieldHelp}>
-          Tap chooses from a word bank; type checks free text.
-        </span>
-      </label>
+      <Field label="Answer mode" help="Tap chooses from a word bank; type checks free text.">
+        <Select
+          name="answer-mode"
+          defaultValue="tap"
+          aria-label="Answer mode"
+          items={[
+            { value: "tap", label: "Tap the word" },
+            { value: "type", label: "Type what you hear" },
+          ]}
+        />
+      </Field>
       <Panel title="Word bank" description="The answer plus distractors, shuffled for the learner.">
         <div className={styles.optionList}>
           {LISTEN_WORD_BANK.map((option) => (
@@ -496,7 +497,7 @@ function SpeakEditor() {
         </span>
       </div>
       <div className={styles.formGrid}>
-        <Field
+        <PromptField
           label="Prompt"
           value="Say this word in Japanese."
           help="Shown above the phrase while the learner speaks."
@@ -517,17 +518,21 @@ function SpeakEditor() {
             />
           </div>
         </Panel>
-        <label className={styles.field}>
-          <span className={styles.fieldLabel}>Match strictness</span>
-          <select className={styles.select} name="strictness" defaultValue="standard">
-            <option value="lenient">Lenient — accept close attempts</option>
-            <option value="standard">Standard</option>
-            <option value="strict">Strict — require accurate pronunciation</option>
-          </select>
-          <span className={styles.fieldHelp}>
-            How closely on-device recognition must match to pass.
-          </span>
-        </label>
+        <Field
+          label="Match strictness"
+          help="How closely on-device recognition must match to pass."
+        >
+          <Select
+            name="strictness"
+            defaultValue="standard"
+            aria-label="Match strictness"
+            items={[
+              { value: "lenient", label: "Lenient — accept close attempts" },
+              { value: "standard", label: "Standard" },
+              { value: "strict", label: "Strict — require accurate pronunciation" },
+            ]}
+          />
+        </Field>
         <div className={styles.settingGroup}>
           <SettingRow name="Show romaji" detail="Display &ldquo;neko&rdquo; under the phrase." />
           <SettingRow name="Allow skip" detail="Let learners without a mic continue." />

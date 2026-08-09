@@ -14,8 +14,7 @@
 }
 
 .input,
-.textarea,
-.select {
+.textarea {
   width: 100%;
   border: var(--border-hairline) solid var(--color-border-strong);
   border-radius: var(--radius-md);
@@ -25,10 +24,9 @@
   color: var(--color-text);
 }
 
-.input,
-.select {
+.input {
   min-height: var(--control-height-md);
-  padding-inline: var(--space-3) calc(var(--space-6) + var(--space-2));
+  padding-inline: var(--space-3);
 }
 
 .textarea {
@@ -38,8 +36,7 @@
 }
 
 .input:focus-visible,
-.textarea:focus-visible,
-.select:focus-visible {
+.textarea:focus-visible {
   border-color: var(--color-text-muted);
   outline-color: var(--color-focus-ring);
 }
@@ -51,8 +48,7 @@
 
 @media (hover: hover) and (pointer: fine) {
   .input:hover,
-  .textarea:hover,
-  .select:hover {
+  .textarea:hover {
     background: var(--color-canvas);
   }
 }
