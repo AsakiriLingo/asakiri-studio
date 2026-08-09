@@ -1,0 +1,290 @@
+.frame {
+  border: var(--border-hairline) solid var(--color-border);
+  background: var(--color-surface);
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-height: 3rem;
+  padding: var(--space-2);
+  overflow-x: auto;
+  border-bottom: var(--border-hairline) solid var(--color-border);
+  background: var(--color-canvas);
+}
+
+.toolButton {
+  display: inline-grid;
+  min-width: var(--control-height-sm);
+  height: var(--control-height-sm);
+  place-items: center;
+  padding-inline: var(--space-2);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-300);
+  font-weight: var(--font-weight-bold);
+  white-space: nowrap;
+}
+
+.toolButton[aria-pressed="true"] {
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.divider {
+  width: var(--border-hairline);
+  align-self: stretch;
+  margin-inline: var(--space-1);
+  background: var(--color-border);
+}
+
+.swatchPopup {
+  z-index: var(--z-dropdown);
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  border: var(--border-hairline) solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  box-shadow:
+    0 4px 6px -2px var(--color-overlay),
+    0 12px 28px -8px var(--color-overlay);
+}
+
+.swatchGrid {
+  display: grid;
+  grid-template-columns: repeat(6, 1.5rem);
+  gap: var(--space-1);
+}
+
+.swatch {
+  width: 1.5rem;
+  height: 1.5rem;
+  padding: 0;
+  border: var(--border-hairline) solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.swatch:focus-visible {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 2px;
+}
+
+.swatchClear {
+  min-height: var(--control-height-sm);
+  padding-inline: var(--space-3);
+  border: var(--border-hairline) solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: var(--font-size-300);
+  font-weight: var(--font-weight-bold);
+  cursor: pointer;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .swatchClear:hover {
+    background: var(--color-canvas);
+  }
+}
+
+.toolButton:active {
+  transform: translateY(1px);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .toolButton:hover {
+    background: var(--color-surface-subtle);
+    color: var(--color-text);
+  }
+}
+
+.prose {
+  min-height: 34rem;
+  max-width: 46rem;
+  margin-inline: auto;
+  padding: clamp(var(--space-6), 6vw, var(--space-16));
+  outline: 0;
+}
+
+.prose :global(.ProseMirror-selectednode) {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 2px;
+}
+
+.prose h2,
+.prose h3 {
+  font-family: var(--font-family-display);
+  font-style: normal;
+  font-weight: var(--font-weight-medium);
+  letter-spacing: -0.025em;
+}
+
+.prose h2 {
+  margin: 0 0 var(--space-5);
+  font-size: clamp(1.8rem, 4vw, 2.5rem);
+  line-height: 1.15;
+}
+
+.prose h3 {
+  margin: var(--space-8) 0 var(--space-3);
+  font-size: var(--font-size-500);
+}
+
+.prose p,
+.prose li {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-400);
+  line-height: 1.68;
+}
+
+.prose ul,
+.prose ol {
+  padding-left: var(--space-6);
+}
+
+.prose blockquote {
+  margin: var(--space-5) 0;
+  padding-left: var(--space-4);
+  border-left: 2px solid var(--color-border-strong);
+  color: var(--color-text-muted);
+}
+
+.prose a {
+  color: var(--color-brand);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.prose mark {
+  padding: 0 0.1em;
+  border-radius: 0.2em;
+  color: #1c2024;
+}
+
+.prose pre {
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--color-canvas);
+  overflow-x: auto;
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-300);
+}
+
+.prose img {
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--radius-md);
+}
+
+.prose :global(div[data-youtube-video]) {
+  margin: var(--space-4) 0;
+}
+
+.prose :global(div[data-youtube-video]) iframe {
+  width: 100%;
+  max-width: 100%;
+  aspect-ratio: 16 / 9;
+  height: auto;
+  border: 0;
+  border-radius: var(--radius-md);
+}
+
+.prose table {
+  width: 100%;
+  margin: var(--space-4) 0;
+  border-collapse: collapse;
+  overflow: hidden;
+}
+
+.prose :global(.tableWrapper) {
+  overflow-x: auto;
+}
+
+.prose th,
+.prose td {
+  min-width: 4rem;
+  padding: var(--space-2) var(--space-3);
+  border: var(--border-hairline) solid var(--color-border);
+  text-align: left;
+  vertical-align: top;
+}
+
+.prose th {
+  background: var(--color-canvas);
+  font-weight: var(--font-weight-bold);
+}
+
+.prose :global(.selectedCell)::after {
+  position: absolute;
+  inset: 0;
+  background: var(--color-surface-subtle);
+  opacity: 0.5;
+  pointer-events: none;
+  content: "";
+}
+
+.footer {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-2) var(--space-3);
+  border-top: var(--border-hairline) solid var(--color-border);
+  background: var(--color-canvas);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-100);
+}
+
+/* Custom node views */
+.binding {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border: var(--border-hairline) solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.bindingName {
+  font-weight: var(--font-weight-bold);
+}
+
+.binding small {
+  color: var(--color-text-muted);
+}
+
+.media {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin: var(--space-4) 0;
+  padding: var(--space-3) var(--space-4);
+  border: var(--border-hairline) solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.mediaBadge {
+  display: grid;
+  place-items: center;
+  width: var(--control-height-md);
+  height: var(--control-height-md);
+  border-radius: var(--radius-sm);
+  background: var(--color-canvas);
+  color: var(--color-brand);
+}
+
+.mediaLabel {
+  font-weight: var(--font-weight-bold);
+}
+
+.mediaMeta {
+  color: var(--color-text-muted);
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-100);
+}

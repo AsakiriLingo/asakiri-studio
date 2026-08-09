@@ -1,8 +1,10 @@
 import { useState, type ReactNode } from "react";
+import type { JSONContent } from "@tiptap/react";
 import { Button } from "@shared/components/button";
 import { Field, TextArea } from "@shared/components/form";
 import { Icon } from "@shared/components/icon";
 import { PanelHeader } from "@shared/components/panel";
+import { RichEditor } from "@shared/components/rich-editor";
 import { Select, type SelectOption } from "@shared/components/select";
 import { Status } from "@shared/components/status";
 import { Tag } from "@shared/components/tag";
@@ -144,64 +146,51 @@ function SettingRow({ name, detail }: { readonly name: string; readonly detail: 
   );
 }
 
+const RICH_TEXT_SEED: JSONContent = {
+  type: "doc",
+  content: [
+    {
+      type: "heading",
+      attrs: { level: 2 },
+      content: [{ type: "text", text: "Your first Japanese words" }],
+    },
+    {
+      type: "paragraph",
+      content: [
+        {
+          type: "text",
+          text: "Japanese uses three writing systems. You do not need to learn them all at once. Start by meeting words in context.",
+        },
+      ],
+    },
+    {
+      type: "heading",
+      attrs: { level: 3 },
+      content: [{ type: "text", text: "A familiar word" }],
+    },
+    {
+      type: "contentRecord",
+      attrs: {
+        label: "Vocabulary / 猫",
+        presentation: "vocabulary-card",
+        binding: { kind: "record", recordId: "record_cat" },
+      },
+    },
+    {
+      type: "paragraph",
+      content: [
+        {
+          type: "text",
+          text: "The same content record can provide its image and both audio versions anywhere this lesson needs them.",
+        },
+      ],
+    },
+  ],
+};
+
 function RichTextEditor() {
-  return (
-    <div className={styles.editorFrame}>
-      <div className={styles.editorToolbar} aria-label="Text formatting">
-        <button className={styles.toolButton} type="button" aria-label="Bold" aria-pressed="false">
-          <Icon name="bold" size={18} />
-        </button>
-        <button
-          className={styles.toolButton}
-          type="button"
-          aria-label="Heading"
-          aria-pressed="false"
-        >
-          <Icon name="heading" size={18} />
-        </button>
-        <button
-          className={styles.toolButton}
-          type="button"
-          aria-label="Bulleted list"
-          aria-pressed="false"
-        >
-          <Icon name="list" size={18} />
-        </button>
-        <button className={styles.toolButton} type="button" aria-label="Insert content reference">
-          Content
-        </button>
-        <button className={styles.toolButton} type="button" aria-label="Insert media reference">
-          Media
-        </button>
-      </div>
-      <article className={styles.richText} aria-label="Rich text part content">
-        <h2>Your first Japanese words</h2>
-        <p>
-          Japanese uses three writing systems. You do not need to learn them all at once. Start by
-          meeting words in context.
-        </p>
-        <h3>A familiar word</h3>
-        <p>
-          <span className={styles.binding}>
-            猫 <small>Vocabulary · Japanese</small>
-          </span>{" "}
-          means{" "}
-          <span className={styles.binding}>
-            Cat <small>Vocabulary · English</small>
-          </span>
-          .
-        </p>
-        <p>
-          The same content record can provide its image and both audio versions anywhere this lesson
-          needs them.
-        </p>
-      </article>
-      <footer className={styles.editorFooter}>
-        <span>Saved locally</span>
-        <span>Rich text part</span>
-      </footer>
-    </div>
-  );
+  const [document, setDocument] = useState<JSONContent>(RICH_TEXT_SEED);
+  return <RichEditor value={document} onChange={setDocument} ariaLabel="Rich text part content" />;
 }
 
 const MULTIPLE_CHOICE_OPTIONS: readonly OptionData[] = [
