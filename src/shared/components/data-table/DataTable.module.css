@@ -1,0 +1,58 @@
+.wrap {
+  min-width: 0;
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  min-width: 44rem;
+  border-collapse: collapse;
+  font-size: var(--font-size-300);
+}
+
+.table th,
+.table td {
+  padding: var(--space-3) var(--space-4);
+  border-bottom: var(--border-hairline) solid var(--color-border);
+  text-align: left;
+  vertical-align: middle;
+}
+
+.table th {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-100);
+  font-weight: var(--font-weight-bold);
+}
+
+.table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.primary {
+  font-size: var(--font-size-400);
+  font-weight: var(--font-weight-bold);
+}
+
+.input {
+  width: 100%;
+  padding: var(--space-1) var(--space-2);
+  border: var(--border-hairline) solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  outline: 2px solid transparent;
+  outline-offset: 1px;
+}
+
+.input:focus-visible {
+  border-color: var(--color-text-muted);
+  outline-color: var(--color-focus-ring);
+  background: var(--color-surface);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .input:hover:not(:focus-visible) {
+    border-color: var(--color-border);
+  }
+}

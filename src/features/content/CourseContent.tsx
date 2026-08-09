@@ -1,5 +1,7 @@
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
+import type { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@shared/components/button";
+import { DataTable } from "@shared/components/data-table";
 import { Icon } from "@shared/components/icon";
 import { PanelHeader } from "@shared/components/panel";
 import { WorkHeader, WorkInner } from "@shared/components/work-surface";
@@ -39,7 +41,7 @@ const COLLECTIONS: readonly Collection[] = [
   },
 ];
 
-const RECORDS: readonly VocabRecord[] = [
+const INITIAL_RECORDS: readonly VocabRecord[] = [
   {
     id: "neko",
     japanese: "猫",
@@ -102,7 +104,44 @@ function AssetCell({ asset }: { readonly asset: AssetRef | null }): ReactNode {
   );
 }
 
+const VOCAB_COLUMNS: ColumnDef<VocabRecord>[] = [
+  {
+    accessorKey: "japanese",
+    header: "Japanese",
+    meta: { primary: true, editable: true },
+  },
+  { accessorKey: "english", header: "English", meta: { editable: true } },
+  {
+    id: "japaneseAudio",
+    header: "Japanese audio",
+    cell: ({ row }) => <AssetCell asset={row.original.japaneseAudio} />,
+  },
+  {
+    id: "englishAudio",
+    header: "English audio",
+    cell: ({ row }) => <AssetCell asset={row.original.englishAudio} />,
+  },
+  {
+    id: "image",
+    header: "Image",
+    cell: ({ row }) => <AssetCell asset={row.original.image} />,
+  },
+];
+
 export function CourseContent() {
+  const [records, setRecords] = useState<readonly VocabRecord[]>(INITIAL_RECORDS);
+
+  const handleEditCell = (rowIndex: number, columnId: string, value: string) => {
+    setRecords((current) =>
+      current.map((record, index) => {
+        if (index !== rowIndex) return record;
+        if (columnId === "japanese") return { ...record, japanese: value };
+        if (columnId === "english") return { ...record, english: value };
+        return record;
+      }),
+    );
+  };
+
   return (
     <WorkInner>
       <WorkHeader
@@ -145,36 +184,12 @@ export function CourseContent() {
             titleId="vocabulary-title"
             description="6 records · autosaved locally"
           />
-          <div className={styles.tableWrap}>
-            <table className={styles.table}>
-              <thead>
-                <tr>
-                  <th scope="col">Japanese</th>
-                  <th scope="col">English</th>
-                  <th scope="col">Japanese audio</th>
-                  <th scope="col">English audio</th>
-                  <th scope="col">Image</th>
-                </tr>
-              </thead>
-              <tbody>
-                {RECORDS.map((record) => (
-                  <tr key={record.id}>
-                    <td className={styles.primaryCell}>{record.japanese}</td>
-                    <td>{record.english}</td>
-                    <td>
-                      <AssetCell asset={record.japaneseAudio} />
-                    </td>
-                    <td>
-                      <AssetCell asset={record.englishAudio} />
-                    </td>
-                    <td>
-                      <AssetCell asset={record.image} />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <DataTable
+            columns={VOCAB_COLUMNS}
+            data={records}
+            ariaLabel="Vocabulary records"
+            onEditCell={handleEditCell}
+          />
         </section>
       </div>
     </WorkInner>
