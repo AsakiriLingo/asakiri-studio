@@ -221,6 +221,8 @@ export const enMessages = {
       bySa: "CC BY-SA 4.0 · Attribution-ShareAlike",
       byNc: "CC BY-NC 4.0 · Attribution-NonCommercial",
       byNcSa: "CC BY-NC-SA 4.0 · Attribution-NonCommercial-ShareAlike",
+      byNd: "CC BY-ND 4.0 · Attribution-NoDerivatives",
+      byNcNd: "CC BY-NC-ND 4.0 · Attribution-NonCommercial-NoDerivatives",
       cc0: "CC0 1.0 · Public domain",
       arr: "All rights reserved",
     },
@@ -232,6 +234,9 @@ export const enMessages = {
       byNc: "Others may share and adapt the course for non-commercial use, as long as they credit the contributors above.",
       byNcSa:
         "Others may share and adapt the course for non-commercial use, as long as they credit the contributors above and release their version under the same license.",
+      byNd: "Others may share the course, even commercially, as long as they credit the contributors above and do not change it.",
+      byNcNd:
+        "Others may share the course for non-commercial use, as long as they credit the contributors above and do not change it.",
       cc0: "The course is placed in the public domain. Anyone may use it for any purpose, no permission or credit required.",
       arr: "No reuse is allowed without explicit permission from the copyright holder.",
     },

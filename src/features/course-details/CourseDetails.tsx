@@ -15,7 +15,7 @@ import { Status } from "@shared/components/status";
 import { WorkHeader, WorkInner } from "@shared/components/work-surface";
 import styles from "@features/course-details/CourseDetails.module.css";
 
-const LICENSE_CODES = ["by", "bySa", "byNc", "byNcSa", "cc0", "arr"] as const;
+const LICENSE_CODES = ["by", "bySa", "byNc", "byNcSa", "byNd", "byNcNd", "cc0", "arr"] as const;
 type LicenseCode = (typeof LICENSE_CODES)[number];
 
 function isLicenseCode(value: string): value is LicenseCode {
