@@ -11,6 +11,7 @@ pub fn run() {
             course::write_course_file,
             course::delete_course_file,
             course::copy_course_file,
+            course::copy_course_image_stripped,
             course::read_course_file_base64,
             course::remove_course_dir,
             course::reveal_path,

@@ -8,6 +8,8 @@ export interface ProjectFileAccess {
   deleteFile(relativePath: string): Promise<void>;
   /** Copies an absolute source file to a project-relative destination. */
   copyFile(sourcePath: string, relativePath: string): Promise<void>;
+  /** Copies an image, stripping EXIF/metadata on the way in. */
+  copyImage(sourcePath: string, relativePath: string): Promise<void>;
   /** Recursively removes a project-relative directory. Missing is a no-op. */
   removeDir(relativePath: string): Promise<void>;
 }
@@ -321,7 +323,9 @@ export function createLayoutProjectWriter(resolve: ResolveProjectFileAccess): Pr
 
       try {
         // Copy the binary first; if that fails the manifest is never touched.
-        await files.copyFile(sourcePath, binaryPath);
+        // Images are stripped of EXIF/metadata; other kinds copy verbatim.
+        if (asset.kind === "image") await files.copyImage(sourcePath, binaryPath);
+        else await files.copyFile(sourcePath, binaryPath);
         await files.writeTextFile(assetPath, `${JSON.stringify(serializeAsset(asset), null, 2)}\n`);
         const parsed: unknown = JSON.parse(await files.readTextFile(MANIFEST_PATH));
         if (!isRecord(parsed)) {

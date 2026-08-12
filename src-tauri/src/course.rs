@@ -176,6 +176,44 @@ pub fn copy_course_file(
     fs::copy(source, &target).map(|_| ()).map_err(|_| "unknown".to_string())
 }
 
+/// Removes EXIF metadata (camera, GPS, timestamps) from image bytes without
+/// re-encoding the pixels. Returns `None` for formats img-parts does not handle,
+/// so the caller can fall back to a verbatim copy.
+fn strip_image_metadata(bytes: &[u8]) -> Option<Vec<u8>> {
+    use img_parts::{Bytes, DynImage, ImageEXIF};
+
+    let mut image = DynImage::from_bytes(Bytes::copy_from_slice(bytes)).ok()??;
+    image.set_exif(None);
+    let mut out: Vec<u8> = Vec::new();
+    image.encoder().write_to(&mut out).ok()?;
+    Some(out)
+}
+
+/// Like `copy_course_file`, but strips image metadata on the way in. Used when
+/// importing images so photos do not carry EXIF (including GPS) into the course.
+#[tauri::command]
+pub fn copy_course_image_stripped(
+    root_path: String,
+    relative_path: String,
+    source_path: String,
+) -> Result<(), String> {
+    let target =
+        resolve_course_path(&root_path, &relative_path).ok_or_else(|| "invalidPath".to_string())?;
+
+    let source = Path::new(&source_path);
+    if !source.is_file() {
+        return Err("notFound".to_string());
+    }
+
+    if let Some(parent) = target.parent() {
+        fs::create_dir_all(parent).map_err(|_| "unknown".to_string())?;
+    }
+    let bytes = fs::read(source).map_err(|_| "unknown".to_string())?;
+    // Unrecognized formats (e.g. SVG) fall through to the original bytes.
+    let output = strip_image_metadata(&bytes).unwrap_or(bytes);
+    fs::write(&target, output).map_err(|_| "unknown".to_string())
+}
+
 /// Reads a project file and returns its bytes base64-encoded, for building a
 /// `data:` URL to preview media inside the webview.
 #[tauri::command]
@@ -288,9 +326,11 @@ pub fn read_course_title(path: String) -> Result<String, String> {
 #[cfg(test)]
 mod tests {
     use super::{
-        copy_course_file, delete_course_file, read_course_file_base64, remove_course_dir,
-        resolve_course_path, slugify, validate_directory_name, write_course_file,
+        copy_course_file, copy_course_image_stripped, delete_course_file, read_course_file_base64,
+        remove_course_dir, resolve_course_path, slugify, strip_image_metadata,
+        validate_directory_name, write_course_file,
     };
+    use base64::{engine::general_purpose::STANDARD, Engine as _};
 
     #[test]
     fn deletes_a_file_and_treats_missing_as_success() {
@@ -361,6 +401,69 @@ mod tests {
         );
 
         let _ = std::fs::remove_file(&source);
+        let _ = std::fs::remove_dir_all(&root);
+    }
+
+    // A valid 1x1 RGB PNG (correct chunk CRCs), with no metadata.
+    const TINY_PNG_BASE64: &str =
+        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR4nGP4z8AAAAMBAQDJ/pLvAAAAAElFTkSuQmCC";
+
+    #[test]
+    fn strips_image_metadata_and_keeps_a_valid_png() {
+        let png = STANDARD.decode(TINY_PNG_BASE64).unwrap();
+        let stripped = strip_image_metadata(&png).expect("png should be recognized");
+        // Still a PNG (signature intact), just re-serialized without any EXIF.
+        assert_eq!(&stripped[0..8], &[0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]);
+    }
+
+    #[test]
+    fn returns_none_for_formats_it_cannot_parse() {
+        assert_eq!(strip_image_metadata(b"<svg xmlns=\"...\"></svg>"), None);
+    }
+
+    #[test]
+    fn imports_a_stripped_image_and_copies_unknown_formats_verbatim() {
+        let root = std::env::temp_dir().join(format!("asakiri_strip_{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&root);
+        let root_string = root.to_string_lossy().into_owned();
+
+        // An SVG is not a raster format, so it is copied byte-for-byte.
+        let svg = std::env::temp_dir().join(format!("asakiri_logo_{}.svg", std::process::id()));
+        std::fs::write(&svg, "<svg/>").unwrap();
+        copy_course_image_stripped(
+            root_string.clone(),
+            "media/assets/a1/logo.svg".to_string(),
+            svg.to_string_lossy().into_owned(),
+        )
+        .unwrap();
+        assert_eq!(
+            std::fs::read_to_string(root.join("media/assets/a1/logo.svg")).unwrap(),
+            "<svg/>"
+        );
+
+        // A real PNG is rewritten (metadata stripped) but stays a valid PNG.
+        let png_path = std::env::temp_dir().join(format!("asakiri_pic_{}.png", std::process::id()));
+        std::fs::write(&png_path, STANDARD.decode(TINY_PNG_BASE64).unwrap()).unwrap();
+        copy_course_image_stripped(
+            root_string.clone(),
+            "media/assets/a2/pic.png".to_string(),
+            png_path.to_string_lossy().into_owned(),
+        )
+        .unwrap();
+        let written = std::fs::read(root.join("media/assets/a2/pic.png")).unwrap();
+        assert_eq!(&written[0..8], &[0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]);
+
+        assert_eq!(
+            copy_course_image_stripped(
+                root_string,
+                "media/assets/a3/missing.png".to_string(),
+                std::env::temp_dir().join("asakiri_absent.png").to_string_lossy().into_owned(),
+            ),
+            Err("notFound".to_string())
+        );
+
+        let _ = std::fs::remove_file(&svg);
+        let _ = std::fs::remove_file(&png_path);
         let _ = std::fs::remove_dir_all(&root);
     }
 

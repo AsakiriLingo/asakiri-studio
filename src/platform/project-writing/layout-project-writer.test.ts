@@ -63,6 +63,10 @@ function fileAccess(files: Map<string, string>): ProjectFileAccess {
       files.set(path, `copied:${sourcePath}`);
       return Promise.resolve();
     },
+    copyImage(sourcePath, path) {
+      files.set(path, `stripped:${sourcePath}`);
+      return Promise.resolve();
+    },
     removeDir(path) {
       const prefix = `${path}/`;
       for (const key of [...files.keys()]) {
@@ -294,7 +298,8 @@ describe("layout project writer", () => {
     });
 
     expect(result).toEqual({ status: "saved" });
-    expect(files.get(binaryPath)).toBe("copied:/tmp/photo.png");
+    // Image imports route through copyImage (EXIF stripped), not copyFile.
+    expect(files.get(binaryPath)).toBe("stripped:/tmp/photo.png");
     const descriptor: unknown = JSON.parse(files.get(assetPath) ?? "");
     expect(descriptor).toMatchObject({
       id: "asset_1",
@@ -305,6 +310,32 @@ describe("layout project writer", () => {
     });
     const manifest: unknown = JSON.parse(files.get("project.json") ?? "");
     expect(manifest).toMatchObject({ assets: [assetPath] });
+  });
+
+  it("imports a non-image asset verbatim (no metadata stripping)", async () => {
+    const files = new Map([
+      ["project.json", JSON.stringify({ format: "asakiri-course", assets: [] })],
+    ]);
+    const writer = createLayoutProjectWriter(() => fileAccess(files));
+
+    const binaryPath = "media/assets/asset_2/clip.mp3";
+    const result = await writer.importAsset(
+      SESSION,
+      "media/assets/asset_2/asset.json",
+      binaryPath,
+      "/tmp/clip.mp3",
+      {
+        id: "asset_2",
+        kind: "audio",
+        label: "clip",
+        availability: "ready",
+        file: "clip.mp3",
+        mimeType: "audio/mpeg",
+      },
+    );
+
+    expect(result).toEqual({ status: "saved" });
+    expect(files.get(binaryPath)).toBe("copied:/tmp/clip.mp3");
   });
 
   it("deletes an asset: unlinks the manifest and removes its folder", async () => {
