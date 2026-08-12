@@ -26,6 +26,11 @@
   "bundle": {
     "active": true,
     "targets": "all",
+    "macOS": {
+      "signingIdentity": "Developer ID Application: Alok Ram Singh (6ZBB7468M8)",
+      "hardenedRuntime": true,
+      "entitlements": "entitlements.plist"
+    },
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
