@@ -176,6 +176,42 @@ export function App() {
     return result;
   };
 
+  const renameUnit = async (unitId: string, title: string): Promise<ProjectWriteResult> => {
+    if (!project || courseState?.status !== "ready") {
+      return { status: "failed", code: "unavailable" };
+    }
+    const nextOutline = courseState.course.outline.map((section) =>
+      section.id === unitId ? { ...section, title } : section,
+    );
+    const session = createProjectSession(project);
+    const result = await services.writer.updateOutline(session, nextOutline);
+    if (result.status === "saved") {
+      setCourseState((current) =>
+        current?.status === "ready"
+          ? { ...current, course: { ...current.course, outline: nextOutline } }
+          : current,
+      );
+    }
+    return result;
+  };
+
+  const deleteUnit = async (unitId: string): Promise<ProjectWriteResult> => {
+    if (!project || courseState?.status !== "ready") {
+      return { status: "failed", code: "unavailable" };
+    }
+    const nextOutline = courseState.course.outline.filter((section) => section.id !== unitId);
+    const session = createProjectSession(project);
+    const result = await services.writer.updateOutline(session, nextOutline);
+    if (result.status === "saved") {
+      setCourseState((current) =>
+        current?.status === "ready"
+          ? { ...current, course: { ...current.course, outline: nextOutline } }
+          : current,
+      );
+    }
+    return result;
+  };
+
   const saveRecord = async (record: ContentRecord): Promise<ProjectWriteResult> => {
     if (!project || courseState?.status !== "ready") {
       return { status: "failed", code: "unavailable" };
@@ -633,6 +669,8 @@ export function App() {
             <CourseStructure
               course={course}
               onNewUnit={addUnit}
+              onRenameUnit={renameUnit}
+              onDeleteUnit={deleteUnit}
               onOpenLesson={(lessonId) => {
                 setOpenLessonId(lessonId);
               }}

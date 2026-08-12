@@ -338,6 +338,13 @@ export const enMessages = {
       "Units contain lessons. Open a lesson to arrange its exercises, rich media, and other parts.",
     newUnit: "New unit",
     defaultUnitTitle: (order: number) => `Unit ${String(order)}`,
+    unitSettings: (unit: string) => `Settings for ${unit}`,
+    unitSettingsLabel: "Unit settings",
+    unitTitleLabel: "Unit title",
+    deleteUnit: "Delete unit",
+    confirmDeleteUnitTitle: "Delete this unit?",
+    confirmDeleteUnitBody: (unit: string) =>
+      `${unit} will be removed from the outline. Its lessons stay in the course and can be added to another unit.`,
     addLesson: "Add lesson",
     empty: "No units yet. Add a unit to start organizing lessons.",
     lessonsAria: (unit: string) => `Lessons in ${unit}`,

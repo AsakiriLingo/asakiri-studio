@@ -340,6 +340,13 @@ export const jaMessages = {
       "ユニットはレッスンを含みます。レッスンを開くと、練習問題やリッチメディアなどのパートを並べられます。",
     newUnit: "新しいユニット",
     defaultUnitTitle: (order: number) => `ユニット${String(order)}`,
+    unitSettings: (unit: string) => `${unit}の設定`,
+    unitSettingsLabel: "ユニット設定",
+    unitTitleLabel: "ユニット名",
+    deleteUnit: "ユニットを削除",
+    confirmDeleteUnitTitle: "このユニットを削除しますか？",
+    confirmDeleteUnitBody: (unit: string) =>
+      `${unit}はアウトラインから削除されます。レッスンはコースに残り、別のユニットに追加できます。`,
     addLesson: "レッスンを追加",
     empty: "ユニットはまだありません。ユニットを追加してレッスンの整理を始めましょう。",
     lessonsAria: (unit: string) => `${unit}のレッスン`,

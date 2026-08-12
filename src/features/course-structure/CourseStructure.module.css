@@ -27,9 +27,15 @@
   background: var(--color-canvas);
 }
 
-.unitHeader > .addLesson {
+.unitHeader > .unitActions {
   grid-column: 3;
   justify-self: start;
+}
+
+.unitActions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
 }
 
 .unitName {
@@ -129,8 +135,54 @@
     grid-template-columns: var(--control-height-sm) 2rem minmax(0, 1fr) auto;
   }
 
-  .unitHeader > .addLesson {
+  .unitHeader > .unitActions {
     grid-column: auto;
     justify-self: end;
   }
+}
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal);
+  display: grid;
+  place-items: center;
+  padding: var(--space-4);
+  background: rgb(0 0 0 / 45%);
+}
+
+.dialog {
+  width: min(100%, 26rem);
+  border: var(--border-hairline) solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+}
+
+.dialogHeader {
+  padding: var(--space-5);
+  border-bottom: var(--border-hairline) solid var(--color-border);
+}
+
+.dialogTitle {
+  margin: 0;
+  font-size: var(--font-size-500);
+  font-weight: var(--font-weight-bold);
+}
+
+.dialogBody {
+  display: grid;
+  gap: var(--space-4);
+  padding: var(--space-5);
+}
+
+.dialogActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  padding: var(--space-5);
+  border-top: var(--border-hairline) solid var(--color-border);
+}
+
+.barSpacer {
+  flex: 1 1 auto;
 }
