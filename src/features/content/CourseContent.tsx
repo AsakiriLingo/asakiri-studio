@@ -485,15 +485,11 @@ export function CourseContent({
       : null;
 
   const saveStatus =
-    saveState === "idle" ? null : (
-      <Status tone={saveState === "failed" ? "warning" : "default"}>
-        {saveState === "saving"
-          ? messages.common.saving
-          : saveState === "failed"
-            ? messages.common.saveFailed
-            : messages.common.savedLocally}
-      </Status>
-    );
+    saveState === "saving" ? (
+      <Status>{messages.common.saving}</Status>
+    ) : saveState === "failed" ? (
+      <Status tone="warning">{messages.common.saveFailed}</Status>
+    ) : null;
 
   return (
     <WorkInner>

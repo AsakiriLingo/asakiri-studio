@@ -62,7 +62,6 @@ export function StartScreen({
             <Icon name="arrow" size={18} />
           </button>
         </div>
-        <p className={styles.note}>{messages.start.note}</p>
       </div>
     </main>
   );

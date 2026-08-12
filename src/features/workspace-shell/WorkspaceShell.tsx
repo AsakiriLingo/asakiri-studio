@@ -82,7 +82,6 @@ export function WorkspaceShell({
             </button>
           ))}
         </nav>
-        <div className={styles.status}>{messages.common.savedLocally}</div>
       </aside>
       <main className={styles.workSurface}>
         <ScrollArea className={styles.workScroll} contentClassName={styles.workContent}>

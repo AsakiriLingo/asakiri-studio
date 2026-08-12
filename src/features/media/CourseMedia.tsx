@@ -120,11 +120,9 @@ export function CourseMedia({
 
   const status = importing ? (
     <Status>{t.importing}</Status>
-  ) : saveState === "idle" ? null : (
-    <Status tone={saveState === "failed" ? "warning" : "default"}>
-      {saveState === "failed" ? t.importFailed : messages.common.savedLocally}
-    </Status>
-  );
+  ) : saveState === "failed" ? (
+    <Status tone="warning">{t.importFailed}</Status>
+  ) : null;
 
   return (
     <WorkInner>

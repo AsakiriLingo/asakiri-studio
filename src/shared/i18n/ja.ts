@@ -14,7 +14,6 @@ export const jaMessages = {
     saved: "保存済み",
     saving: "保存中…",
     saveFailed: "保存に失敗しました",
-    savedLocally: "ローカルに保存済み",
     done: "完了",
     settings: "設定",
     previous: "前へ",
@@ -52,7 +51,6 @@ export const jaMessages = {
     newCourseDetail: "ローカルにプロジェクトフォルダを作成",
     openCourseName: "コースを開く",
     openCourseDetail: "既存のアサキリプロジェクトを選ぶ",
-    note: "プロジェクトはこの端末に残ります。スタジオは選んだフォルダを直接読み書きします。",
   },
 
   newCourse: {
@@ -365,7 +363,6 @@ export const jaMessages = {
 
   lesson: {
     courseStructure: "コース構成",
-    autosaved: "自動でローカルに保存",
     partsPanel: "レッスンのパート",
     addPart: "レッスンパートを追加",
     noPartsTitle: "パートはまだありません",

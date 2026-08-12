@@ -43,7 +43,7 @@ export function LessonEditor({
   const selectedPart = parts.find((part) => part.id === selectedId) ?? parts[0];
 
   const unitTitle = course.outline.find((section) => section.lessonIds.includes(lesson.id))?.title;
-  const description = [unitTitle, t.parts(parts.length), t.autosaved].filter(Boolean).join(" · ");
+  const description = [unitTitle, t.parts(parts.length)].filter(Boolean).join(" · ");
 
   return (
     <WorkInner>

@@ -81,13 +81,6 @@
   white-space: nowrap;
 }
 
-.note {
-  max-width: 58ch;
-  margin: var(--space-4) 0 0;
-  color: var(--color-text-muted);
-  font-size: var(--font-size-300);
-}
-
 @media (hover: hover) and (pointer: fine) {
   .row:hover {
     background: var(--color-surface-subtle);

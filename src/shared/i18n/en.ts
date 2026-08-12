@@ -12,7 +12,6 @@ export const enMessages = {
     saved: "Saved",
     saving: "Saving…",
     saveFailed: "Save failed",
-    savedLocally: "Saved locally",
     done: "Done",
     settings: "Settings",
     previous: "Previous",
@@ -49,7 +48,6 @@ export const enMessages = {
     newCourseDetail: "Create a local project folder",
     openCourseName: "Open course",
     openCourseDetail: "Choose an existing Asakiri project",
-    note: "Projects stay on this device. Studio reads and writes the selected folder directly.",
   },
 
   newCourse: {
@@ -364,7 +362,6 @@ export const enMessages = {
 
   lesson: {
     courseStructure: "Course structure",
-    autosaved: "autosaved locally",
     partsPanel: "Lesson parts",
     addPart: "Add lesson part",
     noPartsTitle: "No parts yet",
