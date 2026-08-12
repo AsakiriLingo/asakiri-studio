@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { useMessages } from "@shared/i18n";
 import { Icon, type IconName } from "@shared/components/icon";
 import { IconButton } from "@shared/components/icon-button";
+import { ScrollArea } from "@shared/components/scroll-area";
 import styles from "@features/workspace-shell/WorkspaceShell.module.css";
 
 export type WorkspaceSection = "details" | "content" | "media" | "lessons";
@@ -83,7 +84,11 @@ export function WorkspaceShell({
         </nav>
         <div className={styles.status}>{messages.common.savedLocally}</div>
       </aside>
-      <main className={styles.workSurface}>{children}</main>
+      <main className={styles.workSurface}>
+        <ScrollArea className={styles.workScroll} contentClassName={styles.workContent}>
+          {children}
+        </ScrollArea>
+      </main>
     </div>
   );
 }

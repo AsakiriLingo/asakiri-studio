@@ -14,6 +14,7 @@ import { useMessages } from "@shared/i18n";
 import { Button } from "@shared/components/button";
 import { useConfirm } from "@shared/components/confirm-dialog";
 import { DataTable } from "@shared/components/data-table";
+import { ScrollArea } from "@shared/components/scroll-area";
 import { Field, TextInput } from "@shared/components/form";
 import { Icon } from "@shared/components/icon";
 import { IconButton } from "@shared/components/icon-button";
@@ -636,7 +637,10 @@ export function CourseContent({
           <div className={styles.dialogHeader}>
             <h2 className={styles.dialogTitle}>{t.editRecord}</h2>
           </div>
-          <div className={styles.dialogBody}>
+          <ScrollArea
+            viewportClassName={styles.dialogViewport}
+            contentClassName={styles.dialogBody}
+          >
             {collection.fields.map((field) => (
               <FieldEditor
                 key={field.id}
@@ -646,7 +650,7 @@ export function CourseContent({
                 onSave={saveField}
               />
             ))}
-          </div>
+          </ScrollArea>
           <div className={styles.dialogActions}>
             {saveStatus}
             <Button
@@ -671,7 +675,10 @@ export function CourseContent({
           <div className={styles.dialogHeader}>
             <h2 className={styles.dialogTitle}>{t.collectionSettings}</h2>
           </div>
-          <div className={styles.dialogBody}>
+          <ScrollArea
+            viewportClassName={styles.dialogViewport}
+            contentClassName={styles.dialogBody}
+          >
             <Field label={t.collectionName}>
               <TextInput
                 key={`name-${collection.id}`}
@@ -754,7 +761,7 @@ export function CourseContent({
                 {t.addField}
               </Button>
             </div>
-          </div>
+          </ScrollArea>
           <div className={styles.dialogActions}>
             <Button
               variant="danger"

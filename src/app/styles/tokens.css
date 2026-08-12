@@ -90,6 +90,8 @@
   --color-danger-hover: oklch(0.42 0.18 25);
   --color-danger-surface: oklch(0.95 0.03 25);
   --color-on-danger: oklch(0.98 0.02 25);
+  --color-scrollbar-thumb: oklch(0.44 0.018 155 / 0.24);
+  --color-scrollbar-thumb-hover: oklch(0.44 0.018 155 / 0.45);
   --color-warning: oklch(0.47 0.11 75);
   --color-warning-subtle: oklch(0.94 0.04 80);
   --color-success: oklch(0.4 0.1 155);
@@ -114,6 +116,8 @@
   --color-danger-hover: oklch(0.68 0.13 25);
   --color-danger-surface: oklch(0.225 0.035 25);
   --color-on-danger: oklch(0.2 0.03 25);
+  --color-scrollbar-thumb: oklch(0.72 0.012 155 / 0.26);
+  --color-scrollbar-thumb-hover: oklch(0.72 0.012 155 / 0.5);
   --color-warning: oklch(0.78 0.1 75);
   --color-warning-subtle: oklch(0.26 0.025 80);
   --color-success: oklch(0.74 0.1 155);

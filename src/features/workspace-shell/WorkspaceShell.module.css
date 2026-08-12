@@ -96,8 +96,15 @@
 .workSurface {
   min-width: 0;
   min-height: calc(100svh - 7rem);
-  padding: var(--space-6);
   background: var(--color-surface);
+}
+
+.workScroll {
+  height: 100%;
+}
+
+.workContent {
+  padding: var(--space-6);
 }
 
 @media (hover: hover) and (pointer: fine) {
@@ -117,6 +124,8 @@
   .workspace {
     display: grid;
     grid-template-columns: var(--sidebar-width) minmax(0, 1fr);
+    height: 100svh;
+    overflow: hidden;
   }
 
   .sidebar {
@@ -172,7 +181,8 @@
   }
 
   .workSurface {
-    min-height: 100svh;
-    padding: var(--space-6);
+    height: 100svh;
+    min-height: 0;
+    overflow: hidden;
   }
 }

@@ -175,11 +175,13 @@
   font-weight: var(--font-weight-bold);
 }
 
+.dialogViewport {
+  max-height: min(60vh, 34rem);
+}
+
 .dialogBody {
   display: grid;
   gap: var(--space-4);
-  max-height: min(60vh, 34rem);
-  overflow-y: auto;
   padding: var(--space-5);
 }
 
