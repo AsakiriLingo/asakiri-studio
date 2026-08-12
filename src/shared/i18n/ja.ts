@@ -46,7 +46,6 @@ export const jaMessages = {
   start: {
     title: "スタート",
     projectActions: "プロジェクトの操作",
-    integrations: "連携",
     newCourseName: "新しいコース",
     newCourseDetail: "ローカルにプロジェクトフォルダを作成",
     openCourseName: "コースを開く",
@@ -84,59 +83,6 @@ export const jaMessages = {
     failedBody:
       "プロジェクトファイルを読み込めませんでした。フォルダがアサキリのコースであることを確認して、もう一度お試しください。",
     fallbackName: "コース",
-  },
-
-  integrations: {
-    title: "連携",
-    description:
-      "この端末のすべてのコースで共有される、アプリ単位の接続です。任意です。なくてもスタジオは完全にオフラインで動きます。",
-    calloutTitle: "キーはこの端末に残ります。",
-    calloutBody:
-      "API キーはコースフォルダではなくスタジオのアプリ設定に保存され、アップロードされることはありません。開いたどのコースでも同じ接続が再利用されます。",
-    status: {
-      connected: "接続済み",
-      notConnected: "未接続",
-      enabled: "有効",
-    },
-    action: {
-      disconnect: "接続を解除",
-      connect: "接続",
-      update: "更新",
-      disable: "無効にする",
-    },
-    keyPlaceholder: (name: string) => `${name} の API キーを貼り付け`,
-    keyAria: (name: string) => `${name} の API キー`,
-    meta: {
-      images: "画像",
-      byok: "BYOK",
-      sentences: "例文",
-      freeCcBy: "無料 · CC-BY",
-      ai: "AI",
-      active: "使用中",
-    },
-    groups: {
-      images: {
-        title: "画像",
-        description: "語彙やカバーに添える写真を検索します。",
-      },
-      sentences: {
-        title: "例文",
-        description: "翻訳付きの実際の文を練習問題に取り込みます。",
-      },
-      ai: {
-        title: "AI · 自分のキーを使う",
-        description:
-          "翻訳やヒント、例文を下書きします。プロバイダーを1つ選びます。リクエストにはあなたのキーとアカウントが使われます。",
-      },
-    },
-    providers: {
-      unsplash: "ロイヤリティフリーの写真。レッスンのカバーや実物の写真に向いています。",
-      pixabay: "写真に加えて、シンプルなイラストやクリップアート風の画像も。",
-      tatoeba: "翻訳付きのコミュニティ文例集。キーは不要で、出典は自動で追加されます。",
-      anthropic: "自然な翻訳と学習者にやさしい説明が得意です。",
-      openai: "コンテンツの下書きや言い換えに使える GPT モデル。",
-      gemini: "一括下書き向けの高速で低コストな選択肢を含む Gemini モデル。",
-    },
   },
 
   details: {

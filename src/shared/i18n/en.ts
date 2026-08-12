@@ -82,60 +82,6 @@ export const enMessages = {
     fallbackName: "Course",
   },
 
-  integrations: {
-    title: "Integrations",
-    description:
-      "App-level connections shared by every course on this device. Optional. Studio works fully offline without them.",
-    calloutTitle: "Keys stay on this device.",
-    calloutBody:
-      "API keys are saved to your Studio app settings, not to any course folder, and are never uploaded. Every course you open reuses the same connections.",
-    status: {
-      connected: "Connected",
-      notConnected: "Not connected",
-      enabled: "Enabled",
-    },
-    action: {
-      disconnect: "Disconnect",
-      connect: "Connect",
-      update: "Update",
-      disable: "Disable",
-    },
-    keyPlaceholder: (name: string) => `Paste your ${name} API key`,
-    keyAria: (name: string) => `${name} API key`,
-    meta: {
-      images: "Images",
-      byok: "BYOK",
-      sentences: "Sentences",
-      freeCcBy: "Free · CC-BY",
-      ai: "AI",
-      active: "Active",
-    },
-    groups: {
-      images: {
-        title: "Images",
-        description: "Search photos to attach to vocabulary and covers.",
-      },
-      sentences: {
-        title: "Example sentences",
-        description: "Pull real sentences with translations into exercises.",
-      },
-      ai: {
-        title: "AI · bring your own key",
-        description:
-          "Draft translations, hints, and example sentences. Choose one provider; requests use your key and account.",
-      },
-    },
-    providers: {
-      unsplash: "Royalty-free photography. Good for lesson covers and real objects.",
-      pixabay: "Photos plus simple illustrations and clip-art style images.",
-      tatoeba:
-        "Community sentence bank with translations. No key required. Attribution is added automatically.",
-      anthropic: "Strong at natural translations and learner-friendly explanations.",
-      openai: "GPT models for drafting content and alternate phrasings.",
-      gemini: "Gemini models, including fast low-cost options for bulk drafts.",
-    },
-  },
-
   details: {
     title: "Course details",
     description:
