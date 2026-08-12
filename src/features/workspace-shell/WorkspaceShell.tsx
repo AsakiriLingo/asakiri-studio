@@ -5,7 +5,7 @@ import { IconButton } from "@shared/components/icon-button";
 import { ScrollArea } from "@shared/components/scroll-area";
 import styles from "@features/workspace-shell/WorkspaceShell.module.css";
 
-export type WorkspaceSection = "details" | "content" | "media" | "lessons";
+export type WorkspaceSection = "details" | "content" | "media" | "attribution" | "lessons";
 
 interface NavLink {
   readonly key: WorkspaceSection;
@@ -42,6 +42,7 @@ export function WorkspaceShell({
     { key: "details", label: messages.workspace.navDetails, icon: "details" },
     { key: "content", label: messages.workspace.navContent, icon: "content" },
     { key: "media", label: messages.workspace.navMedia, icon: "media" },
+    { key: "attribution", label: messages.workspace.navAttribution, icon: "book" },
     { key: "lessons", label: messages.workspace.navLessons, icon: "lessons" },
   ];
 

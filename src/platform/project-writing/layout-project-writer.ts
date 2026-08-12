@@ -12,6 +12,7 @@ export interface ProjectFileAccess {
   readTextFile(relativePath: string): Promise<string>;
   writeTextFile(relativePath: string, contents: string): Promise<void>;
   deleteFile(relativePath: string): Promise<void>;
+  renameFile(fromRelativePath: string, toRelativePath: string): Promise<void>;
   /** Copies an absolute source file to a project-relative destination. */
   copyFile(sourcePath: string, relativePath: string): Promise<void>;
   /** Copies an image, stripping EXIF/metadata on the way in. */
@@ -460,6 +461,41 @@ export function createLayoutProjectWriter(resolve: ResolveProjectFileAccess): Pr
         }
         // Remove the whole media/assets/<id> folder (descriptor + binary).
         await files.removeDir(dirOf(assetPath));
+        return { status: "saved" };
+      } catch {
+        return { status: "failed", code: "unknown" };
+      }
+    },
+
+    async writeAttribution(session, markdown): Promise<ProjectWriteResult> {
+      const files = resolve(session);
+      if (!files) {
+        return { status: "failed", code: "unavailable" };
+      }
+
+      try {
+        await files.writeTextFile("ATTRIBUTION.md", markdown);
+        return { status: "saved" };
+      } catch {
+        return { status: "failed", code: "unknown" };
+      }
+    },
+
+    async renameAsset(session, assetPath, oldFile, asset): Promise<ProjectWriteResult> {
+      const files = resolve(session);
+      if (!files) {
+        return { status: "failed", code: "unavailable" };
+      }
+
+      try {
+        const dir = dirOf(assetPath);
+        if (oldFile && asset.file && oldFile !== asset.file) {
+          await files.renameFile(`${dir}/${oldFile}`, `${dir}/${asset.file}`);
+        }
+        const parsed: unknown = JSON.parse(await files.readTextFile(assetPath));
+        const base = isRecord(parsed) ? parsed : {};
+        const next = { ...base, ...serializeAsset(asset) };
+        await files.writeTextFile(assetPath, `${JSON.stringify(next, null, 2)}\n`);
         return { status: "saved" };
       } catch {
         return { status: "failed", code: "unknown" };

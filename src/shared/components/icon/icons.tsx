@@ -41,6 +41,8 @@ export type IconName =
   | "search"
   | "play"
   | "stop"
+  | "close"
+  | "edit"
   | "language";
 
 export const icons: Readonly<Record<IconName, ReactNode>> = {
@@ -199,6 +201,8 @@ export const icons: Readonly<Record<IconName, ReactNode>> = {
   ),
   play: <path d="M7 5v14l11-7z" />,
   stop: <rect x="6" y="6" width="12" height="12" rx="1.5" />,
+  close: <path d="M18 6 6 18M6 6l12 12" />,
+  edit: <path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" />,
   integrations: (
     <>
       <path d="M9.5 14.5 14.5 9.5" />

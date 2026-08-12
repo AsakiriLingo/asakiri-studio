@@ -59,6 +59,14 @@ function fileAccess(files: Map<string, string>): ProjectFileAccess {
       files.delete(path);
       return Promise.resolve();
     },
+    renameFile(from, to) {
+      const contents = files.get(from);
+      if (contents !== undefined) {
+        files.set(to, contents);
+        files.delete(from);
+      }
+      return Promise.resolve();
+    },
     copyFile(sourcePath, path) {
       // Record the copy by storing a marker keyed by the destination path.
       files.set(path, `copied:${sourcePath}`);
@@ -434,6 +442,30 @@ describe("layout project writer", () => {
 
     expect(result).toEqual({ status: "saved" });
     expect(files.get(binaryPath)).toBe("copied:/tmp/clip.mp3");
+  });
+
+  it("renames an asset: moves the binary and rewrites the descriptor", async () => {
+    const assetPath = "media/assets/asset_1/asset.json";
+    const files = new Map([
+      [assetPath, JSON.stringify({ id: "asset_1", label: "photo", file: "photo.png" })],
+      ["media/assets/asset_1/photo.png", "binary"],
+    ]);
+    const writer = createLayoutProjectWriter(() => fileAccess(files));
+
+    const result = await writer.renameAsset(SESSION, assetPath, "photo.png", {
+      id: "asset_1",
+      kind: "image",
+      label: "cat",
+      availability: "ready",
+      file: "cat.png",
+      mimeType: "image/png",
+    });
+
+    expect(result).toEqual({ status: "saved" });
+    expect(files.has("media/assets/asset_1/photo.png")).toBe(false);
+    expect(files.get("media/assets/asset_1/cat.png")).toBe("binary");
+    const descriptor: unknown = JSON.parse(files.get(assetPath) ?? "");
+    expect(descriptor).toMatchObject({ id: "asset_1", label: "cat", file: "cat.png" });
   });
 
   it("deletes an asset: unlinks the manifest and removes its folder", async () => {

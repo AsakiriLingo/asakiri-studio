@@ -176,6 +176,23 @@ pub fn copy_course_file(
     fs::copy(source, &target).map(|_| ()).map_err(|_| "unknown".to_string())
 }
 
+#[tauri::command]
+pub fn rename_course_file(
+    root_path: String,
+    from_relative_path: String,
+    to_relative_path: String,
+) -> Result<(), String> {
+    let from = resolve_course_path(&root_path, &from_relative_path)
+        .ok_or_else(|| "invalidPath".to_string())?;
+    let to =
+        resolve_course_path(&root_path, &to_relative_path).ok_or_else(|| "invalidPath".to_string())?;
+
+    if let Some(parent) = to.parent() {
+        fs::create_dir_all(parent).map_err(|_| "unknown".to_string())?;
+    }
+    fs::rename(&from, &to).map_err(|_| "unknown".to_string())
+}
+
 /// Removes EXIF metadata (camera, GPS, timestamps) from image bytes without
 /// re-encoding the pixels. Returns `None` for formats img-parts does not handle,
 /// so the caller can fall back to a verbatim copy.

@@ -8,6 +8,11 @@ export interface TauriProjectFileWriterOptions {
   readonly readTextFile?: (path: string) => Promise<string>;
   readonly writeFile?: (rootPath: string, relativePath: string, contents: string) => Promise<void>;
   readonly deleteFile?: (rootPath: string, relativePath: string) => Promise<void>;
+  readonly renameFile?: (
+    rootPath: string,
+    fromRelativePath: string,
+    toRelativePath: string,
+  ) => Promise<void>;
   readonly copyFile?: (rootPath: string, relativePath: string, sourcePath: string) => Promise<void>;
   readonly copyImage?: (
     rootPath: string,
@@ -32,6 +37,14 @@ async function invokeWrite(
 
 async function invokeDelete(rootPath: string, relativePath: string): Promise<void> {
   await invoke("delete_course_file", { rootPath, relativePath });
+}
+
+async function invokeRename(
+  rootPath: string,
+  fromRelativePath: string,
+  toRelativePath: string,
+): Promise<void> {
+  await invoke("rename_course_file", { rootPath, fromRelativePath, toRelativePath });
 }
 
 async function invokeCopy(
@@ -59,6 +72,7 @@ export function createTauriProjectFileWriter({
   readTextFile: read = readTextFile,
   writeFile = invokeWrite,
   deleteFile = invokeDelete,
+  renameFile = invokeRename,
   copyFile = invokeCopy,
   copyImage = invokeCopyImage,
   removeDir = invokeRemoveDir,
@@ -75,6 +89,11 @@ export function createTauriProjectFileWriter({
     async deleteFile(relativePath) {
       projectRelativePathSegments(relativePath);
       await deleteFile(rootPath, relativePath);
+    },
+    async renameFile(fromRelativePath, toRelativePath) {
+      projectRelativePathSegments(fromRelativePath);
+      projectRelativePathSegments(toRelativePath);
+      await renameFile(rootPath, fromRelativePath, toRelativePath);
     },
     async copyFile(sourcePath, relativePath) {
       projectRelativePathSegments(relativePath);

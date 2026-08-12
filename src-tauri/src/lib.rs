@@ -1,4 +1,5 @@
 mod course;
+mod media;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -12,10 +13,13 @@ pub fn run() {
             course::delete_course_file,
             course::copy_course_file,
             course::copy_course_image_stripped,
+            course::rename_course_file,
             course::read_course_file_base64,
             course::remove_course_dir,
             course::reveal_path,
-            course::git_status
+            course::git_status,
+            media::http_get_text,
+            media::download_media_file
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

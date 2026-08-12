@@ -1,3 +1,4 @@
+import type { MediaSearchGateway } from "@core/media-search";
 import type { AssetReader, MediaPicker } from "@core/project-media";
 import type { ProjectCreationGateway, ProjectDirectoryGateway } from "@core/projects";
 import type { ProjectReader } from "@core/project-reading";
@@ -10,6 +11,7 @@ import { ProjectLocationRegistry } from "@platform/project-location";
 import { createProjectReader } from "@platform/project-reading";
 import { createProjectSystem } from "@platform/project-system";
 import { createProjectWriter } from "@platform/project-writing";
+import { createTauriMediaSearchGateway } from "@platform/media-search";
 
 export interface AppServices {
   readonly creation: ProjectCreationGateway;
@@ -19,6 +21,7 @@ export interface AppServices {
   readonly system: ProjectSystem;
   readonly mediaPicker: MediaPicker;
   readonly assetReader: AssetReader;
+  readonly mediaSearch: MediaSearchGateway;
 }
 
 /**
@@ -36,5 +39,6 @@ export function createAppServices(): AppServices {
     system: createProjectSystem(locations),
     mediaPicker: createMediaPicker(),
     assetReader: createAssetReader(locations),
+    mediaSearch: createTauriMediaSearchGateway(),
   };
 }

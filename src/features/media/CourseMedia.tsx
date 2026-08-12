@@ -1,15 +1,18 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { Menu } from "@base-ui/react/menu";
 import type { Asset, ContentRecord, Course } from "@core/course";
+import type { AudioSearchResult, ImageSearchResult, SearchPage } from "@core/media-search";
 import type { ProjectWriteResult } from "@core/project-writing";
 import { useMessages, type StudioMessages } from "@shared/i18n";
 import { Button } from "@shared/components/button";
 import { useConfirm } from "@shared/components/confirm-dialog";
-import { TextInput } from "@shared/components/form";
+import { Field, TextInput } from "@shared/components/form";
 import { Icon } from "@shared/components/icon";
 import { IconButton } from "@shared/components/icon-button";
 import { PanelHeader } from "@shared/components/panel";
 import { Status } from "@shared/components/status";
 import { WorkHeader, WorkInner } from "@shared/components/work-surface";
+import { MediaSearchDialog, type MediaSearchMode } from "@features/media/MediaSearchDialog";
 import styles from "@features/media/CourseMedia.module.css";
 
 const PAGE_SIZE = 24;
@@ -53,6 +56,14 @@ export interface CourseMediaProps {
   readonly onImportMedia: () => Promise<ProjectWriteResult | null>;
   readonly onDeleteAsset: (assetId: string) => Promise<ProjectWriteResult>;
   readonly onLoadPreview: (assetId: string) => Promise<string | null>;
+  readonly onSearchImages: (query: string, page: number) => Promise<SearchPage<ImageSearchResult>>;
+  readonly onSearchAudio: (query: string, page: number) => Promise<SearchPage<AudioSearchResult>>;
+  readonly onAddRemoteMedia: (
+    url: string,
+    fileName: string,
+    metadata: Readonly<Record<string, unknown>>,
+  ) => Promise<ProjectWriteResult | null>;
+  readonly onRenameAsset: (assetId: string, name: string) => Promise<ProjectWriteResult>;
 }
 
 export function CourseMedia({
@@ -60,6 +71,10 @@ export function CourseMedia({
   onImportMedia,
   onDeleteAsset,
   onLoadPreview,
+  onSearchImages,
+  onSearchAudio,
+  onAddRemoteMedia,
+  onRenameAsset,
 }: CourseMediaProps) {
   const messages = useMessages();
   const t = messages.media;
@@ -72,6 +87,9 @@ export function CourseMedia({
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [playingId, setPlayingId] = useState<string | null>(null);
   const [previews, setPreviews] = useState<Record<string, string>>({});
+  const [searchMode, setSearchMode] = useState<MediaSearchMode | null>(null);
+  const [renameTarget, setRenameTarget] = useState<Asset | null>(null);
+  const [renameValue, setRenameValue] = useState("");
 
   useEffect(() => {
     const handle = setTimeout(() => {
@@ -181,6 +199,22 @@ export function CourseMedia({
     });
   };
 
+  const openRename = (asset: Asset) => {
+    const name = assetName(asset);
+    const dot = name.lastIndexOf(".");
+    setRenameValue(dot > 0 ? name.slice(0, dot) : name);
+    setRenameTarget(asset);
+  };
+
+  const submitRename = () => {
+    const target = renameTarget;
+    setRenameTarget(null);
+    if (!target) return;
+    void onRenameAsset(target.id, renameValue).then((result) => {
+      setSaveState(result.status === "saved" ? "saved" : "failed");
+    });
+  };
+
   const status = importing ? (
     <Status>{t.importing}</Status>
   ) : saveState === "failed" ? (
@@ -193,10 +227,45 @@ export function CourseMedia({
         title={t.title}
         description={t.description}
         actions={
-          <Button disabled={importing} onClick={runImport}>
-            <Icon name="plus" size={18} />
-            {t.importMedia}
-          </Button>
+          <Menu.Root>
+            <Menu.Trigger
+              render={
+                <Button disabled={importing}>
+                  <Icon name="plus" size={18} />
+                  {t.addMedia}
+                  <Icon name="chevron-down" size={16} />
+                </Button>
+              }
+            />
+            <Menu.Portal>
+              <Menu.Positioner className={styles.menuPositioner} sideOffset={4} align="end">
+                <Menu.Popup className={styles.menuPopup}>
+                  <Menu.Item className={styles.menuItem} onClick={runImport}>
+                    <Icon name="upload" size={18} />
+                    {t.importFromDevice}
+                  </Menu.Item>
+                  <Menu.Item
+                    className={styles.menuItem}
+                    onClick={() => {
+                      setSearchMode("images");
+                    }}
+                  >
+                    <Icon name="image" size={18} />
+                    {t.searchUnsplashImages}
+                  </Menu.Item>
+                  <Menu.Item
+                    className={styles.menuItem}
+                    onClick={() => {
+                      setSearchMode("audio");
+                    }}
+                  >
+                    <Icon name="audio" size={18} />
+                    {t.searchTatoebaAudio}
+                  </Menu.Item>
+                </Menu.Popup>
+              </Menu.Positioner>
+            </Menu.Portal>
+          </Menu.Root>
         }
       />
 
@@ -235,7 +304,6 @@ export function CourseMedia({
                   key={asset.id}
                   asset={asset}
                   preview={previews[asset.id]}
-                  uses={usage.get(asset.id) ?? 0}
                   kindLabel={kindLabel[asset.kind]}
                   playing={playingId === asset.id}
                   messages={messages}
@@ -245,6 +313,9 @@ export function CourseMedia({
                   onLoadUrl={onLoadPreview}
                   onDelete={() => {
                     removeAsset(asset);
+                  }}
+                  onRename={() => {
+                    openRename(asset);
                   }}
                 />
               ))}
@@ -266,6 +337,68 @@ export function CourseMedia({
           </>
         )}
       </section>
+
+      {searchMode ? (
+        <MediaSearchDialog
+          mode={searchMode}
+          onClose={() => {
+            setSearchMode(null);
+          }}
+          onSearchImages={onSearchImages}
+          onSearchAudio={onSearchAudio}
+          onAddRemoteMedia={onAddRemoteMedia}
+        />
+      ) : null}
+
+      {renameTarget ? (
+        <div
+          className={styles.renameOverlay}
+          role="presentation"
+          onClick={() => {
+            setRenameTarget(null);
+          }}
+        >
+          <form
+            className={styles.renameDialog}
+            role="dialog"
+            aria-modal="true"
+            aria-label={t.renameTitle}
+            onClick={(event) => {
+              event.stopPropagation();
+            }}
+            onSubmit={(event) => {
+              event.preventDefault();
+              submitRename();
+            }}
+          >
+            <h2 className={styles.renameTitle}>{t.renameTitle}</h2>
+            <Field label={t.renameLabel}>
+              <TextInput
+                autoFocus
+                value={renameValue}
+                autoComplete="off"
+                onChange={(event) => {
+                  setRenameValue(event.currentTarget.value);
+                }}
+              />
+            </Field>
+            <div className={styles.renameActions}>
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => {
+                  setRenameTarget(null);
+                }}
+              >
+                {t.renameCancel}
+              </Button>
+              <Button type="submit" disabled={renameValue.trim() === ""}>
+                {messages.common.save}
+              </Button>
+            </div>
+          </form>
+        </div>
+      ) : null}
     </WorkInner>
   );
 }
@@ -273,29 +406,32 @@ export function CourseMedia({
 interface MediaCardProps {
   readonly asset: Asset;
   readonly preview: string | undefined;
-  readonly uses: number;
   readonly kindLabel: string;
   readonly playing: boolean;
   readonly messages: StudioMessages;
   readonly onTogglePlay: (next: boolean) => void;
   readonly onLoadUrl: (assetId: string) => Promise<string | null>;
   readonly onDelete: () => void;
+  readonly onRename: () => void;
 }
 
 function MediaCard({
   asset,
   preview,
-  uses,
   kindLabel,
   playing,
   messages,
   onTogglePlay,
   onLoadUrl,
   onDelete,
+  onRename,
 }: MediaCardProps) {
   const t = messages.media;
   const name = assetName(asset);
   const ready = asset.availability === "ready" && Boolean(asset.file);
+  const author = typeof asset.metadata?.author === "string" ? asset.metadata.author : "";
+  const license = typeof asset.metadata?.license === "string" ? asset.metadata.license : "";
+  const credit = author && license ? t.credit(author, license) : author || license;
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
 
@@ -357,11 +493,15 @@ function MediaCard({
           <span>{kindLabel}</span>
           <span>{asset.mimeType}</span>
         </span>
+        {credit ? (
+          <span className={styles.credit} title={credit}>
+            {credit}
+          </span>
+        ) : null}
         <div className={styles.cardFooter}>
-          <Status tone={ready ? "default" : "warning"}>
-            {ready ? t.available : t.placeholder}
-          </Status>
-          <span className={styles.uses}>{uses === 0 ? t.notReferenced : t.usedBy(uses)}</span>
+          <IconButton aria-label={t.renameMedia} size="sm" onClick={onRename}>
+            <Icon name="edit" size={18} />
+          </IconButton>
           <IconButton aria-label={messages.common.remove(name)} size="sm" onClick={onDelete}>
             <Icon name="trash" size={18} />
           </IconButton>

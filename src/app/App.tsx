@@ -25,6 +25,7 @@ import { WorkspaceShell, type WorkspaceSection } from "@features/workspace-shell
 import { CourseStructure } from "@features/course-structure";
 import { CourseContent } from "@features/content";
 import { CourseMedia } from "@features/media";
+import { CourseAttribution } from "@features/attribution";
 import { CourseDetails } from "@features/course-details";
 import { LessonEditor } from "@features/lesson-editor";
 import { createAppServices } from "@app/services";
@@ -573,6 +574,7 @@ export function App() {
 
   const importPickedMedia = async (
     picked: readonly PickedMediaFile[],
+    metadata?: Readonly<Record<string, unknown>>,
   ): Promise<{ readonly assets: readonly Asset[]; readonly allOk: boolean }> => {
     if (!project) return { assets: [], allOk: false };
     const session = createProjectSession(project);
@@ -594,6 +596,7 @@ export function App() {
         availability: "ready",
         file: file.name,
         mimeType: type.mimeType,
+        ...(metadata ? { metadata } : {}),
       };
       const result = await services.writer.importAsset(
         session,
@@ -645,6 +648,73 @@ export function App() {
     if (picked.length === 0) return null;
     const { assets } = await importPickedMedia(picked.slice(0, 1));
     return assets[0] ?? null;
+  };
+
+  const addRemoteMedia = async (
+    url: string,
+    fileName: string,
+    metadata?: Readonly<Record<string, unknown>>,
+  ): Promise<ProjectWriteResult | null> => {
+    if (!project || courseState?.status !== "ready") {
+      return { status: "failed", code: "unavailable" };
+    }
+    const picked = await services.mediaSearch.downloadToTemp(url, fileName);
+    if (!picked) return { status: "failed", code: "unknown" };
+    const { allOk } = await importPickedMedia([picked], metadata);
+    return allOk ? { status: "saved" } : { status: "failed", code: "unknown" };
+  };
+
+  const saveAttribution = async (markdown: string): Promise<ProjectWriteResult> => {
+    if (!project) {
+      return { status: "failed", code: "unavailable" };
+    }
+    const session = createProjectSession(project);
+    return services.writer.writeAttribution(session, markdown);
+  };
+
+  const renameAsset = async (assetId: string, rawName: string): Promise<ProjectWriteResult> => {
+    if (!project || courseState?.status !== "ready") {
+      return { status: "failed", code: "unavailable" };
+    }
+    const asset = courseState.course.assets.find((entry) => entry.id === assetId);
+    const assetPath = courseState.sources.assets[assetId];
+    if (!asset || assetPath === undefined) {
+      return { status: "failed", code: "unavailable" };
+    }
+    const currentName = asset.file ?? asset.expectedFile ?? "";
+    const dot = currentName.lastIndexOf(".");
+    const ext = dot > 0 ? currentName.slice(dot) : "";
+    const base = rawName
+      .trim()
+      .replace(/\.[^.]*$/, "")
+      .replace(/[/\\:*?"<>|]/g, "")
+      .trim();
+    if (base === "") return { status: "saved" };
+    const nextName = `${base}${ext}`;
+    if (nextName === currentName) return { status: "saved" };
+    const nextAsset: Asset = {
+      ...asset,
+      label: labelForFile(nextName),
+      ...(asset.file !== null ? { file: nextName } : { expectedFile: nextName }),
+    };
+    const session = createProjectSession(project);
+    const result = await services.writer.renameAsset(session, assetPath, asset.file, nextAsset);
+    if (result.status === "saved") {
+      setCourseState((current) =>
+        current?.status === "ready"
+          ? {
+              ...current,
+              course: {
+                ...current.course,
+                assets: current.course.assets.map((entry) =>
+                  entry.id === assetId ? nextAsset : entry,
+                ),
+              },
+            }
+          : current,
+      );
+    }
+    return result;
   };
 
   const deleteAsset = async (assetId: string): Promise<ProjectWriteResult> => {
@@ -793,7 +863,13 @@ export function App() {
               onImportMedia={importMedia}
               onDeleteAsset={deleteAsset}
               onLoadPreview={loadAssetPreview}
+              onSearchImages={(query, page) => services.mediaSearch.searchImages(query, page)}
+              onSearchAudio={(query, page) => services.mediaSearch.searchAudio(query, page)}
+              onAddRemoteMedia={addRemoteMedia}
+              onRenameAsset={renameAsset}
             />
+          ) : section === "attribution" ? (
+            <CourseAttribution course={course} onSaveAttribution={saveAttribution} />
           ) : openLesson ? (
             <LessonEditor
               course={course}

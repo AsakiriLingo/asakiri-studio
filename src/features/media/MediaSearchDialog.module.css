@@ -1,0 +1,184 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal);
+  display: grid;
+  place-items: center;
+  padding: var(--space-4);
+  background: rgb(0 0 0 / 45%);
+}
+
+.dialog {
+  display: flex;
+  width: min(100%, 52rem);
+  max-height: min(90vh, 44rem);
+  flex-direction: column;
+  overflow: hidden;
+  border: var(--border-hairline) solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-4) var(--space-5);
+  border-bottom: var(--border-hairline) solid var(--color-border);
+}
+
+.title {
+  margin: 0;
+  font-size: var(--font-size-500);
+  font-weight: var(--font-weight-bold);
+}
+
+.searchRow {
+  display: flex;
+  gap: var(--space-2);
+  padding: var(--space-4) var(--space-5);
+}
+
+.searchField {
+  position: relative;
+  flex: 1 1 auto;
+}
+
+.searchField > svg {
+  position: absolute;
+  inset-inline-start: var(--space-3);
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--color-text-muted);
+  pointer-events: none;
+}
+
+.searchInput {
+  width: 100%;
+  min-height: var(--control-height-md);
+  padding-inline: 2.5rem var(--space-3);
+  border: var(--border-hairline) solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  outline: 2px solid transparent;
+  outline-offset: 1px;
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.searchInput:focus-visible {
+  border-color: var(--color-text-muted);
+  outline-color: var(--color-focus-ring);
+}
+
+.body {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  padding: 0 var(--space-5) var(--space-4);
+}
+
+.message {
+  padding: var(--space-8) 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-300);
+  text-align: center;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr));
+  gap: var(--space-4);
+}
+
+.card {
+  display: flex;
+  min-width: 0;
+  margin: 0;
+  flex-direction: column;
+  gap: var(--space-2);
+  overflow: hidden;
+  border: var(--border-hairline) solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+}
+
+.thumb {
+  display: grid;
+  aspect-ratio: 4 / 3;
+  place-items: center;
+  overflow: hidden;
+  background: var(--color-canvas);
+  color: var(--color-text-muted);
+}
+
+.image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.playButton {
+  display: grid;
+  width: 3rem;
+  height: 3rem;
+  place-items: center;
+  padding: 0;
+  border: var(--border-hairline) solid var(--color-border);
+  border-radius: var(--radius-full);
+  background: var(--color-surface);
+  color: var(--color-brand);
+  cursor: pointer;
+}
+
+.playButton:focus-visible {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 2px;
+}
+
+.caption {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+  padding: 0 var(--space-3);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-100);
+}
+
+.audioText {
+  overflow: hidden;
+  color: var(--color-text);
+  font-size: var(--font-size-200);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.audioLang {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-100);
+}
+
+.addButton {
+  margin: var(--space-1) var(--space-3) var(--space-3);
+}
+
+.more {
+  position: relative;
+  display: grid;
+  place-items: center;
+  margin-top: var(--space-5);
+}
+
+.sentinel {
+  position: absolute;
+  inset-block-start: -300px;
+  width: 1px;
+  height: 1px;
+  pointer-events: none;
+}
+
+.footer {
+  padding: var(--space-3) var(--space-5);
+  border-top: var(--border-hairline) solid var(--color-border);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-100);
+}

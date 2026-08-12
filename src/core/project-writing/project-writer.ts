@@ -105,4 +105,11 @@ export interface ProjectWriter {
   ): Promise<ProjectWriteResult>;
   /** Unlinks an asset from project.json and removes its media/assets folder. */
   deleteAsset(session: ProjectSession, assetPath: string): Promise<ProjectWriteResult>;
+  writeAttribution(session: ProjectSession, markdown: string): Promise<ProjectWriteResult>;
+  renameAsset(
+    session: ProjectSession,
+    assetPath: string,
+    oldFile: string | null,
+    asset: Asset,
+  ): Promise<ProjectWriteResult>;
 }
