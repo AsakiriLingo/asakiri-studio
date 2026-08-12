@@ -33,6 +33,14 @@ export const enMessages = {
     remove: (label: string) => `Remove ${label}`,
   },
 
+  flag: {
+    add: "Add flag",
+    change: "Change flag",
+    remove: "No flag",
+    search: "Search flags",
+    searchPlaceholder: "Search by country…",
+  },
+
   start: {
     title: "Start",
     projectActions: "Project actions",

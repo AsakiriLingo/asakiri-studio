@@ -13,3 +13,5 @@ export function getMessages(locale: Locale): StudioMessages {
 }
 
 export const MessagesContext = createContext<StudioMessages>(enMessages);
+
+export const LocaleContext = createContext<Locale>("en");

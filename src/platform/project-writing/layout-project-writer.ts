@@ -116,6 +116,7 @@ export function createLayoutProjectWriter(resolve: ResolveProjectFileAccess): Pr
             description: project.description,
             defaultLocale: project.defaultLocale,
             learningLocales: [...project.learningLocales],
+            taughtFlag: project.taughtFlag,
             level: project.level,
             estimatedLength: project.estimatedLength,
             license: project.license,

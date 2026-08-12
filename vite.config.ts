@@ -16,6 +16,9 @@ export default defineConfig(() => ({
       "@shared": fileURLToPath(new URL("./src/shared", import.meta.url)),
     },
   },
+  build: {
+    assetsInlineLimit: (filePath) => (filePath.includes("circle-flags") ? false : undefined),
+  },
   test: {
     environment: "jsdom",
     setupFiles: ["./src/test/setup.ts"],

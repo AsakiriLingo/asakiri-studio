@@ -595,6 +595,7 @@ function parseProject(value: unknown, context: string): CourseProject {
     description: str(data.description, `${context}.description`),
     defaultLocale: str(data.defaultLocale, `${context}.defaultLocale`),
     learningLocales: strArr(data.learningLocales, `${context}.learningLocales`),
+    taughtFlag: strOr(data.taughtFlag),
     level: strOr(data.level),
     estimatedLength: strOr(data.estimatedLength),
     license: strOr(data.license),

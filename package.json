@@ -38,6 +38,7 @@
     "@tiptap/pm": "^3.29.2",
     "@tiptap/react": "^3.29.2",
     "@tiptap/starter-kit": "^3.29.2",
+    "circle-flags": "^2.8.3",
     "react": "^19.1.0",
     "react-dom": "^19.1.0"
   },

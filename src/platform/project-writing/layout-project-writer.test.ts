@@ -15,6 +15,7 @@ const PROJECT: CourseProject = {
   description: "A new description.",
   defaultLocale: "en",
   learningLocales: ["ja", "ko"],
+  taughtFlag: "jp",
   level: "a1",
   estimatedLength: "2 units",
   license: "bySa",

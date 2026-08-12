@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { getMessages, MessagesContext } from "@shared/i18n/context";
+import { getMessages, LocaleContext, MessagesContext } from "@shared/i18n/context";
 import type { Locale } from "@shared/i18n/types";
 
 export interface I18nProviderProps {
@@ -9,6 +9,8 @@ export interface I18nProviderProps {
 
 export function I18nProvider({ locale, children }: I18nProviderProps) {
   return (
-    <MessagesContext.Provider value={getMessages(locale)}>{children}</MessagesContext.Provider>
+    <LocaleContext.Provider value={locale}>
+      <MessagesContext.Provider value={getMessages(locale)}>{children}</MessagesContext.Provider>
+    </LocaleContext.Provider>
   );
 }

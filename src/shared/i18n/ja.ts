@@ -36,6 +36,14 @@ export const jaMessages = {
     remove: (label: string) => `${label}を削除`,
   },
 
+  flag: {
+    add: "旗を追加",
+    change: "旗を変更",
+    remove: "旗なし",
+    search: "旗を検索",
+    searchPlaceholder: "国名で検索…",
+  },
+
   start: {
     title: "スタート",
     projectActions: "プロジェクトの操作",

@@ -6,6 +6,7 @@ import { useMessages, type StudioMessages } from "@shared/i18n";
 import { Button } from "@shared/components/button";
 import { Callout } from "@shared/components/callout";
 import { Field, TextArea, TextInput } from "@shared/components/form";
+import { FlagPicker } from "@shared/components/flag";
 import { Select, type SelectOption } from "@shared/components/select";
 import { Icon } from "@shared/components/icon";
 import { IconButton } from "@shared/components/icon-button";
@@ -343,17 +344,26 @@ export function CourseDetails({
         >
           <div className={joinClassNames(styles.formGrid, styles.two, styles.detailBody)}>
             <Field label={t.fieldTaught} help={t.fieldTaughtHelp}>
-              <TextInput
-                name="target-language"
-                defaultValue={project.learningLocales[0] ?? ""}
-                autoComplete="off"
-                onBlur={(event) => {
-                  const value = event.currentTarget.value;
-                  if (value !== (project.learningLocales[0] ?? "")) {
-                    patch({ learningLocales: [value, ...project.learningLocales.slice(1)] });
-                  }
-                }}
-              />
+              <div className={styles.taughtField}>
+                <TextInput
+                  className={styles.taughtInput}
+                  name="target-language"
+                  defaultValue={project.learningLocales[0] ?? ""}
+                  autoComplete="off"
+                  onBlur={(event) => {
+                    const value = event.currentTarget.value;
+                    if (value !== (project.learningLocales[0] ?? "")) {
+                      patch({ learningLocales: [value, ...project.learningLocales.slice(1)] });
+                    }
+                  }}
+                />
+                <FlagPicker
+                  value={project.taughtFlag}
+                  onChange={(code) => {
+                    patch({ taughtFlag: code });
+                  }}
+                />
+              </div>
             </Field>
             <Field label={t.fieldExplained} help={t.fieldExplainedHelp}>
               <TextInput

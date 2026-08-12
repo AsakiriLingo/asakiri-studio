@@ -13,6 +13,7 @@ const course: Course = {
     description: "",
     defaultLocale: "en",
     learningLocales: ["ja"],
+    taughtFlag: "",
     level: "",
     estimatedLength: "",
     license: "",

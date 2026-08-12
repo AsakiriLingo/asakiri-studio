@@ -1,0 +1,140 @@
+.trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--control-height-md);
+  max-width: 100%;
+  padding-inline: var(--space-3);
+  border: var(--border-hairline) solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  outline: 2px solid transparent;
+  outline-offset: 1px;
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: inherit;
+  cursor: pointer;
+}
+
+.trigger[data-popup-open],
+.trigger:focus-visible {
+  border-color: var(--color-text-muted);
+  outline-color: var(--color-focus-ring);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .trigger:hover {
+    background: var(--color-canvas);
+  }
+}
+
+.triggerLabel {
+  overflow: hidden;
+  color: var(--color-text);
+  font-size: var(--font-size-300);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.triggerIcon {
+  color: var(--color-text-muted);
+}
+
+.positioner {
+  z-index: var(--z-dropdown);
+  outline: 0;
+}
+
+.popup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  width: 18rem;
+  max-width: calc(100vw - var(--space-6));
+  padding: var(--space-2);
+  border: var(--border-hairline) solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  box-shadow:
+    0 4px 6px -2px var(--color-overlay),
+    0 12px 28px -8px var(--color-overlay);
+}
+
+.search {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.searchIcon {
+  position: absolute;
+  inset-inline-start: var(--space-3);
+  color: var(--color-text-muted);
+  pointer-events: none;
+}
+
+.searchInput {
+  width: 100%;
+  padding-inline-start: calc(var(--space-3) * 2 + 16px);
+}
+
+.removeRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--control-height-sm);
+  padding: var(--space-2) var(--space-2);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-text-muted);
+  font: inherit;
+  font-size: var(--font-size-300);
+  text-align: start;
+  cursor: pointer;
+}
+
+.listScroll {
+  height: 15rem;
+}
+
+.listViewport {
+  height: 100%;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+}
+
+.option {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: var(--control-height-sm);
+  padding: var(--space-2);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-text);
+  font: inherit;
+  font-size: var(--font-size-300);
+  text-align: start;
+  cursor: pointer;
+}
+
+.optionSelected {
+  font-weight: var(--font-weight-bold);
+}
+
+.optionName {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .removeRow:hover,
+  .option:hover {
+    background: var(--color-surface-subtle);
+  }
+}
