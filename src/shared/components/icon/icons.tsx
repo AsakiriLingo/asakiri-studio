@@ -14,7 +14,6 @@ export type IconName =
   | "teacher"
   | "moon"
   | "sun"
-  | "integrations"
   | "grip"
   | "details"
   | "content"
@@ -203,13 +202,6 @@ export const icons: Readonly<Record<IconName, ReactNode>> = {
   stop: <rect x="6" y="6" width="12" height="12" rx="1.5" />,
   close: <path d="M18 6 6 18M6 6l12 12" />,
   edit: <path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" />,
-  integrations: (
-    <>
-      <path d="M9.5 14.5 14.5 9.5" />
-      <path d="M11 6.5 12.2 5.3a4 4 0 0 1 5.7 5.7l-1.2 1.2" />
-      <path d="M13 17.5 11.8 18.7a4 4 0 0 1-5.7-5.7l1.2-1.2" />
-    </>
-  ),
   plus: (
     <>
       <path d="M12 5v14" />

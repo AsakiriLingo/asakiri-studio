@@ -43,7 +43,6 @@ export const enMessages = {
   start: {
     title: "Start",
     projectActions: "Project actions",
-    integrations: "Integrations",
     newCourseName: "New course",
     newCourseDetail: "Create a local project folder",
     openCourseName: "Open course",

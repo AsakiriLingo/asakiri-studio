@@ -7,7 +7,6 @@ interface StartScreenProps {
   readonly isDark: boolean;
   readonly onNewCourse: () => void;
   readonly onOpenCourse: () => void;
-  readonly onIntegrations: () => void;
   readonly onToggleTheme: () => void;
   readonly onToggleLocale: () => void;
 }
@@ -16,7 +15,6 @@ export function StartScreen({
   isDark,
   onNewCourse,
   onOpenCourse,
-  onIntegrations,
   onToggleTheme,
   onToggleLocale,
 }: StartScreenProps) {
@@ -25,9 +23,6 @@ export function StartScreen({
   return (
     <main className={styles.hub}>
       <div className={styles.tools}>
-        <IconButton aria-label={messages.start.integrations} onClick={onIntegrations}>
-          <Icon name="integrations" size={18} />
-        </IconButton>
         <IconButton aria-label={messages.switchLanguage} onClick={onToggleLocale}>
           <Icon name="language" size={18} />
         </IconButton>

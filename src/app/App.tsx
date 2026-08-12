@@ -20,7 +20,6 @@ import { I18nProvider, getMessages, type Locale } from "@shared/i18n";
 import { ConfirmProvider } from "@shared/components/confirm-dialog";
 import { StartScreen } from "@features/start";
 import { NewCourseDialog } from "@features/new-course";
-import { Integrations } from "@features/integrations";
 import { WorkspaceShell, type WorkspaceSection } from "@features/workspace-shell";
 import { CourseStructure } from "@features/course-structure";
 import { CourseContent } from "@features/content";
@@ -44,7 +43,7 @@ function initialLocale(): Locale {
   return navigator.language.toLowerCase().startsWith("ja") ? "ja" : "en";
 }
 
-type View = "start" | "new-course" | "integrations" | "workspace";
+type View = "start" | "new-course" | "workspace";
 
 type CourseState =
   | { readonly status: "loading" }
@@ -772,9 +771,6 @@ export function App() {
           onOpenCourse={() => {
             void openCourse();
           }}
-          onIntegrations={() => {
-            setView("integrations");
-          }}
           onToggleTheme={toggleTheme}
           onToggleLocale={toggleLocale}
         />
@@ -792,17 +788,6 @@ export function App() {
             })
           }
           onCreated={enterWorkspace}
-        />
-      );
-    }
-
-    if (view === "integrations") {
-      return (
-        <Integrations
-          isDark={isDark}
-          onBack={goToStart}
-          onToggleTheme={toggleTheme}
-          onToggleLocale={toggleLocale}
         />
       );
     }
