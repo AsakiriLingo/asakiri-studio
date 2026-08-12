@@ -1,8 +1,10 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import type { Course, Lesson } from "@core/course";
+import type { ProjectWriteResult } from "@core/project-writing";
 import { useMessages } from "@shared/i18n";
 import { Button } from "@shared/components/button";
 import { Icon } from "@shared/components/icon";
+import { Status } from "@shared/components/status";
 import { WorkHeader, WorkInner } from "@shared/components/work-surface";
 import styles from "@features/course-structure/CourseStructure.module.css";
 
@@ -12,12 +14,25 @@ function orderLabel(index: number): string {
 
 export interface CourseStructureProps {
   readonly course: Course;
+  readonly onNewUnit: () => Promise<ProjectWriteResult>;
   readonly onOpenLesson: (lessonId: string) => void;
 }
 
-export function CourseStructure({ course, onOpenLesson }: CourseStructureProps) {
+export function CourseStructure({ course, onNewUnit, onOpenLesson }: CourseStructureProps) {
   const messages = useMessages();
   const t = messages.structure;
+  const [creating, setCreating] = useState(false);
+  const [failed, setFailed] = useState(false);
+
+  const createUnit = async () => {
+    setCreating(true);
+    setFailed(false);
+    const result = await onNewUnit();
+    setCreating(false);
+    if (result.status !== "saved") {
+      setFailed(true);
+    }
+  };
   const lessonById = useMemo(
     () => new Map<string, Lesson>(course.lessons.map((lesson) => [lesson.id, lesson])),
     [course.lessons],
@@ -29,10 +44,18 @@ export function CourseStructure({ course, onOpenLesson }: CourseStructureProps) 
         title={t.title}
         description={t.description}
         actions={
-          <Button>
-            <Icon name="plus" size={18} />
-            {t.newUnit}
-          </Button>
+          <>
+            {failed ? <Status tone="warning">{messages.common.saveFailed}</Status> : null}
+            <Button
+              disabled={creating}
+              onClick={() => {
+                void createUnit();
+              }}
+            >
+              <Icon name="plus" size={18} />
+              {t.newUnit}
+            </Button>
+          </>
         }
       />
 

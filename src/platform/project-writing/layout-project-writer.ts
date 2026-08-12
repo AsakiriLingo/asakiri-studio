@@ -149,6 +149,32 @@ export function createLayoutProjectWriter(resolve: ResolveProjectFileAccess): Pr
       }
     },
 
+    async updateOutline(session, outline): Promise<ProjectWriteResult> {
+      const files = resolve(session);
+      if (!files) {
+        return { status: "failed", code: "unavailable" };
+      }
+
+      try {
+        const parsed: unknown = JSON.parse(await files.readTextFile(MANIFEST_PATH));
+        if (!isRecord(parsed)) {
+          return { status: "failed", code: "unknown" };
+        }
+        const nextOutline = outline.map((section) => ({
+          id: section.id,
+          title: section.title,
+          lessonIds: [...section.lessonIds],
+        }));
+        await files.writeTextFile(
+          MANIFEST_PATH,
+          `${JSON.stringify({ ...parsed, outline: nextOutline }, null, 2)}\n`,
+        );
+        return { status: "saved" };
+      } catch {
+        return { status: "failed", code: "unknown" };
+      }
+    },
+
     async updateRecord(session, path, record): Promise<ProjectWriteResult> {
       const files = resolve(session);
       if (!files) {

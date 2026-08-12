@@ -6,6 +6,7 @@ import type {
   Course,
   CourseProject,
   CourseSources,
+  OutlineSection,
   TiptapDocument,
 } from "@core/course";
 import { labelForFile, mediaTypeForFile, partSourceKey } from "@core/course";
@@ -147,6 +148,28 @@ export function App() {
       setCourseState((current) =>
         current?.status === "ready"
           ? { ...current, course: { ...current.course, project: nextProject } }
+          : current,
+      );
+    }
+    return result;
+  };
+
+  const addUnit = async (): Promise<ProjectWriteResult> => {
+    if (!project || courseState?.status !== "ready") {
+      return { status: "failed", code: "unavailable" };
+    }
+    const unit: OutlineSection = {
+      id: `unit_${crypto.randomUUID()}`,
+      title: messages.structure.defaultUnitTitle(courseState.course.outline.length + 1),
+      lessonIds: [],
+    };
+    const nextOutline = [...courseState.course.outline, unit];
+    const session = createProjectSession(project);
+    const result = await services.writer.updateOutline(session, nextOutline);
+    if (result.status === "saved") {
+      setCourseState((current) =>
+        current?.status === "ready"
+          ? { ...current, course: { ...current.course, outline: nextOutline } }
           : current,
       );
     }
@@ -609,6 +632,7 @@ export function App() {
           ) : (
             <CourseStructure
               course={course}
+              onNewUnit={addUnit}
               onOpenLesson={(lessonId) => {
                 setOpenLessonId(lessonId);
               }}

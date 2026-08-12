@@ -121,6 +121,27 @@ describe("layout project writer", () => {
     expect(result).toEqual({ status: "failed", code: "unavailable" });
   });
 
+  it("rewrites the outline while preserving other manifest keys", async () => {
+    const files = new Map([["project.json", MANIFEST]]);
+    const writer = createLayoutProjectWriter(() => fileAccess(files));
+
+    const result = await writer.updateOutline(SESSION, [
+      { id: "u1", title: "Unit 1", lessonIds: ["l1"] },
+      { id: "unit_new", title: "Unit 2", lessonIds: [] },
+    ]);
+
+    expect(result).toEqual({ status: "saved" });
+    const written: unknown = JSON.parse(files.get("project.json") ?? "");
+    expect(written).toMatchObject({
+      collections: ["content/collections/vocabulary.json"],
+      lessons: ["lessons/intro/lesson.json"],
+      outline: [
+        { id: "u1", title: "Unit 1", lessonIds: ["l1"] },
+        { id: "unit_new", title: "Unit 2", lessonIds: [] },
+      ],
+    });
+  });
+
   it("writes a record to its source file, preserving unknown keys", async () => {
     const path = "content/records/cat.json";
     const files = new Map([

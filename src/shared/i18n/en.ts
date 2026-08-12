@@ -337,6 +337,7 @@ export const enMessages = {
     description:
       "Units contain lessons. Open a lesson to arrange its exercises, rich media, and other parts.",
     newUnit: "New unit",
+    defaultUnitTitle: (order: number) => `Unit ${String(order)}`,
     addLesson: "Add lesson",
     empty: "No units yet. Add a unit to start organizing lessons.",
     lessonsAria: (unit: string) => `Lessons in ${unit}`,

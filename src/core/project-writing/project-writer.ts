@@ -1,4 +1,11 @@
-import type { Asset, Collection, ContentRecord, CourseProject, TiptapDocument } from "@core/course";
+import type {
+  Asset,
+  Collection,
+  ContentRecord,
+  CourseProject,
+  OutlineSection,
+  TiptapDocument,
+} from "@core/course";
 import type { ProjectSession } from "@core/projects";
 
 export type ProjectWriteErrorCode = "unavailable" | "unknown";
@@ -13,6 +20,10 @@ export type ProjectWriteResult =
  */
 export interface ProjectWriter {
   updateProject(session: ProjectSession, project: CourseProject): Promise<ProjectWriteResult>;
+  updateOutline(
+    session: ProjectSession,
+    outline: readonly OutlineSection[],
+  ): Promise<ProjectWriteResult>;
   /**
    * Writes a content record back to its source file. `path` is the
    * project-relative path retained from parsing (see CourseSources).
