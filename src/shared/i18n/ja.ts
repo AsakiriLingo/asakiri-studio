@@ -330,6 +330,13 @@ export const jaMessages = {
     usedBy: (count: number) => `${String(count)}件で使用`,
     available: "利用可能",
     placeholder: "プレースホルダー",
+    searchLabel: "メディアを検索",
+    searchPlaceholder: "名前・種類・形式で検索",
+    play: (name: string) => `${name}を再生`,
+    stop: (name: string) => `${name}を停止`,
+    loadMore: "さらに読み込む",
+    noResults: "検索に一致するメディアがありません。",
+    showing: (shown: number, total: number) => `${String(total)}件中${String(shown)}件を表示`,
   },
 
   structure: {

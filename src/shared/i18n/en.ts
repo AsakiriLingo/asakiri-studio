@@ -328,6 +328,13 @@ export const enMessages = {
     usedBy: (count: number) => `Used by ${String(count)}`,
     available: "Available",
     placeholder: "Placeholder",
+    searchLabel: "Search media",
+    searchPlaceholder: "Search by name, type, or format",
+    play: (name: string) => `Play ${name}`,
+    stop: (name: string) => `Stop ${name}`,
+    loadMore: "Load more",
+    noResults: "No media matches your search.",
+    showing: (shown: number, total: number) => `Showing ${String(shown)} of ${String(total)}`,
   },
 
   structure: {

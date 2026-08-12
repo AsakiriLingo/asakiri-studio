@@ -39,6 +39,8 @@ export type IconName =
   | "audio"
   | "video"
   | "search"
+  | "play"
+  | "stop"
   | "language";
 
 export const icons: Readonly<Record<IconName, ReactNode>> = {
@@ -195,6 +197,8 @@ export const icons: Readonly<Record<IconName, ReactNode>> = {
       <path d="m21 21-4.3-4.3" />
     </>
   ),
+  play: <path d="M7 5v14l11-7z" />,
+  stop: <rect x="6" y="6" width="12" height="12" rx="1.5" />,
   integrations: (
     <>
       <path d="M9.5 14.5 14.5 9.5" />

@@ -1,15 +1,18 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Asset, ContentRecord, Course } from "@core/course";
 import type { ProjectWriteResult } from "@core/project-writing";
-import { useMessages } from "@shared/i18n";
+import { useMessages, type StudioMessages } from "@shared/i18n";
 import { Button } from "@shared/components/button";
 import { useConfirm } from "@shared/components/confirm-dialog";
+import { TextInput } from "@shared/components/form";
 import { Icon } from "@shared/components/icon";
 import { IconButton } from "@shared/components/icon-button";
 import { PanelHeader } from "@shared/components/panel";
 import { Status } from "@shared/components/status";
 import { WorkHeader, WorkInner } from "@shared/components/work-surface";
 import styles from "@features/media/CourseMedia.module.css";
+
+const PAGE_SIZE = 24;
 
 function referencedAssetIds(record: ContentRecord): string[] {
   const ids: string[] = [];
@@ -23,6 +26,26 @@ function referencedAssetIds(record: ContentRecord): string[] {
     }
   }
   return ids;
+}
+
+function assetName(asset: Asset): string {
+  return asset.file ?? asset.expectedFile ?? asset.label;
+}
+
+function matchesQuery(asset: Asset, query: string): boolean {
+  const haystack =
+    `${assetName(asset)} ${asset.label} ${asset.kind} ${asset.mimeType}`.toLowerCase();
+  return haystack.includes(query);
+}
+
+function scrollParentOf(element: Element | null): Element | null {
+  let node = element?.parentElement ?? null;
+  while (node) {
+    const overflowY = getComputedStyle(node).overflowY;
+    if (overflowY === "auto" || overflowY === "scroll") return node;
+    node = node.parentElement;
+  }
+  return null;
 }
 
 export interface CourseMediaProps {
@@ -43,37 +66,26 @@ export function CourseMedia({
   const confirm = useConfirm();
   const [importing, setImporting] = useState(false);
   const [saveState, setSaveState] = useState<"idle" | "saved" | "failed">("idle");
+  const [query, setQuery] = useState("");
+  const [settledQuery, setSettledQuery] = useState("");
+  const [lastQuery, setLastQuery] = useState("");
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const [playingId, setPlayingId] = useState<string | null>(null);
   const [previews, setPreviews] = useState<Record<string, string>>({});
 
-  // Load an image thumbnail once per asset. A ref keeps the loader current
-  // without re-running the effect when unrelated course state changes.
+  useEffect(() => {
+    const handle = setTimeout(() => {
+      setSettledQuery(query.trim().toLowerCase());
+    }, 250);
+    return () => {
+      clearTimeout(handle);
+    };
+  }, [query]);
+
   const loadRef = useRef(onLoadPreview);
   useEffect(() => {
     loadRef.current = onLoadPreview;
   });
-
-  const imageIds = useMemo(
-    () =>
-      course.assets
-        .filter((asset) => asset.kind === "image" && asset.availability === "ready" && asset.file)
-        .map((asset) => asset.id),
-    [course.assets],
-  );
-
-  const requested = useRef<Set<string>>(new Set());
-  useEffect(() => {
-    let cancelled = false;
-    for (const id of imageIds) {
-      if (requested.current.has(id)) continue;
-      requested.current.add(id);
-      void loadRef.current(id).then((url) => {
-        if (!cancelled && url) setPreviews((prev) => ({ ...prev, [id]: url }));
-      });
-    }
-    return () => {
-      cancelled = true;
-    };
-  }, [imageIds]);
 
   const kindLabel: Record<Asset["kind"], string> = {
     audio: t.kindAudio,
@@ -91,11 +103,61 @@ export function CourseMedia({
     return counts;
   }, [course.records]);
 
+  const filtered = useMemo(() => {
+    if (!settledQuery) return course.assets;
+    return course.assets.filter((asset) => matchesQuery(asset, settledQuery));
+  }, [course.assets, settledQuery]);
+
+  if (settledQuery !== lastQuery) {
+    setLastQuery(settledQuery);
+    setVisibleCount(PAGE_SIZE);
+    setPlayingId(null);
+  }
+
+  const visible = filtered.slice(0, visibleCount);
+  const hasMore = visibleCount < filtered.length;
+
+  const requested = useRef<Set<string>>(new Set());
+  const visibleImageIds = visible
+    .filter((asset) => asset.kind === "image" && asset.availability === "ready" && asset.file)
+    .map((asset) => asset.id)
+    .join(",");
+  useEffect(() => {
+    let cancelled = false;
+    for (const id of visibleImageIds.split(",").filter(Boolean)) {
+      if (requested.current.has(id)) continue;
+      requested.current.add(id);
+      void loadRef.current(id).then((url) => {
+        if (!cancelled && url) setPreviews((prev) => ({ ...prev, [id]: url }));
+      });
+    }
+    return () => {
+      cancelled = true;
+    };
+  }, [visibleImageIds]);
+
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    if (!sentinel || !hasMore) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          setVisibleCount((count) => Math.min(count + PAGE_SIZE, filtered.length));
+        }
+      },
+      { root: scrollParentOf(sentinel), rootMargin: "400px" },
+    );
+    observer.observe(sentinel);
+    return () => {
+      observer.disconnect();
+    };
+  }, [hasMore, filtered.length]);
+
   const runImport = () => {
     setImporting(true);
     void onImportMedia()
       .then((result) => {
-        // null means the picker was dismissed; leave the status untouched.
         if (result) setSaveState(result.status === "saved" ? "saved" : "failed");
       })
       .finally(() => {
@@ -104,7 +166,7 @@ export function CourseMedia({
   };
 
   const removeAsset = (asset: Asset) => {
-    const name = asset.file ?? asset.expectedFile ?? asset.label;
+    const name = assetName(asset);
     const uses = usage.get(asset.id) ?? 0;
     void confirm({
       title: uses > 0 ? t.inUseTitle : t.confirmDeleteTitle,
@@ -112,6 +174,7 @@ export function CourseMedia({
       confirmLabel: t.deleteMedia,
     }).then((ok) => {
       if (!ok) return;
+      if (playingId === asset.id) setPlayingId(null);
       void onDeleteAsset(asset.id).then((result) => {
         setSaveState(result.status === "saved" ? "saved" : "failed");
       });
@@ -141,62 +204,180 @@ export function CourseMedia({
         <PanelHeader
           title={t.projectMedia}
           titleId="media-title"
-          description={t.storedInside(t.files(course.assets.length))}
+          description={t.showing(Math.min(visibleCount, filtered.length), filtered.length)}
           actions={status}
         />
+
+        <div className={styles.searchBar}>
+          <Icon name="search" size={18} />
+          <TextInput
+            type="search"
+            className={styles.searchInput}
+            style={{ paddingInlineStart: "2.5rem" }}
+            aria-label={t.searchLabel}
+            placeholder={t.searchPlaceholder}
+            value={query}
+            onChange={(event) => {
+              setQuery(event.currentTarget.value);
+            }}
+          />
+        </div>
+
         {course.assets.length === 0 ? (
           <p className={styles.empty}>{t.empty}</p>
+        ) : filtered.length === 0 ? (
+          <p className={styles.empty}>{t.noResults}</p>
         ) : (
-          <div className={styles.list}>
-            {course.assets.map((asset) => {
-              const uses = usage.get(asset.id) ?? 0;
-              return (
-                <div key={asset.id} className={styles.row}>
-                  <span className={styles.kind}>
-                    {previews[asset.id] ? (
-                      <img
-                        className={styles.thumb}
-                        src={previews[asset.id]}
-                        alt=""
-                        loading="lazy"
-                        decoding="async"
-                      />
-                    ) : (
-                      <Icon name={asset.kind} size={18} />
-                    )}
-                  </span>
-                  <span>
-                    <span className={styles.rowTitle}>
-                      {asset.file ?? asset.expectedFile ?? asset.label}
-                    </span>
-                    <span className={styles.meta}>
-                      <span>{kindLabel[asset.kind]}</span>
-                      <span>{asset.mimeType}</span>
-                      <span>{uses === 0 ? t.notReferenced : t.usedBy(uses)}</span>
-                    </span>
-                  </span>
-                  <span className={styles.rowEnd}>
-                    <Status tone={asset.availability === "ready" ? "default" : "warning"}>
-                      {asset.availability === "ready" ? t.available : t.placeholder}
-                    </Status>
-                    <IconButton
-                      aria-label={messages.common.remove(
-                        asset.file ?? asset.expectedFile ?? asset.label,
-                      )}
-                      size="sm"
-                      onClick={() => {
-                        removeAsset(asset);
-                      }}
-                    >
-                      <Icon name="trash" size={18} />
-                    </IconButton>
-                  </span>
-                </div>
-              );
-            })}
-          </div>
+          <>
+            <div className={styles.grid} aria-label={t.projectMedia}>
+              {visible.map((asset) => (
+                <MediaCard
+                  key={asset.id}
+                  asset={asset}
+                  preview={previews[asset.id]}
+                  uses={usage.get(asset.id) ?? 0}
+                  kindLabel={kindLabel[asset.kind]}
+                  playing={playingId === asset.id}
+                  messages={messages}
+                  onTogglePlay={(next) => {
+                    setPlayingId(next ? asset.id : null);
+                  }}
+                  onLoadUrl={onLoadPreview}
+                  onDelete={() => {
+                    removeAsset(asset);
+                  }}
+                />
+              ))}
+            </div>
+
+            {hasMore ? (
+              <div className={styles.more}>
+                <div ref={sentinelRef} aria-hidden className={styles.sentinel} />
+                <Button
+                  variant="ghost"
+                  onClick={() => {
+                    setVisibleCount((count) => Math.min(count + PAGE_SIZE, filtered.length));
+                  }}
+                >
+                  {t.loadMore}
+                </Button>
+              </div>
+            ) : null}
+          </>
         )}
       </section>
     </WorkInner>
+  );
+}
+
+interface MediaCardProps {
+  readonly asset: Asset;
+  readonly preview: string | undefined;
+  readonly uses: number;
+  readonly kindLabel: string;
+  readonly playing: boolean;
+  readonly messages: StudioMessages;
+  readonly onTogglePlay: (next: boolean) => void;
+  readonly onLoadUrl: (assetId: string) => Promise<string | null>;
+  readonly onDelete: () => void;
+}
+
+function MediaCard({
+  asset,
+  preview,
+  uses,
+  kindLabel,
+  playing,
+  messages,
+  onTogglePlay,
+  onLoadUrl,
+  onDelete,
+}: MediaCardProps) {
+  const t = messages.media;
+  const name = assetName(asset);
+  const ready = asset.availability === "ready" && Boolean(asset.file);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    const element = audioRef.current;
+    if (!playing && element) {
+      element.pause();
+      element.currentTime = 0;
+    }
+  }, [playing]);
+
+  useEffect(() => {
+    const element = audioRef.current;
+    if (playing && element && audioUrl) void element.play().catch(() => undefined);
+  }, [playing, audioUrl]);
+
+  const toggleAudio = async () => {
+    if (playing) {
+      onTogglePlay(false);
+      return;
+    }
+    let url = audioUrl;
+    if (!url) {
+      url = await onLoadUrl(asset.id);
+      if (!url) return;
+      setAudioUrl(url);
+    }
+    onTogglePlay(true);
+  };
+
+  return (
+    <article className={styles.card}>
+      <div className={styles.thumb}>
+        {asset.kind === "image" && ready && preview ? (
+          <img className={styles.image} src={preview} alt="" loading="lazy" decoding="async" />
+        ) : asset.kind === "audio" && ready ? (
+          <button
+            type="button"
+            className={styles.playButton}
+            aria-label={playing ? t.stop(name) : t.play(name)}
+            onClick={() => {
+              void toggleAudio();
+            }}
+          >
+            <Icon name={playing ? "stop" : "play"} size={28} />
+          </button>
+        ) : (
+          <span className={styles.placeholderIcon}>
+            <Icon name={asset.kind} size={28} />
+          </span>
+        )}
+      </div>
+
+      <div className={styles.cardBody}>
+        <span className={styles.cardTitle} title={name}>
+          {name}
+        </span>
+        <span className={styles.meta}>
+          <span>{kindLabel}</span>
+          <span>{asset.mimeType}</span>
+        </span>
+        <div className={styles.cardFooter}>
+          <Status tone={ready ? "default" : "warning"}>
+            {ready ? t.available : t.placeholder}
+          </Status>
+          <span className={styles.uses}>{uses === 0 ? t.notReferenced : t.usedBy(uses)}</span>
+          <IconButton aria-label={messages.common.remove(name)} size="sm" onClick={onDelete}>
+            <Icon name="trash" size={18} />
+          </IconButton>
+        </div>
+      </div>
+
+      {asset.kind === "audio" && ready ? (
+        <audio
+          ref={audioRef}
+          src={audioUrl ?? undefined}
+          preload="none"
+          onEnded={() => {
+            onTogglePlay(false);
+          }}
+        />
+      ) : null}
+    </article>
   );
 }
