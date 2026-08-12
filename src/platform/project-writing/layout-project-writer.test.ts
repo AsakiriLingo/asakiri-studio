@@ -58,6 +58,18 @@ function fileAccess(files: Map<string, string>): ProjectFileAccess {
       files.delete(path);
       return Promise.resolve();
     },
+    copyFile(sourcePath, path) {
+      // Record the copy by storing a marker keyed by the destination path.
+      files.set(path, `copied:${sourcePath}`);
+      return Promise.resolve();
+    },
+    removeDir(path) {
+      const prefix = `${path}/`;
+      for (const key of [...files.keys()]) {
+        if (key === path || key.startsWith(prefix)) files.delete(key);
+      }
+      return Promise.resolve();
+    },
   };
 }
 
@@ -262,5 +274,60 @@ describe("layout project writer", () => {
     expect(manifest).toMatchObject({
       collections: ["content/collections/vocabulary.json", "content/collections/hiragana.json"],
     });
+  });
+
+  it("imports an asset: copies the binary, writes the descriptor, links the manifest", async () => {
+    const files = new Map([
+      ["project.json", JSON.stringify({ format: "asakiri-course", assets: [] })],
+    ]);
+    const writer = createLayoutProjectWriter(() => fileAccess(files));
+
+    const assetPath = "media/assets/asset_1/asset.json";
+    const binaryPath = "media/assets/asset_1/photo.png";
+    const result = await writer.importAsset(SESSION, assetPath, binaryPath, "/tmp/photo.png", {
+      id: "asset_1",
+      kind: "image",
+      label: "photo",
+      availability: "ready",
+      file: "photo.png",
+      mimeType: "image/png",
+    });
+
+    expect(result).toEqual({ status: "saved" });
+    expect(files.get(binaryPath)).toBe("copied:/tmp/photo.png");
+    const descriptor: unknown = JSON.parse(files.get(assetPath) ?? "");
+    expect(descriptor).toMatchObject({
+      id: "asset_1",
+      kind: "image",
+      file: "photo.png",
+      mimeType: "image/png",
+      availability: "ready",
+    });
+    const manifest: unknown = JSON.parse(files.get("project.json") ?? "");
+    expect(manifest).toMatchObject({ assets: [assetPath] });
+  });
+
+  it("deletes an asset: unlinks the manifest and removes its folder", async () => {
+    const assetPath = "media/assets/asset_1/asset.json";
+    const files = new Map([
+      [
+        "project.json",
+        JSON.stringify({
+          format: "asakiri-course",
+          assets: [assetPath, "media/assets/keep/asset.json"],
+        }),
+      ],
+      [assetPath, JSON.stringify({ id: "asset_1" })],
+      ["media/assets/asset_1/photo.png", "copied:/tmp/photo.png"],
+    ]);
+    const writer = createLayoutProjectWriter(() => fileAccess(files));
+
+    const result = await writer.deleteAsset(SESSION, assetPath);
+
+    expect(result).toEqual({ status: "saved" });
+    expect(files.has(assetPath)).toBe(false);
+    expect(files.has("media/assets/asset_1/photo.png")).toBe(false);
+    const manifest: unknown = JSON.parse(files.get("project.json") ?? "");
+    expect(manifest).toMatchObject({ assets: ["media/assets/keep/asset.json"] });
   });
 });

@@ -36,6 +36,13 @@
   color: var(--color-text-muted);
 }
 
+.thumb {
+  width: 100%;
+  height: 100%;
+  border-radius: var(--radius-sm);
+  object-fit: cover;
+}
+
 .rowTitle {
   display: block;
   overflow: hidden;
@@ -52,6 +59,12 @@
   margin-top: var(--space-1);
   color: var(--color-text-muted);
   font-size: var(--font-size-100);
+}
+
+.rowEnd {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
 }
 
 @media (hover: hover) and (pointer: fine) {

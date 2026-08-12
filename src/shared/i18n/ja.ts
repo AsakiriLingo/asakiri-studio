@@ -294,6 +294,15 @@ export const jaMessages = {
     title: "メディア",
     description: "コンテンツレコードやレッスンが参照する、ローカルの画像・音声・動画を管理します。",
     importMedia: "メディアを取り込む",
+    importing: "取り込み中…",
+    importFailed: "一部のファイルを取り込めませんでした",
+    deleteMedia: "メディアを削除",
+    confirmDeleteTitle: "このメディアファイルを削除しますか？",
+    confirmDeleteBody: (name: string) =>
+      `「${name}」をプロジェクトフォルダから削除します。参照しているレコードではファイルが見つからなくなります。この操作は元に戻せません。`,
+    inUseTitle: "このファイルはまだ使用されています",
+    inUseBody: (count: number, name: string) =>
+      `「${name}」は ${String(count)} 件のレコードから参照されています。それでも削除しますか？`,
     projectMedia: "プロジェクトのメディア",
     files: (count: number) => `${String(count)}件のファイル`,
     storedInside: (files: string) => `${files}・このプロジェクト内に保存`,

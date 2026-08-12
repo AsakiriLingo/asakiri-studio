@@ -1,4 +1,4 @@
-import type { Collection, ContentRecord, CourseProject, TiptapDocument } from "@core/course";
+import type { Asset, Collection, ContentRecord, CourseProject, TiptapDocument } from "@core/course";
 import type { ProjectSession } from "@core/projects";
 
 export type ProjectWriteErrorCode = "unavailable" | "unknown";
@@ -63,4 +63,18 @@ export interface ProjectWriter {
     collectionPath: string,
     collection: Collection,
   ): Promise<ProjectWriteResult>;
+  /**
+   * Copies a picked media file into the project, writes its `asset.json`
+   * descriptor, and links it into project.json assets. `binaryPath` and
+   * `assetPath` are project-relative; `sourcePath` is the absolute file to copy.
+   */
+  importAsset(
+    session: ProjectSession,
+    assetPath: string,
+    binaryPath: string,
+    sourcePath: string,
+    asset: Asset,
+  ): Promise<ProjectWriteResult>;
+  /** Unlinks an asset from project.json and removes its media/assets folder. */
+  deleteAsset(session: ProjectSession, assetPath: string): Promise<ProjectWriteResult>;
 }

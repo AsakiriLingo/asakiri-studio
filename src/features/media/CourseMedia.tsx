@@ -1,8 +1,11 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { Asset, ContentRecord, Course } from "@core/course";
+import type { ProjectWriteResult } from "@core/project-writing";
 import { useMessages } from "@shared/i18n";
 import { Button } from "@shared/components/button";
+import { useConfirm } from "@shared/components/confirm-dialog";
 import { Icon } from "@shared/components/icon";
+import { IconButton } from "@shared/components/icon-button";
 import { PanelHeader } from "@shared/components/panel";
 import { Status } from "@shared/components/status";
 import { WorkHeader, WorkInner } from "@shared/components/work-surface";
@@ -24,11 +27,53 @@ function referencedAssetIds(record: ContentRecord): string[] {
 
 export interface CourseMediaProps {
   readonly course: Course;
+  readonly onImportMedia: () => Promise<ProjectWriteResult | null>;
+  readonly onDeleteAsset: (assetId: string) => Promise<ProjectWriteResult>;
+  readonly onLoadPreview: (assetId: string) => Promise<string | null>;
 }
 
-export function CourseMedia({ course }: CourseMediaProps) {
+export function CourseMedia({
+  course,
+  onImportMedia,
+  onDeleteAsset,
+  onLoadPreview,
+}: CourseMediaProps) {
   const messages = useMessages();
   const t = messages.media;
+  const confirm = useConfirm();
+  const [importing, setImporting] = useState(false);
+  const [saveState, setSaveState] = useState<"idle" | "saved" | "failed">("idle");
+  const [previews, setPreviews] = useState<Record<string, string>>({});
+
+  // Load an image thumbnail once per asset. A ref keeps the loader current
+  // without re-running the effect when unrelated course state changes.
+  const loadRef = useRef(onLoadPreview);
+  useEffect(() => {
+    loadRef.current = onLoadPreview;
+  });
+
+  const imageIds = useMemo(
+    () =>
+      course.assets
+        .filter((asset) => asset.kind === "image" && asset.availability === "ready" && asset.file)
+        .map((asset) => asset.id),
+    [course.assets],
+  );
+
+  const requested = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    let cancelled = false;
+    for (const id of imageIds) {
+      if (requested.current.has(id)) continue;
+      requested.current.add(id);
+      void loadRef.current(id).then((url) => {
+        if (!cancelled && url) setPreviews((prev) => ({ ...prev, [id]: url }));
+      });
+    }
+    return () => {
+      cancelled = true;
+    };
+  }, [imageIds]);
 
   const kindLabel: Record<Asset["kind"], string> = {
     audio: t.kindAudio,
@@ -46,13 +91,48 @@ export function CourseMedia({ course }: CourseMediaProps) {
     return counts;
   }, [course.records]);
 
+  const runImport = () => {
+    setImporting(true);
+    void onImportMedia()
+      .then((result) => {
+        // null means the picker was dismissed; leave the status untouched.
+        if (result) setSaveState(result.status === "saved" ? "saved" : "failed");
+      })
+      .finally(() => {
+        setImporting(false);
+      });
+  };
+
+  const removeAsset = (asset: Asset) => {
+    const name = asset.file ?? asset.expectedFile ?? asset.label;
+    const uses = usage.get(asset.id) ?? 0;
+    void confirm({
+      title: uses > 0 ? t.inUseTitle : t.confirmDeleteTitle,
+      description: uses > 0 ? t.inUseBody(uses, name) : t.confirmDeleteBody(name),
+      confirmLabel: t.deleteMedia,
+    }).then((ok) => {
+      if (!ok) return;
+      void onDeleteAsset(asset.id).then((result) => {
+        setSaveState(result.status === "saved" ? "saved" : "failed");
+      });
+    });
+  };
+
+  const status = importing ? (
+    <Status>{t.importing}</Status>
+  ) : saveState === "idle" ? null : (
+    <Status tone={saveState === "failed" ? "warning" : "default"}>
+      {saveState === "failed" ? t.importFailed : messages.common.savedLocally}
+    </Status>
+  );
+
   return (
     <WorkInner>
       <WorkHeader
         title={t.title}
         description={t.description}
         actions={
-          <Button>
+          <Button disabled={importing} onClick={runImport}>
             <Icon name="plus" size={18} />
             {t.importMedia}
           </Button>
@@ -64,6 +144,7 @@ export function CourseMedia({ course }: CourseMediaProps) {
           title={t.projectMedia}
           titleId="media-title"
           description={t.storedInside(t.files(course.assets.length))}
+          actions={status}
         />
         {course.assets.length === 0 ? (
           <p className={styles.empty}>{t.empty}</p>
@@ -74,7 +155,17 @@ export function CourseMedia({ course }: CourseMediaProps) {
               return (
                 <div key={asset.id} className={styles.row}>
                   <span className={styles.kind}>
-                    <Icon name={asset.kind} size={18} />
+                    {previews[asset.id] ? (
+                      <img
+                        className={styles.thumb}
+                        src={previews[asset.id]}
+                        alt=""
+                        loading="lazy"
+                        decoding="async"
+                      />
+                    ) : (
+                      <Icon name={asset.kind} size={18} />
+                    )}
                   </span>
                   <span>
                     <span className={styles.rowTitle}>
@@ -86,9 +177,22 @@ export function CourseMedia({ course }: CourseMediaProps) {
                       <span>{uses === 0 ? t.notReferenced : t.usedBy(uses)}</span>
                     </span>
                   </span>
-                  <Status tone={asset.availability === "ready" ? "default" : "warning"}>
-                    {asset.availability === "ready" ? t.available : t.placeholder}
-                  </Status>
+                  <span className={styles.rowEnd}>
+                    <Status tone={asset.availability === "ready" ? "default" : "warning"}>
+                      {asset.availability === "ready" ? t.available : t.placeholder}
+                    </Status>
+                    <IconButton
+                      aria-label={messages.common.remove(
+                        asset.file ?? asset.expectedFile ?? asset.label,
+                      )}
+                      size="sm"
+                      onClick={() => {
+                        removeAsset(asset);
+                      }}
+                    >
+                      <Icon name="trash" size={18} />
+                    </IconButton>
+                  </span>
                 </div>
               );
             })}

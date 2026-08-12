@@ -2,6 +2,8 @@ use std::fs;
 use std::path::Path;
 use std::process::Command;
 
+use base64::engine::general_purpose::STANDARD;
+use base64::Engine as _;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize)]
@@ -152,6 +154,55 @@ pub fn delete_course_file(root_path: String, relative_path: String) -> Result<()
     }
 }
 
+/// Copies an arbitrary absolute file (e.g. one the user picked) into the project
+/// at a guarded, project-relative destination, creating parent directories.
+#[tauri::command]
+pub fn copy_course_file(
+    root_path: String,
+    relative_path: String,
+    source_path: String,
+) -> Result<(), String> {
+    let target =
+        resolve_course_path(&root_path, &relative_path).ok_or_else(|| "invalidPath".to_string())?;
+
+    let source = Path::new(&source_path);
+    if !source.is_file() {
+        return Err("notFound".to_string());
+    }
+
+    if let Some(parent) = target.parent() {
+        fs::create_dir_all(parent).map_err(|_| "unknown".to_string())?;
+    }
+    fs::copy(source, &target).map(|_| ()).map_err(|_| "unknown".to_string())
+}
+
+/// Reads a project file and returns its bytes base64-encoded, for building a
+/// `data:` URL to preview media inside the webview.
+#[tauri::command]
+pub fn read_course_file_base64(root_path: String, relative_path: String) -> Result<String, String> {
+    let target =
+        resolve_course_path(&root_path, &relative_path).ok_or_else(|| "invalidPath".to_string())?;
+
+    match fs::read(&target) {
+        Ok(bytes) => Ok(STANDARD.encode(bytes)),
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => Err("notFound".to_string()),
+        Err(_) => Err("unknown".to_string()),
+    }
+}
+
+/// Recursively removes a project-relative directory. Missing is treated as success.
+#[tauri::command]
+pub fn remove_course_dir(root_path: String, relative_path: String) -> Result<(), String> {
+    let target =
+        resolve_course_path(&root_path, &relative_path).ok_or_else(|| "invalidPath".to_string())?;
+
+    match fs::remove_dir_all(&target) {
+        Ok(()) => Ok(()),
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(()),
+        Err(_) => Err("unknown".to_string()),
+    }
+}
+
 #[tauri::command]
 pub fn reveal_path(path: String) -> Result<(), String> {
     if !Path::new(&path).exists() {
@@ -237,7 +288,8 @@ pub fn read_course_title(path: String) -> Result<String, String> {
 #[cfg(test)]
 mod tests {
     use super::{
-        delete_course_file, resolve_course_path, slugify, validate_directory_name, write_course_file,
+        copy_course_file, delete_course_file, read_course_file_base64, remove_course_dir,
+        resolve_course_path, slugify, validate_directory_name, write_course_file,
     };
 
     #[test]
@@ -278,6 +330,95 @@ mod tests {
         assert_eq!(result, Ok(()));
         let written = std::fs::read_to_string(root.join("content/records/new.json")).unwrap();
         assert_eq!(written, "{\"id\":\"x\"}");
+        let _ = std::fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn copies_a_picked_file_into_the_project() {
+        let root = std::env::temp_dir().join(format!("asakiri_copy_{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&root);
+        let source = std::env::temp_dir().join(format!("asakiri_src_{}.svg", std::process::id()));
+        std::fs::write(&source, "<svg/>").unwrap();
+
+        let result = copy_course_file(
+            root.to_string_lossy().into_owned(),
+            "media/assets/a1/original.svg".to_string(),
+            source.to_string_lossy().into_owned(),
+        );
+
+        assert_eq!(result, Ok(()));
+        let copied = std::fs::read_to_string(root.join("media/assets/a1/original.svg")).unwrap();
+        assert_eq!(copied, "<svg/>");
+
+        // A missing source is reported, not silently ignored.
+        assert_eq!(
+            copy_course_file(
+                root.to_string_lossy().into_owned(),
+                "media/assets/a1/missing.svg".to_string(),
+                std::env::temp_dir().join("asakiri_nope.svg").to_string_lossy().into_owned(),
+            ),
+            Err("notFound".to_string())
+        );
+
+        let _ = std::fs::remove_file(&source);
+        let _ = std::fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn reads_a_file_as_base64_and_reports_missing() {
+        let root = std::env::temp_dir().join(format!("asakiri_b64_{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&root);
+
+        write_course_file(
+            root.to_string_lossy().into_owned(),
+            "media/assets/a1/original.svg".to_string(),
+            "hi".to_string(),
+        )
+        .unwrap();
+
+        // "hi" base64-encodes to "aGk=".
+        assert_eq!(
+            read_course_file_base64(
+                root.to_string_lossy().into_owned(),
+                "media/assets/a1/original.svg".to_string(),
+            ),
+            Ok("aGk=".to_string())
+        );
+        assert_eq!(
+            read_course_file_base64(
+                root.to_string_lossy().into_owned(),
+                "media/assets/a1/missing.svg".to_string(),
+            ),
+            Err("notFound".to_string())
+        );
+
+        let _ = std::fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn removes_an_asset_directory_and_treats_missing_as_success() {
+        let root = std::env::temp_dir().join(format!("asakiri_rmdir_{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&root);
+
+        write_course_file(
+            root.to_string_lossy().into_owned(),
+            "media/assets/a1/asset.json".to_string(),
+            "{}".to_string(),
+        )
+        .unwrap();
+        assert!(root.join("media/assets/a1").exists());
+
+        assert_eq!(
+            remove_course_dir(root.to_string_lossy().into_owned(), "media/assets/a1".to_string()),
+            Ok(())
+        );
+        assert!(!root.join("media/assets/a1").exists());
+        // Removing again (now missing) still succeeds.
+        assert_eq!(
+            remove_course_dir(root.to_string_lossy().into_owned(), "media/assets/a1".to_string()),
+            Ok(())
+        );
+
         let _ = std::fs::remove_dir_all(&root);
     }
 

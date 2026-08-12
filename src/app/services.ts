@@ -1,9 +1,11 @@
+import type { AssetReader, MediaPicker } from "@core/project-media";
 import type { ProjectCreationGateway, ProjectDirectoryGateway } from "@core/projects";
 import type { ProjectReader } from "@core/project-reading";
 import type { ProjectSystem } from "@core/project-system";
 import type { ProjectWriter } from "@core/project-writing";
 import { createProjectCreationGateway } from "@platform/project-creation";
 import { createProjectDirectoryGateway } from "@platform/project-directory";
+import { createAssetReader, createMediaPicker } from "@platform/project-media";
 import { ProjectLocationRegistry } from "@platform/project-location";
 import { createProjectReader } from "@platform/project-reading";
 import { createProjectSystem } from "@platform/project-system";
@@ -15,6 +17,8 @@ export interface AppServices {
   readonly reader: ProjectReader;
   readonly writer: ProjectWriter;
   readonly system: ProjectSystem;
+  readonly mediaPicker: MediaPicker;
+  readonly assetReader: AssetReader;
 }
 
 /**
@@ -30,5 +34,7 @@ export function createAppServices(): AppServices {
     reader: createProjectReader(locations),
     writer: createProjectWriter(locations),
     system: createProjectSystem(locations),
+    mediaPicker: createMediaPicker(),
+    assetReader: createAssetReader(locations),
   };
 }

@@ -292,6 +292,15 @@ export const enMessages = {
     description:
       "Manage the local images, audio, and video that content records and lessons reference.",
     importMedia: "Import media",
+    importing: "Importing…",
+    importFailed: "Some files could not be imported",
+    deleteMedia: "Delete media",
+    confirmDeleteTitle: "Delete this media file?",
+    confirmDeleteBody: (name: string) =>
+      `This removes “${name}” from the project folder. Records that reference it will show a missing file. This cannot be undone.`,
+    inUseTitle: "This file is still in use",
+    inUseBody: (count: number, name: string) =>
+      `“${name}” is referenced by ${String(count)} record${count === 1 ? "" : "s"}. Delete it anyway?`,
     projectMedia: "Project media",
     files: (count: number) => (count === 1 ? "1 file" : `${String(count)} files`),
     storedInside: (files: string) => `${files} · stored inside this project`,

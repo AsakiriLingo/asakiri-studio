@@ -1,4 +1,4 @@
-import type { Collection, ContentRecord, FieldDefinition } from "@core/course";
+import type { Asset, Collection, ContentRecord, FieldDefinition } from "@core/course";
 import type { ProjectWriter, ProjectWriteResult } from "@core/project-writing";
 import type { ProjectSession } from "@core/projects";
 
@@ -6,6 +6,10 @@ export interface ProjectFileAccess {
   readTextFile(relativePath: string): Promise<string>;
   writeTextFile(relativePath: string, contents: string): Promise<void>;
   deleteFile(relativePath: string): Promise<void>;
+  /** Copies an absolute source file to a project-relative destination. */
+  copyFile(sourcePath: string, relativePath: string): Promise<void>;
+  /** Recursively removes a project-relative directory. Missing is a no-op. */
+  removeDir(relativePath: string): Promise<void>;
 }
 
 export type ResolveProjectFileAccess = (session: ProjectSession) => ProjectFileAccess | null;
@@ -63,6 +67,24 @@ function serializeRecord(record: ContentRecord, base: Record<string, unknown> = 
     collectionId: record.collectionId,
     fields: record.fields,
   };
+}
+
+function serializeAsset(asset: Asset): Record<string, unknown> {
+  return {
+    id: asset.id,
+    kind: asset.kind,
+    label: asset.label,
+    availability: asset.availability,
+    file: asset.file,
+    mimeType: asset.mimeType,
+    ...(asset.expectedFile !== undefined ? { expectedFile: asset.expectedFile } : {}),
+    ...(asset.metadata !== undefined ? { metadata: asset.metadata } : {}),
+  };
+}
+
+/** The directory a project-relative file path lives in (drops the last segment). */
+function dirOf(filePath: string): string {
+  return filePath.split("/").slice(0, -1).join("/");
 }
 
 export function createLayoutProjectWriter(resolve: ResolveProjectFileAccess): ProjectWriter {
@@ -279,6 +301,60 @@ export function createLayoutProjectWriter(resolve: ResolveProjectFileAccess): Pr
         // Keep unknown keys and the record list; replace the editable schema.
         const next = { ...base, ...serializeCollection(collection, recordFiles) };
         await files.writeTextFile(collectionPath, `${JSON.stringify(next, null, 2)}\n`);
+        return { status: "saved" };
+      } catch {
+        return { status: "failed", code: "unknown" };
+      }
+    },
+
+    async importAsset(
+      session,
+      assetPath,
+      binaryPath,
+      sourcePath,
+      asset,
+    ): Promise<ProjectWriteResult> {
+      const files = resolve(session);
+      if (!files) {
+        return { status: "failed", code: "unavailable" };
+      }
+
+      try {
+        // Copy the binary first; if that fails the manifest is never touched.
+        await files.copyFile(sourcePath, binaryPath);
+        await files.writeTextFile(assetPath, `${JSON.stringify(serializeAsset(asset), null, 2)}\n`);
+        const parsed: unknown = JSON.parse(await files.readTextFile(MANIFEST_PATH));
+        if (!isRecord(parsed)) {
+          return { status: "failed", code: "unknown" };
+        }
+        const assets = [...stringArray(parsed.assets), assetPath];
+        await files.writeTextFile(
+          MANIFEST_PATH,
+          `${JSON.stringify({ ...parsed, assets }, null, 2)}\n`,
+        );
+        return { status: "saved" };
+      } catch {
+        return { status: "failed", code: "unknown" };
+      }
+    },
+
+    async deleteAsset(session, assetPath): Promise<ProjectWriteResult> {
+      const files = resolve(session);
+      if (!files) {
+        return { status: "failed", code: "unavailable" };
+      }
+
+      try {
+        const parsed: unknown = JSON.parse(await files.readTextFile(MANIFEST_PATH));
+        if (isRecord(parsed)) {
+          const assets = stringArray(parsed.assets).filter((entry) => entry !== assetPath);
+          await files.writeTextFile(
+            MANIFEST_PATH,
+            `${JSON.stringify({ ...parsed, assets }, null, 2)}\n`,
+          );
+        }
+        // Remove the whole media/assets/<id> folder (descriptor + binary).
+        await files.removeDir(dirOf(assetPath));
         return { status: "saved" };
       } catch {
         return { status: "failed", code: "unknown" };

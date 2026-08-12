@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import type {
+  Asset,
   Collection,
   ContentRecord,
   Course,
@@ -7,7 +8,7 @@ import type {
   CourseSources,
   TiptapDocument,
 } from "@core/course";
-import { partSourceKey } from "@core/course";
+import { labelForFile, mediaTypeForFile, partSourceKey } from "@core/course";
 import type { ProjectReadErrorCode } from "@core/project-reading";
 import type { GitStatus } from "@core/project-system";
 import type { ProjectWriteResult } from "@core/project-writing";
@@ -370,6 +371,111 @@ export function App() {
     return result;
   };
 
+  const importMedia = async (): Promise<ProjectWriteResult | null> => {
+    if (!project || courseState?.status !== "ready") {
+      return { status: "failed", code: "unavailable" };
+    }
+    const picked = await services.mediaPicker.pickMediaFiles();
+    if (picked.length === 0) return null;
+
+    const session = createProjectSession(project);
+    const imported: { readonly asset: Asset; readonly assetPath: string }[] = [];
+    let allOk = true;
+    for (const file of picked) {
+      const type = mediaTypeForFile(file.name);
+      if (!type) {
+        allOk = false;
+        continue;
+      }
+      const id = `asset_${crypto.randomUUID()}`;
+      const assetDir = `media/assets/${id}`;
+      const assetPath = `${assetDir}/asset.json`;
+      const asset: Asset = {
+        id,
+        kind: type.kind,
+        label: labelForFile(file.name),
+        availability: "ready",
+        file: file.name,
+        mimeType: type.mimeType,
+      };
+      const result = await services.writer.importAsset(
+        session,
+        assetPath,
+        `${assetDir}/${file.name}`,
+        file.path,
+        asset,
+      );
+      if (result.status === "saved") imported.push({ asset, assetPath });
+      else allOk = false;
+    }
+
+    if (imported.length > 0) {
+      setCourseState((current) =>
+        current?.status === "ready"
+          ? {
+              ...current,
+              course: {
+                ...current.course,
+                assets: [...current.course.assets, ...imported.map((entry) => entry.asset)],
+              },
+              sources: {
+                ...current.sources,
+                assets: {
+                  ...current.sources.assets,
+                  ...Object.fromEntries(imported.map((entry) => [entry.asset.id, entry.assetPath])),
+                },
+              },
+            }
+          : current,
+      );
+    }
+    return allOk ? { status: "saved" } : { status: "failed", code: "unknown" };
+  };
+
+  const deleteAsset = async (assetId: string): Promise<ProjectWriteResult> => {
+    if (!project || courseState?.status !== "ready") {
+      return { status: "failed", code: "unavailable" };
+    }
+    const assetPath = courseState.sources.assets[assetId];
+    if (assetPath === undefined) {
+      return { status: "failed", code: "unavailable" };
+    }
+    const session = createProjectSession(project);
+    const result = await services.writer.deleteAsset(session, assetPath);
+    if (result.status === "saved") {
+      setCourseState((current) =>
+        current?.status === "ready"
+          ? {
+              ...current,
+              course: {
+                ...current.course,
+                assets: current.course.assets.filter((entry) => entry.id !== assetId),
+              },
+            }
+          : current,
+      );
+    }
+    return result;
+  };
+
+  const loadAssetPreview = useCallback(
+    async (assetId: string): Promise<string | null> => {
+      if (!project || courseState?.status !== "ready") return null;
+      const asset = courseState.course.assets.find((entry) => entry.id === assetId);
+      const assetJsonPath = courseState.sources.assets[assetId];
+      if (!asset?.file || assetJsonPath === undefined) return null;
+      // The binary lives beside the asset.json descriptor.
+      const dir = assetJsonPath.split("/").slice(0, -1).join("/");
+      const binaryPath = dir ? `${dir}/${asset.file}` : asset.file;
+      return services.assetReader.readAssetDataUrl(
+        createProjectSession(project),
+        binaryPath,
+        asset.mimeType,
+      );
+    },
+    [project, courseState, services],
+  );
+
   function renderView(): ReactNode {
     if (view === "start") {
       return (
@@ -465,7 +571,12 @@ export function App() {
               onDeleteCollection={deleteCollection}
             />
           ) : section === "media" ? (
-            <CourseMedia course={course} />
+            <CourseMedia
+              course={course}
+              onImportMedia={importMedia}
+              onDeleteAsset={deleteAsset}
+              onLoadPreview={loadAssetPreview}
+            />
           ) : openLesson ? (
             <LessonEditor
               course={course}

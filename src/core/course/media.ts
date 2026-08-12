@@ -12,3 +12,48 @@ export interface Asset {
   readonly mimeType: string;
   readonly metadata?: Readonly<Record<string, unknown>>;
 }
+
+interface MediaType {
+  readonly kind: AssetKind;
+  readonly mimeType: string;
+}
+
+// Extension → media type. Covers the formats the learner app can play back.
+const MEDIA_TYPES: Readonly<Record<string, MediaType>> = {
+  png: { kind: "image", mimeType: "image/png" },
+  jpg: { kind: "image", mimeType: "image/jpeg" },
+  jpeg: { kind: "image", mimeType: "image/jpeg" },
+  gif: { kind: "image", mimeType: "image/gif" },
+  webp: { kind: "image", mimeType: "image/webp" },
+  svg: { kind: "image", mimeType: "image/svg+xml" },
+  avif: { kind: "image", mimeType: "image/avif" },
+  mp3: { kind: "audio", mimeType: "audio/mpeg" },
+  m4a: { kind: "audio", mimeType: "audio/mp4" },
+  aac: { kind: "audio", mimeType: "audio/aac" },
+  wav: { kind: "audio", mimeType: "audio/wav" },
+  ogg: { kind: "audio", mimeType: "audio/ogg" },
+  opus: { kind: "audio", mimeType: "audio/opus" },
+  flac: { kind: "audio", mimeType: "audio/flac" },
+  mp4: { kind: "video", mimeType: "video/mp4" },
+  webm: { kind: "video", mimeType: "video/webm" },
+  mov: { kind: "video", mimeType: "video/quicktime" },
+};
+
+export const SUPPORTED_MEDIA_EXTENSIONS: readonly string[] = Object.keys(MEDIA_TYPES);
+
+function extensionOf(fileName: string): string {
+  const dot = fileName.lastIndexOf(".");
+  return dot >= 0 ? fileName.slice(dot + 1).toLowerCase() : "";
+}
+
+/** The media type for a file name, or `null` if the extension is unsupported. */
+export function mediaTypeForFile(fileName: string): MediaType | null {
+  return MEDIA_TYPES[extensionOf(fileName)] ?? null;
+}
+
+/** A human-friendly label derived from a file name (its base, without extension). */
+export function labelForFile(fileName: string): string {
+  const dot = fileName.lastIndexOf(".");
+  const base = dot > 0 ? fileName.slice(0, dot) : fileName;
+  return base.trim() || fileName;
+}
