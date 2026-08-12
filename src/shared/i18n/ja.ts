@@ -301,6 +301,11 @@ export const jaMessages = {
     confirmDeleteFieldTitle: "このフィールドを削除しますか？",
     confirmDeleteFieldBody: (name: string) =>
       `「${name}」を削除すると、コレクション内のすべてのレコードからこのフィールドと値が削除されます。`,
+    linkAsset: "アセットをリンク",
+    importNewFile: "ファイルを取り込む…",
+    clearAsset: "クリア",
+    importing: "取り込み中…",
+    importFailed: "ファイルを取り込めませんでした",
   },
 
   media: {

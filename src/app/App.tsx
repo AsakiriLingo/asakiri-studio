@@ -9,6 +9,7 @@ import type {
   TiptapDocument,
 } from "@core/course";
 import { labelForFile, mediaTypeForFile, partSourceKey } from "@core/course";
+import type { PickedMediaFile } from "@core/project-media";
 import type { ProjectReadErrorCode } from "@core/project-reading";
 import type { GitStatus } from "@core/project-system";
 import type { ProjectWriteResult } from "@core/project-writing";
@@ -371,13 +372,10 @@ export function App() {
     return result;
   };
 
-  const importMedia = async (): Promise<ProjectWriteResult | null> => {
-    if (!project || courseState?.status !== "ready") {
-      return { status: "failed", code: "unavailable" };
-    }
-    const picked = await services.mediaPicker.pickMediaFiles();
-    if (picked.length === 0) return null;
-
+  const importPickedMedia = async (
+    picked: readonly PickedMediaFile[],
+  ): Promise<{ readonly assets: readonly Asset[]; readonly allOk: boolean }> => {
+    if (!project) return { assets: [], allOk: false };
     const session = createProjectSession(project);
     const imported: { readonly asset: Asset; readonly assetPath: string }[] = [];
     let allOk = true;
@@ -429,7 +427,25 @@ export function App() {
           : current,
       );
     }
+    return { assets: imported.map((entry) => entry.asset), allOk };
+  };
+
+  const importMedia = async (): Promise<ProjectWriteResult | null> => {
+    if (!project || courseState?.status !== "ready") {
+      return { status: "failed", code: "unavailable" };
+    }
+    const picked = await services.mediaPicker.pickMediaFiles();
+    if (picked.length === 0) return null;
+    const { allOk } = await importPickedMedia(picked);
     return allOk ? { status: "saved" } : { status: "failed", code: "unknown" };
+  };
+
+  const importAssetForField = async (): Promise<Asset | null> => {
+    if (!project || courseState?.status !== "ready") return null;
+    const picked = await services.mediaPicker.pickMediaFiles();
+    if (picked.length === 0) return null;
+    const { assets } = await importPickedMedia(picked.slice(0, 1));
+    return assets[0] ?? null;
   };
 
   const deleteAsset = async (assetId: string): Promise<ProjectWriteResult> => {
@@ -569,6 +585,8 @@ export function App() {
               onAddCollection={addCollection}
               onUpdateCollection={updateCollection}
               onDeleteCollection={deleteCollection}
+              onImportAsset={importAssetForField}
+              onLoadPreview={loadAssetPreview}
             />
           ) : section === "media" ? (
             <CourseMedia

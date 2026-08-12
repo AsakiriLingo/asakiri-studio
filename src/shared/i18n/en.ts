@@ -298,6 +298,11 @@ export const enMessages = {
     confirmDeleteFieldTitle: "Delete this field?",
     confirmDeleteFieldBody: (name: string) =>
       `Deleting “${name}” removes this field and its values from every record in the collection.`,
+    linkAsset: "Link asset",
+    importNewFile: "Import file…",
+    clearAsset: "Clear",
+    importing: "Importing…",
+    importFailed: "Could not import the file",
   },
 
   media: {

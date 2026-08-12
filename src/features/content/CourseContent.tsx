@@ -19,10 +19,16 @@ import { Field, TextInput } from "@shared/components/form";
 import { Icon } from "@shared/components/icon";
 import { IconButton } from "@shared/components/icon-button";
 import { PanelHeader } from "@shared/components/panel";
-import { Select, type SelectOption } from "@shared/components/select";
+import { Select } from "@shared/components/select";
 import { Status } from "@shared/components/status";
 import { Tag } from "@shared/components/tag";
 import { WorkHeader, WorkInner } from "@shared/components/work-surface";
+import {
+  AssetFieldControl,
+  AssetListFieldControl,
+  type ImportAsset,
+  type LoadPreview,
+} from "@features/content/AssetField";
 import styles from "@features/content/CourseContent.module.css";
 
 type AssetMap = ReadonlyMap<string, Asset>;
@@ -33,10 +39,6 @@ function joinClassNames(...classNames: (string | undefined)[]) {
 
 function readText(value: RecordFieldValue | undefined): string {
   return value?.kind === "text" ? value.value : "";
-}
-
-function readAssetId(value: RecordFieldValue | undefined): string {
-  return value?.kind === "asset" ? value.assetId : "";
 }
 
 function readListText(value: RecordFieldValue | undefined): string {
@@ -54,12 +56,6 @@ function toTextList(raw: string): RecordFieldValue {
     .filter(Boolean)
     .map((value) => ({ id: `item_${crypto.randomUUID()}`, kind: "text" as const, value }));
   return { kind: "list", items };
-}
-
-function assetOptions(assets: readonly Asset[], assetKind?: Asset["kind"]): SelectOption[] {
-  return assets
-    .filter((asset) => assetKind === undefined || asset.kind === assetKind)
-    .map((asset) => ({ value: asset.id, label: asset.file ?? asset.label }));
 }
 
 // --- Read-only table cells (the clean data-table look) ---
@@ -114,69 +110,19 @@ function FieldDisplay({
 
 type SaveField = (record: ContentRecord, fieldId: string, value: RecordFieldValue) => void;
 
-function AssetListEditor({
-  value,
-  field,
-  assets,
-  onChange,
-}: {
-  readonly value: RecordFieldValue | undefined;
-  readonly field: FieldDefinition;
-  readonly assets: readonly Asset[];
-  readonly onChange: (value: RecordFieldValue) => void;
-}) {
-  const messages = useMessages();
-  const items = value?.kind === "list" ? value.items : [];
-  const byId = new Map(assets.map((asset) => [asset.id, asset]));
-  return (
-    <span className={styles.cellEditor}>
-      {items
-        .filter(
-          (item): item is Extract<RecordFieldItem, { kind: "asset" }> => item.kind === "asset",
-        )
-        .map((item) => {
-          const asset = byId.get(item.assetId);
-          return (
-            <button
-              key={item.id}
-              type="button"
-              className={styles.removableChip}
-              aria-label={messages.common.remove(asset?.file ?? asset?.label ?? item.assetId)}
-              onClick={() => {
-                onChange({ kind: "list", items: items.filter((entry) => entry.id !== item.id) });
-              }}
-            >
-              {asset ? (asset.file ?? asset.label) : messages.content.missing}
-              <Icon name="trash" size={12} />
-            </button>
-          );
-        })}
-      <Select
-        aria-label={field.name}
-        placeholder={messages.content.addItem}
-        items={assetOptions(assets, field.assetKind)}
-        value=""
-        onValueChange={(assetId) => {
-          if (!assetId) return;
-          onChange({
-            kind: "list",
-            items: [...items, { id: `item_${crypto.randomUUID()}`, kind: "asset", assetId }],
-          });
-        }}
-      />
-    </span>
-  );
-}
-
 function FieldEditor({
   field,
   record,
   assets,
+  importAsset,
+  loadPreview,
   onSave,
 }: {
   readonly field: FieldDefinition;
   readonly record: ContentRecord;
   readonly assets: readonly Asset[];
+  readonly importAsset: ImportAsset;
+  readonly loadPreview: LoadPreview;
   readonly onSave: SaveField;
 }) {
   const messages = useMessages();
@@ -214,18 +160,26 @@ function FieldEditor({
     );
   } else if (field.cardinality === "one") {
     control = (
-      <Select
-        aria-label={field.name}
-        placeholder={messages.content.chooseAsset}
-        items={assetOptions(assets, field.assetKind)}
-        value={readAssetId(value)}
-        onValueChange={(assetId) => {
-          set({ kind: "asset", assetId });
-        }}
+      <AssetFieldControl
+        value={value}
+        field={field}
+        assets={assets}
+        importAsset={importAsset}
+        loadPreview={loadPreview}
+        onChange={set}
       />
     );
   } else {
-    control = <AssetListEditor value={value} field={field} assets={assets} onChange={set} />;
+    control = (
+      <AssetListFieldControl
+        value={value}
+        field={field}
+        assets={assets}
+        importAsset={importAsset}
+        loadPreview={loadPreview}
+        onChange={set}
+      />
+    );
   }
 
   return <Field label={field.name}>{control}</Field>;
@@ -270,6 +224,8 @@ export interface CourseContentProps {
   readonly onAddCollection: (collection: Collection) => Promise<ProjectWriteResult>;
   readonly onUpdateCollection: (collection: Collection) => Promise<ProjectWriteResult>;
   readonly onDeleteCollection: (collectionId: string) => Promise<ProjectWriteResult>;
+  readonly onImportAsset: ImportAsset;
+  readonly onLoadPreview: LoadPreview;
 }
 
 export function CourseContent({
@@ -280,6 +236,8 @@ export function CourseContent({
   onAddCollection,
   onUpdateCollection,
   onDeleteCollection,
+  onImportAsset,
+  onLoadPreview,
 }: CourseContentProps) {
   const messages = useMessages();
   const t = messages.content;
@@ -315,6 +273,17 @@ export function CourseContent({
   const saveField: SaveField = (record, fieldId, value) => {
     persist(onSaveRecord({ ...record, fields: { ...record.fields, [fieldId]: value } }));
   };
+
+  const saveFieldRef = useRef(saveField);
+  const importAssetRef = useRef(onImportAsset);
+  const loadPreviewRef = useRef(onLoadPreview);
+  useEffect(() => {
+    saveFieldRef.current = saveField;
+    importAssetRef.current = onImportAsset;
+    loadPreviewRef.current = onLoadPreview;
+  });
+  const importAsset = useCallback<ImportAsset>(() => importAssetRef.current(), []);
+  const loadPreview = useCallback<LoadPreview>((assetId) => loadPreviewRef.current(assetId), []);
 
   const removeRecord = async (recordId: string) => {
     const ok = await confirm({
@@ -452,6 +421,26 @@ export function CourseContent({
             meta: primary ? { primary: true, editable: true } : { editable: true },
           } satisfies ColumnDef<ContentRecord>;
         }
+        if (field.kind === "asset") {
+          const Control = field.cardinality === "one" ? AssetFieldControl : AssetListFieldControl;
+          return {
+            id: field.id,
+            header: field.name,
+            ...(primary ? { meta: { primary: true } } : {}),
+            cell: ({ row }: { row: { original: ContentRecord } }) => (
+              <Control
+                value={row.original.fields[field.id]}
+                field={field}
+                assets={course.assets}
+                importAsset={importAsset}
+                loadPreview={loadPreview}
+                onChange={(value) => {
+                  saveFieldRef.current(row.original, field.id, value);
+                }}
+              />
+            ),
+          } satisfies ColumnDef<ContentRecord>;
+        }
         return {
           id: field.id,
           header: field.name,
@@ -488,7 +477,7 @@ export function CourseContent({
         ),
       },
     ];
-  }, [collection, assets, messages]);
+  }, [collection, assets, course.assets, messages, importAsset, loadPreview]);
 
   const editingRecord =
     editingRecordId !== null
@@ -647,6 +636,8 @@ export function CourseContent({
                 field={field}
                 record={editingRecord}
                 assets={course.assets}
+                importAsset={importAsset}
+                loadPreview={loadPreview}
                 onSave={saveField}
               />
             ))}
