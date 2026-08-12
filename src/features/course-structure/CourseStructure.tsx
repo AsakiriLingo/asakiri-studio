@@ -1,4 +1,24 @@
-import { useMemo, useState, type ReactNode } from "react";
+import { useMemo, useRef, useState, type ReactNode } from "react";
+import {
+  DndContext,
+  DragOverlay,
+  KeyboardSensor,
+  PointerSensor,
+  closestCorners,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+  type DragOverEvent,
+  type DragStartEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  arrayMove,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import type { Course, Lesson, OutlineSection } from "@core/course";
 import type { ProjectWriteResult } from "@core/project-writing";
 import { useMessages } from "@shared/i18n";
@@ -13,6 +33,147 @@ import styles from "@features/course-structure/CourseStructure.module.css";
 
 function orderLabel(index: number): string {
   return String(index + 1).padStart(2, "0");
+}
+
+function LessonRow({
+  lesson,
+  index,
+  onOpen,
+  onOpenSettings,
+}: {
+  readonly lesson: Lesson;
+  readonly index: number;
+  readonly onOpen: () => void;
+  readonly onOpenSettings: () => void;
+}) {
+  const messages = useMessages();
+  const t = messages.structure;
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: lesson.id,
+  });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={[styles.orderedRow, isDragging ? styles.dragging : ""].filter(Boolean).join(" ")}
+    >
+      <button
+        type="button"
+        className={styles.reorderHandle}
+        aria-label={messages.common.reorder(lesson.title)}
+        {...attributes}
+        {...listeners}
+      >
+        <Icon name="grip" size={18} />
+      </button>
+      <span className={styles.orderIndex}>{orderLabel(index)}</span>
+      <button type="button" className={styles.orderedMain} onClick={onOpen}>
+        <span className={styles.rowTitle}>{lesson.title}</span>
+        <span className={styles.rowDetail}>{t.parts(lesson.parts.length)}</span>
+      </button>
+      <IconButton aria-label={t.lessonSettings(lesson.title)} onClick={onOpenSettings}>
+        <Icon name="details" size={18} />
+      </IconButton>
+    </div>
+  );
+}
+
+function useReorderSensors() {
+  return useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
+}
+
+function UnitBlock({
+  unit,
+  index,
+  lessons,
+  addingLesson,
+  onAddLesson,
+  onOpenSettings,
+  onOpenLesson,
+  onOpenLessonSettings,
+}: {
+  readonly unit: OutlineSection;
+  readonly index: number;
+  readonly lessons: readonly Lesson[];
+  readonly addingLesson: boolean;
+  readonly onAddLesson: () => void;
+  readonly onOpenSettings: () => void;
+  readonly onOpenLesson: (lessonId: string) => void;
+  readonly onOpenLessonSettings: (lessonId: string) => void;
+}) {
+  const messages = useMessages();
+  const t = messages.structure;
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: unit.id,
+  });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  return (
+    <article
+      ref={setNodeRef}
+      style={style}
+      className={[styles.unitBlock, isDragging ? styles.dragging : ""].filter(Boolean).join(" ")}
+    >
+      <header className={styles.unitHeader}>
+        <button
+          type="button"
+          className={styles.reorderHandle}
+          aria-label={messages.common.reorder(unit.title)}
+          {...attributes}
+          {...listeners}
+        >
+          <Icon name="grip" size={18} />
+        </button>
+        <span className={styles.orderIndex}>{orderLabel(index)}</span>
+        <span>
+          <span className={styles.unitName}>{unit.title}</span>
+          <span className={styles.rowDetail}>{t.unitLessons(lessons.length)}</span>
+        </span>
+        <div className={styles.unitActions}>
+          <Button variant="ghost" disabled={addingLesson} onClick={onAddLesson}>
+            <Icon name="plus" size={18} />
+            {t.addLesson}
+          </Button>
+          <IconButton aria-label={t.unitSettings(unit.title)} onClick={onOpenSettings}>
+            <Icon name="details" size={18} />
+          </IconButton>
+        </div>
+      </header>
+
+      <SortableContext
+        items={lessons.map((lesson) => lesson.id)}
+        strategy={verticalListSortingStrategy}
+      >
+        <div className={styles.lessonOrder} aria-label={t.lessonsAria(unit.title)}>
+          {lessons.length === 0 ? <p className={styles.unitEmpty}>{t.unitEmpty}</p> : null}
+          {lessons.map((lesson, lessonIndex) => (
+            <LessonRow
+              key={lesson.id}
+              lesson={lesson}
+              index={lessonIndex}
+              onOpen={() => {
+                onOpenLesson(lesson.id);
+              }}
+              onOpenSettings={() => {
+                onOpenLessonSettings(lesson.id);
+              }}
+            />
+          ))}
+        </div>
+      </SortableContext>
+    </article>
+  );
 }
 
 function Modal({
@@ -49,7 +210,33 @@ export interface CourseStructureProps {
   readonly onNewUnit: () => Promise<ProjectWriteResult>;
   readonly onRenameUnit: (unitId: string, title: string) => Promise<ProjectWriteResult>;
   readonly onDeleteUnit: (unitId: string) => Promise<ProjectWriteResult>;
+  readonly onAddLesson: (unitId: string) => Promise<ProjectWriteResult>;
+  readonly onRenameLesson: (lessonId: string, title: string) => Promise<ProjectWriteResult>;
+  readonly onDeleteLesson: (lessonId: string) => Promise<ProjectWriteResult>;
+  readonly onReorderOutline: (
+    sections: readonly { readonly id: string; readonly lessonIds: readonly string[] }[],
+  ) => Promise<ProjectWriteResult>;
   readonly onOpenLesson: (lessonId: string) => void;
+}
+
+interface UnitLayout {
+  readonly id: string;
+  readonly lessonIds: readonly string[];
+}
+
+function outlineToLayout(outline: readonly OutlineSection[]): UnitLayout[] {
+  return outline.map((section) => ({ id: section.id, lessonIds: [...section.lessonIds] }));
+}
+
+function sameLayout(layout: readonly UnitLayout[], outline: readonly OutlineSection[]): boolean {
+  if (layout.length !== outline.length) return false;
+  return layout.every((unit, unitIndex) => {
+    const section = outline[unitIndex];
+    if (!section) return false;
+    if (section.id !== unit.id) return false;
+    if (section.lessonIds.length !== unit.lessonIds.length) return false;
+    return section.lessonIds.every((lessonId, index) => lessonId === unit.lessonIds[index]);
+  });
 }
 
 export function CourseStructure({
@@ -57,14 +244,20 @@ export function CourseStructure({
   onNewUnit,
   onRenameUnit,
   onDeleteUnit,
+  onAddLesson,
+  onRenameLesson,
+  onDeleteLesson,
+  onReorderOutline,
   onOpenLesson,
 }: CourseStructureProps) {
   const messages = useMessages();
   const t = messages.structure;
   const confirm = useConfirm();
   const [creating, setCreating] = useState(false);
+  const [addingUnitId, setAddingUnitId] = useState<string | null>(null);
   const [failed, setFailed] = useState(false);
   const [settingsUnitId, setSettingsUnitId] = useState<string | null>(null);
+  const [settingsLessonId, setSettingsLessonId] = useState<string | null>(null);
 
   const settingsUnit =
     settingsUnitId === null
@@ -108,6 +301,153 @@ export function CourseStructure({
     [course.lessons],
   );
 
+  const settingsLesson =
+    settingsLessonId === null ? null : (lessonById.get(settingsLessonId) ?? null);
+
+  const createLesson = async (unitId: string) => {
+    setAddingUnitId(unitId);
+    setFailed(false);
+    const result = await onAddLesson(unitId);
+    setAddingUnitId(null);
+    report(result);
+  };
+
+  const renameLesson = (lesson: Lesson, title: string) => {
+    const next = title.trim();
+    if (next === "" || next === lesson.title) return;
+    setFailed(false);
+    void onRenameLesson(lesson.id, next).then(report);
+  };
+
+  const removeLesson = async (lesson: Lesson) => {
+    const ok = await confirm({
+      title: t.confirmDeleteLessonTitle,
+      description: t.confirmDeleteLessonBody(lesson.title),
+      confirmLabel: t.deleteLesson,
+      tone: "danger",
+    });
+    if (!ok) return;
+    setSettingsLessonId(null);
+    setFailed(false);
+    report(await onDeleteLesson(lesson.id));
+  };
+
+  const sensors = useReorderSensors();
+  const [layout, setLayout] = useState<UnitLayout[]>(() => outlineToLayout(course.outline));
+  const [syncedOutline, setSyncedOutline] = useState(course.outline);
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const layoutRef = useRef(layout);
+
+  if (activeId === null && course.outline !== syncedOutline) {
+    setSyncedOutline(course.outline);
+    setLayout(outlineToLayout(course.outline));
+  }
+
+  const commitLayout = (next: UnitLayout[]) => {
+    layoutRef.current = next;
+    setLayout(next);
+  };
+
+  const isUnitId = (id: string) => layoutRef.current.some((unit) => unit.id === id);
+
+  const containerOf = (id: string): string | null => {
+    if (isUnitId(id)) return id;
+    const owner = layoutRef.current.find((unit) => unit.lessonIds.includes(id));
+    return owner ? owner.id : null;
+  };
+
+  const persistLayout = (next: UnitLayout[]) => {
+    if (sameLayout(next, course.outline)) return;
+    setFailed(false);
+    void onReorderOutline(next).then(report);
+  };
+
+  const handleDragStart = (event: DragStartEvent) => {
+    layoutRef.current = layout;
+    setActiveId(String(event.active.id));
+  };
+
+  const handleDragOver = (event: DragOverEvent) => {
+    const { active, over } = event;
+    if (!over) return;
+    const activeLessonId = String(active.id);
+    const overId = String(over.id);
+    if (isUnitId(activeLessonId)) return;
+    const fromUnit = containerOf(activeLessonId);
+    const toUnit = containerOf(overId);
+    if (!fromUnit || !toUnit || fromUnit === toUnit) return;
+
+    const current = layoutRef.current;
+    const target = current.find((unit) => unit.id === toUnit);
+    if (!target) return;
+    const overIsUnit = isUnitId(overId);
+    const overIndex = overIsUnit ? target.lessonIds.length : target.lessonIds.indexOf(overId);
+    const insertAt = overIndex < 0 ? target.lessonIds.length : overIndex;
+
+    commitLayout(
+      current.map((unit) => {
+        if (unit.id === fromUnit) {
+          return { ...unit, lessonIds: unit.lessonIds.filter((id) => id !== activeLessonId) };
+        }
+        if (unit.id === toUnit) {
+          const next = unit.lessonIds.filter((id) => id !== activeLessonId);
+          next.splice(insertAt, 0, activeLessonId);
+          return { ...unit, lessonIds: next };
+        }
+        return unit;
+      }),
+    );
+  };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    const activeIdStr = String(active.id);
+    setActiveId(null);
+    if (!over) {
+      commitLayout(outlineToLayout(course.outline));
+      return;
+    }
+    const overId = String(over.id);
+    const current = layoutRef.current;
+
+    if (isUnitId(activeIdStr)) {
+      const from = current.findIndex((unit) => unit.id === activeIdStr);
+      const to = current.findIndex((unit) => unit.id === overId);
+      if (from === -1 || to === -1 || from === to) return;
+      const next = arrayMove(current, from, to);
+      commitLayout(next);
+      persistLayout(next);
+      return;
+    }
+
+    const container = containerOf(overId) ?? containerOf(activeIdStr);
+    if (!container) {
+      commitLayout(outlineToLayout(course.outline));
+      return;
+    }
+    const unit = current.find((entry) => entry.id === container);
+    let next = current;
+    if (unit) {
+      const ids = [...unit.lessonIds];
+      const from = ids.indexOf(activeIdStr);
+      const to = isUnitId(overId) ? ids.length - 1 : ids.indexOf(overId);
+      if (from !== -1 && to !== -1 && from !== to) {
+        const reordered = arrayMove(ids, from, to);
+        next = current.map((entry) =>
+          entry.id === container ? { ...entry, lessonIds: reordered } : entry,
+        );
+        commitLayout(next);
+      }
+    }
+    persistLayout(next);
+  };
+
+  const activeLesson = activeId === null ? null : (lessonById.get(activeId) ?? null);
+  const unitById = useMemo(
+    () => new Map<string, OutlineSection>(course.outline.map((section) => [section.id, section])),
+    [course.outline],
+  );
+
   return (
     <WorkInner className={styles.inner}>
       <WorkHeader
@@ -132,71 +472,67 @@ export function CourseStructure({
       {course.outline.length === 0 ? (
         <p className={styles.empty}>{t.empty}</p>
       ) : (
-        <div className={styles.unitStack} aria-label="Course units">
-          {course.outline.map((unit, unitIndex) => {
-            const lessons = unit.lessonIds
-              .map((lessonId) => lessonById.get(lessonId))
-              .filter((lesson): lesson is Lesson => lesson !== undefined);
-            return (
-              <article key={unit.id} className={styles.unitBlock}>
-                <header className={styles.unitHeader}>
-                  <button
-                    type="button"
-                    className={styles.reorderHandle}
-                    aria-label={messages.common.reorder(unit.title)}
-                  >
-                    <Icon name="grip" size={18} />
-                  </button>
-                  <span className={styles.orderIndex}>{orderLabel(unitIndex)}</span>
-                  <span>
-                    <span className={styles.unitName}>{unit.title}</span>
-                    <span className={styles.rowDetail}>{t.unitLessons(lessons.length)}</span>
-                  </span>
-                  <div className={styles.unitActions}>
-                    <Button variant="ghost">
-                      <Icon name="plus" size={18} />
-                      {t.addLesson}
-                    </Button>
-                    <IconButton
-                      aria-label={t.unitSettings(unit.title)}
-                      onClick={() => {
-                        setFailed(false);
-                        setSettingsUnitId(unit.id);
-                      }}
-                    >
-                      <Icon name="details" size={18} />
-                    </IconButton>
-                  </div>
-                </header>
-
-                <div className={styles.lessonOrder} aria-label={t.lessonsAria(unit.title)}>
-                  {lessons.map((lesson, lessonIndex) => (
-                    <div key={lesson.id} className={styles.orderedRow}>
-                      <button
-                        type="button"
-                        className={styles.reorderHandle}
-                        aria-label={messages.common.reorder(lesson.title)}
-                      >
-                        <Icon name="grip" size={18} />
-                      </button>
-                      <span className={styles.orderIndex}>{orderLabel(lessonIndex)}</span>
-                      <button
-                        type="button"
-                        className={styles.orderedMain}
-                        onClick={() => {
-                          onOpenLesson(lesson.id);
-                        }}
-                      >
-                        <span className={styles.rowTitle}>{lesson.title}</span>
-                        <span className={styles.rowDetail}>{t.parts(lesson.parts.length)}</span>
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </article>
-            );
-          })}
-        </div>
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCorners}
+          onDragStart={handleDragStart}
+          onDragOver={handleDragOver}
+          onDragEnd={handleDragEnd}
+          onDragCancel={() => {
+            setActiveId(null);
+            commitLayout(outlineToLayout(course.outline));
+          }}
+        >
+          <SortableContext
+            items={layout.map((unit) => unit.id)}
+            strategy={verticalListSortingStrategy}
+          >
+            <div className={styles.unitStack} aria-label="Course units">
+              {layout.map((unitLayout, unitIndex) => {
+                const unit = unitById.get(unitLayout.id);
+                if (!unit) return null;
+                const lessons = unitLayout.lessonIds
+                  .map((lessonId) => lessonById.get(lessonId))
+                  .filter((lesson): lesson is Lesson => lesson !== undefined);
+                return (
+                  <UnitBlock
+                    key={unit.id}
+                    unit={unit}
+                    index={unitIndex}
+                    lessons={lessons}
+                    addingLesson={addingUnitId === unit.id}
+                    onAddLesson={() => {
+                      void createLesson(unit.id);
+                    }}
+                    onOpenSettings={() => {
+                      setFailed(false);
+                      setSettingsUnitId(unit.id);
+                    }}
+                    onOpenLesson={onOpenLesson}
+                    onOpenLessonSettings={(lessonId) => {
+                      setFailed(false);
+                      setSettingsLessonId(lessonId);
+                    }}
+                  />
+                );
+              })}
+            </div>
+          </SortableContext>
+          <DragOverlay>
+            {activeLesson ? (
+              <div className={[styles.orderedRow, styles.dragOverlay].join(" ")}>
+                <span className={styles.reorderHandle}>
+                  <Icon name="grip" size={18} />
+                </span>
+                <span className={styles.orderIndex} />
+                <span className={styles.orderedMain}>
+                  <span className={styles.rowTitle}>{activeLesson.title}</span>
+                  <span className={styles.rowDetail}>{t.parts(activeLesson.parts.length)}</span>
+                </span>
+              </div>
+            ) : null}
+          </DragOverlay>
+        </DndContext>
       )}
 
       {settingsUnit ? (
@@ -234,6 +570,49 @@ export function CourseStructure({
             <Button
               onClick={() => {
                 setSettingsUnitId(null);
+              }}
+            >
+              {messages.common.done}
+            </Button>
+          </div>
+        </Modal>
+      ) : null}
+
+      {settingsLesson ? (
+        <Modal
+          label={t.lessonSettingsLabel}
+          onClose={() => {
+            setSettingsLessonId(null);
+          }}
+        >
+          <div className={styles.dialogHeader}>
+            <h2 className={styles.dialogTitle}>{t.lessonSettingsLabel}</h2>
+          </div>
+          <div className={styles.dialogBody}>
+            <Field label={t.lessonTitleLabel}>
+              <TextInput
+                key={`lesson-name-${settingsLesson.id}`}
+                defaultValue={settingsLesson.title}
+                autoComplete="off"
+                onBlur={(event) => {
+                  renameLesson(settingsLesson, event.currentTarget.value);
+                }}
+              />
+            </Field>
+          </div>
+          <div className={styles.dialogActions}>
+            <Button
+              variant="danger"
+              onClick={() => {
+                void removeLesson(settingsLesson);
+              }}
+            >
+              {t.deleteLesson}
+            </Button>
+            <span className={styles.barSpacer} />
+            <Button
+              onClick={() => {
+                setSettingsLessonId(null);
               }}
             >
               {messages.common.done}

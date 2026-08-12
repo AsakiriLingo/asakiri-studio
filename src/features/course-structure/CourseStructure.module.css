@@ -17,6 +17,13 @@
   border-block: var(--border-hairline) solid var(--color-border);
 }
 
+.unitBlock.dragging {
+  position: relative;
+  z-index: 1;
+  opacity: 0.7;
+  box-shadow: 0 0 0 2px var(--color-brand);
+}
+
 .unitHeader {
   display: grid;
   grid-template-columns: var(--control-height-sm) 2rem minmax(0, 1fr);
@@ -66,6 +73,28 @@
   border-bottom: 0;
 }
 
+.orderedRow.dragging {
+  opacity: 0.4;
+}
+
+.dragOverlay {
+  cursor: grabbing;
+  border-bottom: 0;
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  box-shadow:
+    0 4px 6px -2px var(--color-overlay),
+    0 12px 28px -8px var(--color-overlay);
+}
+
+.unitEmpty {
+  margin: 0;
+  padding: var(--space-3) var(--space-3) var(--space-3)
+    calc(var(--control-height-sm) + var(--space-2));
+  color: var(--color-text-muted);
+  font-size: var(--font-size-100);
+}
+
 .orderedMain {
   display: block;
   min-width: 0;
@@ -113,6 +142,7 @@
   background: transparent;
   color: var(--color-text-muted);
   cursor: grab;
+  touch-action: none;
 }
 
 .reorderHandle:active {

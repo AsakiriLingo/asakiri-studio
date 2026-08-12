@@ -348,7 +348,16 @@ export const jaMessages = {
     confirmDeleteUnitBody: (unit: string) =>
       `${unit}はアウトラインから削除されます。レッスンはコースに残り、別のユニットに追加できます。`,
     addLesson: "レッスンを追加",
+    defaultLessonTitle: (order: number) => `レッスン${String(order)}`,
+    lessonSettings: (lesson: string) => `${lesson}の設定`,
+    lessonSettingsLabel: "レッスン設定",
+    lessonTitleLabel: "レッスン名",
+    deleteLesson: "レッスンを削除",
+    confirmDeleteLessonTitle: "このレッスンを削除しますか？",
+    confirmDeleteLessonBody: (lesson: string) =>
+      `${lesson}とそのすべてのパートが完全に削除されます。この操作は取り消せません。`,
     empty: "ユニットはまだありません。ユニットを追加してレッスンの整理を始めましょう。",
+    unitEmpty: "レッスンはまだありません。追加するか、レッスンをここにドラッグしてください。",
     lessonsAria: (unit: string) => `${unit}のレッスン`,
     unitLessons: (count: number) => `ユニット · レッスン${String(count)}件`,
     parts: (count: number) => `${String(count)}パート`,

@@ -6,6 +6,7 @@ import type {
   Course,
   CourseProject,
   CourseSources,
+  Lesson,
   OutlineSection,
   TiptapDocument,
 } from "@core/course";
@@ -200,6 +201,145 @@ export function App() {
       return { status: "failed", code: "unavailable" };
     }
     const nextOutline = courseState.course.outline.filter((section) => section.id !== unitId);
+    const session = createProjectSession(project);
+    const result = await services.writer.updateOutline(session, nextOutline);
+    if (result.status === "saved") {
+      setCourseState((current) =>
+        current?.status === "ready"
+          ? { ...current, course: { ...current.course, outline: nextOutline } }
+          : current,
+      );
+    }
+    return result;
+  };
+
+  const addLesson = async (unitId: string): Promise<ProjectWriteResult> => {
+    if (!project || courseState?.status !== "ready") {
+      return { status: "failed", code: "unavailable" };
+    }
+    const unit = courseState.course.outline.find((section) => section.id === unitId);
+    if (!unit) {
+      return { status: "failed", code: "unavailable" };
+    }
+    const lessonId = `lesson_${crypto.randomUUID()}`;
+    const lessonPath = `lessons/${lessonId}/lesson.json`;
+    const lesson: Lesson = {
+      id: lessonId,
+      title: messages.structure.defaultLessonTitle(unit.lessonIds.length + 1),
+      parts: [],
+    };
+    const nextOutline = courseState.course.outline.map((section) =>
+      section.id === unitId ? { ...section, lessonIds: [...section.lessonIds, lessonId] } : section,
+    );
+    const session = createProjectSession(project);
+    const result = await services.writer.createLesson(session, lessonPath, lesson, nextOutline);
+    if (result.status === "saved") {
+      setCourseState((current) =>
+        current?.status === "ready"
+          ? {
+              ...current,
+              course: {
+                ...current.course,
+                lessons: [...current.course.lessons, lesson],
+                outline: nextOutline,
+              },
+              sources: {
+                ...current.sources,
+                lessons: { ...current.sources.lessons, [lessonId]: lessonPath },
+              },
+            }
+          : current,
+      );
+    }
+    return result;
+  };
+
+  const renameLesson = async (lessonId: string, title: string): Promise<ProjectWriteResult> => {
+    if (!project || courseState?.status !== "ready") {
+      return { status: "failed", code: "unavailable" };
+    }
+    const lessonPath = courseState.sources.lessons[lessonId];
+    const lesson = courseState.course.lessons.find((entry) => entry.id === lessonId);
+    if (lessonPath === undefined || !lesson) {
+      return { status: "failed", code: "unavailable" };
+    }
+    const nextLesson: Lesson = { ...lesson, title };
+    const session = createProjectSession(project);
+    const result = await services.writer.updateLesson(session, lessonPath, nextLesson);
+    if (result.status === "saved") {
+      setCourseState((current) =>
+        current?.status === "ready"
+          ? {
+              ...current,
+              course: {
+                ...current.course,
+                lessons: current.course.lessons.map((entry) =>
+                  entry.id === lessonId ? nextLesson : entry,
+                ),
+              },
+            }
+          : current,
+      );
+    }
+    return result;
+  };
+
+  const deleteLesson = async (lessonId: string): Promise<ProjectWriteResult> => {
+    if (!project || courseState?.status !== "ready") {
+      return { status: "failed", code: "unavailable" };
+    }
+    const lessonPath = courseState.sources.lessons[lessonId];
+    const lesson = courseState.course.lessons.find((entry) => entry.id === lessonId);
+    if (lessonPath === undefined || !lesson) {
+      return { status: "failed", code: "unavailable" };
+    }
+    const nextOutline = courseState.course.outline.map((section) => ({
+      ...section,
+      lessonIds: section.lessonIds.filter((id) => id !== lessonId),
+    }));
+    const session = createProjectSession(project);
+    const result = await services.writer.deleteLesson(session, lessonPath, nextOutline);
+    if (result.status === "saved") {
+      if (openLessonId === lessonId) setOpenLessonId(null);
+      setCourseState((current) =>
+        current?.status === "ready"
+          ? {
+              ...current,
+              course: {
+                ...current.course,
+                lessons: current.course.lessons.filter((entry) => entry.id !== lessonId),
+                outline: nextOutline,
+              },
+              sources: {
+                ...current.sources,
+                lessons: Object.fromEntries(
+                  Object.entries(current.sources.lessons).filter(([id]) => id !== lessonId),
+                ),
+                parts: Object.fromEntries(
+                  Object.entries(current.sources.parts).filter(
+                    ([key]) => !key.startsWith(`${lessonId}::`),
+                  ),
+                ),
+              },
+            }
+          : current,
+      );
+    }
+    return result;
+  };
+
+  const reorderOutline = async (
+    sections: readonly { readonly id: string; readonly lessonIds: readonly string[] }[],
+  ): Promise<ProjectWriteResult> => {
+    if (!project || courseState?.status !== "ready") {
+      return { status: "failed", code: "unavailable" };
+    }
+    const byId = new Map(courseState.course.outline.map((section) => [section.id, section]));
+    const nextOutline: OutlineSection[] = [];
+    for (const section of sections) {
+      const existing = byId.get(section.id);
+      if (existing) nextOutline.push({ ...existing, lessonIds: [...section.lessonIds] });
+    }
     const session = createProjectSession(project);
     const result = await services.writer.updateOutline(session, nextOutline);
     if (result.status === "saved") {
@@ -671,6 +811,10 @@ export function App() {
               onNewUnit={addUnit}
               onRenameUnit={renameUnit}
               onDeleteUnit={deleteUnit}
+              onAddLesson={addLesson}
+              onRenameLesson={renameLesson}
+              onDeleteLesson={deleteLesson}
+              onReorderOutline={reorderOutline}
               onOpenLesson={(lessonId) => {
                 setOpenLessonId(lessonId);
               }}

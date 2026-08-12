@@ -1,4 +1,10 @@
-import type { Asset, Collection, ContentRecord, FieldDefinition } from "@core/course";
+import type {
+  Asset,
+  Collection,
+  ContentRecord,
+  FieldDefinition,
+  OutlineSection,
+} from "@core/course";
 import type { ProjectWriter, ProjectWriteResult } from "@core/project-writing";
 import type { ProjectSession } from "@core/projects";
 
@@ -69,6 +75,14 @@ function serializeRecord(record: ContentRecord, base: Record<string, unknown> = 
     collectionId: record.collectionId,
     fields: record.fields,
   };
+}
+
+function serializeOutline(outline: readonly OutlineSection[]): Record<string, unknown>[] {
+  return outline.map((section) => ({
+    id: section.id,
+    title: section.title,
+    lessonIds: [...section.lessonIds],
+  }));
 }
 
 function serializeAsset(asset: Asset): Record<string, unknown> {
@@ -160,14 +174,9 @@ export function createLayoutProjectWriter(resolve: ResolveProjectFileAccess): Pr
         if (!isRecord(parsed)) {
           return { status: "failed", code: "unknown" };
         }
-        const nextOutline = outline.map((section) => ({
-          id: section.id,
-          title: section.title,
-          lessonIds: [...section.lessonIds],
-        }));
         await files.writeTextFile(
           MANIFEST_PATH,
-          `${JSON.stringify({ ...parsed, outline: nextOutline }, null, 2)}\n`,
+          `${JSON.stringify({ ...parsed, outline: serializeOutline(outline) }, null, 2)}\n`,
         );
         return { status: "saved" };
       } catch {
@@ -208,6 +217,71 @@ export function createLayoutProjectWriter(resolve: ResolveProjectFileAccess): Pr
       try {
         // The body file is the tiptap document itself, so replace it wholesale.
         await files.writeTextFile(path, `${JSON.stringify(document, null, 2)}\n`);
+        return { status: "saved" };
+      } catch {
+        return { status: "failed", code: "unknown" };
+      }
+    },
+
+    async createLesson(session, lessonPath, lesson, outline): Promise<ProjectWriteResult> {
+      const files = resolve(session);
+      if (!files) {
+        return { status: "failed", code: "unavailable" };
+      }
+
+      try {
+        await files.writeTextFile(
+          lessonPath,
+          `${JSON.stringify({ id: lesson.id, title: lesson.title, parts: [] }, null, 2)}\n`,
+        );
+        const parsed: unknown = JSON.parse(await files.readTextFile(MANIFEST_PATH));
+        if (!isRecord(parsed)) {
+          return { status: "failed", code: "unknown" };
+        }
+        const lessons = [...stringArray(parsed.lessons), lessonPath];
+        await files.writeTextFile(
+          MANIFEST_PATH,
+          `${JSON.stringify({ ...parsed, lessons, outline: serializeOutline(outline) }, null, 2)}\n`,
+        );
+        return { status: "saved" };
+      } catch {
+        return { status: "failed", code: "unknown" };
+      }
+    },
+
+    async updateLesson(session, lessonPath, lesson): Promise<ProjectWriteResult> {
+      const files = resolve(session);
+      if (!files) {
+        return { status: "failed", code: "unavailable" };
+      }
+
+      try {
+        const parsed: unknown = JSON.parse(await files.readTextFile(lessonPath));
+        const base = isRecord(parsed) ? parsed : {};
+        const next = { ...base, id: lesson.id, title: lesson.title };
+        await files.writeTextFile(lessonPath, `${JSON.stringify(next, null, 2)}\n`);
+        return { status: "saved" };
+      } catch {
+        return { status: "failed", code: "unknown" };
+      }
+    },
+
+    async deleteLesson(session, lessonPath, outline): Promise<ProjectWriteResult> {
+      const files = resolve(session);
+      if (!files) {
+        return { status: "failed", code: "unavailable" };
+      }
+
+      try {
+        const parsed: unknown = JSON.parse(await files.readTextFile(MANIFEST_PATH));
+        if (isRecord(parsed)) {
+          const lessons = stringArray(parsed.lessons).filter((entry) => entry !== lessonPath);
+          await files.writeTextFile(
+            MANIFEST_PATH,
+            `${JSON.stringify({ ...parsed, lessons, outline: serializeOutline(outline) }, null, 2)}\n`,
+          );
+        }
+        await files.removeDir(dirOf(lessonPath));
         return { status: "saved" };
       } catch {
         return { status: "failed", code: "unknown" };

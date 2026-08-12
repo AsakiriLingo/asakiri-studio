@@ -346,7 +346,16 @@ export const enMessages = {
     confirmDeleteUnitBody: (unit: string) =>
       `${unit} will be removed from the outline. Its lessons stay in the course and can be added to another unit.`,
     addLesson: "Add lesson",
+    defaultLessonTitle: (order: number) => `Lesson ${String(order)}`,
+    lessonSettings: (lesson: string) => `Settings for ${lesson}`,
+    lessonSettingsLabel: "Lesson settings",
+    lessonTitleLabel: "Lesson title",
+    deleteLesson: "Delete lesson",
+    confirmDeleteLessonTitle: "Delete this lesson?",
+    confirmDeleteLessonBody: (lesson: string) =>
+      `${lesson} and all of its parts will be permanently deleted. This cannot be undone.`,
     empty: "No units yet. Add a unit to start organizing lessons.",
+    unitEmpty: "No lessons yet. Add one, or drag a lesson here.",
     lessonsAria: (unit: string) => `Lessons in ${unit}`,
     unitLessons: (count: number) =>
       count === 1 ? "Unit · 1 lesson" : `Unit · ${String(count)} lessons`,

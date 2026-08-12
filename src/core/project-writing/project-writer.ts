@@ -3,6 +3,7 @@ import type {
   Collection,
   ContentRecord,
   CourseProject,
+  Lesson,
   OutlineSection,
   TiptapDocument,
 } from "@core/course";
@@ -42,6 +43,22 @@ export interface ProjectWriter {
     session: ProjectSession,
     path: string,
     document: TiptapDocument,
+  ): Promise<ProjectWriteResult>;
+  createLesson(
+    session: ProjectSession,
+    lessonPath: string,
+    lesson: Lesson,
+    outline: readonly OutlineSection[],
+  ): Promise<ProjectWriteResult>;
+  updateLesson(
+    session: ProjectSession,
+    lessonPath: string,
+    lesson: Lesson,
+  ): Promise<ProjectWriteResult>;
+  deleteLesson(
+    session: ProjectSession,
+    lessonPath: string,
+    outline: readonly OutlineSection[],
   ): Promise<ProjectWriteResult>;
   /** Writes a new record file and links it into its collection's recordFiles. */
   createRecord(

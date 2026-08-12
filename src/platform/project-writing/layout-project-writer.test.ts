@@ -199,6 +199,82 @@ describe("layout project writer", () => {
     expect(written).toEqual(document);
   });
 
+  it("creates a lesson file, links it into the manifest, and updates the outline", async () => {
+    const files = new Map([["project.json", MANIFEST]]);
+    const writer = createLayoutProjectWriter(() => fileAccess(files));
+
+    const lessonPath = "lessons/lesson_new/lesson.json";
+    const result = await writer.createLesson(
+      SESSION,
+      lessonPath,
+      { id: "lesson_new", title: "New lesson", parts: [] },
+      [{ id: "u1", title: "Unit 1", lessonIds: ["l1", "lesson_new"] }],
+    );
+
+    expect(result).toEqual({ status: "saved" });
+    const lessonWritten: unknown = JSON.parse(files.get(lessonPath) ?? "");
+    expect(lessonWritten).toEqual({ id: "lesson_new", title: "New lesson", parts: [] });
+    const manifest: unknown = JSON.parse(files.get("project.json") ?? "");
+    expect(manifest).toMatchObject({
+      lessons: ["lessons/intro/lesson.json", lessonPath],
+      outline: [{ id: "u1", title: "Unit 1", lessonIds: ["l1", "lesson_new"] }],
+    });
+  });
+
+  it("renames a lesson, preserving its parts and unknown keys", async () => {
+    const lessonPath = "lessons/intro/lesson.json";
+    const files = new Map([
+      [
+        lessonPath,
+        JSON.stringify({
+          id: "l1",
+          title: "Intro",
+          parts: [{ id: "p1", title: "Section", content: { kind: "tiptap", file: "a.json" } }],
+          legacy: { keep: true },
+        }),
+      ],
+    ]);
+    const writer = createLayoutProjectWriter(() => fileAccess(files));
+
+    const result = await writer.updateLesson(SESSION, lessonPath, {
+      id: "l1",
+      title: "Getting started",
+      parts: [],
+    });
+
+    expect(result).toEqual({ status: "saved" });
+    const written: unknown = JSON.parse(files.get(lessonPath) ?? "");
+    expect(written).toEqual({
+      id: "l1",
+      title: "Getting started",
+      parts: [{ id: "p1", title: "Section", content: { kind: "tiptap", file: "a.json" } }],
+      legacy: { keep: true },
+    });
+  });
+
+  it("deletes a lesson: unlinks the manifest, rewrites the outline, removes its folder", async () => {
+    const lessonPath = "lessons/intro/lesson.json";
+    const files = new Map([
+      ["project.json", MANIFEST],
+      [lessonPath, JSON.stringify({ id: "l1", title: "Intro", parts: [] })],
+      ["lessons/intro/parts/intro/document.json", JSON.stringify({ type: "doc", content: [] })],
+    ]);
+    const writer = createLayoutProjectWriter(() => fileAccess(files));
+
+    const result = await writer.deleteLesson(SESSION, lessonPath, [
+      { id: "u1", title: "Unit 1", lessonIds: [] },
+    ]);
+
+    expect(result).toEqual({ status: "saved" });
+    expect(files.has(lessonPath)).toBe(false);
+    expect(files.has("lessons/intro/parts/intro/document.json")).toBe(false);
+    const manifest: unknown = JSON.parse(files.get("project.json") ?? "");
+    expect(manifest).toMatchObject({
+      lessons: [],
+      outline: [{ id: "u1", title: "Unit 1", lessonIds: [] }],
+    });
+  });
+
   it("creates a record file and links it into the collection", async () => {
     const collectionPath = "content/collections/vocabulary.json";
     const files = new Map([
