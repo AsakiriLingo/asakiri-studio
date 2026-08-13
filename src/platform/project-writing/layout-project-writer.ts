@@ -75,6 +75,9 @@ function serializeRecord(record: ContentRecord, base: Record<string, unknown> = 
     id: record.id,
     collectionId: record.collectionId,
     fields: record.fields,
+    ...(record.presentations !== undefined
+      ? { presentations: record.presentations.map((p) => ({ ...p, columns: [...p.columns] })) }
+      : {}),
   };
 }
 
@@ -196,12 +199,7 @@ export function createLayoutProjectWriter(resolve: ResolveProjectFileAccess): Pr
         const base = isRecord(parsed) ? parsed : {};
         // Record file values already match the domain shape, so fields serialize
         // directly; unknown keys (e.g. comments) on the file are preserved.
-        const next = {
-          ...base,
-          id: record.id,
-          collectionId: record.collectionId,
-          fields: record.fields,
-        };
+        const next = serializeRecord(record, base);
         await files.writeTextFile(path, `${JSON.stringify(next, null, 2)}\n`);
         return { status: "saved" };
       } catch {

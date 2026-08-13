@@ -56,6 +56,19 @@ describe("parseCourse", () => {
     expect(cat?.fields.field_pronunciations).toMatchObject({ kind: "list" });
   });
 
+  it("parses record presentations", async () => {
+    const course = await parseCourse(diskReader(fixtureRoot));
+    const cat = course.records.find((record) => record.id === "record_cat");
+
+    expect(cat?.presentations).toEqual([
+      {
+        id: "presentation_cat_primary",
+        primaryFieldId: "field_japanese",
+        columns: [{ fieldId: "field_english", visible: true }],
+      },
+    ]);
+  });
+
   it("parses every exercise type", async () => {
     const course = await parseCourse(diskReader(fixtureRoot));
     const types = course.lessons

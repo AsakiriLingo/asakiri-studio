@@ -188,6 +188,52 @@ describe("layout project writer", () => {
     });
   });
 
+  it("writes record presentations, preserving unknown keys", async () => {
+    const path = "content/records/cat.json";
+    const files = new Map([
+      [
+        path,
+        JSON.stringify({
+          legacy: { itemId: "abc" },
+          id: "record_cat",
+          collectionId: "vocabulary",
+          fields: { english: { kind: "text", value: "Cat" } },
+        }),
+      ],
+    ]);
+    const writer = createLayoutProjectWriter(() => fileAccess(files));
+
+    const record: ContentRecord = {
+      id: "record_cat",
+      collectionId: "vocabulary",
+      fields: { english: { kind: "text", value: "Cat" } },
+      presentations: [
+        {
+          id: "pres_1",
+          primaryFieldId: "japanese",
+          columns: [{ fieldId: "english", visible: true }],
+        },
+      ],
+    };
+    const result = await writer.updateRecord(SESSION, path, record);
+
+    expect(result).toEqual({ status: "saved" });
+    const written: unknown = JSON.parse(files.get(path) ?? "");
+    expect(written).toEqual({
+      legacy: { itemId: "abc" },
+      id: "record_cat",
+      collectionId: "vocabulary",
+      fields: { english: { kind: "text", value: "Cat" } },
+      presentations: [
+        {
+          id: "pres_1",
+          primaryFieldId: "japanese",
+          columns: [{ fieldId: "english", visible: true }],
+        },
+      ],
+    });
+  });
+
   it("writes a rich-text document to its part body file", async () => {
     const path = "lessons/intro/parts/intro/document.json";
     const files = new Map([[path, JSON.stringify({ type: "doc", content: [] })]]);

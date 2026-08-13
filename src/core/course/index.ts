@@ -8,6 +8,8 @@ export type {
   Collection,
   RecordFieldItem,
   RecordFieldValue,
+  RecordColumn,
+  RecordPresentation,
   ContentRecord,
 } from "@core/course/content";
 export type { TiptapMark, TiptapNode, TiptapDocument } from "@core/course/document";

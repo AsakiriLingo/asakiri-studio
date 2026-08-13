@@ -42,8 +42,20 @@ export type RecordFieldValue =
   | { readonly kind: "asset"; readonly assetId: string }
   | { readonly kind: "list"; readonly items: readonly RecordFieldItem[] };
 
+export interface RecordColumn {
+  readonly fieldId: string;
+  readonly visible: boolean;
+}
+
+export interface RecordPresentation {
+  readonly id: string;
+  readonly primaryFieldId: string;
+  readonly columns: readonly RecordColumn[];
+}
+
 export interface ContentRecord {
   readonly id: string;
   readonly collectionId: string;
   readonly fields: Readonly<Record<string, RecordFieldValue>>;
+  readonly presentations?: readonly RecordPresentation[];
 }

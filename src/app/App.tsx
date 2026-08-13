@@ -865,6 +865,9 @@ export function App() {
               onSaveDocument={(partId, document) =>
                 savePartDocument(openLesson.id, partId, document)
               }
+              onSaveRecord={saveRecord}
+              onLoadAssetPreview={loadAssetPreview}
+              onImportMedia={importAssetForField}
             />
           ) : (
             <CourseStructure

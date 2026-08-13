@@ -1,17 +1,26 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import type { JSONContent } from "@tiptap/react";
-import type { Part, TiptapDocument } from "@core/course";
+import type { Asset, ContentRecord, Course, Part, TiptapDocument } from "@core/course";
 import type { ProjectWriteResult } from "@core/project-writing";
 import { useMessages } from "@shared/i18n";
 import { Button } from "@shared/components/button";
 import { Field, TextArea } from "@shared/components/form";
 import { Icon } from "@shared/components/icon";
 import { PanelHeader } from "@shared/components/panel";
-import { RichEditor } from "@shared/components/rich-editor";
+import {
+  RichEditor,
+  type EditorAsset,
+  type EditorPresentation,
+  type ImportMedia,
+  type LoadAssetPreview,
+  type RichEditorLibrary,
+  type SaveRecordPresentation,
+} from "@shared/components/rich-editor";
 import { Select } from "@shared/components/select";
 import { Status } from "@shared/components/status";
 import { Tag } from "@shared/components/tag";
 import { partKind } from "@features/lesson-editor/parts";
+import { courseToRichLibrary } from "@features/lesson-editor/rich-library";
 import styles from "@features/lesson-editor/LessonEditor.module.css";
 
 function joinClassNames(...classNames: (string | undefined)[]) {
@@ -177,20 +186,19 @@ const RICH_TEXT_SEED: JSONContent = {
       content: [{ type: "text", text: "A familiar word" }],
     },
     {
-      type: "contentRecord",
-      attrs: {
-        label: "Vocabulary / 猫",
-        presentation: "vocabulary-card",
-        binding: { kind: "record", recordId: "record_cat" },
-      },
-    },
-    {
       type: "paragraph",
       content: [
+        { type: "text", text: "Meet " },
         {
-          type: "text",
-          text: "The same content record can provide its image and both audio versions anywhere this lesson needs them.",
+          type: "contentRecord",
+          attrs: {
+            label: "Vocabulary / 猫",
+            presentation: "vocabulary-card",
+            binding: { kind: "record", recordId: "record_cat" },
+          },
         },
+        { type: "text", text: " — the same content record can provide its image and both" },
+        { type: "text", text: " audio versions anywhere this lesson needs them." },
       ],
     },
   ],
@@ -199,9 +207,17 @@ const RICH_TEXT_SEED: JSONContent = {
 function RichTextEditor({
   initial,
   onPersist,
+  library,
+  onSaveRecordPresentation,
+  onLoadAssetPreview,
+  onImportMedia,
 }: {
   readonly initial?: JSONContent | undefined;
   readonly onPersist?: ((document: JSONContent) => void) | undefined;
+  readonly library: RichEditorLibrary;
+  readonly onSaveRecordPresentation: SaveRecordPresentation;
+  readonly onLoadAssetPreview: LoadAssetPreview;
+  readonly onImportMedia: ImportMedia;
 }) {
   const messages = useMessages();
   const [document, setDocument] = useState<JSONContent>(initial ?? RICH_TEXT_SEED);
@@ -225,7 +241,15 @@ function RichTextEditor({
   };
 
   return (
-    <RichEditor value={document} onChange={handleChange} ariaLabel={messages.lesson.richTextAria} />
+    <RichEditor
+      value={document}
+      onChange={handleChange}
+      ariaLabel={messages.lesson.richTextAria}
+      library={library}
+      onSaveRecordPresentation={onSaveRecordPresentation}
+      onLoadAssetPreview={onLoadAssetPreview}
+      onImportMedia={onImportMedia}
+    />
   );
 }
 
@@ -585,9 +609,17 @@ function SpeakEditor() {
 function EditorBody({
   part,
   onPersist,
+  library,
+  onSaveRecordPresentation,
+  onLoadAssetPreview,
+  onImportMedia,
 }: {
   readonly part: Part;
   readonly onPersist?: ((document: JSONContent) => void) | undefined;
+  readonly library: RichEditorLibrary;
+  readonly onSaveRecordPresentation: SaveRecordPresentation;
+  readonly onLoadAssetPreview: LoadAssetPreview;
+  readonly onImportMedia: ImportMedia;
 }) {
   const messages = useMessages();
   const t = messages.lesson;
@@ -597,7 +629,16 @@ function EditorBody({
   switch (kind) {
     case "rich-text":
       // Only real tiptap parts persist; composition placeholders do not.
-      return <RichTextEditor initial={initial} onPersist={isTiptap ? onPersist : undefined} />;
+      return (
+        <RichTextEditor
+          initial={initial}
+          onPersist={isTiptap ? onPersist : undefined}
+          library={library}
+          onSaveRecordPresentation={onSaveRecordPresentation}
+          onLoadAssetPreview={onLoadAssetPreview}
+          onImportMedia={onImportMedia}
+        />
+      );
     case "select-image":
       return (
         <OptionEditor
@@ -635,19 +676,54 @@ type SaveState = "idle" | "saving" | "saved" | "failed";
 
 export interface PartEditorProps {
   readonly part: Part;
+  readonly course: Course;
   readonly onSaveDocument: (
     partId: string,
     document: TiptapDocument,
   ) => Promise<ProjectWriteResult>;
+  readonly onSaveRecord: (record: ContentRecord) => Promise<ProjectWriteResult>;
+  readonly onLoadAssetPreview: LoadAssetPreview;
+  readonly onImportMedia: () => Promise<Asset | null>;
 }
 
-export function PartEditor({ part, onSaveDocument }: PartEditorProps) {
+export function PartEditor({
+  part,
+  course,
+  onSaveDocument,
+  onSaveRecord,
+  onLoadAssetPreview,
+  onImportMedia,
+}: PartEditorProps) {
   const messages = useMessages();
   const t = messages.lesson;
   const kind = partKind(part.content);
   const tabLabels =
     kind === "rich-text" ? [t.tabWrite, t.tabReferences] : [t.tabOptions, t.tabFeedback];
   const [saveState, setSaveState] = useState<SaveState>("idle");
+
+  const library = useMemo(() => courseToRichLibrary(course), [course]);
+
+  const saveRecordPresentation: SaveRecordPresentation = (recordId, presentation) => {
+    const record = course.records.find((entry) => entry.id === recordId);
+    if (!record) return;
+    const next: EditorPresentation[] = [
+      ...(record.presentations ?? []).filter((entry) => entry.id !== presentation.id),
+      presentation,
+    ];
+    void onSaveRecord({ ...record, presentations: next });
+  };
+
+  const importMedia: ImportMedia = async () => {
+    const asset = await onImportMedia();
+    if (!asset) return null;
+    const editorAsset: EditorAsset = {
+      id: asset.id,
+      kind: asset.kind,
+      label: asset.label,
+      file: asset.file,
+    };
+    return editorAsset;
+  };
 
   const persist = (document: JSONContent) => {
     setSaveState("saving");
@@ -673,7 +749,15 @@ export function PartEditor({ part, onSaveDocument }: PartEditorProps) {
         <Status tone={saveState === "failed" ? "warning" : "default"}>{statusLabel}</Status>
       </div>
       <Tabs labels={tabLabels} />
-      <EditorBody key={part.id} part={part} onPersist={persist} />
+      <EditorBody
+        key={part.id}
+        part={part}
+        onPersist={persist}
+        library={library}
+        onSaveRecordPresentation={saveRecordPresentation}
+        onLoadAssetPreview={onLoadAssetPreview}
+        onImportMedia={importMedia}
+      />
     </section>
   );
 }

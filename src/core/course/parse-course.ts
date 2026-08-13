@@ -5,8 +5,10 @@ import type {
   FieldCardinality,
   FieldDefinition,
   FieldKind,
+  RecordColumn,
   RecordFieldItem,
   RecordFieldValue,
+  RecordPresentation,
 } from "@core/course/content";
 import type { Composition, CompositionBlock, CompositionBlockType } from "@core/course/composition";
 import type {
@@ -529,6 +531,25 @@ function parseFieldValue(value: unknown, context: string): RecordFieldValue {
   return fail(`${context} has unsupported field value kind: ${kind}`);
 }
 
+function parseRecordColumn(value: unknown, context: string): RecordColumn {
+  const data = obj(value, context);
+  return {
+    fieldId: str(data.fieldId, `${context}.fieldId`),
+    visible: bool(data.visible, `${context}.visible`),
+  };
+}
+
+function parseRecordPresentation(value: unknown, context: string): RecordPresentation {
+  const data = obj(value, context);
+  return {
+    id: str(data.id, `${context}.id`),
+    primaryFieldId: str(data.primaryFieldId, `${context}.primaryFieldId`),
+    columns: arr(data.columns, `${context}.columns`).map((item, index) =>
+      parseRecordColumn(item, `${context}.columns[${String(index)}]`),
+    ),
+  };
+}
+
 function parseRecord(value: unknown, context: string): ContentRecord {
   const data = obj(value, context);
   const fieldsObject = obj(data.fields, `${context}.fields`);
@@ -540,6 +561,13 @@ function parseRecord(value: unknown, context: string): ContentRecord {
     id: str(data.id, `${context}.id`),
     collectionId: str(data.collectionId, `${context}.collectionId`),
     fields,
+    ...(data.presentations !== undefined
+      ? {
+          presentations: arr(data.presentations, `${context}.presentations`).map((item, index) =>
+            parseRecordPresentation(item, `${context}.presentations[${String(index)}]`),
+          ),
+        }
+      : {}),
   };
 }
 

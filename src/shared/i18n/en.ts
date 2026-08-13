@@ -70,7 +70,7 @@ export const enMessages = {
     projectAria: "Project workspace",
     areasAria: "Course areas",
     navDetails: "Course details",
-    navContent: "Content",
+    navContent: "Collections",
     navMedia: "Media",
     navAttribution: "Attribution",
     navLessons: "Lessons",
@@ -200,7 +200,7 @@ export const enMessages = {
   },
 
   content: {
-    title: "Content",
+    title: "Collections",
     description:
       "Create reusable records first, then reference them from lessons, rich media, and exercises.",
     newContent: "New content",
@@ -392,6 +392,19 @@ export const enMessages = {
     roleDistractor: "Distractor",
     roleAnswer: "Answer",
     richTextAria: "Rich text part content",
+    slash: {
+      title: "Insert",
+      empty: "No matches",
+      importMedia: "Import file…",
+      assetsSection: "Assets",
+      collectionsSection: "Collections",
+      back: "Back",
+      searchRecords: "Search records",
+      noRecords: "No records in this collection",
+      primaryLabel: "Primary field",
+      columnsLabel: "Columns",
+      insert: "Insert",
+    },
     addPair: "Add pair",
     addTile: "Add tile",
     uploadAudio: "Upload audio",

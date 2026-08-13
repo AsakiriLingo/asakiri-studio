@@ -3,7 +3,8 @@ import { AudioView, ContentRecordView, VideoView } from "@shared/components/rich
 
 export const ContentRecord = Node.create({
   name: "contentRecord",
-  group: "block",
+  group: "inline",
+  inline: true,
   atom: true,
   selectable: true,
   draggable: true,

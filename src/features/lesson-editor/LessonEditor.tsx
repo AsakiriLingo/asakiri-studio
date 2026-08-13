@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { Course, Lesson, TiptapDocument } from "@core/course";
+import type { Asset, ContentRecord, Course, Lesson, TiptapDocument } from "@core/course";
 import type { ProjectWriteResult } from "@core/project-writing";
 import { useMessages } from "@shared/i18n";
 import { Button } from "@shared/components/button";
@@ -28,6 +28,9 @@ export interface LessonEditorProps {
     partId: string,
     document: TiptapDocument,
   ) => Promise<ProjectWriteResult>;
+  readonly onSaveRecord: (record: ContentRecord) => Promise<ProjectWriteResult>;
+  readonly onLoadAssetPreview: (assetId: string) => Promise<string | null>;
+  readonly onImportMedia: () => Promise<Asset | null>;
 }
 
 export function LessonEditor({
@@ -35,6 +38,9 @@ export function LessonEditor({
   lesson,
   onBackToStructure,
   onSaveDocument,
+  onSaveRecord,
+  onLoadAssetPreview,
+  onImportMedia,
 }: LessonEditorProps) {
   const messages = useMessages();
   const t = messages.lesson;
@@ -109,7 +115,14 @@ export function LessonEditor({
             </div>
           </aside>
 
-          <PartEditor part={selectedPart} onSaveDocument={onSaveDocument} />
+          <PartEditor
+            part={selectedPart}
+            course={course}
+            onSaveDocument={onSaveDocument}
+            onSaveRecord={onSaveRecord}
+            onLoadAssetPreview={onLoadAssetPreview}
+            onImportMedia={onImportMedia}
+          />
           <PartPreview part={selectedPart} />
         </div>
       )}
