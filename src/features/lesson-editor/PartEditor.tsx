@@ -20,6 +20,7 @@ import { Select } from "@shared/components/select";
 import { Status } from "@shared/components/status";
 import { Tag } from "@shared/components/tag";
 import { partKind, type PartKind } from "@features/lesson-editor/parts";
+import { FillBlankEditor } from "@features/lesson-editor/exercise/FillBlankEditor";
 import { MultipleChoiceEditor } from "@features/lesson-editor/exercise/MultipleChoiceEditor";
 import { WordOrderEditor } from "@features/lesson-editor/exercise/WordOrderEditor";
 import { courseToRichLibrary } from "@features/lesson-editor/rich-library";
@@ -344,32 +345,6 @@ function MatchEditor() {
   );
 }
 
-function FillBlankEditor() {
-  const messages = useMessages();
-  const t = messages.lesson;
-  return (
-    <div className={styles.formGrid}>
-      <PromptField
-        label={t.exercise.sentenceLabel}
-        value="これは {{猫}} です。"
-        help="Wrap the answer in {{ }} to make the blank. The word inside references Vocabulary / 猫."
-      />
-      <PromptField
-        label={t.exercise.translationLabel}
-        value="This is a cat."
-        help="Optional. Displayed under the sentence while the learner answers."
-      />
-      <Panel title={t.exercise.wordBankTitle} description={t.exercise.wordBankFillDesc}>
-        <div className={styles.optionList}>
-          {FILL_BLANK_OPTIONS.map((option) => (
-            <OptionRow key={option.mono} option={option} />
-          ))}
-        </div>
-      </Panel>
-    </div>
-  );
-}
-
 function ListenEditor() {
   const messages = useMessages();
   const t = messages.lesson;
@@ -532,7 +507,9 @@ function EditorBody({
     case "match-pairs":
       return <MatchEditor />;
     case "fill-blank":
-      return <FillBlankEditor />;
+      return exercise?.type === "fill-blank" ? (
+        <FillBlankEditor exercise={exercise} library={library} onChange={onPersistExercise} />
+      ) : null;
     case "word-order":
       return exercise?.type === "word-order" ? (
         <WordOrderEditor exercise={exercise} library={library} onChange={onPersistExercise} />
@@ -559,7 +536,12 @@ export interface PartEditorProps {
   readonly onImportMedia: () => Promise<Asset | null>;
 }
 
-const REAL_EXERCISE_EDITORS = new Set<PartKind>(["multiple-choice", "select-image", "word-order"]);
+const REAL_EXERCISE_EDITORS = new Set<PartKind>([
+  "multiple-choice",
+  "select-image",
+  "word-order",
+  "fill-blank",
+]);
 
 export function PartEditor({
   part,

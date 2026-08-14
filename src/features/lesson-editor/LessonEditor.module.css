@@ -219,6 +219,11 @@
   min-width: 11rem;
 }
 
+.matchToggle {
+  flex: 0 0 auto;
+  min-width: 6rem;
+}
+
 /* Option / pair / token authoring */
 .optionList {
   display: grid;

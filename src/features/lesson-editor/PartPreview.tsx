@@ -256,30 +256,52 @@ function MatchPreview() {
   );
 }
 
-function FillBlankPreview() {
+function FillBlankPreview({ part, course }: { readonly part: Part; readonly course: Course }) {
+  const messages = useMessages();
+  if (part.content.kind !== "exercise" || part.content.exercise.type !== "fill-blank") {
+    return null;
+  }
+  const exercise = part.content.exercise;
+  const resolver = createBindingResolver(course);
+  const bank = exercise.bank ?? [];
+  const translation = exercise.translation ? fragmentText(exercise.translation, resolver) : "";
+  const tileLabel = (tileId: string | undefined): string => {
+    const tile = bank.find((entry) => entry.id === tileId);
+    return tile ? fragmentText(tile.body[0], resolver) : "";
+  };
+  const blankAnswer = (blankId: string): string => {
+    const blank = exercise.evaluation.blanks.find((entry) => entry.blankId === blankId);
+    return tileLabel(blank?.correctOptionIds?.[0]);
+  };
   return (
     <>
-      <p className={styles.muted}>Fill in the blank</p>
-      <h2>Complete the sentence</h2>
-      <p className={styles.clozeSentence}>
-        これは <span className={joinClassNames(styles.blank, styles.filled)}>猫</span> です。
-      </p>
-      <p className={styles.muted}>This is a cat.</p>
-      <div className={styles.wordBank}>
-        <span className={styles.wordBankLabel}>Word bank</span>
-        <button className={joinClassNames(styles.wordChip, styles.used)} type="button">
-          猫
-        </button>
-        <button className={styles.wordChip} type="button">
-          犬
-        </button>
-        <button className={styles.wordChip} type="button">
-          鳥
-        </button>
-      </div>
-      <p className={styles.exerciseHint}>
-        猫 has been placed in the blank; tap it again to return it to the bank.
-      </p>
+      <p className={styles.muted}>{messages.lesson.kind["fill-blank"]}</p>
+      <h2>{fragmentText(exercise.prompt[0], resolver) || part.title}</h2>
+      {exercise.stem.length === 0 ? (
+        <p className={styles.exerciseHint}>{messages.lesson.previewNoSentence}</p>
+      ) : (
+        <p className={styles.clozeSentence}>
+          {exercise.stem.map((segment) =>
+            segment.kind === "text" ? (
+              <span key={segment.fragment.id}>{fragmentText(segment.fragment, resolver)}</span>
+            ) : (
+              <span key={segment.id} className={joinClassNames(styles.blank, styles.filled)}>
+                {blankAnswer(segment.id) || "___"}
+              </span>
+            ),
+          )}
+        </p>
+      )}
+      {translation ? <p className={styles.muted}>{translation}</p> : null}
+      {bank.length === 0 ? null : (
+        <div className={styles.wordBank}>
+          {bank.map((tile) => (
+            <button key={tile.id} className={styles.wordChip} type="button">
+              {fragmentText(tile.body[0], resolver) || "—"}
+            </button>
+          ))}
+        </div>
+      )}
     </>
   );
 }
@@ -406,7 +428,7 @@ function PreviewBody({
     case "match-pairs":
       return <MatchPreview />;
     case "fill-blank":
-      return <FillBlankPreview />;
+      return <FillBlankPreview part={part} course={course} />;
     case "word-order":
       return <WordOrderPreview part={part} course={course} />;
     case "listen":

@@ -1,4 +1,5 @@
 import type { Binding, RenderFragment } from "@core/course";
+import type { RichEditorLibrary } from "@shared/components/rich-editor";
 
 export type FragmentSource = "text" | "content" | "asset";
 
@@ -58,4 +59,30 @@ export function withBinding(
 
 export function textFragment(role: string, text = ""): RenderFragment {
   return { id: newFragmentId("frag"), role, binding: textBinding(text) };
+}
+
+export function fragmentLabel(
+  fragment: RenderFragment | undefined,
+  library: RichEditorLibrary,
+): string {
+  if (!fragment) return "";
+  const binding = fragment.binding;
+  switch (binding.kind) {
+    case "literal":
+      return literalText(binding);
+    case "record":
+      return (
+        library.records.find((entry) => entry.id === binding.recordId)?.label ?? binding.recordId
+      );
+    case "field":
+      return (
+        library.records.find((entry) => entry.id === binding.recordId)?.fieldText[
+          binding.fieldId
+        ] ?? binding.fieldId
+      );
+    case "asset":
+      return library.assets.find((entry) => entry.id === binding.assetId)?.label ?? binding.assetId;
+    case "item":
+      return binding.itemId;
+  }
 }
