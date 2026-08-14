@@ -3,6 +3,9 @@ use std::io::Read;
 use std::path::PathBuf;
 use std::time::{SystemTime, UNIX_EPOCH};
 
+use base64::engine::general_purpose::STANDARD;
+use base64::Engine as _;
+
 const ALLOWED_HOSTS: &[&str] = &[
     "unsplash.com",
     "images.unsplash.com",
@@ -38,6 +41,40 @@ pub fn http_get_text(url: String) -> Result<String, String> {
         .call()
         .map_err(|error| error.to_string())?;
     response.into_string().map_err(|error| error.to_string())
+}
+
+fn write_temp_file(file_name: &str, bytes: &[u8]) -> Result<String, String> {
+    let safe_name: String = file_name
+        .chars()
+        .filter(|character| character.is_alphanumeric() || matches!(character, '.' | '-' | '_'))
+        .collect();
+    let safe_name = if safe_name.is_empty() {
+        "recording".to_string()
+    } else {
+        safe_name
+    };
+
+    let mut dir: PathBuf = std::env::temp_dir();
+    dir.push(format!("asakiri-media-{}", unique_stamp()));
+    fs::create_dir_all(&dir).map_err(|_| "unknown".to_string())?;
+    let target = dir.join(&safe_name);
+    fs::write(&target, bytes).map_err(|_| "unknown".to_string())?;
+
+    target
+        .to_str()
+        .map(|path| path.to_string())
+        .ok_or_else(|| "unknown".to_string())
+}
+
+#[tauri::command]
+pub fn write_temp_media(file_name: String, data_base64: String) -> Result<String, String> {
+    let bytes = STANDARD
+        .decode(data_base64.as_bytes())
+        .map_err(|_| "decodeFailed".to_string())?;
+    if bytes.is_empty() {
+        return Err("emptyRecording".to_string());
+    }
+    write_temp_file(&file_name, &bytes)
 }
 
 #[tauri::command]

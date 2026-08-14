@@ -29,6 +29,7 @@ pub fn run() {
             course::git_status,
             media::http_get_text,
             media::download_media_file,
+            media::write_temp_media,
             tts::list_tts_voices,
             tts::synthesize_tts
         ])

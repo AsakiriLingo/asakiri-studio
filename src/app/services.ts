@@ -6,6 +6,7 @@ import type { ProjectCreationGateway, ProjectDirectoryGateway } from "@core/proj
 import type { ProjectReader } from "@core/project-reading";
 import type { ProjectSystem } from "@core/project-system";
 import type { ProjectWriter } from "@core/project-writing";
+import type { RecordingGateway } from "@core/recording";
 import type { TtsGateway } from "@core/tts";
 import { createAppUpdateGateway } from "@platform/app-update";
 import { createLinkOpener } from "@platform/links";
@@ -17,6 +18,7 @@ import { createProjectReader } from "@platform/project-reading";
 import { createProjectSystem } from "@platform/project-system";
 import { createProjectWriter } from "@platform/project-writing";
 import { createTauriMediaSearchGateway } from "@platform/media-search";
+import { createTauriRecordingGateway } from "@platform/recording";
 import { createTauriTtsGateway } from "@platform/tts";
 
 export interface AppServices {
@@ -31,6 +33,7 @@ export interface AppServices {
   readonly appUpdate: AppUpdateGateway;
   readonly links: LinkOpener;
   readonly tts: TtsGateway;
+  readonly recording: RecordingGateway;
 }
 
 /**
@@ -52,5 +55,6 @@ export function createAppServices(): AppServices {
     appUpdate: createAppUpdateGateway(),
     links: createLinkOpener(),
     tts: createTauriTtsGateway(),
+    recording: createTauriRecordingGateway(),
   };
 }

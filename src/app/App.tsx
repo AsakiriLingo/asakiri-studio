@@ -990,6 +990,53 @@ export function App() {
     return allOk ? { status: "saved" } : { status: "failed", code: "unknown" };
   };
 
+  const addRecording = async (
+    bytes: Uint8Array,
+    mimeType: string,
+    ext: string,
+  ): Promise<ProjectWriteResult | null> => {
+    if (!project || courseState?.status !== "ready") {
+      return { status: "failed", code: "unavailable" };
+    }
+    const id = `asset_${crypto.randomUUID()}`;
+    const fileName = `recording-${id.slice(-6)}.${ext}`;
+    const picked = await services.recording.saveToTemp(fileName, bytes);
+    if (!picked) return { status: "failed", code: "unknown" };
+    const assetDir = `media/assets/${id}`;
+    const assetPath = `${assetDir}/asset.json`;
+    const asset: Asset = {
+      id,
+      kind: "audio",
+      label: labelForFile(fileName),
+      availability: "ready",
+      file: fileName,
+      mimeType,
+    };
+    const session = createProjectSession(project);
+    const result = await services.writer.importAsset(
+      session,
+      assetPath,
+      `${assetDir}/${fileName}`,
+      picked.path,
+      asset,
+    );
+    if (result.status === "saved") {
+      setCourseState((current) =>
+        current?.status === "ready"
+          ? {
+              ...current,
+              course: { ...current.course, assets: [...current.course.assets, asset] },
+              sources: {
+                ...current.sources,
+                assets: { ...current.sources.assets, [asset.id]: assetPath },
+              },
+            }
+          : current,
+      );
+    }
+    return result;
+  };
+
   const saveAttribution = async (markdown: string): Promise<ProjectWriteResult> => {
     if (!project) {
       return { status: "failed", code: "unavailable" };
@@ -1187,6 +1234,7 @@ export function App() {
               onRenameAsset={renameAsset}
               onListTtsVoices={() => services.tts.listVoices()}
               onAddTtsAudio={addTtsAudio}
+              onAddRecording={addRecording}
             />
           ) : section === "attribution" ? (
             <CourseAttribution course={course} onSaveAttribution={saveAttribution} />

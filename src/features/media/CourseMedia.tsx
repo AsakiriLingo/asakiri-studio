@@ -15,6 +15,7 @@ import { Status } from "@shared/components/status";
 import { WorkHeader, WorkInner } from "@shared/components/work-surface";
 import { MediaSearchDialog, type MediaSearchMode } from "@features/media/MediaSearchDialog";
 import { TtsDialog } from "@features/media/TtsDialog";
+import { RecordDialog } from "@features/media/RecordDialog";
 import styles from "@features/media/CourseMedia.module.css";
 
 const PAGE_SIZE = 24;
@@ -72,6 +73,11 @@ export interface CourseMediaProps {
     voice: string,
     fileName: string,
   ) => Promise<ProjectWriteResult | null>;
+  readonly onAddRecording: (
+    bytes: Uint8Array,
+    mimeType: string,
+    ext: string,
+  ) => Promise<ProjectWriteResult | null>;
 }
 
 export function CourseMedia({
@@ -85,6 +91,7 @@ export function CourseMedia({
   onRenameAsset,
   onListTtsVoices,
   onAddTtsAudio,
+  onAddRecording,
 }: CourseMediaProps) {
   const messages = useMessages();
   const t = messages.media;
@@ -99,6 +106,7 @@ export function CourseMedia({
   const [previews, setPreviews] = useState<Record<string, string>>({});
   const [searchMode, setSearchMode] = useState<MediaSearchMode | null>(null);
   const [showTts, setShowTts] = useState(false);
+  const [showRecord, setShowRecord] = useState(false);
   const [renameTarget, setRenameTarget] = useState<Asset | null>(null);
   const [renameValue, setRenameValue] = useState("");
 
@@ -282,6 +290,15 @@ export function CourseMedia({
                     <Icon name="mic" size={18} />
                     {t.addTts}
                   </Menu.Item>
+                  <Menu.Item
+                    className={styles.menuItem}
+                    onClick={() => {
+                      setShowRecord(true);
+                    }}
+                  >
+                    <Icon name="audio" size={18} />
+                    {t.recordAudio}
+                  </Menu.Item>
                 </Menu.Popup>
               </Menu.Positioner>
             </Menu.Portal>
@@ -378,6 +395,20 @@ export function CourseMedia({
           onListVoices={onListTtsVoices}
           onAddTtsAudio={(text, voice, fileName) =>
             onAddTtsAudio(text, voice, fileName).then((result) => {
+              if (result) setSaveState(result.status === "saved" ? "saved" : "failed");
+              return result;
+            })
+          }
+        />
+      ) : null}
+
+      {showRecord ? (
+        <RecordDialog
+          onClose={() => {
+            setShowRecord(false);
+          }}
+          onAddRecording={(bytes, mimeType, ext) =>
+            onAddRecording(bytes, mimeType, ext).then((result) => {
               if (result) setSaveState(result.status === "saved" ? "saved" : "failed");
               return result;
             })
