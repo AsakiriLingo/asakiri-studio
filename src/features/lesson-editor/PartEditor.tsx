@@ -3,7 +3,6 @@ import type { JSONContent } from "@tiptap/react";
 import type { Asset, ContentRecord, Course, Exercise, Part, TiptapDocument } from "@core/course";
 import type { ProjectWriteResult } from "@core/project-writing";
 import { useMessages } from "@shared/i18n";
-import { Button } from "@shared/components/button";
 import { Field, TextArea } from "@shared/components/form";
 import { Icon } from "@shared/components/icon";
 import { PanelHeader } from "@shared/components/panel";
@@ -21,6 +20,7 @@ import { Status } from "@shared/components/status";
 import { Tag } from "@shared/components/tag";
 import { partKind, type PartKind } from "@features/lesson-editor/parts";
 import { FillBlankEditor } from "@features/lesson-editor/exercise/FillBlankEditor";
+import { ListeningEditor } from "@features/lesson-editor/exercise/ListeningEditor";
 import { MatchPairsEditor } from "@features/lesson-editor/exercise/MatchPairsEditor";
 import { MultipleChoiceEditor } from "@features/lesson-editor/exercise/MultipleChoiceEditor";
 import { WordOrderEditor } from "@features/lesson-editor/exercise/WordOrderEditor";
@@ -201,7 +201,7 @@ const RICH_TEXT_SEED: JSONContent = {
             binding: { kind: "record", recordId: "record_cat" },
           },
         },
-        { type: "text", text: " — the same content record can provide its image and both" },
+        { type: "text", text: ". The same content record can provide its image and both" },
         { type: "text", text: " audio versions anywhere this lesson needs them." },
       ],
     },
@@ -254,104 +254,6 @@ function RichTextEditor({
       onLoadAssetPreview={onLoadAssetPreview}
       onImportMedia={onImportMedia}
     />
-  );
-}
-
-const FILL_BLANK_OPTIONS: readonly OptionData[] = [
-  {
-    index: "A",
-    title: "Vocabulary / 猫",
-    mono: "option_cat",
-    values: ["猫", "Cat"],
-    roleKind: "answer",
-    role: "answer",
-  },
-  {
-    index: "B",
-    title: "Vocabulary / 犬",
-    mono: "option_dog",
-    values: ["犬", "Dog"],
-    roleKind: "answer",
-    role: "distractor",
-  },
-  {
-    index: "C",
-    title: "Vocabulary / 鳥",
-    mono: "option_bird",
-    values: ["鳥", "Bird"],
-    roleKind: "answer",
-    role: "distractor",
-  },
-];
-
-const LISTEN_WORD_BANK: readonly OptionData[] = [
-  ...FILL_BLANK_OPTIONS.slice(0, 3),
-  {
-    index: "D",
-    title: "Vocabulary / 魚",
-    mono: "option_fish",
-    values: ["魚", "Fish"],
-    roleKind: "answer",
-    role: "distractor",
-  },
-];
-
-function ListenEditor() {
-  const messages = useMessages();
-  const t = messages.lesson;
-  return (
-    <div className={styles.formGrid}>
-      <PromptField
-        label={t.prompt}
-        value="Tap the word you hear."
-        help="No text is shown until the learner answers — the audio is the whole question."
-      />
-      <Panel title={t.exercise.audioTitle} description={t.exercise.audioDesc}>
-        <div className={styles.optionList}>
-          <OptionRow
-            option={{
-              index: <Icon name="audio" size={18} />,
-              title: "neko-ja.mp3",
-              detail: "Uploaded · Vocabulary / 猫",
-              values: ["0:01", "audio/mpeg"],
-              trailing: <SpeakButton>{messages.common.play}</SpeakButton>,
-            }}
-          />
-        </div>
-        <div className={styles.tokenList}>
-          <Button variant="ghost">
-            <Icon name="plus" size={18} />
-            {t.uploadAudio}
-          </Button>
-          <Button variant="ghost">
-            <Icon name="content" size={18} />
-            {t.getFromTatoeba}
-          </Button>
-        </div>
-      </Panel>
-      <Field label={t.answerModeLabel} help={t.answerModeHelp}>
-        <Select
-          name="answer-mode"
-          defaultValue="tap"
-          aria-label={t.answerModeLabel}
-          items={[
-            { value: "tap", label: t.answerModeTap },
-            { value: "type", label: t.answerModeType },
-          ]}
-        />
-      </Field>
-      <Panel title={t.exercise.wordBankTitle} description={t.exercise.wordBankListenDesc}>
-        <div className={styles.optionList}>
-          {LISTEN_WORD_BANK.map((option) => (
-            <OptionRow key={option.mono} option={option} />
-          ))}
-        </div>
-      </Panel>
-      <div className={styles.settingGroup}>
-        <SettingRow name={t.settingSlowReplay} detail={t.settingSlowReplayDetail} />
-        <SettingRow name={t.settingAllowSkip} detail={t.settingAllowSkipDetail} />
-      </div>
-    </div>
   );
 }
 
@@ -468,7 +370,9 @@ function EditorBody({
         <WordOrderEditor exercise={exercise} library={library} onChange={onPersistExercise} />
       ) : null;
     case "listen":
-      return <ListenEditor />;
+      return exercise?.type === "listening" ? (
+        <ListeningEditor exercise={exercise} library={library} onChange={onPersistExercise} />
+      ) : null;
     case "speak":
       return <SpeakEditor />;
   }
@@ -495,6 +399,7 @@ const REAL_EXERCISE_EDITORS = new Set<PartKind>([
   "word-order",
   "fill-blank",
   "match-pairs",
+  "listen",
 ]);
 
 export function PartEditor({

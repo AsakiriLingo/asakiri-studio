@@ -73,7 +73,7 @@ function resolvedText(resolved: ResolvedValue): string {
     case "literal":
       return typeof resolved.value === "string" ? resolved.value : JSON.stringify(resolved.value);
     case "missing":
-      return "—";
+      return "…";
   }
 }
 
@@ -234,7 +234,7 @@ function MatchPreview({ part, course }: { readonly part: Part; readonly course: 
       return (
         <button key={option.id} className={styles.matchChip} type="button">
           {number === undefined ? null : <span className={styles.matchNum}>{number}</span>}
-          {fragmentText(option.body[0], resolver) || "—"}
+          {fragmentText(option.body[0], resolver) || "…"}
         </button>
       );
     });
@@ -296,7 +296,7 @@ function FillBlankPreview({ part, course }: { readonly part: Part; readonly cour
         <div className={styles.wordBank}>
           {bank.map((tile) => (
             <button key={tile.id} className={styles.wordChip} type="button">
-              {fragmentText(tile.body[0], resolver) || "—"}
+              {fragmentText(tile.body[0], resolver) || "…"}
             </button>
           ))}
         </div>
@@ -325,14 +325,14 @@ function WordOrderPreview({ part, course }: { readonly part: Part; readonly cour
           <div className={styles.answerTrack}>
             {exercise.tokens.map((token) => (
               <span key={token.id} className={styles.token}>
-                {fragmentText(token.body[0], resolver) || "—"}
+                {fragmentText(token.body[0], resolver) || "…"}
               </span>
             ))}
           </div>
           <div className={styles.wordBank}>
             {bank.map((token) => (
               <button key={token.id} className={styles.wordChip} type="button">
-                {fragmentText(token.body[0], resolver) || "—"}
+                {fragmentText(token.body[0], resolver) || "…"}
               </button>
             ))}
           </div>
@@ -342,37 +342,46 @@ function WordOrderPreview({ part, course }: { readonly part: Part; readonly cour
   );
 }
 
-function ListenPreview() {
+function ListenPreview({ part, course }: { readonly part: Part; readonly course: Course }) {
+  const messages = useMessages();
+  if (part.content.kind !== "exercise" || part.content.exercise.type !== "listening") {
+    return null;
+  }
+  const exercise = part.content.exercise;
+  const resolver = createBindingResolver(course);
+  const prompt = fragmentText(exercise.prompt[0], resolver);
+  const stimulusLabel = fragmentText(exercise.stimulus, resolver);
+  const options = exercise.options ?? [];
   return (
     <>
-      <p className={styles.muted}>Listening</p>
-      <h2>Tap the word you hear</h2>
-      <button className={styles.audioPlay} type="button" aria-label="Play audio">
+      <p className={styles.muted}>{messages.lesson.kind.listen}</p>
+      {prompt ? <h2>{prompt}</h2> : null}
+      <button className={styles.audioPlay} type="button" aria-label={messages.common.play}>
         <Icon name="audio" size={18} />
       </button>
-      <div className={styles.listenTools}>
-        <SpeakButton>Slow · 0.5×</SpeakButton>
-      </div>
-      <div className={styles.wordBank}>
-        <button className={joinClassNames(styles.wordChip, styles.selected)} type="button">
-          猫
-        </button>
-        <button className={styles.wordChip} type="button">
-          犬
-        </button>
-        <button className={styles.wordChip} type="button">
-          鳥
-        </button>
-        <button className={styles.wordChip} type="button">
-          魚
-        </button>
-      </div>
-      <p className={styles.exerciseHint}>
-        Plays the linked recording (neko-ja.mp3). Source audio is uploaded or from Tatoeba.
-      </p>
-      <button className={styles.skipLink} type="button">
-        Can&rsquo;t listen right now
-      </button>
+      {stimulusLabel ? <p className={styles.muted}>{stimulusLabel}</p> : null}
+      {exercise.answerMode === "type" ? (
+        <p className={styles.exerciseHint}>{messages.lesson.answerModeType}</p>
+      ) : options.length === 0 ? (
+        <p className={styles.exerciseHint}>{messages.lesson.previewNoOptions}</p>
+      ) : (
+        <div className={styles.wordBank}>
+          {options.map((option) => {
+            const correct =
+              exercise.evaluation.kind === "selected-options" &&
+              exercise.evaluation.correctOptionIds.includes(option.id);
+            return (
+              <button
+                key={option.id}
+                className={joinClassNames(styles.wordChip, correct ? styles.selected : undefined)}
+                type="button"
+              >
+                {fragmentText(option.body[0], resolver) || "…"}
+              </button>
+            );
+          })}
+        </div>
+      )}
     </>
   );
 }
@@ -392,7 +401,7 @@ function SpeakPreview() {
       </button>
       <p className={styles.micLabel}>Tap the mic and say it out loud</p>
       <p className={styles.exerciseHint}>
-        Recording and pronunciation checking happen on the learner&rsquo;s device — nothing is
+        Recording and pronunciation checking happen on the learner&rsquo;s device. Nothing is
         uploaded, and it can&rsquo;t be tried from Studio.
       </p>
       <button className={styles.skipLink} type="button">
@@ -431,7 +440,7 @@ function PreviewBody({
     case "word-order":
       return <WordOrderPreview part={part} course={course} />;
     case "listen":
-      return <ListenPreview />;
+      return <ListenPreview part={part} course={course} />;
     case "speak":
       return <SpeakPreview />;
   }
