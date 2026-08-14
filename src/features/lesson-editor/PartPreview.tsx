@@ -1,9 +1,12 @@
 import type { ReactNode } from "react";
-import type { Part } from "@core/course";
+import type { JSONContent } from "@tiptap/react";
+import type { Course, Part } from "@core/course";
 import { useMessages } from "@shared/i18n";
 import { Icon } from "@shared/components/icon";
+import { RichContent, type LoadAssetPreview } from "@shared/components/rich-editor";
 import { Status } from "@shared/components/status";
 import { partKind, type PartKind } from "@features/lesson-editor/parts";
+import { courseToRichLibrary } from "@features/lesson-editor/rich-library";
 import styles from "@features/lesson-editor/LessonEditor.module.css";
 
 function joinClassNames(...classNames: (string | undefined)[]) {
@@ -19,17 +22,26 @@ function SpeakButton({ children }: { readonly children: ReactNode }) {
   );
 }
 
-function RichTextPreview() {
+function RichTextPreview({
+  part,
+  course,
+  onLoadAssetPreview,
+}: {
+  readonly part: Part;
+  readonly course: Course;
+  readonly onLoadAssetPreview: LoadAssetPreview;
+}) {
+  if (part.content.kind !== "tiptap") {
+    return <p className={styles.exerciseHint}>This part has no rich-text content to preview.</p>;
+  }
   return (
     <>
-      <h2>Your first Japanese words</h2>
-      <p>
-        Japanese uses three writing systems. You do not need to learn them all at once. Start by
-        meeting words in context.
-      </p>
-      <p>
-        <strong>猫</strong> means Cat.
-      </p>
+      <h2>{part.title}</h2>
+      <RichContent
+        value={part.content.document as unknown as JSONContent}
+        library={courseToRichLibrary(course)}
+        onLoadAssetPreview={onLoadAssetPreview}
+      />
     </>
   );
 }
@@ -263,10 +275,22 @@ function SpeakPreview() {
   );
 }
 
-function PreviewBody({ kind }: { readonly kind: PartKind }) {
+function PreviewBody({
+  kind,
+  part,
+  course,
+  onLoadAssetPreview,
+}: {
+  readonly kind: PartKind;
+  readonly part: Part;
+  readonly course: Course;
+  readonly onLoadAssetPreview: LoadAssetPreview;
+}) {
   switch (kind) {
     case "rich-text":
-      return <RichTextPreview />;
+      return (
+        <RichTextPreview part={part} course={course} onLoadAssetPreview={onLoadAssetPreview} />
+      );
     case "select-image":
       return <SelectImagePreview />;
     case "multiple-choice":
@@ -284,7 +308,15 @@ function PreviewBody({ kind }: { readonly kind: PartKind }) {
   }
 }
 
-export function PartPreview({ part }: { readonly part: Part }) {
+export function PartPreview({
+  part,
+  course,
+  onLoadAssetPreview,
+}: {
+  readonly part: Part;
+  readonly course: Course;
+  readonly onLoadAssetPreview: LoadAssetPreview;
+}) {
   const messages = useMessages();
   const t = messages.lesson;
   const kind = partKind(part.content);
@@ -301,7 +333,12 @@ export function PartPreview({ part }: { readonly part: Part }) {
           )}
         </div>
         <div className={styles.previewBody}>
-          <PreviewBody kind={kind} />
+          <PreviewBody
+            kind={kind}
+            part={part}
+            course={course}
+            onLoadAssetPreview={onLoadAssetPreview}
+          />
         </div>
       </div>
     </aside>

@@ -123,7 +123,11 @@ export function LessonEditor({
             onLoadAssetPreview={onLoadAssetPreview}
             onImportMedia={onImportMedia}
           />
-          <PartPreview part={selectedPart} />
+          <PartPreview
+            part={selectedPart}
+            course={course}
+            onLoadAssetPreview={onLoadAssetPreview}
+          />
         </div>
       )}
     </WorkInner>

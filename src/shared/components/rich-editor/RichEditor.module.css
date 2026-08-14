@@ -111,6 +111,12 @@
   outline: 0;
 }
 
+.previewProse {
+  min-height: 0;
+  max-width: none;
+  padding: 0;
+}
+
 .prose :global(.ProseMirror-selectednode) {
   outline: 2px solid var(--color-focus-ring);
   outline-offset: 2px;

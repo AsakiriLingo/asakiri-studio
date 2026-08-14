@@ -462,7 +462,7 @@ export function CourseContent({
                 setEditingRecordId(row.original.id);
               }}
             >
-              <Icon name="details" size={18} />
+              <Icon name="edit" size={18} />
             </IconButton>
             <IconButton
               aria-label={messages.content.deleteRecord}
@@ -553,7 +553,7 @@ export function CourseContent({
                   setShowingSettings(true);
                 }}
               >
-                <Icon name="details" size={18} />
+                <Icon name="edit" size={18} />
               </IconButton>
             </div>
             <DataTable

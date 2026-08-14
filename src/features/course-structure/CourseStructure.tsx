@@ -77,7 +77,7 @@ function LessonRow({
         <span className={styles.rowDetail}>{t.parts(lesson.parts.length)}</span>
       </button>
       <IconButton aria-label={t.lessonSettings(lesson.title)} onClick={onOpenSettings}>
-        <Icon name="details" size={18} />
+        <Icon name="edit" size={18} />
       </IconButton>
     </div>
   );
@@ -146,7 +146,7 @@ function UnitBlock({
             {t.addLesson}
           </Button>
           <IconButton aria-label={t.unitSettings(unit.title)} onClick={onOpenSettings}>
-            <Icon name="details" size={18} />
+            <Icon name="edit" size={18} />
           </IconButton>
         </div>
       </header>

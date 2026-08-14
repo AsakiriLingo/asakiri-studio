@@ -1,21 +1,8 @@
 import { useMemo, useState } from "react";
-import {
-  EditorContent,
-  ReactNodeViewRenderer,
-  useEditor,
-  useEditorState,
-  type JSONContent,
-} from "@tiptap/react";
-import StarterKit from "@tiptap/starter-kit";
-import { Image } from "@tiptap/extension-image";
-import { Youtube } from "@tiptap/extension-youtube";
-import { TableKit } from "@tiptap/extension-table";
-import { Color, TextStyle } from "@tiptap/extension-text-style";
-import { Highlight } from "@tiptap/extension-highlight";
+import { EditorContent, useEditor, useEditorState, type JSONContent } from "@tiptap/react";
 import { Icon } from "@shared/components/icon";
 import { ColorMenu, type Swatch } from "@shared/components/rich-editor/ColorMenu";
-import { AudioNode, ContentRecord, VideoNode } from "@shared/components/rich-editor/nodes";
-import { ImageView } from "@shared/components/rich-editor/node-views";
+import { baseExtensions } from "@shared/components/rich-editor/extensions";
 import { RichEditorProvider } from "@shared/components/rich-editor/context";
 import {
   EMPTY_LIBRARY,
@@ -40,31 +27,6 @@ export interface RichEditorProps {
   readonly onLoadAssetPreview?: LoadAssetPreview;
   readonly onImportMedia?: ImportMedia;
 }
-
-const ImageWithAsset = Image.extend({
-  addAttributes() {
-    return {
-      ...this.parent?.(),
-      assetId: { default: null },
-    };
-  },
-  addNodeView() {
-    return ReactNodeViewRenderer(ImageView);
-  },
-});
-
-const baseExtensions = [
-  StarterKit.configure({ link: { openOnClick: false, autolink: true } }),
-  TextStyle,
-  Color,
-  Highlight.configure({ multicolor: true }),
-  ImageWithAsset,
-  Youtube.configure({ nocookie: true }),
-  TableKit.configure({ table: { resizable: false } }),
-  ContentRecord,
-  AudioNode,
-  VideoNode,
-];
 
 const TEXT_COLORS: readonly Swatch[] = [
   { value: "#e5484d", label: "Red" },
