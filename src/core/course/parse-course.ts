@@ -328,7 +328,7 @@ function parseBlankSegment(value: unknown, context: string): BlankSegment {
   return fail(`${context} has unsupported segment kind: ${kind}`);
 }
 
-function parseExercise(value: unknown, context: string): Exercise {
+export function parseExercise(value: unknown, context: string): Exercise {
   const data = obj(value, context);
   const type = str(data.type, `${context}.type`);
   const base = {

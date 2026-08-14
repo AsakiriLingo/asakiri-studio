@@ -38,6 +38,7 @@ export type {
   SpeakingExercise,
   Exercise,
 } from "@core/course/exercise";
+export { createDefaultExercise } from "@core/course/exercise-defaults";
 export type { PartContent, Part, Lesson } from "@core/course/lesson";
 export type {
   CourseProject,
@@ -51,6 +52,11 @@ export type {
 } from "@core/course/course";
 export { partSourceKey } from "@core/course/course";
 export type { CourseFileReader } from "@core/course/parse-course";
-export { parseCourse, parseCourseWithSources, CourseParseError } from "@core/course/parse-course";
+export {
+  parseCourse,
+  parseCourseWithSources,
+  parseExercise,
+  CourseParseError,
+} from "@core/course/parse-course";
 export type { ResolvedValue, BindingResolver } from "@core/course/resolve-binding";
 export { createBindingResolver } from "@core/course/resolve-binding";

@@ -3,6 +3,7 @@ import type {
   Collection,
   ContentRecord,
   CourseProject,
+  Exercise,
   Lesson,
   OutlineSection,
   TiptapDocument,
@@ -44,6 +45,11 @@ export interface ProjectWriter {
     path: string,
     document: TiptapDocument,
   ): Promise<ProjectWriteResult>;
+  updatePartExercise(
+    session: ProjectSession,
+    path: string,
+    exercise: Exercise,
+  ): Promise<ProjectWriteResult>;
   updatePartTitle(
     session: ProjectSession,
     lessonPath: string,
@@ -55,6 +61,25 @@ export interface ProjectWriter {
     lessonPath: string,
     partId: string,
     bodyPath: string,
+  ): Promise<ProjectWriteResult>;
+  createPart(
+    session: ProjectSession,
+    lessonPath: string,
+    bodyPath: string,
+    part: { readonly id: string; readonly title: string },
+    document: TiptapDocument,
+  ): Promise<ProjectWriteResult>;
+  createExercisePart(
+    session: ProjectSession,
+    lessonPath: string,
+    bodyPath: string,
+    part: { readonly id: string; readonly title: string },
+    exercise: Exercise,
+  ): Promise<ProjectWriteResult>;
+  reorderParts(
+    session: ProjectSession,
+    lessonPath: string,
+    orderedPartIds: readonly string[],
   ): Promise<ProjectWriteResult>;
   createLesson(
     session: ProjectSession,

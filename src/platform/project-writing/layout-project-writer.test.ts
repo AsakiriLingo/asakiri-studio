@@ -339,6 +339,181 @@ describe("layout project writer", () => {
     });
   });
 
+  it("creates a part: writes its body file and appends the lesson entry", async () => {
+    const lessonPath = "lessons/intro/lesson.json";
+    const bodyPath = "lessons/intro/parts/part_new/document.json";
+    const files = new Map([
+      [
+        lessonPath,
+        JSON.stringify({
+          id: "l1",
+          title: "Intro",
+          parts: [{ id: "p1", title: "Warm up", content: { kind: "tiptap", file: "a.json" } }],
+          legacy: { keep: true },
+        }),
+      ],
+    ]);
+    const writer = createLayoutProjectWriter(() => fileAccess(files));
+
+    const document: TiptapDocument = { type: "doc", content: [{ type: "paragraph" }] };
+    const result = await writer.createPart(
+      SESSION,
+      lessonPath,
+      bodyPath,
+      { id: "part_new", title: "Part 2" },
+      document,
+    );
+
+    expect(result).toEqual({ status: "saved" });
+    expect(JSON.parse(files.get(bodyPath) ?? "")).toEqual(document);
+    const written: unknown = JSON.parse(files.get(lessonPath) ?? "");
+    expect(written).toEqual({
+      id: "l1",
+      title: "Intro",
+      parts: [
+        { id: "p1", title: "Warm up", content: { kind: "tiptap", file: "a.json" } },
+        {
+          id: "part_new",
+          title: "Part 2",
+          content: { kind: "tiptap", file: "parts/part_new/document.json" },
+        },
+      ],
+      legacy: { keep: true },
+    });
+  });
+
+  it("writes an exercise back to its body file", async () => {
+    const path = "lessons/intro/parts/quiz/exercise.json";
+    const files = new Map([[path, JSON.stringify({ id: "ex_old", type: "multiple-choice" })]]);
+    const writer = createLayoutProjectWriter(() => fileAccess(files));
+
+    const result = await writer.updatePartExercise(SESSION, path, {
+      id: "ex_quiz",
+      type: "multiple-choice",
+      prompt: [
+        {
+          id: "p1",
+          role: "primary",
+          binding: { kind: "literal", value: { type: "text", text: "Pick 猫." } },
+        },
+      ],
+      options: [
+        {
+          id: "opt_a",
+          body: [{ id: "b1", role: "primary", binding: { kind: "record", recordId: "rec_cat" } }],
+        },
+      ],
+      evaluation: { kind: "selected-options", select: "one", correctOptionIds: ["opt_a"] },
+    });
+
+    expect(result).toEqual({ status: "saved" });
+    expect(JSON.parse(files.get(path) ?? "")).toEqual({
+      id: "ex_quiz",
+      type: "multiple-choice",
+      prompt: [
+        {
+          id: "p1",
+          role: "primary",
+          binding: { kind: "literal", value: { type: "text", text: "Pick 猫." } },
+        },
+      ],
+      options: [
+        {
+          id: "opt_a",
+          body: [{ id: "b1", role: "primary", binding: { kind: "record", recordId: "rec_cat" } }],
+        },
+      ],
+      evaluation: { kind: "selected-options", select: "one", correctOptionIds: ["opt_a"] },
+    });
+  });
+
+  it("creates an exercise part: writes exercise.json and appends the lesson entry", async () => {
+    const lessonPath = "lessons/intro/lesson.json";
+    const bodyPath = "lessons/intro/parts/part_quiz/exercise.json";
+    const files = new Map([
+      [
+        lessonPath,
+        JSON.stringify({
+          id: "l1",
+          title: "Intro",
+          parts: [{ id: "p1", title: "Intro text", content: { kind: "tiptap", file: "a.json" } }],
+        }),
+      ],
+    ]);
+    const writer = createLayoutProjectWriter(() => fileAccess(files));
+
+    const result = await writer.createExercisePart(
+      SESSION,
+      lessonPath,
+      bodyPath,
+      { id: "part_quiz", title: "Quiz" },
+      {
+        id: "ex_quiz",
+        type: "multiple-choice",
+        prompt: [],
+        options: [],
+        evaluation: { kind: "selected-options", correctOptionIds: [] },
+      },
+    );
+
+    expect(result).toEqual({ status: "saved" });
+    expect(JSON.parse(files.get(bodyPath) ?? "")).toEqual({
+      id: "ex_quiz",
+      type: "multiple-choice",
+      prompt: [],
+      options: [],
+      evaluation: { kind: "selected-options", correctOptionIds: [] },
+    });
+    const lesson: unknown = JSON.parse(files.get(lessonPath) ?? "");
+    expect(lesson).toEqual({
+      id: "l1",
+      title: "Intro",
+      parts: [
+        { id: "p1", title: "Intro text", content: { kind: "tiptap", file: "a.json" } },
+        {
+          id: "part_quiz",
+          title: "Quiz",
+          content: { kind: "exercise", file: "parts/part_quiz/exercise.json" },
+        },
+      ],
+    });
+  });
+
+  it("reorders parts, preserving each entry and unknown lesson keys", async () => {
+    const lessonPath = "lessons/intro/lesson.json";
+    const files = new Map([
+      [
+        lessonPath,
+        JSON.stringify({
+          id: "l1",
+          title: "Intro",
+          parts: [
+            { id: "p1", title: "One", content: { kind: "tiptap", file: "a.json" } },
+            { id: "p2", title: "Two", content: { kind: "exercise", file: "b.json" } },
+            { id: "p3", title: "Three", content: { kind: "tiptap", file: "c.json" } },
+          ],
+          legacy: { keep: true },
+        }),
+      ],
+    ]);
+    const writer = createLayoutProjectWriter(() => fileAccess(files));
+
+    const result = await writer.reorderParts(SESSION, lessonPath, ["p3", "p1", "p2"]);
+
+    expect(result).toEqual({ status: "saved" });
+    const written: unknown = JSON.parse(files.get(lessonPath) ?? "");
+    expect(written).toEqual({
+      id: "l1",
+      title: "Intro",
+      parts: [
+        { id: "p3", title: "Three", content: { kind: "tiptap", file: "c.json" } },
+        { id: "p1", title: "One", content: { kind: "tiptap", file: "a.json" } },
+        { id: "p2", title: "Two", content: { kind: "exercise", file: "b.json" } },
+      ],
+      legacy: { keep: true },
+    });
+  });
+
   it("deletes a part: unlinks it from the lesson and removes its body folder", async () => {
     const lessonPath = "lessons/intro/lesson.json";
     const bodyPath = "lessons/intro/parts/quiz/exercise.json";

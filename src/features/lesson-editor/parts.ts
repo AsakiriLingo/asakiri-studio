@@ -1,4 +1,4 @@
-import type { PartContent } from "@core/course";
+import type { ExerciseType, PartContent } from "@core/course";
 
 export type PartKind =
   | "rich-text"
@@ -9,6 +9,31 @@ export type PartKind =
   | "word-order"
   | "listen"
   | "speak";
+
+export const PART_KINDS: readonly PartKind[] = [
+  "rich-text",
+  "multiple-choice",
+  "select-image",
+  "match-pairs",
+  "fill-blank",
+  "word-order",
+  "listen",
+  "speak",
+];
+
+const EXERCISE_TYPE_BY_KIND: Record<Exclude<PartKind, "rich-text">, ExerciseType> = {
+  "multiple-choice": "multiple-choice",
+  "select-image": "select-image",
+  "match-pairs": "match-pairs",
+  "fill-blank": "fill-blank",
+  "word-order": "word-order",
+  listen: "listening",
+  speak: "speaking",
+};
+
+export function exerciseTypeForKind(kind: Exclude<PartKind, "rich-text">): ExerciseType {
+  return EXERCISE_TYPE_BY_KIND[kind];
+}
 
 export function partKind(content: PartContent): PartKind {
   if (content.kind === "tiptap" || content.kind === "composition") {

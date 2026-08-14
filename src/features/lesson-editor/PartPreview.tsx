@@ -1,6 +1,14 @@
-import type { ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import type { JSONContent } from "@tiptap/react";
-import type { Course, Part } from "@core/course";
+import type {
+  Asset,
+  BindingResolver,
+  ContentRecord,
+  Course,
+  Part,
+  ResolvedValue,
+} from "@core/course";
+import { createBindingResolver } from "@core/course";
 import { useMessages } from "@shared/i18n";
 import { Icon } from "@shared/components/icon";
 import { RichContent, type LoadAssetPreview } from "@shared/components/rich-editor";
@@ -46,66 +54,162 @@ function RichTextPreview({
   );
 }
 
-function MultipleChoicePreview() {
+function recordPreviewLabel(record: ContentRecord): string {
+  const text = Object.values(record.fields).find((value) => value.kind === "text");
+  return text?.kind === "text" ? text.value : record.id;
+}
+
+function resolvedText(resolved: ResolvedValue): string {
+  switch (resolved.kind) {
+    case "text":
+      return resolved.text;
+    case "asset":
+      return resolved.label ?? resolved.asset.label;
+    case "record":
+      return recordPreviewLabel(resolved.record);
+    case "list":
+      return resolved.items.map(resolvedText).join(" · ");
+    case "literal":
+      return typeof resolved.value === "string" ? resolved.value : JSON.stringify(resolved.value);
+    case "missing":
+      return "—";
+  }
+}
+
+function fragmentText(
+  fragment: { readonly binding: Parameters<BindingResolver["resolve"]>[0] } | undefined,
+  resolver: BindingResolver,
+): string {
+  return fragment ? resolvedText(resolver.resolve(fragment.binding)) : "";
+}
+
+function MultipleChoicePreview({ part, course }: { readonly part: Part; readonly course: Course }) {
+  const messages = useMessages();
+  if (part.content.kind !== "exercise" || part.content.exercise.type !== "multiple-choice") {
+    return null;
+  }
+  const exercise = part.content.exercise;
+  const resolver = createBindingResolver(course);
+  const prompt = fragmentText(exercise.prompt[0], resolver);
   return (
     <>
-      <p className={styles.muted}>Multiple choice</p>
-      <h2>Choose the meaning of 猫.</h2>
-      <button className={joinClassNames(styles.previewOption, styles.selected)} type="button">
-        Cat
-      </button>
-      <button className={styles.previewOption} type="button">
-        Dog
-      </button>
-      <button className={styles.previewOption} type="button">
-        Bird
-      </button>
+      <p className={styles.muted}>{messages.lesson.kind["multiple-choice"]}</p>
+      <h2>{prompt || part.title}</h2>
+      {exercise.options.length === 0 ? (
+        <p className={styles.exerciseHint}>{messages.lesson.previewNoOptions}</p>
+      ) : (
+        exercise.options.map((option, index) => {
+          const correct = exercise.evaluation.correctOptionIds.includes(option.id);
+          const label = fragmentText(option.body[0], resolver);
+          return (
+            <button
+              key={option.id}
+              className={joinClassNames(
+                styles.previewOption,
+                correct ? styles.selected : undefined,
+              )}
+              type="button"
+            >
+              {label || String.fromCharCode(65 + index)}
+            </button>
+          );
+        })
+      )}
     </>
   );
 }
 
-const IMAGE_CHOICES: readonly {
-  readonly file: string;
-  readonly label: string;
-  readonly sub: string;
-}[] = [
-  { file: "cat.png", label: "猫", sub: "neko" },
-  { file: "dog.png", label: "犬", sub: "inu" },
-  { file: "bird.png", label: "鳥", sub: "tori" },
-  { file: "fish.png", label: "魚", sub: "sakana" },
-];
+const thumbCache = new Map<string, Promise<string | null>>();
 
-function SelectImagePreview() {
+function useAssetThumb(asset: Asset | undefined, load: LoadAssetPreview): string | null {
+  const [loaded, setLoaded] = useState<{ readonly id: string; readonly url: string } | null>(null);
+  const loadRef = useRef(load);
+  useEffect(() => {
+    loadRef.current = load;
+  });
+
+  const previewable =
+    asset?.kind === "image" && asset.availability === "ready" && asset.file ? asset.id : null;
+
+  useEffect(() => {
+    if (!previewable) return;
+    let cancelled = false;
+    let promise = thumbCache.get(previewable);
+    if (!promise) {
+      promise = loadRef.current(previewable);
+      thumbCache.set(previewable, promise);
+    }
+    void promise.then((url) => {
+      if (!cancelled && url) setLoaded({ id: previewable, url });
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [previewable]);
+
+  return loaded?.id === previewable ? loaded.url : null;
+}
+
+function OptionThumb({
+  asset,
+  load,
+}: {
+  readonly asset: Asset | undefined;
+  readonly load: LoadAssetPreview;
+}) {
+  const url = useAssetThumb(asset, load);
+  return url ? (
+    <img className={styles.optionThumbImage} src={url} alt="" loading="lazy" decoding="async" />
+  ) : (
+    <Icon name="image" size={18} />
+  );
+}
+
+function SelectImagePreview({
+  part,
+  course,
+  onLoadAssetPreview,
+}: {
+  readonly part: Part;
+  readonly course: Course;
+  readonly onLoadAssetPreview: LoadAssetPreview;
+}) {
+  const messages = useMessages();
+  if (part.content.kind !== "exercise" || part.content.exercise.type !== "select-image") {
+    return null;
+  }
+  const exercise = part.content.exercise;
+  const resolver = createBindingResolver(course);
+  const prompt = fragmentText(exercise.prompt[0], resolver);
   return (
     <>
-      <p className={styles.muted}>New words</p>
-      <h2>Which one is 猫?</h2>
-      <button className={styles.speakButton} type="button">
-        <Icon name="audio" size={18} />
-        ねこ
-      </button>
-      <div className={styles.imageChoiceGrid}>
-        {IMAGE_CHOICES.map((choice, index) => (
-          <button
-            key={choice.file}
-            className={joinClassNames(
-              styles.imageChoice,
-              index === 0 ? styles.selected : undefined,
-            )}
-            type="button"
-          >
-            <span className={styles.imageThumb}>
-              <Icon name="image" size={18} />
-              <span className={styles.file}>{choice.file}</span>
-            </span>
-            <span className={styles.imageChoiceLabel}>{choice.label}</span>
-            <span className={styles.imageChoiceSub}>{choice.sub}</span>
-          </button>
-        ))}
-      </div>
-      <p className={styles.exerciseHint}>
-        The word under each image teaches its reading while the learner picks.
-      </p>
+      <p className={styles.muted}>{messages.lesson.kind["select-image"]}</p>
+      <h2>{prompt || part.title}</h2>
+      {exercise.options.length === 0 ? (
+        <p className={styles.exerciseHint}>{messages.lesson.previewNoOptions}</p>
+      ) : (
+        <div className={styles.imageChoiceGrid}>
+          {exercise.options.map((option) => {
+            const correct = exercise.evaluation.correctOptionIds.includes(option.id);
+            const resolved = option.body[0] ? resolver.resolve(option.body[0].binding) : null;
+            const asset = resolved?.kind === "asset" ? resolved.asset : undefined;
+            return (
+              <button
+                key={option.id}
+                className={joinClassNames(
+                  styles.imageChoice,
+                  correct ? styles.selected : undefined,
+                )}
+                type="button"
+              >
+                <span className={styles.imageThumb}>
+                  <OptionThumb asset={asset} load={onLoadAssetPreview} />
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      )}
     </>
   );
 }
@@ -292,9 +396,11 @@ function PreviewBody({
         <RichTextPreview part={part} course={course} onLoadAssetPreview={onLoadAssetPreview} />
       );
     case "select-image":
-      return <SelectImagePreview />;
+      return (
+        <SelectImagePreview part={part} course={course} onLoadAssetPreview={onLoadAssetPreview} />
+      );
     case "multiple-choice":
-      return <MultipleChoicePreview />;
+      return <MultipleChoicePreview part={part} course={course} />;
     case "match-pairs":
       return <MatchPreview />;
     case "fill-blank":

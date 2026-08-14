@@ -7,6 +7,7 @@ import type {
 } from "@core/course";
 import type { ProjectWriter, ProjectWriteResult } from "@core/project-writing";
 import type { ProjectSession } from "@core/projects";
+import { serializeExercise } from "@platform/project-writing/serialize-exercise";
 
 export interface ProjectFileAccess {
   readTextFile(relativePath: string): Promise<string>;
@@ -222,6 +223,23 @@ export function createLayoutProjectWriter(resolve: ResolveProjectFileAccess): Pr
       }
     },
 
+    async updatePartExercise(session, path, exercise): Promise<ProjectWriteResult> {
+      const files = resolve(session);
+      if (!files) {
+        return { status: "failed", code: "unavailable" };
+      }
+
+      try {
+        await files.writeTextFile(
+          path,
+          `${JSON.stringify(serializeExercise(exercise), null, 2)}\n`,
+        );
+        return { status: "saved" };
+      } catch {
+        return { status: "failed", code: "unknown" };
+      }
+    },
+
     async updatePartTitle(session, lessonPath, partId, title): Promise<ProjectWriteResult> {
       const files = resolve(session);
       if (!files) {
@@ -259,6 +277,102 @@ export function createLayoutProjectWriter(resolve: ResolveProjectFileAccess): Pr
         );
         await files.writeTextFile(lessonPath, `${JSON.stringify({ ...parsed, parts }, null, 2)}\n`);
         await files.removeDir(dirOf(bodyPath));
+        return { status: "saved" };
+      } catch {
+        return { status: "failed", code: "unknown" };
+      }
+    },
+
+    async createPart(session, lessonPath, bodyPath, part, document): Promise<ProjectWriteResult> {
+      const files = resolve(session);
+      if (!files) {
+        return { status: "failed", code: "unavailable" };
+      }
+
+      try {
+        await files.writeTextFile(bodyPath, `${JSON.stringify(document, null, 2)}\n`);
+        const parsed: unknown = JSON.parse(await files.readTextFile(lessonPath));
+        if (!isRecord(parsed)) {
+          return { status: "failed", code: "unknown" };
+        }
+        const existing = Array.isArray(parsed.parts) ? (parsed.parts as unknown[]) : [];
+        const entry = {
+          id: part.id,
+          title: part.title,
+          content: { kind: "tiptap", file: relativeFromDir(lessonPath, bodyPath) },
+        };
+        const next = { ...parsed, parts: [...existing, entry] };
+        await files.writeTextFile(lessonPath, `${JSON.stringify(next, null, 2)}\n`);
+        return { status: "saved" };
+      } catch {
+        return { status: "failed", code: "unknown" };
+      }
+    },
+
+    async createExercisePart(
+      session,
+      lessonPath,
+      bodyPath,
+      part,
+      exercise,
+    ): Promise<ProjectWriteResult> {
+      const files = resolve(session);
+      if (!files) {
+        return { status: "failed", code: "unavailable" };
+      }
+
+      try {
+        await files.writeTextFile(
+          bodyPath,
+          `${JSON.stringify(serializeExercise(exercise), null, 2)}\n`,
+        );
+        const parsed: unknown = JSON.parse(await files.readTextFile(lessonPath));
+        if (!isRecord(parsed)) {
+          return { status: "failed", code: "unknown" };
+        }
+        const existing = Array.isArray(parsed.parts) ? (parsed.parts as unknown[]) : [];
+        const entry = {
+          id: part.id,
+          title: part.title,
+          content: { kind: "exercise", file: relativeFromDir(lessonPath, bodyPath) },
+        };
+        const next = { ...parsed, parts: [...existing, entry] };
+        await files.writeTextFile(lessonPath, `${JSON.stringify(next, null, 2)}\n`);
+        return { status: "saved" };
+      } catch {
+        return { status: "failed", code: "unknown" };
+      }
+    },
+
+    async reorderParts(session, lessonPath, orderedPartIds): Promise<ProjectWriteResult> {
+      const files = resolve(session);
+      if (!files) {
+        return { status: "failed", code: "unavailable" };
+      }
+
+      try {
+        const parsed: unknown = JSON.parse(await files.readTextFile(lessonPath));
+        if (!isRecord(parsed) || !Array.isArray(parsed.parts)) {
+          return { status: "failed", code: "unknown" };
+        }
+        const parts = parsed.parts as unknown[];
+        const byId = new Map<string, unknown>();
+        for (const part of parts) {
+          if (isRecord(part) && typeof part.id === "string") byId.set(part.id, part);
+        }
+        const reordered = orderedPartIds
+          .map((id) => byId.get(id))
+          .filter((part) => part !== undefined);
+        const named = new Set(orderedPartIds);
+        for (const part of parts) {
+          if (isRecord(part) && typeof part.id === "string" && !named.has(part.id)) {
+            reordered.push(part);
+          }
+        }
+        await files.writeTextFile(
+          lessonPath,
+          `${JSON.stringify({ ...parsed, parts: reordered }, null, 2)}\n`,
+        );
         return { status: "saved" };
       } catch {
         return { status: "failed", code: "unknown" };

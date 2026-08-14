@@ -6,11 +6,13 @@ import type {
   Course,
   CourseProject,
   CourseSources,
+  Exercise,
   Lesson,
   OutlineSection,
+  Part,
   TiptapDocument,
 } from "@core/course";
-import { labelForFile, mediaTypeForFile, partSourceKey } from "@core/course";
+import { createDefaultExercise, labelForFile, mediaTypeForFile, partSourceKey } from "@core/course";
 import type { AvailableUpdate } from "@core/app-update";
 import type { PickedMediaFile } from "@core/project-media";
 import type { ProjectReadErrorCode } from "@core/project-reading";
@@ -27,7 +29,7 @@ import { CourseContent } from "@features/content";
 import { CourseMedia } from "@features/media";
 import { CourseAttribution } from "@features/attribution";
 import { CourseDetails } from "@features/course-details";
-import { LessonEditor } from "@features/lesson-editor";
+import { LessonEditor, exerciseTypeForKind, type PartKind } from "@features/lesson-editor";
 import { createAppServices } from "@app/services";
 import styles from "@app/App.module.css";
 
@@ -594,6 +596,47 @@ export function App() {
     return result;
   };
 
+  const savePartExercise = async (
+    lessonId: string,
+    partId: string,
+    exercise: Exercise,
+  ): Promise<ProjectWriteResult> => {
+    if (!project || courseState?.status !== "ready") {
+      return { status: "failed", code: "unavailable" };
+    }
+    const path = courseState.sources.parts[partSourceKey(lessonId, partId)];
+    if (path === undefined) {
+      return { status: "failed", code: "unavailable" };
+    }
+    const session = createProjectSession(project);
+    const result = await services.writer.updatePartExercise(session, path, exercise);
+    if (result.status === "saved") {
+      setCourseState((current) =>
+        current?.status === "ready"
+          ? {
+              ...current,
+              course: {
+                ...current.course,
+                lessons: current.course.lessons.map((lesson) =>
+                  lesson.id !== lessonId
+                    ? lesson
+                    : {
+                        ...lesson,
+                        parts: lesson.parts.map((part) =>
+                          part.id === partId && part.content.kind === "exercise"
+                            ? { ...part, content: { kind: "exercise", exercise } }
+                            : part,
+                        ),
+                      },
+                ),
+              },
+            }
+          : current,
+      );
+    }
+    return result;
+  };
+
   const renamePart = async (
     lessonId: string,
     partId: string,
@@ -663,6 +706,108 @@ export function App() {
                 parts: Object.fromEntries(
                   Object.entries(current.sources.parts).filter(([key]) => key !== partKey),
                 ),
+              },
+            }
+          : current,
+      );
+    }
+    return result;
+  };
+
+  const addPart = async (lessonId: string, kind: PartKind): Promise<string | null> => {
+    if (!project || courseState?.status !== "ready") {
+      return null;
+    }
+    const lessonPath = courseState.sources.lessons[lessonId];
+    const lesson = courseState.course.lessons.find((entry) => entry.id === lessonId);
+    if (lessonPath === undefined || !lesson) {
+      return null;
+    }
+    const partId = `part_${crypto.randomUUID()}`;
+    const lessonDir = lessonPath.split("/").slice(0, -1).join("/");
+    const title = messages.lesson.defaultPartTitle(lesson.parts.length + 1);
+    const session = createProjectSession(project);
+
+    let bodyPath: string;
+    let part: Part;
+    let result: ProjectWriteResult;
+    if (kind === "rich-text") {
+      bodyPath = `${lessonDir}/parts/${partId}/document.json`;
+      const document: TiptapDocument = { type: "doc", content: [{ type: "paragraph" }] };
+      part = { id: partId, title, content: { kind: "tiptap", document } };
+      result = await services.writer.createPart(
+        session,
+        lessonPath,
+        bodyPath,
+        { id: partId, title },
+        document,
+      );
+    } else {
+      bodyPath = `${lessonDir}/parts/${partId}/exercise.json`;
+      const exercise = createDefaultExercise(exerciseTypeForKind(kind));
+      part = { id: partId, title, content: { kind: "exercise", exercise } };
+      result = await services.writer.createExercisePart(
+        session,
+        lessonPath,
+        bodyPath,
+        { id: partId, title },
+        exercise,
+      );
+    }
+
+    if (result.status === "saved") {
+      setCourseState((current) =>
+        current?.status === "ready"
+          ? {
+              ...current,
+              course: {
+                ...current.course,
+                lessons: current.course.lessons.map((entry) =>
+                  entry.id !== lessonId ? entry : { ...entry, parts: [...entry.parts, part] },
+                ),
+              },
+              sources: {
+                ...current.sources,
+                parts: {
+                  ...current.sources.parts,
+                  [partSourceKey(lessonId, partId)]: bodyPath,
+                },
+              },
+            }
+          : current,
+      );
+    }
+    return result.status === "saved" ? partId : null;
+  };
+
+  const reorderParts = async (
+    lessonId: string,
+    orderedPartIds: readonly string[],
+  ): Promise<ProjectWriteResult> => {
+    if (!project || courseState?.status !== "ready") {
+      return { status: "failed", code: "unavailable" };
+    }
+    const lessonPath = courseState.sources.lessons[lessonId];
+    if (lessonPath === undefined) {
+      return { status: "failed", code: "unavailable" };
+    }
+    const session = createProjectSession(project);
+    const result = await services.writer.reorderParts(session, lessonPath, orderedPartIds);
+    if (result.status === "saved") {
+      setCourseState((current) =>
+        current?.status === "ready"
+          ? {
+              ...current,
+              course: {
+                ...current.course,
+                lessons: current.course.lessons.map((entry) => {
+                  if (entry.id !== lessonId) return entry;
+                  const byId = new Map(entry.parts.map((part) => [part.id, part]));
+                  const parts = orderedPartIds
+                    .map((id) => byId.get(id))
+                    .filter((part): part is Part => part !== undefined);
+                  return { ...entry, parts };
+                }),
               },
             }
           : current,
@@ -970,8 +1115,13 @@ export function App() {
               onSaveDocument={(partId, document) =>
                 savePartDocument(openLesson.id, partId, document)
               }
+              onSaveExercise={(partId, exercise) =>
+                savePartExercise(openLesson.id, partId, exercise)
+              }
               onRenamePart={(partId, title) => renamePart(openLesson.id, partId, title)}
               onDeletePart={(partId) => deletePart(openLesson.id, partId)}
+              onAddPart={(kind) => addPart(openLesson.id, kind)}
+              onReorderParts={(orderedIds) => reorderParts(openLesson.id, orderedIds)}
               onSaveRecord={saveRecord}
               onLoadAssetPreview={loadAssetPreview}
               onImportMedia={importAssetForField}

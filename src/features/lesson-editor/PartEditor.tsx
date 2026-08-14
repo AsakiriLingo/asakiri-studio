@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import type { JSONContent } from "@tiptap/react";
-import type { Asset, ContentRecord, Course, Part, TiptapDocument } from "@core/course";
+import type { Asset, ContentRecord, Course, Exercise, Part, TiptapDocument } from "@core/course";
 import type { ProjectWriteResult } from "@core/project-writing";
 import { useMessages } from "@shared/i18n";
 import { Button } from "@shared/components/button";
@@ -19,7 +19,8 @@ import {
 import { Select } from "@shared/components/select";
 import { Status } from "@shared/components/status";
 import { Tag } from "@shared/components/tag";
-import { partKind } from "@features/lesson-editor/parts";
+import { partKind, type PartKind } from "@features/lesson-editor/parts";
+import { MultipleChoiceEditor } from "@features/lesson-editor/exercise/MultipleChoiceEditor";
 import { courseToRichLibrary } from "@features/lesson-editor/rich-library";
 import styles from "@features/lesson-editor/LessonEditor.module.css";
 
@@ -253,68 +254,6 @@ function RichTextEditor({
   );
 }
 
-const MULTIPLE_CHOICE_OPTIONS: readonly OptionData[] = [
-  {
-    index: "A",
-    title: "Vocabulary / 猫",
-    mono: "option_cat",
-    values: ["猫", "Cat", "Japanese audio", "English audio", "Image"],
-    roleKind: "correct",
-    role: "correct",
-  },
-  {
-    index: "B",
-    title: "Vocabulary / 犬",
-    mono: "option_dog",
-    values: ["犬", "Dog"],
-    roleKind: "correct",
-    role: "distractor",
-  },
-  {
-    index: "C",
-    title: "Vocabulary / 鳥",
-    mono: "option_bird",
-    values: ["鳥", "Bird"],
-    roleKind: "correct",
-    role: "distractor",
-  },
-];
-
-const IMAGE_OPTIONS: readonly OptionData[] = [
-  {
-    index: "A",
-    title: "Vocabulary / 猫",
-    mono: "option_cat",
-    values: ["Image · cat.png", "猫", "Japanese audio"],
-    roleKind: "correct",
-    role: "correct",
-  },
-  {
-    index: "B",
-    title: "Vocabulary / 犬",
-    mono: "option_dog",
-    values: ["Image · dog.png", "犬"],
-    roleKind: "correct",
-    role: "distractor",
-  },
-  {
-    index: "C",
-    title: "Vocabulary / 鳥",
-    mono: "option_bird",
-    values: ["Image · bird.png", "鳥"],
-    roleKind: "correct",
-    role: "distractor",
-  },
-  {
-    index: "D",
-    title: "Vocabulary / 魚",
-    mono: "option_fish",
-    values: ["Image · fish.png", "魚"],
-    roleKind: "correct",
-    role: "distractor",
-  },
-];
-
 const FILL_BLANK_OPTIONS: readonly OptionData[] = [
   {
     index: "A",
@@ -360,34 +299,6 @@ const MATCH_PAIRS: readonly { readonly ja: string; readonly en: string }[] = [
   { ja: "鳥", en: "Bird" },
   { ja: "魚", en: "Fish" },
 ];
-
-function OptionEditor({
-  prompt,
-  help,
-  panelTitle,
-  panelDescription,
-  options,
-}: {
-  readonly prompt: string;
-  readonly help: string;
-  readonly panelTitle: string;
-  readonly panelDescription: string;
-  readonly options: readonly OptionData[];
-}) {
-  const messages = useMessages();
-  return (
-    <div className={styles.formGrid}>
-      <PromptField label={messages.lesson.prompt} value={prompt} help={help} />
-      <Panel title={panelTitle} description={panelDescription}>
-        <div className={styles.optionList}>
-          {options.map((option) => (
-            <OptionRow key={option.title} option={option} />
-          ))}
-        </div>
-      </Panel>
-    </div>
-  );
-}
 
 function MatchEditor() {
   const messages = useMessages();
@@ -609,6 +520,7 @@ function SpeakEditor() {
 function EditorBody({
   part,
   onPersist,
+  onPersistExercise,
   library,
   onSaveRecordPresentation,
   onLoadAssetPreview,
@@ -616,16 +528,16 @@ function EditorBody({
 }: {
   readonly part: Part;
   readonly onPersist?: ((document: JSONContent) => void) | undefined;
+  readonly onPersistExercise: (exercise: Exercise) => void;
   readonly library: RichEditorLibrary;
   readonly onSaveRecordPresentation: SaveRecordPresentation;
   readonly onLoadAssetPreview: LoadAssetPreview;
   readonly onImportMedia: ImportMedia;
 }) {
-  const messages = useMessages();
-  const t = messages.lesson;
   const kind = partKind(part.content);
   const isTiptap = part.content.kind === "tiptap";
   const initial = isTiptap ? (part.content.document as unknown as JSONContent) : undefined;
+  const exercise = part.content.kind === "exercise" ? part.content.exercise : undefined;
   switch (kind) {
     case "rich-text":
       // Only real tiptap parts persist; composition placeholders do not.
@@ -640,25 +552,18 @@ function EditorBody({
         />
       );
     case "select-image":
-      return (
-        <OptionEditor
-          prompt="Tap the picture for 猫."
-          help="Learners hear the Japanese audio, then choose the matching image. Introduces the word before it is tested."
-          panelTitle={t.exercise.imageOptionsTitle}
-          panelDescription={t.exercise.imageOptionsDesc}
-          options={IMAGE_OPTIONS}
+      return exercise?.type === "select-image" ? (
+        <MultipleChoiceEditor
+          exercise={exercise}
+          library={library}
+          onChange={onPersistExercise}
+          optionSource="asset"
         />
-      );
+      ) : null;
     case "multiple-choice":
-      return (
-        <OptionEditor
-          prompt="Choose the meaning of 猫."
-          help="The prompt references Vocabulary / 猫 / Japanese."
-          panelTitle={t.exercise.answerOptionsTitle}
-          panelDescription={t.exercise.answerOptionsDesc}
-          options={MULTIPLE_CHOICE_OPTIONS}
-        />
-      );
+      return exercise?.type === "multiple-choice" ? (
+        <MultipleChoiceEditor exercise={exercise} library={library} onChange={onPersistExercise} />
+      ) : null;
     case "match-pairs":
       return <MatchEditor />;
     case "fill-blank":
@@ -681,15 +586,19 @@ export interface PartEditorProps {
     partId: string,
     document: TiptapDocument,
   ) => Promise<ProjectWriteResult>;
+  readonly onSaveExercise: (partId: string, exercise: Exercise) => Promise<ProjectWriteResult>;
   readonly onSaveRecord: (record: ContentRecord) => Promise<ProjectWriteResult>;
   readonly onLoadAssetPreview: LoadAssetPreview;
   readonly onImportMedia: () => Promise<Asset | null>;
 }
 
+const REAL_EXERCISE_EDITORS = new Set<PartKind>(["multiple-choice", "select-image"]);
+
 export function PartEditor({
   part,
   course,
   onSaveDocument,
+  onSaveExercise,
   onSaveRecord,
   onLoadAssetPreview,
   onImportMedia,
@@ -700,6 +609,14 @@ export function PartEditor({
   const tabLabels =
     kind === "rich-text" ? [t.tabWrite, t.tabReferences] : [t.tabOptions, t.tabFeedback];
   const [saveState, setSaveState] = useState<SaveState>("idle");
+  const exerciseTimer = useRef<number | null>(null);
+
+  useEffect(
+    () => () => {
+      if (exerciseTimer.current !== null) window.clearTimeout(exerciseTimer.current);
+    },
+    [],
+  );
 
   const library = useMemo(() => courseToRichLibrary(course), [course]);
 
@@ -732,6 +649,16 @@ export function PartEditor({
     });
   };
 
+  const persistExercise = (exercise: Exercise) => {
+    setSaveState("saving");
+    if (exerciseTimer.current !== null) window.clearTimeout(exerciseTimer.current);
+    exerciseTimer.current = window.setTimeout(() => {
+      void onSaveExercise(part.id, exercise).then((result) => {
+        setSaveState(result.status === "saved" ? "saved" : "failed");
+      });
+    }, 700);
+  };
+
   const statusLabel =
     saveState === "saving"
       ? messages.common.saving
@@ -748,11 +675,12 @@ export function PartEditor({
         </span>
         <Status tone={saveState === "failed" ? "warning" : "default"}>{statusLabel}</Status>
       </div>
-      <Tabs labels={tabLabels} />
+      {REAL_EXERCISE_EDITORS.has(kind) ? null : <Tabs labels={tabLabels} />}
       <EditorBody
         key={part.id}
         part={part}
         onPersist={persist}
+        onPersistExercise={persistExercise}
         library={library}
         onSaveRecordPresentation={saveRecordPresentation}
         onLoadAssetPreview={onLoadAssetPreview}

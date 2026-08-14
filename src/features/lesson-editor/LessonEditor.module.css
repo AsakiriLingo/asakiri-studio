@@ -31,6 +31,11 @@
   background: var(--color-surface-subtle);
 }
 
+.orderedRow.dragging {
+  z-index: 1;
+  opacity: 0.6;
+}
+
 .orderedMain {
   display: block;
   min-width: 0;
@@ -135,6 +140,52 @@
 .formGrid {
   display: grid;
   gap: var(--space-5);
+}
+
+.fragmentGroup {
+  display: grid;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.fragmentLabel {
+  font-size: var(--font-size-200);
+  font-weight: var(--font-weight-bold);
+}
+
+.fragmentField {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.fragmentSource {
+  flex: 0 0 auto;
+}
+
+.fragmentField > :not(.fragmentSource) {
+  flex: 1 1 12rem;
+  min-width: 0;
+}
+
+.exerciseOption {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) 0;
+  border-bottom: var(--border-hairline) solid var(--color-border);
+}
+
+.exerciseOption:first-child {
+  border-top: var(--border-hairline) solid var(--color-border);
+}
+
+.optionRole {
+  flex: 0 0 auto;
+  min-width: 11rem;
 }
 
 /* Option / pair / token authoring */
@@ -408,6 +459,13 @@
   width: 1.75rem;
   height: 1.75rem;
   color: var(--color-brand);
+}
+
+.optionThumbImage {
+  width: 100%;
+  height: 100%;
+  border-radius: var(--radius-sm);
+  object-fit: cover;
 }
 
 .imageThumb .file {
@@ -697,6 +755,34 @@
 
 .barSpacer {
   flex: 1 1 auto;
+}
+
+.typeList {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.typeOption {
+  min-height: var(--control-height-md);
+  padding: var(--space-2) var(--space-3);
+  border: var(--border-hairline) solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-text);
+  text-align: start;
+  cursor: pointer;
+  transition: background-color var(--duration-normal) var(--ease-out);
+}
+
+.typeOption:focus-visible {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 2px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .typeOption:hover {
+    background: var(--color-surface-subtle);
+  }
 }
 
 @media (min-width: 64rem) {
