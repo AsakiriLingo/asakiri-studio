@@ -36,6 +36,10 @@ export function FillBlankEditor({ exercise, library, onChange }: FillBlankEditor
     onChange(next);
   };
 
+  const setPrompt = (fragment: RenderFragment) => {
+    update({ ...ex, prompt: [fragment, ...ex.prompt.slice(1)] });
+  };
+
   const bank = ex.bank ?? [];
 
   const commitSentence = (nextSentence: string) => {
@@ -110,6 +114,14 @@ export function FillBlankEditor({ exercise, library, onChange }: FillBlankEditor
 
   const optionsSection = (
     <div className={styles.formGrid}>
+      <FragmentField
+        label={t.prompt}
+        role="primary"
+        fragment={ex.prompt[0]}
+        library={library}
+        onChange={setPrompt}
+      />
+
       <Field label={te.sentenceLabel} help={te.sentenceHelp}>
         <TextArea
           value={sentence}

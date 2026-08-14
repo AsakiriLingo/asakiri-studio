@@ -273,10 +273,11 @@ function FillBlankPreview({ part, course }: { readonly part: Part; readonly cour
     const blank = exercise.evaluation.blanks.find((entry) => entry.blankId === blankId);
     return tileLabel(blank?.correctOptionIds?.[0]);
   };
+  const prompt = fragmentText(exercise.prompt[0], resolver);
   return (
     <>
       <p className={styles.muted}>{messages.lesson.kind["fill-blank"]}</p>
-      <h2>{fragmentText(exercise.prompt[0], resolver) || part.title}</h2>
+      {prompt ? <h2>{prompt}</h2> : null}
       {exercise.stem.length === 0 ? (
         <p className={styles.exerciseHint}>{messages.lesson.previewNoSentence}</p>
       ) : (
