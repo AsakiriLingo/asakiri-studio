@@ -382,6 +382,8 @@ export const enMessages = {
     previewNoOptions: "No options yet.",
     previewNoSentence: "No sentence yet.",
     previewNoPairs: "No pairs yet.",
+    speakPreviewMic: "Start speaking",
+    speakPreviewTap: "Tap the mic and say it out loud",
     editorModesAria: "Part editor modes",
     parts: (count: number) => (count === 1 ? "1 part" : `${String(count)} parts`),
     partHeading: (kind: string) => `${kind} part`,
@@ -446,11 +448,6 @@ export const enMessages = {
     answerModeHelp: "Tap chooses from a word bank; type checks free text.",
     answerModeTap: "Tap the word",
     answerModeType: "Type what you hear",
-    strictnessLabel: "Match strictness",
-    strictnessHelp: "How closely on-device recognition must match to pass.",
-    strictnessLenient: "Lenient (accept close attempts)",
-    strictnessStandard: "Standard",
-    strictnessStrict: "Strict (require accurate pronunciation)",
     settingSlowReplay: "Slow replay",
     settingSlowReplayDetail: "Offer a 0.5× playback button.",
     settingAllowSkip: "Allow skip",
@@ -522,6 +519,6 @@ export const enMessages = {
     },
     speakCalloutStrong: "Graded in the learner app.",
     speakCalloutBody:
-      "Speaking needs a microphone and on-device speech recognition, so recording and scoring can’t run here in Studio. This editor sets what learners say and how strictly it’s matched.",
+      "Speaking needs a microphone and on-device speech recognition, so recording and scoring can’t run here in Studio. This editor sets what learners say.",
   },
 };

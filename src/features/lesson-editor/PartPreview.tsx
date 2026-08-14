@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { JSONContent } from "@tiptap/react";
 import type {
   Asset,
@@ -20,15 +20,6 @@ import styles from "@features/lesson-editor/LessonEditor.module.css";
 
 function joinClassNames(...classNames: (string | undefined)[]) {
   return classNames.filter(Boolean).join(" ");
-}
-
-function SpeakButton({ children }: { readonly children: ReactNode }) {
-  return (
-    <button className={styles.speakButton} type="button">
-      <Icon name="audio" size={18} />
-      {children}
-    </button>
-  );
 }
 
 function RichTextPreview({
@@ -350,7 +341,6 @@ function ListenPreview({ part, course }: { readonly part: Part; readonly course:
   const exercise = part.content.exercise;
   const resolver = createBindingResolver(course);
   const prompt = fragmentText(exercise.prompt[0], resolver);
-  const stimulusLabel = fragmentText(exercise.stimulus, resolver);
   const options = exercise.options ?? [];
   return (
     <>
@@ -359,7 +349,6 @@ function ListenPreview({ part, course }: { readonly part: Part; readonly course:
       <button className={styles.audioPlay} type="button" aria-label={messages.common.play}>
         <Icon name="audio" size={18} />
       </button>
-      {stimulusLabel ? <p className={styles.muted}>{stimulusLabel}</p> : null}
       {exercise.answerMode === "type" ? (
         <p className={styles.exerciseHint}>{messages.lesson.answerModeType}</p>
       ) : options.length === 0 ? (
@@ -386,27 +375,38 @@ function ListenPreview({ part, course }: { readonly part: Part; readonly course:
   );
 }
 
-function SpeakPreview() {
+function SpeakPreview({ part, course }: { readonly part: Part; readonly course: Course }) {
+  const messages = useMessages();
+  if (part.content.kind !== "exercise" || part.content.exercise.type !== "speaking") {
+    return null;
+  }
+  const exercise = part.content.exercise;
+  const resolver = createBindingResolver(course);
+  const prompt = fragmentText(exercise.prompt[0], resolver);
+  const targetResolved = resolver.resolve(exercise.target.binding);
+  const targetIsAsset = targetResolved.kind === "asset";
   return (
     <>
-      <p className={styles.muted}>Speaking</p>
-      <h2>Say this word</h2>
+      <p className={styles.muted}>{messages.lesson.kind.speak}</p>
+      {prompt ? <h2>{prompt}</h2> : null}
       <div className={styles.speakTarget}>
-        <span className={styles.phrase}>猫</span>
-        <span className={styles.reading}>neko</span>
-        <SpeakButton>Hear it</SpeakButton>
+        {targetIsAsset ? (
+          <button className={styles.audioPlay} type="button" aria-label={messages.common.play}>
+            <Icon name="audio" size={18} />
+          </button>
+        ) : (
+          <span className={styles.phrase}>{resolvedText(targetResolved) || "…"}</span>
+        )}
       </div>
-      <button className={styles.micButton} type="button" aria-label="Start speaking">
+      <button
+        className={styles.micButton}
+        type="button"
+        aria-label={messages.lesson.speakPreviewMic}
+      >
         <Icon name="mic" size={18} />
       </button>
-      <p className={styles.micLabel}>Tap the mic and say it out loud</p>
-      <p className={styles.exerciseHint}>
-        Recording and pronunciation checking happen on the learner&rsquo;s device. Nothing is
-        uploaded, and it can&rsquo;t be tried from Studio.
-      </p>
-      <button className={styles.skipLink} type="button">
-        Can&rsquo;t speak right now
-      </button>
+      <p className={styles.micLabel}>{messages.lesson.speakPreviewTap}</p>
+      <p className={styles.exerciseHint}>{messages.lesson.speakCalloutBody}</p>
     </>
   );
 }
@@ -442,7 +442,7 @@ function PreviewBody({
     case "listen":
       return <ListenPreview part={part} course={course} />;
     case "speak":
-      return <SpeakPreview />;
+      return <SpeakPreview part={part} course={course} />;
   }
 }
 

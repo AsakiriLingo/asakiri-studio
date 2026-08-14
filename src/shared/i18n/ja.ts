@@ -383,6 +383,8 @@ export const jaMessages = {
     previewNoOptions: "選択肢がまだありません。",
     previewNoSentence: "文がまだありません。",
     previewNoPairs: "ペアがまだありません。",
+    speakPreviewMic: "話し始める",
+    speakPreviewTap: "マイクをタップして声に出して言う",
     editorModesAria: "パートエディターのモード",
     parts: (count: number) => `${String(count)}パート`,
     partHeading: (kind: string) => `${kind}パート`,
@@ -447,11 +449,6 @@ export const jaMessages = {
     answerModeHelp: "タップは語群から選び、入力は自由記述を判定します。",
     answerModeTap: "語をタップ",
     answerModeType: "聞こえたとおりに入力",
-    strictnessLabel: "判定の厳しさ",
-    strictnessHelp: "合格とするために端末側の認識がどれだけ一致すべきか。",
-    strictnessLenient: "ゆるい（近い発話も受け入れる）",
-    strictnessStandard: "標準",
-    strictnessStrict: "厳しい（正確な発音を求める）",
     settingSlowReplay: "ゆっくり再生",
     settingSlowReplayDetail: "0.5× 再生ボタンを表示します。",
     settingAllowSkip: "スキップを許可",
@@ -523,6 +520,6 @@ export const jaMessages = {
     },
     speakCalloutStrong: "学習者アプリで採点されます。",
     speakCalloutBody:
-      "スピーキングにはマイクと端末側の音声認識が必要なため、録音と採点はここスタジオでは実行できません。このエディターでは、学習者が何を話すか、どれだけ厳しく判定するかを設定します。",
+      "スピーキングにはマイクと端末側の音声認識が必要なため、録音と採点はここスタジオでは実行できません。このエディターでは学習者が何を話すかを設定します。",
   },
 } satisfies StudioMessages;

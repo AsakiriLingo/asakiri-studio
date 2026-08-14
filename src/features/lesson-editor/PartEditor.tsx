@@ -1,11 +1,8 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { JSONContent } from "@tiptap/react";
 import type { Asset, ContentRecord, Course, Exercise, Part, TiptapDocument } from "@core/course";
 import type { ProjectWriteResult } from "@core/project-writing";
 import { useMessages } from "@shared/i18n";
-import { Field, TextArea } from "@shared/components/form";
-import { Icon } from "@shared/components/icon";
-import { PanelHeader } from "@shared/components/panel";
 import {
   RichEditor,
   type EditorAsset,
@@ -15,21 +12,16 @@ import {
   type RichEditorLibrary,
   type SaveRecordPresentation,
 } from "@shared/components/rich-editor";
-import { Select } from "@shared/components/select";
 import { Status } from "@shared/components/status";
-import { Tag } from "@shared/components/tag";
 import { partKind, type PartKind } from "@features/lesson-editor/parts";
 import { FillBlankEditor } from "@features/lesson-editor/exercise/FillBlankEditor";
 import { ListeningEditor } from "@features/lesson-editor/exercise/ListeningEditor";
 import { MatchPairsEditor } from "@features/lesson-editor/exercise/MatchPairsEditor";
 import { MultipleChoiceEditor } from "@features/lesson-editor/exercise/MultipleChoiceEditor";
+import { SpeakingEditor } from "@features/lesson-editor/exercise/SpeakingEditor";
 import { WordOrderEditor } from "@features/lesson-editor/exercise/WordOrderEditor";
 import { courseToRichLibrary } from "@features/lesson-editor/rich-library";
 import styles from "@features/lesson-editor/LessonEditor.module.css";
-
-function joinClassNames(...classNames: (string | undefined)[]) {
-  return classNames.filter(Boolean).join(" ");
-}
 
 function Tabs({ labels }: { readonly labels: readonly string[] }) {
   const messages = useMessages();
@@ -50,119 +42,6 @@ function Tabs({ labels }: { readonly labels: readonly string[] }) {
           {label}
         </button>
       ))}
-    </div>
-  );
-}
-
-function PromptField({
-  label,
-  value,
-  help,
-}: {
-  readonly label: string;
-  readonly value: string;
-  readonly help: string;
-}) {
-  return (
-    <Field label={label} help={help}>
-      <TextArea defaultValue={value} rows={2} />
-    </Field>
-  );
-}
-
-// Example content only; roleKind selects which localized role options to show.
-interface OptionData {
-  readonly index: ReactNode;
-  readonly title: string;
-  readonly mono?: string;
-  readonly detail?: string;
-  readonly values: readonly string[];
-  readonly roleKind?: "correct" | "answer";
-  readonly role?: string;
-  readonly trailing?: ReactNode;
-}
-
-function OptionRow({ option }: { readonly option: OptionData }) {
-  const messages = useMessages();
-  const t = messages.lesson;
-  const roleItems =
-    option.roleKind === "answer"
-      ? [
-          { value: "answer", label: t.roleAnswer },
-          { value: "distractor", label: t.roleDistractor },
-        ]
-      : [
-          { value: "correct", label: t.roleCorrect },
-          { value: "distractor", label: t.roleDistractor },
-        ];
-  return (
-    <div className={styles.optionRow}>
-      <span className={styles.optionIndex}>{option.index}</span>
-      <span>
-        <span className={styles.rowTitle}>{option.title}</span>
-        {option.mono === undefined ? null : (
-          <span className={joinClassNames(styles.rowDetail, styles.mono)}>{option.mono}</span>
-        )}
-        {option.detail === undefined ? null : (
-          <span className={styles.rowDetail}>{option.detail}</span>
-        )}
-        {option.values.length === 0 ? null : (
-          <span className={styles.optionValues}>
-            {option.values.map((value) => (
-              <Tag key={value}>{value}</Tag>
-            ))}
-          </span>
-        )}
-      </span>
-      {option.roleKind === undefined ? (
-        option.trailing
-      ) : (
-        <Select
-          className={styles.roleSelect}
-          aria-label={t.roleFor(option.title)}
-          items={roleItems}
-          defaultValue={option.role}
-        />
-      )}
-    </div>
-  );
-}
-
-function SpeakButton({ children }: { readonly children: ReactNode }) {
-  return (
-    <button className={styles.speakButton} type="button">
-      <Icon name="audio" size={18} />
-      {children}
-    </button>
-  );
-}
-
-function Panel({
-  title,
-  description,
-  children,
-}: {
-  readonly title: string;
-  readonly description: string;
-  readonly children: ReactNode;
-}) {
-  return (
-    <div>
-      <PanelHeader title={title} description={description} />
-      {children}
-    </div>
-  );
-}
-
-function SettingRow({ name, detail }: { readonly name: string; readonly detail: string }) {
-  const messages = useMessages();
-  return (
-    <div className={styles.settingRow}>
-      <span>
-        <span className={styles.settingName}>{name}</span>
-        <span className={styles.settingDetail}>{detail}</span>
-      </span>
-      <Tag variant="accent">{messages.common.on}</Tag>
     </div>
   );
 }
@@ -257,59 +136,6 @@ function RichTextEditor({
   );
 }
 
-function SpeakEditor() {
-  const messages = useMessages();
-  const t = messages.lesson;
-  return (
-    <>
-      <div className={styles.callout}>
-        <Icon name="mic" size={18} />
-        <span>
-          <strong>{t.speakCalloutStrong}</strong>
-          <br />
-          {t.speakCalloutBody}
-        </span>
-      </div>
-      <div className={styles.formGrid}>
-        <PromptField
-          label={t.prompt}
-          value="Say this word in Japanese."
-          help="Shown above the phrase while the learner speaks."
-        />
-        <Panel title={t.exercise.phraseTitle} description={t.exercise.phraseDesc}>
-          <div className={styles.optionList}>
-            <OptionRow
-              option={{
-                index: <Icon name="mic" size={18} />,
-                title: "Vocabulary / 猫",
-                detail: "Target · reads “neko”",
-                values: ["猫", "neko", "Model audio · neko-ja.mp3"],
-                trailing: <SpeakButton>{messages.common.play}</SpeakButton>,
-              }}
-            />
-          </div>
-        </Panel>
-        <Field label={t.strictnessLabel} help={t.strictnessHelp}>
-          <Select
-            name="strictness"
-            defaultValue="standard"
-            aria-label={t.strictnessLabel}
-            items={[
-              { value: "lenient", label: t.strictnessLenient },
-              { value: "standard", label: t.strictnessStandard },
-              { value: "strict", label: t.strictnessStrict },
-            ]}
-          />
-        </Field>
-        <div className={styles.settingGroup}>
-          <SettingRow name={t.settingShowRomaji} detail={t.settingShowRomajiDetail} />
-          <SettingRow name={t.settingAllowSkip} detail={t.settingAllowSkipMicDetail} />
-        </div>
-      </div>
-    </>
-  );
-}
-
 function EditorBody({
   part,
   onPersist,
@@ -374,7 +200,9 @@ function EditorBody({
         <ListeningEditor exercise={exercise} library={library} onChange={onPersistExercise} />
       ) : null;
     case "speak":
-      return <SpeakEditor />;
+      return exercise?.type === "speaking" ? (
+        <SpeakingEditor exercise={exercise} library={library} onChange={onPersistExercise} />
+      ) : null;
   }
 }
 
@@ -400,6 +228,7 @@ const REAL_EXERCISE_EDITORS = new Set<PartKind>([
   "fill-blank",
   "match-pairs",
   "listen",
+  "speak",
 ]);
 
 export function PartEditor({
