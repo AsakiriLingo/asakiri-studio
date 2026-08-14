@@ -57,6 +57,13 @@ export const enMessages = {
     installRestart: "Install & restart",
   },
 
+  support: {
+    message: "Asakiri is free and open source. Support us on Patreon.",
+    action: "Support on Patreon",
+    later: "Later",
+    dismiss: "Don't show again",
+  },
+
   newCourse: {
     title: "Create a course",
     description: "Name the project, then choose where its folder should be created.",

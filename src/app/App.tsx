@@ -46,6 +46,12 @@ function initialLocale(): Locale {
   return navigator.language.toLowerCase().startsWith("ja") ? "ja" : "en";
 }
 
+const PATREON_URL = "https://www.patreon.com/asakiri";
+
+function initialSupportHidden(): boolean {
+  return localStorage.getItem("asakiri-support-dismissed") === "true";
+}
+
 type View = "start" | "new-course" | "workspace";
 
 type CourseState =
@@ -64,6 +70,7 @@ export function App() {
   const [courseState, setCourseState] = useState<CourseState | null>(null);
   const [update, setUpdate] = useState<AvailableUpdate | null>(null);
   const [updateInstalling, setUpdateInstalling] = useState(false);
+  const [supportHidden, setSupportHidden] = useState(initialSupportHidden);
 
   const messages = getMessages(locale);
 
@@ -113,6 +120,19 @@ export function App() {
       cancelled = true;
     };
   }, [project, services]);
+
+  const openPatreon = () => {
+    void services.links.open(PATREON_URL);
+  };
+
+  const dismissSupportLater = () => {
+    setSupportHidden(true);
+  };
+
+  const dismissSupportForever = () => {
+    localStorage.setItem("asakiri-support-dismissed", "true");
+    setSupportHidden(true);
+  };
 
   const toggleTheme = () => {
     setIsDark((value) => !value);
@@ -1060,9 +1080,13 @@ export function App() {
           isDark={isDark}
           update={update}
           updateInstalling={updateInstalling}
+          showSupport={!supportHidden}
           onInstallUpdate={() => {
             void installUpdate();
           }}
+          onSupport={openPatreon}
+          onSupportLater={dismissSupportLater}
+          onSupportDismiss={dismissSupportForever}
           onNewCourse={() => {
             setView("new-course");
           }}

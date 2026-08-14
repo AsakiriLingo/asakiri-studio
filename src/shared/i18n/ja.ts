@@ -60,6 +60,13 @@ export const jaMessages = {
     installRestart: "インストールして再起動",
   },
 
+  support: {
+    message: "Asakiriは無料のオープンソースです。Patreonでご支援ください。",
+    action: "Patreonで支援する",
+    later: "後で",
+    dismiss: "今後表示しない",
+  },
+
   newCourse: {
     title: "コースを作成",
     description: "プロジェクトに名前をつけ、フォルダを作成する場所を選びます。",

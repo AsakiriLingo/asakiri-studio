@@ -9,7 +9,11 @@ interface StartScreenProps {
   readonly isDark: boolean;
   readonly update: AvailableUpdate | null;
   readonly updateInstalling: boolean;
+  readonly showSupport: boolean;
   readonly onInstallUpdate: () => void;
+  readonly onSupport: () => void;
+  readonly onSupportLater: () => void;
+  readonly onSupportDismiss: () => void;
   readonly onNewCourse: () => void;
   readonly onOpenCourse: () => void;
   readonly onToggleTheme: () => void;
@@ -20,7 +24,11 @@ export function StartScreen({
   isDark,
   update,
   updateInstalling,
+  showSupport,
   onInstallUpdate,
+  onSupport,
+  onSupportLater,
+  onSupportDismiss,
   onNewCourse,
   onOpenCourse,
   onToggleTheme,
@@ -91,6 +99,24 @@ export function StartScreen({
           </button>
         </div>
       </div>
+      {showSupport ? (
+        <div className={styles.support} role="complementary" aria-label={messages.support.message}>
+          <span className={styles.supportIcon} aria-hidden="true">
+            <Icon name="heart" size={18} />
+          </span>
+          <p className={styles.supportMessage}>{messages.support.message}</p>
+          <button type="button" className={styles.supportAction} onClick={onSupport}>
+            {messages.support.action}
+            <Icon name="external" size={16} />
+          </button>
+          <button type="button" className={styles.supportLater} onClick={onSupportLater}>
+            {messages.support.later}
+          </button>
+          <button type="button" className={styles.supportDismiss} onClick={onSupportDismiss}>
+            {messages.support.dismiss}
+          </button>
+        </div>
+      ) : null}
     </main>
   );
 }

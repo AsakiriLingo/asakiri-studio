@@ -1,4 +1,5 @@
 import type { AppUpdateGateway } from "@core/app-update";
+import type { LinkOpener } from "@core/links";
 import type { MediaSearchGateway } from "@core/media-search";
 import type { AssetReader, MediaPicker } from "@core/project-media";
 import type { ProjectCreationGateway, ProjectDirectoryGateway } from "@core/projects";
@@ -6,6 +7,7 @@ import type { ProjectReader } from "@core/project-reading";
 import type { ProjectSystem } from "@core/project-system";
 import type { ProjectWriter } from "@core/project-writing";
 import { createAppUpdateGateway } from "@platform/app-update";
+import { createLinkOpener } from "@platform/links";
 import { createProjectCreationGateway } from "@platform/project-creation";
 import { createProjectDirectoryGateway } from "@platform/project-directory";
 import { createAssetReader, createMediaPicker } from "@platform/project-media";
@@ -25,6 +27,7 @@ export interface AppServices {
   readonly assetReader: AssetReader;
   readonly mediaSearch: MediaSearchGateway;
   readonly appUpdate: AppUpdateGateway;
+  readonly links: LinkOpener;
 }
 
 /**
@@ -44,5 +47,6 @@ export function createAppServices(): AppServices {
     assetReader: createAssetReader(locations),
     mediaSearch: createTauriMediaSearchGateway(),
     appUpdate: createAppUpdateGateway(),
+    links: createLinkOpener(),
   };
 }
