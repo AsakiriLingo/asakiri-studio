@@ -3,7 +3,7 @@ import type { TiptapDocument } from "@core/course/document";
 import type { Exercise } from "@core/course/exercise";
 
 export type PartContent =
-  | { readonly kind: "tiptap"; readonly document: TiptapDocument }
+  | { readonly kind: "tiptap"; readonly title?: string; readonly document: TiptapDocument }
   | { readonly kind: "composition"; readonly composition: Composition }
   | { readonly kind: "exercise"; readonly exercise: Exercise };
 

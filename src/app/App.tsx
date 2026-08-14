@@ -637,6 +637,54 @@ export function App() {
     return result;
   };
 
+  const savePartContentTitle = async (
+    lessonId: string,
+    partId: string,
+    title: string,
+  ): Promise<ProjectWriteResult> => {
+    if (!project || courseState?.status !== "ready") {
+      return { status: "failed", code: "unavailable" };
+    }
+    const lessonPath = courseState.sources.lessons[lessonId];
+    if (lessonPath === undefined) {
+      return { status: "failed", code: "unavailable" };
+    }
+    const session = createProjectSession(project);
+    const result = await services.writer.updatePartContentTitle(session, lessonPath, partId, title);
+    if (result.status === "saved") {
+      setCourseState((current) =>
+        current?.status === "ready"
+          ? {
+              ...current,
+              course: {
+                ...current.course,
+                lessons: current.course.lessons.map((lesson) =>
+                  lesson.id !== lessonId
+                    ? lesson
+                    : {
+                        ...lesson,
+                        parts: lesson.parts.map((part) =>
+                          part.id === partId && part.content.kind === "tiptap"
+                            ? {
+                                ...part,
+                                content: {
+                                  kind: "tiptap",
+                                  document: part.content.document,
+                                  ...(title === "" ? {} : { title }),
+                                },
+                              }
+                            : part,
+                        ),
+                      },
+                ),
+              },
+            }
+          : current,
+      );
+    }
+    return result;
+  };
+
   const renamePart = async (
     lessonId: string,
     partId: string,
@@ -1117,6 +1165,9 @@ export function App() {
               }
               onSaveExercise={(partId, exercise) =>
                 savePartExercise(openLesson.id, partId, exercise)
+              }
+              onSaveContentTitle={(partId, title) =>
+                savePartContentTitle(openLesson.id, partId, title)
               }
               onRenamePart={(partId, title) => renamePart(openLesson.id, partId, title)}
               onDeletePart={(partId) => deletePart(openLesson.id, partId)}

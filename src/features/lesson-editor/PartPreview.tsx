@@ -34,9 +34,10 @@ function RichTextPreview({
   if (part.content.kind !== "tiptap") {
     return <p className={styles.exerciseHint}>This part has no rich-text content to preview.</p>;
   }
+  const heading = part.content.title ?? part.title;
   return (
     <>
-      <h2>{part.title}</h2>
+      {heading ? <h2>{heading}</h2> : null}
       <RichContent
         value={part.content.document as unknown as JSONContent}
         library={courseToRichLibrary(course)}

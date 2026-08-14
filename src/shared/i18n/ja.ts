@@ -428,6 +428,9 @@ export const jaMessages = {
       pickAsset: "アセットを選ぶ",
     },
     richTextAria: "リッチテキストパートの内容",
+    contentTitleLabel: "タイトル",
+    contentTitleHelp: "内容の上に表示される任意の見出し。パート名とは別です。",
+    contentTitlePlaceholder: "無題",
     slash: {
       title: "挿入",
       empty: "一致するものがありません",

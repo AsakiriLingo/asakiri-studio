@@ -3,6 +3,7 @@ import type { JSONContent } from "@tiptap/react";
 import type { Asset, ContentRecord, Course, Exercise, Part, TiptapDocument } from "@core/course";
 import type { ProjectWriteResult } from "@core/project-writing";
 import { useMessages } from "@shared/i18n";
+import { Field, TextInput } from "@shared/components/form";
 import {
   RichEditor,
   type EditorAsset,
@@ -89,14 +90,18 @@ const RICH_TEXT_SEED: JSONContent = {
 
 function RichTextEditor({
   initial,
+  initialTitle,
   onPersist,
+  onTitleChange,
   library,
   onSaveRecordPresentation,
   onLoadAssetPreview,
   onImportMedia,
 }: {
   readonly initial?: JSONContent | undefined;
+  readonly initialTitle?: string | undefined;
   readonly onPersist?: ((document: JSONContent) => void) | undefined;
+  readonly onTitleChange?: ((title: string) => void) | undefined;
   readonly library: RichEditorLibrary;
   readonly onSaveRecordPresentation: SaveRecordPresentation;
   readonly onLoadAssetPreview: LoadAssetPreview;
@@ -104,6 +109,7 @@ function RichTextEditor({
 }) {
   const messages = useMessages();
   const [document, setDocument] = useState<JSONContent>(initial ?? RICH_TEXT_SEED);
+  const [title, setTitle] = useState(initialTitle ?? "");
   const timer = useRef<number | null>(null);
 
   useEffect(
@@ -124,15 +130,30 @@ function RichTextEditor({
   };
 
   return (
-    <RichEditor
-      value={document}
-      onChange={handleChange}
-      ariaLabel={messages.lesson.richTextAria}
-      library={library}
-      onSaveRecordPresentation={onSaveRecordPresentation}
-      onLoadAssetPreview={onLoadAssetPreview}
-      onImportMedia={onImportMedia}
-    />
+    <div className={styles.formGrid}>
+      {onTitleChange ? (
+        <Field label={messages.lesson.contentTitleLabel} help={messages.lesson.contentTitleHelp}>
+          <TextInput
+            value={title}
+            placeholder={messages.lesson.contentTitlePlaceholder}
+            autoComplete="off"
+            onChange={(event) => {
+              setTitle(event.currentTarget.value);
+              onTitleChange(event.currentTarget.value);
+            }}
+          />
+        </Field>
+      ) : null}
+      <RichEditor
+        value={document}
+        onChange={handleChange}
+        ariaLabel={messages.lesson.richTextAria}
+        library={library}
+        onSaveRecordPresentation={onSaveRecordPresentation}
+        onLoadAssetPreview={onLoadAssetPreview}
+        onImportMedia={onImportMedia}
+      />
+    </div>
   );
 }
 
@@ -140,6 +161,7 @@ function EditorBody({
   part,
   onPersist,
   onPersistExercise,
+  onPersistContentTitle,
   library,
   onSaveRecordPresentation,
   onLoadAssetPreview,
@@ -148,6 +170,7 @@ function EditorBody({
   readonly part: Part;
   readonly onPersist?: ((document: JSONContent) => void) | undefined;
   readonly onPersistExercise: (exercise: Exercise) => void;
+  readonly onPersistContentTitle: (title: string) => void;
   readonly library: RichEditorLibrary;
   readonly onSaveRecordPresentation: SaveRecordPresentation;
   readonly onLoadAssetPreview: LoadAssetPreview;
@@ -156,6 +179,7 @@ function EditorBody({
   const kind = partKind(part.content);
   const isTiptap = part.content.kind === "tiptap";
   const initial = isTiptap ? (part.content.document as unknown as JSONContent) : undefined;
+  const initialTitle = part.content.kind === "tiptap" ? part.content.title : undefined;
   const exercise = part.content.kind === "exercise" ? part.content.exercise : undefined;
   switch (kind) {
     case "rich-text":
@@ -163,7 +187,9 @@ function EditorBody({
       return (
         <RichTextEditor
           initial={initial}
+          initialTitle={initialTitle}
           onPersist={isTiptap ? onPersist : undefined}
+          onTitleChange={isTiptap ? onPersistContentTitle : undefined}
           library={library}
           onSaveRecordPresentation={onSaveRecordPresentation}
           onLoadAssetPreview={onLoadAssetPreview}
@@ -216,6 +242,7 @@ export interface PartEditorProps {
     document: TiptapDocument,
   ) => Promise<ProjectWriteResult>;
   readonly onSaveExercise: (partId: string, exercise: Exercise) => Promise<ProjectWriteResult>;
+  readonly onSaveContentTitle: (partId: string, title: string) => Promise<ProjectWriteResult>;
   readonly onSaveRecord: (record: ContentRecord) => Promise<ProjectWriteResult>;
   readonly onLoadAssetPreview: LoadAssetPreview;
   readonly onImportMedia: () => Promise<Asset | null>;
@@ -236,6 +263,7 @@ export function PartEditor({
   course,
   onSaveDocument,
   onSaveExercise,
+  onSaveContentTitle,
   onSaveRecord,
   onLoadAssetPreview,
   onImportMedia,
@@ -247,9 +275,11 @@ export function PartEditor({
     kind === "rich-text" ? [t.tabWrite, t.tabReferences] : [t.tabOptions, t.tabFeedback];
   const [saveState, setSaveState] = useState<SaveState>("idle");
   const exerciseTimer = useRef<number | null>(null);
+  const titleTimer = useRef<number | null>(null);
 
   useEffect(
     () => () => {
+      if (titleTimer.current !== null) window.clearTimeout(titleTimer.current);
       if (exerciseTimer.current !== null) window.clearTimeout(exerciseTimer.current);
     },
     [],
@@ -296,6 +326,16 @@ export function PartEditor({
     }, 700);
   };
 
+  const persistContentTitle = (title: string) => {
+    setSaveState("saving");
+    if (titleTimer.current !== null) window.clearTimeout(titleTimer.current);
+    titleTimer.current = window.setTimeout(() => {
+      void onSaveContentTitle(part.id, title).then((result) => {
+        setSaveState(result.status === "saved" ? "saved" : "failed");
+      });
+    }, 700);
+  };
+
   const statusLabel =
     saveState === "saving"
       ? messages.common.saving
@@ -318,6 +358,7 @@ export function PartEditor({
         part={part}
         onPersist={persist}
         onPersistExercise={persistExercise}
+        onPersistContentTitle={persistContentTitle}
         library={library}
         onSaveRecordPresentation={saveRecordPresentation}
         onLoadAssetPreview={onLoadAssetPreview}

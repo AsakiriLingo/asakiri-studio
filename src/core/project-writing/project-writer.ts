@@ -50,6 +50,12 @@ export interface ProjectWriter {
     path: string,
     exercise: Exercise,
   ): Promise<ProjectWriteResult>;
+  updatePartContentTitle(
+    session: ProjectSession,
+    lessonPath: string,
+    partId: string,
+    title: string,
+  ): Promise<ProjectWriteResult>;
   updatePartTitle(
     session: ProjectSession,
     lessonPath: string,

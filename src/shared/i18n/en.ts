@@ -427,6 +427,9 @@ export const enMessages = {
       pickAsset: "Choose an asset",
     },
     richTextAria: "Rich text part content",
+    contentTitleLabel: "Title",
+    contentTitleHelp: "Optional heading shown above the content. Separate from the part name.",
+    contentTitlePlaceholder: "Untitled",
     slash: {
       title: "Insert",
       empty: "No matches",

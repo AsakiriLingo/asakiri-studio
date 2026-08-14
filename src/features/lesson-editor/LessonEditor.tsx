@@ -141,6 +141,7 @@ export interface LessonEditorProps {
     document: TiptapDocument,
   ) => Promise<ProjectWriteResult>;
   readonly onSaveExercise: (partId: string, exercise: Exercise) => Promise<ProjectWriteResult>;
+  readonly onSaveContentTitle: (partId: string, title: string) => Promise<ProjectWriteResult>;
   readonly onRenamePart: (partId: string, title: string) => Promise<ProjectWriteResult>;
   readonly onDeletePart: (partId: string) => Promise<ProjectWriteResult>;
   readonly onAddPart: (kind: PartKind) => Promise<string | null>;
@@ -156,6 +157,7 @@ export function LessonEditor({
   onBackToStructure,
   onSaveDocument,
   onSaveExercise,
+  onSaveContentTitle,
   onRenamePart,
   onDeletePart,
   onAddPart,
@@ -313,6 +315,7 @@ export function LessonEditor({
             course={course}
             onSaveDocument={onSaveDocument}
             onSaveExercise={onSaveExercise}
+            onSaveContentTitle={onSaveContentTitle}
             onSaveRecord={onSaveRecord}
             onLoadAssetPreview={onLoadAssetPreview}
             onImportMedia={onImportMedia}

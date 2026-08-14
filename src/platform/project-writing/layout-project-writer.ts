@@ -240,6 +240,32 @@ export function createLayoutProjectWriter(resolve: ResolveProjectFileAccess): Pr
       }
     },
 
+    async updatePartContentTitle(session, lessonPath, partId, title): Promise<ProjectWriteResult> {
+      const files = resolve(session);
+      if (!files) {
+        return { status: "failed", code: "unavailable" };
+      }
+
+      try {
+        const parsed: unknown = JSON.parse(await files.readTextFile(lessonPath));
+        if (!isRecord(parsed) || !Array.isArray(parsed.parts)) {
+          return { status: "failed", code: "unknown" };
+        }
+        const parts = (parsed.parts as unknown[]).map((part) => {
+          if (!isRecord(part) || part.id !== partId || !isRecord(part.content)) return part;
+          const rest = Object.fromEntries(
+            Object.entries(part.content).filter(([key]) => key !== "title"),
+          );
+          const content = title === "" ? rest : { ...rest, title };
+          return { ...part, content };
+        });
+        await files.writeTextFile(lessonPath, `${JSON.stringify({ ...parsed, parts }, null, 2)}\n`);
+        return { status: "saved" };
+      } catch {
+        return { status: "failed", code: "unknown" };
+      }
+    },
+
     async updatePartTitle(session, lessonPath, partId, title): Promise<ProjectWriteResult> {
       const files = resolve(session);
       if (!files) {

@@ -647,9 +647,18 @@ function parseOutline(value: unknown, context: string): OutlineSection[] {
   });
 }
 
-function parsePartContent(kind: string, body: unknown, context: string): PartContent {
+function parsePartContent(
+  kind: string,
+  body: unknown,
+  context: string,
+  title: string | undefined,
+): PartContent {
   if (kind === "tiptap") {
-    return { kind, document: parseTiptapDocument(body, context) };
+    return {
+      kind,
+      document: parseTiptapDocument(body, context),
+      ...(title !== undefined ? { title } : {}),
+    };
   }
   if (kind === "composition") {
     return { kind, composition: parseComposition(body, context) };
@@ -672,11 +681,12 @@ async function parsePart(
   const contentKind = str(content.kind, `${context}.content.kind`);
   const bodyPath = resolvePath(lessonPath, str(content.file, `${context}.content.file`));
   const body = await readJson(files, bodyPath);
+  const contentTitle = typeof content.title === "string" ? content.title : undefined;
   return {
     part: {
       id: str(data.id, `${context}.id`),
       title: str(data.title, `${context}.title`),
-      content: parsePartContent(contentKind, body, bodyPath),
+      content: parsePartContent(contentKind, body, bodyPath, contentTitle),
     },
     bodyPath,
   };

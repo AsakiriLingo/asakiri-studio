@@ -306,6 +306,43 @@ describe("layout project writer", () => {
     });
   });
 
+  it("sets and clears a part's content title in its lesson file", async () => {
+    const lessonPath = "lessons/intro/lesson.json";
+    const files = new Map([
+      [
+        lessonPath,
+        JSON.stringify({
+          id: "l1",
+          title: "Intro",
+          parts: [{ id: "p1", title: "Section", content: { kind: "tiptap", file: "a.json" } }],
+        }),
+      ],
+    ]);
+    const writer = createLayoutProjectWriter(() => fileAccess(files));
+
+    const set = await writer.updatePartContentTitle(SESSION, lessonPath, "p1", "First words");
+    expect(set).toEqual({ status: "saved" });
+    expect(JSON.parse(files.get(lessonPath) ?? "")).toEqual({
+      id: "l1",
+      title: "Intro",
+      parts: [
+        {
+          id: "p1",
+          title: "Section",
+          content: { kind: "tiptap", file: "a.json", title: "First words" },
+        },
+      ],
+    });
+
+    const cleared = await writer.updatePartContentTitle(SESSION, lessonPath, "p1", "");
+    expect(cleared).toEqual({ status: "saved" });
+    expect(JSON.parse(files.get(lessonPath) ?? "")).toEqual({
+      id: "l1",
+      title: "Intro",
+      parts: [{ id: "p1", title: "Section", content: { kind: "tiptap", file: "a.json" } }],
+    });
+  });
+
   it("renames a part, preserving its content body and sibling parts", async () => {
     const lessonPath = "lessons/intro/lesson.json";
     const files = new Map([
