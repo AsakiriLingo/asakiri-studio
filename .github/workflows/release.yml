@@ -1,4 +1,4 @@
-name: Release (macOS)
+name: Release
 
 on:
   workflow_dispatch:
@@ -7,10 +7,24 @@ on:
       - "v*"
 
 jobs:
-  macos:
-    runs-on: macos-latest
+  release:
     permissions:
       contents: write
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix:
+        include:
+          - platform: macos-latest
+            args: --target universal-apple-darwin
+            rust-targets: aarch64-apple-darwin,x86_64-apple-darwin
+          - platform: ubuntu-22.04
+            args: ""
+            rust-targets: ""
+          - platform: windows-latest
+            args: ""
+            rust-targets: ""
+    runs-on: ${{ matrix.platform }}
     steps:
       - uses: actions/checkout@v4
 
@@ -28,24 +42,39 @@ jobs:
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
-          targets: aarch64-apple-darwin,x86_64-apple-darwin
+          targets: ${{ matrix.rust-targets }}
 
       - name: Cache Rust build
         uses: swatinem/rust-cache@v2
         with:
           workspaces: src-tauri
 
+      - name: Install Linux dependencies
+        if: matrix.platform == 'ubuntu-22.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            libgtk-3-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev \
+            libxdo-dev \
+            libssl-dev \
+            patchelf \
+            file
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
       - name: Write notarization API key
+        if: matrix.platform == 'macos-latest'
         run: |
           printf '%s' "$APPLE_API_KEY_BASE64" | base64 --decode > "$RUNNER_TEMP/apple-api-key.p8"
           echo "APPLE_API_KEY_PATH=$RUNNER_TEMP/apple-api-key.p8" >> "$GITHUB_ENV"
         env:
           APPLE_API_KEY_BASE64: ${{ secrets.APPLE_API_KEY_BASE64 }}
 
-      - name: Build, sign, notarize, and publish
+      - name: Build, sign, and publish
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -58,10 +87,10 @@ jobs:
           APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
         with:
           tauriScript: pnpm tauri
-          args: --target universal-apple-darwin
+          args: ${{ matrix.args }}
           tagName: v__VERSION__
           releaseName: "Asakiri Studio v__VERSION__"
-          releaseBody: "Download the .dmg to install, or let an existing install update itself."
+          releaseBody: "Download the installer for your platform, or let an existing install update itself."
           releaseDraft: true
           prerelease: false
           includeUpdaterJson: true
