@@ -373,6 +373,13 @@ export const jaMessages = {
     editorModesAria: "パートエディターのモード",
     parts: (count: number) => `${String(count)}パート`,
     partHeading: (kind: string) => `${kind}パート`,
+    partSettings: (title: string) => `${title}の設定`,
+    partSettingsLabel: "パート設定",
+    partTitleLabel: "パート名",
+    deletePart: "パートを削除",
+    confirmDeletePartTitle: "このパートを削除しますか？",
+    confirmDeletePartBody: (title: string) =>
+      `${title}が完全に削除されます。この操作は取り消せません。`,
     roleFor: (title: string) => `${title}の役割`,
     kind: {
       "rich-text": "リッチテキスト",

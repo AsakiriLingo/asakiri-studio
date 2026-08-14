@@ -372,6 +372,13 @@ export const enMessages = {
     editorModesAria: "Part editor modes",
     parts: (count: number) => (count === 1 ? "1 part" : `${String(count)} parts`),
     partHeading: (kind: string) => `${kind} part`,
+    partSettings: (title: string) => `Settings for ${title}`,
+    partSettingsLabel: "Part settings",
+    partTitleLabel: "Part title",
+    deletePart: "Delete part",
+    confirmDeletePartTitle: "Delete this part?",
+    confirmDeletePartBody: (title: string) =>
+      `${title} will be permanently deleted. This cannot be undone.`,
     roleFor: (title: string) => `Role for ${title}`,
     kind: {
       "rich-text": "Rich text",

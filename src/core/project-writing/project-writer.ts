@@ -44,6 +44,18 @@ export interface ProjectWriter {
     path: string,
     document: TiptapDocument,
   ): Promise<ProjectWriteResult>;
+  updatePartTitle(
+    session: ProjectSession,
+    lessonPath: string,
+    partId: string,
+    title: string,
+  ): Promise<ProjectWriteResult>;
+  deletePart(
+    session: ProjectSession,
+    lessonPath: string,
+    partId: string,
+    bodyPath: string,
+  ): Promise<ProjectWriteResult>;
   createLesson(
     session: ProjectSession,
     lessonPath: string,

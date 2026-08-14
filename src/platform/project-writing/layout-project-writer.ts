@@ -222,6 +222,49 @@ export function createLayoutProjectWriter(resolve: ResolveProjectFileAccess): Pr
       }
     },
 
+    async updatePartTitle(session, lessonPath, partId, title): Promise<ProjectWriteResult> {
+      const files = resolve(session);
+      if (!files) {
+        return { status: "failed", code: "unavailable" };
+      }
+
+      try {
+        const parsed: unknown = JSON.parse(await files.readTextFile(lessonPath));
+        if (!isRecord(parsed) || !Array.isArray(parsed.parts)) {
+          return { status: "failed", code: "unknown" };
+        }
+        const parts = (parsed.parts as unknown[]).map((part) =>
+          isRecord(part) && part.id === partId ? { ...part, title } : part,
+        );
+        await files.writeTextFile(lessonPath, `${JSON.stringify({ ...parsed, parts }, null, 2)}\n`);
+        return { status: "saved" };
+      } catch {
+        return { status: "failed", code: "unknown" };
+      }
+    },
+
+    async deletePart(session, lessonPath, partId, bodyPath): Promise<ProjectWriteResult> {
+      const files = resolve(session);
+      if (!files) {
+        return { status: "failed", code: "unavailable" };
+      }
+
+      try {
+        const parsed: unknown = JSON.parse(await files.readTextFile(lessonPath));
+        if (!isRecord(parsed) || !Array.isArray(parsed.parts)) {
+          return { status: "failed", code: "unknown" };
+        }
+        const parts = (parsed.parts as unknown[]).filter(
+          (part) => !(isRecord(part) && part.id === partId),
+        );
+        await files.writeTextFile(lessonPath, `${JSON.stringify({ ...parsed, parts }, null, 2)}\n`);
+        await files.removeDir(dirOf(bodyPath));
+        return { status: "saved" };
+      } catch {
+        return { status: "failed", code: "unknown" };
+      }
+    },
+
     async createLesson(session, lessonPath, lesson, outline): Promise<ProjectWriteResult> {
       const files = resolve(session);
       if (!files) {

@@ -571,6 +571,83 @@ export function App() {
     return result;
   };
 
+  const renamePart = async (
+    lessonId: string,
+    partId: string,
+    title: string,
+  ): Promise<ProjectWriteResult> => {
+    if (!project || courseState?.status !== "ready") {
+      return { status: "failed", code: "unavailable" };
+    }
+    const lessonPath = courseState.sources.lessons[lessonId];
+    if (lessonPath === undefined) {
+      return { status: "failed", code: "unavailable" };
+    }
+    const session = createProjectSession(project);
+    const result = await services.writer.updatePartTitle(session, lessonPath, partId, title);
+    if (result.status === "saved") {
+      setCourseState((current) =>
+        current?.status === "ready"
+          ? {
+              ...current,
+              course: {
+                ...current.course,
+                lessons: current.course.lessons.map((lesson) =>
+                  lesson.id !== lessonId
+                    ? lesson
+                    : {
+                        ...lesson,
+                        parts: lesson.parts.map((part) =>
+                          part.id === partId ? { ...part, title } : part,
+                        ),
+                      },
+                ),
+              },
+            }
+          : current,
+      );
+    }
+    return result;
+  };
+
+  const deletePart = async (lessonId: string, partId: string): Promise<ProjectWriteResult> => {
+    if (!project || courseState?.status !== "ready") {
+      return { status: "failed", code: "unavailable" };
+    }
+    const lessonPath = courseState.sources.lessons[lessonId];
+    const bodyPath = courseState.sources.parts[partSourceKey(lessonId, partId)];
+    if (lessonPath === undefined || bodyPath === undefined) {
+      return { status: "failed", code: "unavailable" };
+    }
+    const session = createProjectSession(project);
+    const result = await services.writer.deletePart(session, lessonPath, partId, bodyPath);
+    if (result.status === "saved") {
+      const partKey = partSourceKey(lessonId, partId);
+      setCourseState((current) =>
+        current?.status === "ready"
+          ? {
+              ...current,
+              course: {
+                ...current.course,
+                lessons: current.course.lessons.map((lesson) =>
+                  lesson.id !== lessonId
+                    ? lesson
+                    : { ...lesson, parts: lesson.parts.filter((part) => part.id !== partId) },
+                ),
+              },
+              sources: {
+                ...current.sources,
+                parts: Object.fromEntries(
+                  Object.entries(current.sources.parts).filter(([key]) => key !== partKey),
+                ),
+              },
+            }
+          : current,
+      );
+    }
+    return result;
+  };
+
   const importPickedMedia = async (
     picked: readonly PickedMediaFile[],
     metadata?: Readonly<Record<string, unknown>>,
@@ -865,6 +942,8 @@ export function App() {
               onSaveDocument={(partId, document) =>
                 savePartDocument(openLesson.id, partId, document)
               }
+              onRenamePart={(partId, title) => renamePart(openLesson.id, partId, title)}
+              onDeletePart={(partId) => deletePart(openLesson.id, partId)}
               onSaveRecord={saveRecord}
               onLoadAssetPreview={loadAssetPreview}
               onImportMedia={importAssetForField}

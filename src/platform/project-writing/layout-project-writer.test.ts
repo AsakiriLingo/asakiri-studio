@@ -306,6 +306,80 @@ describe("layout project writer", () => {
     });
   });
 
+  it("renames a part, preserving its content body and sibling parts", async () => {
+    const lessonPath = "lessons/intro/lesson.json";
+    const files = new Map([
+      [
+        lessonPath,
+        JSON.stringify({
+          id: "l1",
+          title: "Intro",
+          parts: [
+            { id: "p1", title: "Warm up", content: { kind: "tiptap", file: "a.json" } },
+            { id: "p2", title: "Quiz", content: { kind: "exercise", file: "b.json" } },
+          ],
+          legacy: { keep: true },
+        }),
+      ],
+    ]);
+    const writer = createLayoutProjectWriter(() => fileAccess(files));
+
+    const result = await writer.updatePartTitle(SESSION, lessonPath, "p2", "Check yourself");
+
+    expect(result).toEqual({ status: "saved" });
+    const written: unknown = JSON.parse(files.get(lessonPath) ?? "");
+    expect(written).toEqual({
+      id: "l1",
+      title: "Intro",
+      parts: [
+        { id: "p1", title: "Warm up", content: { kind: "tiptap", file: "a.json" } },
+        { id: "p2", title: "Check yourself", content: { kind: "exercise", file: "b.json" } },
+      ],
+      legacy: { keep: true },
+    });
+  });
+
+  it("deletes a part: unlinks it from the lesson and removes its body folder", async () => {
+    const lessonPath = "lessons/intro/lesson.json";
+    const bodyPath = "lessons/intro/parts/quiz/exercise.json";
+    const files = new Map([
+      [
+        lessonPath,
+        JSON.stringify({
+          id: "l1",
+          title: "Intro",
+          parts: [
+            { id: "p1", title: "Warm up", content: { kind: "tiptap", file: "parts/warm/a.json" } },
+            {
+              id: "p2",
+              title: "Quiz",
+              content: { kind: "exercise", file: "parts/quiz/exercise.json" },
+            },
+          ],
+          legacy: { keep: true },
+        }),
+      ],
+      ["lessons/intro/parts/warm/a.json", JSON.stringify({ type: "doc", content: [] })],
+      [bodyPath, JSON.stringify({ id: "ex_1", type: "match-pairs" })],
+    ]);
+    const writer = createLayoutProjectWriter(() => fileAccess(files));
+
+    const result = await writer.deletePart(SESSION, lessonPath, "p2", bodyPath);
+
+    expect(result).toEqual({ status: "saved" });
+    expect(files.has(bodyPath)).toBe(false);
+    expect(files.has("lessons/intro/parts/warm/a.json")).toBe(true);
+    const written: unknown = JSON.parse(files.get(lessonPath) ?? "");
+    expect(written).toEqual({
+      id: "l1",
+      title: "Intro",
+      parts: [
+        { id: "p1", title: "Warm up", content: { kind: "tiptap", file: "parts/warm/a.json" } },
+      ],
+      legacy: { keep: true },
+    });
+  });
+
   it("deletes a lesson: unlinks the manifest, rewrites the outline, removes its folder", async () => {
     const lessonPath = "lessons/intro/lesson.json";
     const files = new Map([
