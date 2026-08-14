@@ -21,6 +21,7 @@ import { Status } from "@shared/components/status";
 import { Tag } from "@shared/components/tag";
 import { partKind, type PartKind } from "@features/lesson-editor/parts";
 import { MultipleChoiceEditor } from "@features/lesson-editor/exercise/MultipleChoiceEditor";
+import { WordOrderEditor } from "@features/lesson-editor/exercise/WordOrderEditor";
 import { courseToRichLibrary } from "@features/lesson-editor/rich-library";
 import styles from "@features/lesson-editor/LessonEditor.module.css";
 
@@ -369,42 +370,6 @@ function FillBlankEditor() {
   );
 }
 
-function WordOrderEditor() {
-  const messages = useMessages();
-  const t = messages.lesson;
-  return (
-    <div className={styles.formGrid}>
-      <PromptField
-        label={t.prompt}
-        value={'Build this sentence: "This is a cat."'}
-        help="Learners tap the word tiles in the correct order to build the answer."
-      />
-      <Panel title={t.exercise.answerOrderTitle} description={t.exercise.answerOrderDesc}>
-        <div className={styles.tokenList}>
-          {["これ", "は", "猫", "です"].map((token, index) => (
-            <span key={token} className={styles.token}>
-              <span className={joinClassNames(styles.orderIndex, styles.mono)}>
-                {String(index + 1)}
-              </span>
-              {token}
-            </span>
-          ))}
-        </div>
-      </Panel>
-      <Panel title={t.exercise.distractorTilesTitle} description={t.exercise.distractorTilesDesc}>
-        <div className={styles.tokenList}>
-          <span className={styles.token}>犬</span>
-          <span className={styles.token}>か</span>
-          <Button variant="ghost">
-            <Icon name="plus" size={18} />
-            {t.addTile}
-          </Button>
-        </div>
-      </Panel>
-    </div>
-  );
-}
-
 function ListenEditor() {
   const messages = useMessages();
   const t = messages.lesson;
@@ -569,7 +534,9 @@ function EditorBody({
     case "fill-blank":
       return <FillBlankEditor />;
     case "word-order":
-      return <WordOrderEditor />;
+      return exercise?.type === "word-order" ? (
+        <WordOrderEditor exercise={exercise} library={library} onChange={onPersistExercise} />
+      ) : null;
     case "listen":
       return <ListenEditor />;
     case "speak":
@@ -592,7 +559,7 @@ export interface PartEditorProps {
   readonly onImportMedia: () => Promise<Asset | null>;
 }
 
-const REAL_EXERCISE_EDITORS = new Set<PartKind>(["multiple-choice", "select-image"]);
+const REAL_EXERCISE_EDITORS = new Set<PartKind>(["multiple-choice", "select-image", "word-order"]);
 
 export function PartEditor({
   part,

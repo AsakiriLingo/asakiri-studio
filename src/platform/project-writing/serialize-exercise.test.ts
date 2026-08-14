@@ -129,6 +129,56 @@ describe("serializeExercise", () => {
     expect(roundTrip(exercise)).toEqual(exercise);
   });
 
+  it("round-trips a word-order exercise with tokens and distractors", () => {
+    const exercise: Exercise = {
+      id: "ex_wo",
+      type: "word-order",
+      prompt: [
+        {
+          id: "p1",
+          role: "primary",
+          binding: { kind: "literal", value: { type: "text", text: "Build the sentence." } },
+        },
+      ],
+      tokens: [
+        {
+          id: "tok_a",
+          body: [
+            {
+              id: "t1",
+              role: "primary",
+              binding: { kind: "literal", value: { type: "text", text: "これ" } },
+            },
+          ],
+        },
+        {
+          id: "tok_b",
+          body: [
+            {
+              id: "t2",
+              role: "primary",
+              binding: { kind: "field", recordId: "rec_cat", fieldId: "ja" },
+            },
+          ],
+        },
+      ],
+      distractors: [
+        {
+          id: "dis_a",
+          body: [
+            {
+              id: "d1",
+              role: "primary",
+              binding: { kind: "literal", value: { type: "text", text: "犬" } },
+            },
+          ],
+        },
+      ],
+      evaluation: { kind: "ordered-tokens", correctOrder: ["tok_a", "tok_b"] },
+    };
+    expect(roundTrip(exercise)).toEqual(exercise);
+  });
+
   it("round-trips a listening exercise with a typed answer", () => {
     const exercise: Exercise = {
       id: "ex_listen",

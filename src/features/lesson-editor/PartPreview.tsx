@@ -284,37 +284,39 @@ function FillBlankPreview() {
   );
 }
 
-function WordOrderPreview() {
+function WordOrderPreview({ part, course }: { readonly part: Part; readonly course: Course }) {
+  const messages = useMessages();
+  if (part.content.kind !== "exercise" || part.content.exercise.type !== "word-order") {
+    return null;
+  }
+  const exercise = part.content.exercise;
+  const resolver = createBindingResolver(course);
+  const prompt = fragmentText(exercise.prompt[0], resolver);
+  const bank = [...exercise.tokens, ...(exercise.distractors ?? [])];
   return (
     <>
-      <p className={styles.muted}>Build the sentence</p>
-      <h2>This is a cat.</h2>
-      <div className={styles.sentenceBuild}>
-        <div className={styles.answerTrack}>
-          <span className={styles.token}>これ</span>
-          <span className={styles.token}>は</span>
-          <span className={styles.token}>猫</span>
+      <p className={styles.muted}>{messages.lesson.kind["word-order"]}</p>
+      <h2>{prompt || part.title}</h2>
+      {exercise.tokens.length === 0 ? (
+        <p className={styles.exerciseHint}>{messages.lesson.previewNoOptions}</p>
+      ) : (
+        <div className={styles.sentenceBuild}>
+          <div className={styles.answerTrack}>
+            {exercise.tokens.map((token) => (
+              <span key={token.id} className={styles.token}>
+                {fragmentText(token.body[0], resolver) || "—"}
+              </span>
+            ))}
+          </div>
+          <div className={styles.wordBank}>
+            {bank.map((token) => (
+              <button key={token.id} className={styles.wordChip} type="button">
+                {fragmentText(token.body[0], resolver) || "—"}
+              </button>
+            ))}
+          </div>
         </div>
-        <div className={styles.wordBank}>
-          {["これ", "は", "猫"].map((token) => (
-            <button
-              key={token}
-              className={joinClassNames(styles.wordChip, styles.used)}
-              type="button"
-            >
-              {token}
-            </button>
-          ))}
-          {["です", "犬", "か"].map((token) => (
-            <button key={token} className={styles.wordChip} type="button">
-              {token}
-            </button>
-          ))}
-        </div>
-      </div>
-      <p className={styles.exerciseHint}>
-        Three tiles placed, one to go. Used tiles are greyed in the bank.
-      </p>
+      )}
     </>
   );
 }
@@ -406,7 +408,7 @@ function PreviewBody({
     case "fill-blank":
       return <FillBlankPreview />;
     case "word-order":
-      return <WordOrderPreview />;
+      return <WordOrderPreview part={part} course={course} />;
     case "listen":
       return <ListenPreview />;
     case "speak":
