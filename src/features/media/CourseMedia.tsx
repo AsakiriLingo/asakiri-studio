@@ -3,6 +3,7 @@ import { Menu } from "@base-ui/react/menu";
 import type { Asset, ContentRecord, Course } from "@core/course";
 import type { AudioSearchResult, ImageSearchResult, SearchPage } from "@core/media-search";
 import type { ProjectWriteResult } from "@core/project-writing";
+import type { TtsVoice } from "@core/tts";
 import { useMessages, type StudioMessages } from "@shared/i18n";
 import { Button } from "@shared/components/button";
 import { useConfirm } from "@shared/components/confirm-dialog";
@@ -13,6 +14,7 @@ import { PanelHeader } from "@shared/components/panel";
 import { Status } from "@shared/components/status";
 import { WorkHeader, WorkInner } from "@shared/components/work-surface";
 import { MediaSearchDialog, type MediaSearchMode } from "@features/media/MediaSearchDialog";
+import { TtsDialog } from "@features/media/TtsDialog";
 import styles from "@features/media/CourseMedia.module.css";
 
 const PAGE_SIZE = 24;
@@ -64,6 +66,12 @@ export interface CourseMediaProps {
     metadata: Readonly<Record<string, unknown>>,
   ) => Promise<ProjectWriteResult | null>;
   readonly onRenameAsset: (assetId: string, name: string) => Promise<ProjectWriteResult>;
+  readonly onListTtsVoices: () => Promise<readonly TtsVoice[]>;
+  readonly onAddTtsAudio: (
+    text: string,
+    voice: string,
+    fileName: string,
+  ) => Promise<ProjectWriteResult | null>;
 }
 
 export function CourseMedia({
@@ -75,6 +83,8 @@ export function CourseMedia({
   onSearchAudio,
   onAddRemoteMedia,
   onRenameAsset,
+  onListTtsVoices,
+  onAddTtsAudio,
 }: CourseMediaProps) {
   const messages = useMessages();
   const t = messages.media;
@@ -88,6 +98,7 @@ export function CourseMedia({
   const [playingId, setPlayingId] = useState<string | null>(null);
   const [previews, setPreviews] = useState<Record<string, string>>({});
   const [searchMode, setSearchMode] = useState<MediaSearchMode | null>(null);
+  const [showTts, setShowTts] = useState(false);
   const [renameTarget, setRenameTarget] = useState<Asset | null>(null);
   const [renameValue, setRenameValue] = useState("");
 
@@ -262,6 +273,15 @@ export function CourseMedia({
                     <Icon name="audio" size={18} />
                     {t.searchTatoebaAudio}
                   </Menu.Item>
+                  <Menu.Item
+                    className={styles.menuItem}
+                    onClick={() => {
+                      setShowTts(true);
+                    }}
+                  >
+                    <Icon name="mic" size={18} />
+                    {t.addTts}
+                  </Menu.Item>
                 </Menu.Popup>
               </Menu.Positioner>
             </Menu.Portal>
@@ -347,6 +367,21 @@ export function CourseMedia({
           onSearchImages={onSearchImages}
           onSearchAudio={onSearchAudio}
           onAddRemoteMedia={onAddRemoteMedia}
+        />
+      ) : null}
+
+      {showTts ? (
+        <TtsDialog
+          onClose={() => {
+            setShowTts(false);
+          }}
+          onListVoices={onListTtsVoices}
+          onAddTtsAudio={(text, voice, fileName) =>
+            onAddTtsAudio(text, voice, fileName).then((result) => {
+              if (result) setSaveState(result.status === "saved" ? "saved" : "failed");
+              return result;
+            })
+          }
         />
       ) : null}
 

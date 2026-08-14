@@ -20,6 +20,7 @@ export interface SelectProps {
   readonly placeholder?: string | undefined;
   readonly "aria-label"?: string | undefined;
   readonly className?: string | undefined;
+  readonly elevated?: boolean | undefined;
 }
 
 export function Select({
@@ -31,6 +32,7 @@ export function Select({
   placeholder,
   "aria-label": ariaLabel,
   className,
+  elevated,
 }: SelectProps) {
   return (
     <BaseSelect.Root
@@ -56,7 +58,10 @@ export function Select({
         </BaseSelect.Icon>
       </BaseSelect.Trigger>
       <BaseSelect.Portal>
-        <BaseSelect.Positioner className={styles.positioner} sideOffset={4}>
+        <BaseSelect.Positioner
+          className={joinClassNames(styles.positioner, elevated ? styles.elevated : undefined)}
+          sideOffset={4}
+        >
           <BaseSelect.Popup className={styles.popup}>
             {items.map((item) => (
               <BaseSelect.Item key={item.value} className={styles.item} value={item.value}>

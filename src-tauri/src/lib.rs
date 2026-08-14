@@ -1,5 +1,6 @@
 mod course;
 mod media;
+mod tts;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -27,7 +28,9 @@ pub fn run() {
             course::reveal_path,
             course::git_status,
             media::http_get_text,
-            media::download_media_file
+            media::download_media_file,
+            tts::list_tts_voices,
+            tts::synthesize_tts
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

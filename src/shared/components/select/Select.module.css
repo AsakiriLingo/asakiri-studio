@@ -47,6 +47,10 @@
   outline: 0;
 }
 
+.positioner.elevated {
+  z-index: var(--z-tooltip);
+}
+
 .popup {
   max-height: var(--available-height);
   overflow-y: auto;

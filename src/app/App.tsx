@@ -976,6 +976,20 @@ export function App() {
     return allOk ? { status: "saved" } : { status: "failed", code: "unknown" };
   };
 
+  const addTtsAudio = async (
+    text: string,
+    voice: string,
+    fileName: string,
+  ): Promise<ProjectWriteResult | null> => {
+    if (!project || courseState?.status !== "ready") {
+      return { status: "failed", code: "unavailable" };
+    }
+    const picked = await services.tts.synthesizeToTemp(text, voice, fileName);
+    if (!picked) return { status: "failed", code: "unknown" };
+    const { allOk } = await importPickedMedia([picked]);
+    return allOk ? { status: "saved" } : { status: "failed", code: "unknown" };
+  };
+
   const saveAttribution = async (markdown: string): Promise<ProjectWriteResult> => {
     if (!project) {
       return { status: "failed", code: "unavailable" };
@@ -1171,6 +1185,8 @@ export function App() {
               onSearchAudio={(query, page) => services.mediaSearch.searchAudio(query, page)}
               onAddRemoteMedia={addRemoteMedia}
               onRenameAsset={renameAsset}
+              onListTtsVoices={() => services.tts.listVoices()}
+              onAddTtsAudio={addTtsAudio}
             />
           ) : section === "attribution" ? (
             <CourseAttribution course={course} onSaveAttribution={saveAttribution} />
