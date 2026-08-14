@@ -1127,11 +1127,8 @@ export function App() {
         projectName={projectName}
         projectLocation={projectLocation}
         active={section}
-        isDark={isDark}
         onNavigate={navigate}
         onBack={goToStart}
-        onToggleTheme={toggleTheme}
-        onToggleLocale={toggleLocale}
       >
         {courseState?.status === "loading" ? (
           <WorkspaceMessage

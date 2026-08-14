@@ -17,11 +17,8 @@ export interface WorkspaceShellProps {
   readonly projectName: string;
   readonly projectLocation: string;
   readonly active: WorkspaceSection;
-  readonly isDark: boolean;
   readonly onNavigate: (section: WorkspaceSection) => void;
   readonly onBack: () => void;
-  readonly onToggleTheme: () => void;
-  readonly onToggleLocale: () => void;
   readonly children: ReactNode;
 }
 
@@ -29,11 +26,8 @@ export function WorkspaceShell({
   projectName,
   projectLocation,
   active,
-  isDark,
   onNavigate,
   onBack,
-  onToggleTheme,
-  onToggleLocale,
   children,
 }: WorkspaceShellProps) {
   const messages = useMessages();
@@ -56,15 +50,6 @@ export function WorkspaceShell({
         <div className={styles.utilities}>
           <IconButton aria-label={messages.common.backToStart} onClick={onBack}>
             <Icon name="back" size={18} />
-          </IconButton>
-          <IconButton aria-label={messages.switchLanguage} onClick={onToggleLocale}>
-            <Icon name="language" size={18} />
-          </IconButton>
-          <IconButton
-            aria-label={isDark ? messages.common.useLightTheme : messages.common.useDarkTheme}
-            onClick={onToggleTheme}
-          >
-            <Icon name={isDark ? "sun" : "moon"} size={18} />
           </IconButton>
         </div>
         <nav className={styles.nav} aria-label={messages.workspace.areasAria}>
