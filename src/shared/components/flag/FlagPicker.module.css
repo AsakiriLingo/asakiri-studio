@@ -54,9 +54,6 @@
   border: var(--border-hairline) solid var(--color-border);
   border-radius: var(--radius-md);
   background: var(--color-surface);
-  box-shadow:
-    0 4px 6px -2px var(--color-overlay),
-    0 12px 28px -8px var(--color-overlay);
 }
 
 .search {

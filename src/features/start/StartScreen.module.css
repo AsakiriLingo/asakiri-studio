@@ -156,7 +156,6 @@
   border: var(--border-hairline) solid var(--color-border);
   border-radius: var(--radius-lg);
   background: var(--color-surface-subtle);
-  box-shadow: var(--shadow-md);
   transform: translateX(-50%);
 }
 

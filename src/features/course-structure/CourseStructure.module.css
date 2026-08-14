@@ -80,11 +80,9 @@
 .dragOverlay {
   cursor: grabbing;
   border-bottom: 0;
+  border: var(--border-hairline) solid var(--color-border-strong);
   border-radius: var(--radius-md);
   background: var(--color-surface);
-  box-shadow:
-    0 4px 6px -2px var(--color-overlay),
-    0 12px 28px -8px var(--color-overlay);
 }
 
 .unitEmpty {
@@ -178,7 +176,7 @@
   display: grid;
   place-items: center;
   padding: var(--space-4);
-  background: rgb(0 0 0 / 45%);
+  background: var(--color-overlay);
 }
 
 .dialog {

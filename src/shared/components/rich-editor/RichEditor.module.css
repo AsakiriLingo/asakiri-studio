@@ -21,7 +21,7 @@
   display: grid;
   place-items: center;
   padding: var(--space-4);
-  background: rgb(0 0 0 / 45%);
+  background: var(--color-overlay);
 }
 
 .urlDialog {
@@ -119,9 +119,6 @@
   border: var(--border-hairline) solid var(--color-border);
   border-radius: var(--radius-md);
   background: var(--color-surface);
-  box-shadow:
-    0 4px 6px -2px var(--color-overlay),
-    0 12px 28px -8px var(--color-overlay);
 }
 
 .swatchGrid {
@@ -239,7 +236,8 @@
 .prose mark {
   padding: 0 0.1em;
   border-radius: 0.2em;
-  color: #1c2024;
+  background: var(--color-warning-subtle);
+  color: var(--color-text);
 }
 
 .prose pre {
@@ -338,9 +336,6 @@
   border: var(--border-hairline) solid var(--color-border);
   border-radius: var(--radius-md);
   background: var(--color-surface);
-  box-shadow:
-    0 4px 6px -2px var(--color-overlay),
-    0 12px 28px -8px var(--color-overlay);
 }
 
 .referencePopover::before {
@@ -444,9 +439,6 @@
   border: var(--border-hairline) solid var(--color-border);
   border-radius: var(--radius-md);
   background: var(--color-surface);
-  box-shadow:
-    0 4px 6px -2px var(--color-overlay),
-    0 12px 28px -8px var(--color-overlay);
 }
 
 .slashList {

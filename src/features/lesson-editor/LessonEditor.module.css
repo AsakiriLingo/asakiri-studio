@@ -768,7 +768,7 @@
   display: grid;
   place-items: center;
   padding: var(--space-4);
-  background: rgb(0 0 0 / 45%);
+  background: var(--color-overlay);
 }
 
 .dialog {
