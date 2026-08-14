@@ -13,7 +13,7 @@ import { createLinkOpener } from "@platform/links";
 import { createProjectCreationGateway } from "@platform/project-creation";
 import { createProjectDirectoryGateway } from "@platform/project-directory";
 import { createAssetReader, createMediaPicker } from "@platform/project-media";
-import { ProjectLocationRegistry } from "@platform/project-location";
+import { ProjectLocationRegistry, RecentProjectsStore } from "@platform/project-location";
 import { createProjectReader } from "@platform/project-reading";
 import { createProjectSystem } from "@platform/project-system";
 import { createProjectWriter } from "@platform/project-writing";
@@ -43,9 +43,10 @@ export interface AppServices {
  */
 export function createAppServices(): AppServices {
   const locations = new ProjectLocationRegistry();
+  const recents = new RecentProjectsStore();
   return {
-    creation: createProjectCreationGateway(locations),
-    directory: createProjectDirectoryGateway(locations),
+    creation: createProjectCreationGateway(locations, recents),
+    directory: createProjectDirectoryGateway(locations, recents),
     reader: createProjectReader(locations),
     writer: createProjectWriter(locations),
     system: createProjectSystem(locations),

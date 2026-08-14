@@ -50,6 +50,7 @@ export const jaMessages = {
     newCourseDetail: "ローカルにプロジェクトフォルダを作成",
     openCourseName: "コースを開く",
     openCourseDetail: "既存のアサキリプロジェクトを選ぶ",
+    recentTitle: "最近のコース",
   },
 
   update: {

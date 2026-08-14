@@ -1,4 +1,5 @@
 import type { AvailableUpdate } from "@core/app-update";
+import type { RecentProject } from "@core/projects";
 import { useMessages } from "@shared/i18n";
 import { useConfirm } from "@shared/components/confirm-dialog";
 import { Icon } from "@shared/components/icon";
@@ -9,6 +10,7 @@ interface StartScreenProps {
   readonly isDark: boolean;
   readonly update: AvailableUpdate | null;
   readonly updateInstalling: boolean;
+  readonly recentProjects: readonly RecentProject[];
   readonly showSupport: boolean;
   readonly onInstallUpdate: () => void;
   readonly onSupport: () => void;
@@ -16,6 +18,7 @@ interface StartScreenProps {
   readonly onSupportDismiss: () => void;
   readonly onNewCourse: () => void;
   readonly onOpenCourse: () => void;
+  readonly onOpenRecent: (id: string) => void;
   readonly onToggleTheme: () => void;
   readonly onToggleLocale: () => void;
 }
@@ -24,6 +27,7 @@ export function StartScreen({
   isDark,
   update,
   updateInstalling,
+  recentProjects,
   showSupport,
   onInstallUpdate,
   onSupport,
@@ -31,6 +35,7 @@ export function StartScreen({
   onSupportDismiss,
   onNewCourse,
   onOpenCourse,
+  onOpenRecent,
   onToggleTheme,
   onToggleLocale,
 }: StartScreenProps) {
@@ -98,6 +103,34 @@ export function StartScreen({
             <Icon name="arrow" size={18} />
           </button>
         </div>
+        {recentProjects.length > 0 ? (
+          <section className={styles.recent} aria-labelledby="recent-title">
+            <h2 id="recent-title" className={styles.recentTitle}>
+              {messages.start.recentTitle}
+            </h2>
+            <div className={styles.list}>
+              {recentProjects.slice(0, 3).map((recent) => (
+                <button
+                  key={recent.id}
+                  className={styles.row}
+                  type="button"
+                  onClick={() => {
+                    onOpenRecent(recent.id);
+                  }}
+                >
+                  <span className={styles.icon}>
+                    <Icon name="book" size={18} />
+                  </span>
+                  <span>
+                    <span className={styles.name}>{recent.name}</span>
+                    <span className={styles.detail}>{recent.locationLabel}</span>
+                  </span>
+                  <Icon name="arrow" size={18} />
+                </button>
+              ))}
+            </div>
+          </section>
+        ) : null}
       </div>
       {showSupport ? (
         <div className={styles.support} role="complementary" aria-label={messages.support.message}>

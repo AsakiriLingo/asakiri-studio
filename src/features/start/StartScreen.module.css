@@ -70,6 +70,19 @@
   border-block: var(--border-hairline) solid var(--color-border);
 }
 
+.recent {
+  margin-top: var(--space-8);
+}
+
+.recentTitle {
+  margin: 0 0 var(--space-3);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-200);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
 .row {
   display: grid;
   grid-template-columns: var(--control-height-md) minmax(0, 1fr) auto;

@@ -18,7 +18,7 @@ import type { PickedMediaFile } from "@core/project-media";
 import type { ProjectReadErrorCode } from "@core/project-reading";
 import type { GitStatus } from "@core/project-system";
 import type { ProjectWriteResult } from "@core/project-writing";
-import { createProjectSession, type ProjectDirectory } from "@core/projects";
+import { createProjectSession, type ProjectDirectory, type RecentProject } from "@core/projects";
 import { I18nProvider, getMessages, type Locale } from "@shared/i18n";
 import { ConfirmProvider } from "@shared/components/confirm-dialog";
 import { StartScreen } from "@features/start";
@@ -71,6 +71,9 @@ export function App() {
   const [update, setUpdate] = useState<AvailableUpdate | null>(null);
   const [updateInstalling, setUpdateInstalling] = useState(false);
   const [supportHidden, setSupportHidden] = useState(initialSupportHidden);
+  const [recentProjects, setRecentProjects] = useState<readonly RecentProject[]>(() =>
+    services.directory.listRecentProjects(),
+  );
 
   const messages = getMessages(locale);
 
@@ -148,12 +151,20 @@ export function App() {
     setSection("details");
     setOpenLessonId(null);
     setView("workspace");
+    setRecentProjects(services.directory.listRecentProjects());
   };
 
   const openCourse = async () => {
     const directory = await services.directory.openProjectDirectory({
       dialogTitle: "Open an Asakiri course",
     });
+    if (directory) {
+      enterWorkspace(directory);
+    }
+  };
+
+  const openRecent = async (id: string) => {
+    const directory = await services.directory.openRecentProject(id);
     if (directory) {
       enterWorkspace(directory);
     }
@@ -1141,6 +1152,7 @@ export function App() {
           isDark={isDark}
           update={update}
           updateInstalling={updateInstalling}
+          recentProjects={recentProjects}
           showSupport={!supportHidden}
           onInstallUpdate={() => {
             void installUpdate();
@@ -1153,6 +1165,9 @@ export function App() {
           }}
           onOpenCourse={() => {
             void openCourse();
+          }}
+          onOpenRecent={(id) => {
+            void openRecent(id);
           }}
           onToggleTheme={toggleTheme}
           onToggleLocale={toggleLocale}

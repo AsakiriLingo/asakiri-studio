@@ -47,6 +47,7 @@ export const enMessages = {
     newCourseDetail: "Create a local project folder",
     openCourseName: "Open course",
     openCourseDetail: "Choose an existing Asakiri project",
+    recentTitle: "Recent courses",
   },
 
   update: {

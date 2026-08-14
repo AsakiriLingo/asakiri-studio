@@ -3,6 +3,7 @@ import { open } from "@tauri-apps/plugin-dialog";
 import type { ProjectCreationGateway, ProjectDirectory } from "@core/projects";
 import { ProjectCreationError, type ProjectCreationErrorCode } from "@core/projects";
 import type { ProjectLocationRegistry } from "@platform/project-location/project-location-registry";
+import type { RecentProjectsStore } from "@platform/project-location/recent-projects-store";
 
 interface CreatedCourse {
   readonly name: string;
@@ -22,7 +23,10 @@ function toErrorCode(error: unknown): ProjectCreationErrorCode {
 }
 
 export class TauriProjectCreationGateway implements ProjectCreationGateway {
-  constructor(private readonly locations: ProjectLocationRegistry) {}
+  constructor(
+    private readonly locations: ProjectLocationRegistry,
+    private readonly recents: RecentProjectsStore,
+  ) {}
 
   async createCourse(request: {
     readonly name: string;
@@ -51,6 +55,12 @@ export class TauriProjectCreationGateway implements ProjectCreationGateway {
 
     const id = crypto.randomUUID();
     this.locations.register(id, { rootPath: created.path });
+    this.recents.remember({
+      id,
+      name: created.name,
+      locationLabel: created.name,
+      rootPath: created.path,
+    });
 
     return {
       id,
