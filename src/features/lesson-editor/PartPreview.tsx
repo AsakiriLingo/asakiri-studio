@@ -5,6 +5,7 @@ import type {
   BindingResolver,
   ContentRecord,
   Course,
+  MatchPairsExercise,
   Part,
   ResolvedValue,
 } from "@core/course";
@@ -214,44 +215,41 @@ function SelectImagePreview({
   );
 }
 
-function MatchPreview() {
+function MatchPreview({ part, course }: { readonly part: Part; readonly course: Course }) {
+  const messages = useMessages();
+  if (part.content.kind !== "exercise" || part.content.exercise.type !== "match-pairs") {
+    return null;
+  }
+  const exercise = part.content.exercise;
+  const resolver = createBindingResolver(course);
+  const prompt = fragmentText(exercise.prompt[0], resolver);
+  const pairNumber = new Map<string, number>();
+  exercise.evaluation.pairs.forEach((pair, index) => {
+    pairNumber.set(pair.leftId, index + 1);
+    pairNumber.set(pair.rightId, index + 1);
+  });
+  const column = (options: MatchPairsExercise["left"]) =>
+    options.map((option) => {
+      const number = pairNumber.get(option.id);
+      return (
+        <button key={option.id} className={styles.matchChip} type="button">
+          {number === undefined ? null : <span className={styles.matchNum}>{number}</span>}
+          {fragmentText(option.body[0], resolver) || "—"}
+        </button>
+      );
+    });
   return (
     <>
-      <p className={styles.muted}>Match the words</p>
-      <h2>Match each word to its meaning</h2>
-      <div className={styles.matchGrid}>
-        <div className={styles.matchCol}>
-          <button className={joinClassNames(styles.matchChip, styles.matched)} type="button">
-            <span className={styles.matchNum}>1</span>猫
-          </button>
-          <button className={joinClassNames(styles.matchChip, styles.selected)} type="button">
-            犬
-          </button>
-          <button className={styles.matchChip} type="button">
-            鳥
-          </button>
-          <button className={styles.matchChip} type="button">
-            魚
-          </button>
+      <p className={styles.muted}>{messages.lesson.kind["match-pairs"]}</p>
+      {prompt ? <h2>{prompt}</h2> : null}
+      {exercise.evaluation.pairs.length === 0 ? (
+        <p className={styles.exerciseHint}>{messages.lesson.previewNoPairs}</p>
+      ) : (
+        <div className={styles.matchGrid}>
+          <div className={styles.matchCol}>{column(exercise.left)}</div>
+          <div className={styles.matchCol}>{column(exercise.right)}</div>
         </div>
-        <div className={styles.matchCol}>
-          <button className={styles.matchChip} type="button">
-            Bird
-          </button>
-          <button className={joinClassNames(styles.matchChip, styles.matched)} type="button">
-            <span className={styles.matchNum}>1</span>Cat
-          </button>
-          <button className={styles.matchChip} type="button">
-            Fish
-          </button>
-          <button className={styles.matchChip} type="button">
-            Dog
-          </button>
-        </div>
-      </div>
-      <p className={styles.exerciseHint}>
-        猫 ↔ Cat is matched. 犬 is selected — tap its meaning to make the next pair.
-      </p>
+      )}
     </>
   );
 }
@@ -427,7 +425,7 @@ function PreviewBody({
     case "multiple-choice":
       return <MultipleChoicePreview part={part} course={course} />;
     case "match-pairs":
-      return <MatchPreview />;
+      return <MatchPreview part={part} course={course} />;
     case "fill-blank":
       return <FillBlankPreview part={part} course={course} />;
     case "word-order":

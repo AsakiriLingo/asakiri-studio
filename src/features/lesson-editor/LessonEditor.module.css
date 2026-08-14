@@ -214,6 +214,20 @@
   border-top: var(--border-hairline) solid var(--color-border);
 }
 
+.matchPair {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: var(--border-hairline) solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.matchPairHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
 .optionRole {
   flex: 0 0 auto;
   min-width: 11rem;

@@ -21,6 +21,7 @@ import { Status } from "@shared/components/status";
 import { Tag } from "@shared/components/tag";
 import { partKind, type PartKind } from "@features/lesson-editor/parts";
 import { FillBlankEditor } from "@features/lesson-editor/exercise/FillBlankEditor";
+import { MatchPairsEditor } from "@features/lesson-editor/exercise/MatchPairsEditor";
 import { MultipleChoiceEditor } from "@features/lesson-editor/exercise/MultipleChoiceEditor";
 import { WordOrderEditor } from "@features/lesson-editor/exercise/WordOrderEditor";
 import { courseToRichLibrary } from "@features/lesson-editor/rich-library";
@@ -295,56 +296,6 @@ const LISTEN_WORD_BANK: readonly OptionData[] = [
   },
 ];
 
-const MATCH_PAIRS: readonly { readonly ja: string; readonly en: string }[] = [
-  { ja: "猫", en: "Cat" },
-  { ja: "犬", en: "Dog" },
-  { ja: "鳥", en: "Bird" },
-  { ja: "魚", en: "Fish" },
-];
-
-function MatchEditor() {
-  const messages = useMessages();
-  const t = messages.lesson;
-  return (
-    <div className={styles.formGrid}>
-      <PromptField
-        label={t.prompt}
-        value="Match each word to its meaning."
-        help="Learners tap a Japanese word, then its English meaning. Pairs are shuffled on each attempt."
-      />
-      <Panel title={t.exercise.pairsTitle} description={t.exercise.pairsDesc}>
-        <div className={styles.pairList}>
-          {MATCH_PAIRS.map((pair) => (
-            <div key={pair.ja} className={styles.pairRow}>
-              <span className={styles.pairSide}>
-                <span className={styles.rowTitle}>{pair.ja}</span>
-                <span className={joinClassNames(styles.rowDetail, styles.mono)}>
-                  Vocabulary · Japanese
-                </span>
-              </span>
-              <span className={styles.pairArrow} aria-hidden="true">
-                ↔
-              </span>
-              <span className={styles.pairSide}>
-                <span className={styles.rowTitle}>{pair.en}</span>
-                <span className={joinClassNames(styles.rowDetail, styles.mono)}>
-                  Vocabulary · English
-                </span>
-              </span>
-            </div>
-          ))}
-        </div>
-        <div className={styles.tokenList}>
-          <Button variant="ghost">
-            <Icon name="plus" size={18} />
-            {t.addPair}
-          </Button>
-        </div>
-      </Panel>
-    </div>
-  );
-}
-
 function ListenEditor() {
   const messages = useMessages();
   const t = messages.lesson;
@@ -505,7 +456,9 @@ function EditorBody({
         <MultipleChoiceEditor exercise={exercise} library={library} onChange={onPersistExercise} />
       ) : null;
     case "match-pairs":
-      return <MatchEditor />;
+      return exercise?.type === "match-pairs" ? (
+        <MatchPairsEditor exercise={exercise} library={library} onChange={onPersistExercise} />
+      ) : null;
     case "fill-blank":
       return exercise?.type === "fill-blank" ? (
         <FillBlankEditor exercise={exercise} library={library} onChange={onPersistExercise} />
@@ -541,6 +494,7 @@ const REAL_EXERCISE_EDITORS = new Set<PartKind>([
   "select-image",
   "word-order",
   "fill-blank",
+  "match-pairs",
 ]);
 
 export function PartEditor({

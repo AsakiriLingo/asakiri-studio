@@ -129,6 +129,40 @@ describe("serializeExercise", () => {
     expect(roundTrip(exercise)).toEqual(exercise);
   });
 
+  it("round-trips a match-pairs exercise with left/right columns and pairs", () => {
+    const exercise: Exercise = {
+      id: "ex_match",
+      type: "match-pairs",
+      prompt: [],
+      left: [
+        {
+          id: "left_a",
+          body: [
+            {
+              id: "l1",
+              role: "primary",
+              binding: { kind: "field", recordId: "rec_a", fieldId: "ja" },
+            },
+          ],
+        },
+      ],
+      right: [
+        {
+          id: "right_a",
+          body: [
+            {
+              id: "r1",
+              role: "primary",
+              binding: { kind: "field", recordId: "rec_a", fieldId: "en" },
+            },
+          ],
+        },
+      ],
+      evaluation: { kind: "matched-pairs", pairs: [{ leftId: "left_a", rightId: "right_a" }] },
+    };
+    expect(roundTrip(exercise)).toEqual(exercise);
+  });
+
   it("round-trips a word-order exercise with tokens and distractors", () => {
     const exercise: Exercise = {
       id: "ex_wo",
