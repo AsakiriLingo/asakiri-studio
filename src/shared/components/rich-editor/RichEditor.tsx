@@ -63,6 +63,8 @@ export function RichEditor({
     [lib, onLoadAssetPreview],
   );
   const [slash, setSlash] = useState<SlashState | null>(null);
+  const [urlPrompt, setUrlPrompt] = useState<{ readonly kind: "link" | "youtube" } | null>(null);
+  const [urlValue, setUrlValue] = useState("");
 
   const [slashExtension] = useState(() =>
     SlashCommand.configure({
@@ -149,22 +151,39 @@ export function RichEditor({
     if (asset) insertAsset(asset);
   };
 
+  const openUrlPrompt = (kind: "link" | "youtube") => {
+    const href: unknown = editor.getAttributes("link").href;
+    setUrlValue(kind === "link" && typeof href === "string" ? href : "");
+    setUrlPrompt({ kind });
+  };
+
+  const cancelUrlPrompt = () => {
+    setUrlPrompt(null);
+    setUrlValue("");
+  };
+
+  const submitUrlPrompt = () => {
+    const url = urlValue.trim();
+    if (url) {
+      if (urlPrompt?.kind === "youtube") {
+        editor.commands.setYoutubeVideo({ src: url });
+      } else {
+        editor.chain().focus().extendMarkRange("link").setLink({ href: url }).run();
+      }
+    }
+    cancelUrlPrompt();
+  };
+
   const toggleLink = () => {
     if (editor.isActive("link")) {
       editor.chain().focus().unsetLink().run();
       return;
     }
-    const url = window.prompt("Link URL");
-    if (url) {
-      editor.chain().focus().extendMarkRange("link").setLink({ href: url }).run();
-    }
+    openUrlPrompt("link");
   };
 
   const insertYoutube = () => {
-    const url = window.prompt("YouTube URL");
-    if (url) {
-      editor.commands.setYoutubeVideo({ src: url });
-    }
+    openUrlPrompt("youtube");
   };
 
   const insertTable = () => {
@@ -274,6 +293,51 @@ export function RichEditor({
             <Icon name="table" size={18} />
           </button>
         </div>
+        {urlPrompt ? (
+          <div className={styles.urlOverlay} role="presentation" onClick={cancelUrlPrompt}>
+            <div
+              className={styles.urlDialog}
+              role="dialog"
+              aria-modal="true"
+              aria-label={urlPrompt.kind === "youtube" ? "Insert YouTube video" : "Add link"}
+              onClick={(event) => {
+                event.stopPropagation();
+              }}
+            >
+              <span className={styles.urlLabel}>
+                {urlPrompt.kind === "youtube" ? "YouTube URL" : "Link URL"}
+              </span>
+              <input
+                className={styles.urlInput}
+                type="url"
+                value={urlValue}
+                autoFocus
+                placeholder="https://…"
+                aria-label={urlPrompt.kind === "youtube" ? "YouTube URL" : "Link URL"}
+                onChange={(event) => {
+                  setUrlValue(event.currentTarget.value);
+                }}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") {
+                    event.preventDefault();
+                    submitUrlPrompt();
+                  } else if (event.key === "Escape") {
+                    event.preventDefault();
+                    cancelUrlPrompt();
+                  }
+                }}
+              />
+              <div className={styles.urlActions}>
+                <button className={styles.urlCancel} type="button" onClick={cancelUrlPrompt}>
+                  Cancel
+                </button>
+                <button className={styles.urlAdd} type="button" onClick={submitUrlPrompt}>
+                  {urlPrompt.kind === "youtube" ? "Insert" : "Add link"}
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : null}
         <EditorContent editor={editor} />
         {slash ? (
           <SlashMenu

@@ -14,6 +14,76 @@
   background: var(--color-canvas);
 }
 
+.urlOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal, 100);
+  display: grid;
+  place-items: center;
+  padding: var(--space-4);
+  background: rgb(0 0 0 / 45%);
+}
+
+.urlDialog {
+  display: grid;
+  gap: var(--space-3);
+  width: min(100%, 26rem);
+  padding: var(--space-5);
+  border: var(--border-hairline) solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+}
+
+.urlLabel {
+  font-size: var(--font-size-200);
+  font-weight: var(--font-weight-bold);
+}
+
+.urlInput {
+  min-width: 0;
+  height: var(--control-height-md);
+  padding-inline: var(--space-3);
+  border: var(--border-hairline) solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: var(--font-size-300);
+}
+
+.urlInput:focus-visible {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 1px;
+}
+
+.urlActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
+.urlAdd,
+.urlCancel {
+  height: var(--control-height-sm);
+  padding-inline: var(--space-3);
+  border: var(--border-hairline) solid transparent;
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-200);
+  font-weight: var(--font-weight-bold);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.urlAdd {
+  background: var(--color-brand);
+  color: var(--color-on-brand);
+}
+
+.urlCancel {
+  border-color: var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
 .toolButton {
   display: inline-grid;
   min-width: var(--control-height-sm);
