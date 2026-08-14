@@ -52,6 +52,14 @@ export const jaMessages = {
     openCourseDetail: "既存のアサキリプロジェクトを選ぶ",
   },
 
+  update: {
+    available: "アップデートがあります",
+    installing: "インストール中…",
+    dialogTitle: (version: string) => `${version}に更新しますか？`,
+    noNotes: "新しいバージョンが利用できます。",
+    installRestart: "インストールして再起動",
+  },
+
   newCourse: {
     title: "コースを作成",
     description: "プロジェクトに名前をつけ、フォルダを作成する場所を選びます。",

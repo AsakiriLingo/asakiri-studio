@@ -11,6 +11,7 @@ import type {
   TiptapDocument,
 } from "@core/course";
 import { labelForFile, mediaTypeForFile, partSourceKey } from "@core/course";
+import type { AvailableUpdate } from "@core/app-update";
 import type { PickedMediaFile } from "@core/project-media";
 import type { ProjectReadErrorCode } from "@core/project-reading";
 import type { GitStatus } from "@core/project-system";
@@ -59,6 +60,8 @@ export function App() {
   const [openLessonId, setOpenLessonId] = useState<string | null>(null);
   const [project, setProject] = useState<ProjectDirectory | null>(null);
   const [courseState, setCourseState] = useState<CourseState | null>(null);
+  const [update, setUpdate] = useState<AvailableUpdate | null>(null);
+  const [updateInstalling, setUpdateInstalling] = useState(false);
 
   const messages = getMessages(locale);
 
@@ -71,6 +74,26 @@ export function App() {
     document.documentElement.lang = locale;
     localStorage.setItem("asakiri-locale", locale);
   }, [locale]);
+
+  useEffect(() => {
+    let cancelled = false;
+    void services.appUpdate.check().then((available) => {
+      if (!cancelled) setUpdate(available);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [services]);
+
+  const installUpdate = async () => {
+    setUpdateInstalling(true);
+    try {
+      await services.appUpdate.downloadAndInstall();
+      await services.appUpdate.relaunch();
+    } catch {
+      setUpdateInstalling(false);
+    }
+  };
 
   useEffect(() => {
     if (!project) return;
@@ -842,6 +865,11 @@ export function App() {
       return (
         <StartScreen
           isDark={isDark}
+          update={update}
+          updateInstalling={updateInstalling}
+          onInstallUpdate={() => {
+            void installUpdate();
+          }}
           onNewCourse={() => {
             setView("new-course");
           }}

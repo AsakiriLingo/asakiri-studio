@@ -26,6 +26,7 @@
   "bundle": {
     "active": true,
     "targets": "all",
+    "createUpdaterArtifacts": true,
     "macOS": {
       "signingIdentity": "Developer ID Application: Alok Ram Singh (6ZBB7468M8)",
       "hardenedRuntime": true,
@@ -38,5 +39,13 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ]
+  },
+  "plugins": {
+    "updater": {
+      "endpoints": [
+        "https://github.com/AsakiriLingo/asakiri-studio/releases/latest/download/latest.json"
+      ],
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDNFREQ2NTVGNDZBMkEwNEIKUldSTG9LSkdYMlhkUGlNeGFDamR1RUsyanhldXcxb1F1QlJqSVZvd3Qveld2N3ZmeWRQVkZmTUUK"
+    }
   }
 }

@@ -49,6 +49,14 @@ export const enMessages = {
     openCourseDetail: "Choose an existing Asakiri project",
   },
 
+  update: {
+    available: "Update available",
+    installing: "Installing…",
+    dialogTitle: (version: string) => `Update to ${version}?`,
+    noNotes: "A new version is available.",
+    installRestart: "Install & restart",
+  },
+
   newCourse: {
     title: "Create a course",
     description: "Name the project, then choose where its folder should be created.",

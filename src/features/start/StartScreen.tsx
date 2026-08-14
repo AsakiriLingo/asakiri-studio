@@ -1,10 +1,15 @@
+import type { AvailableUpdate } from "@core/app-update";
 import { useMessages } from "@shared/i18n";
+import { useConfirm } from "@shared/components/confirm-dialog";
 import { Icon } from "@shared/components/icon";
 import { IconButton } from "@shared/components/icon-button";
 import styles from "@features/start/StartScreen.module.css";
 
 interface StartScreenProps {
   readonly isDark: boolean;
+  readonly update: AvailableUpdate | null;
+  readonly updateInstalling: boolean;
+  readonly onInstallUpdate: () => void;
   readonly onNewCourse: () => void;
   readonly onOpenCourse: () => void;
   readonly onToggleTheme: () => void;
@@ -13,16 +18,44 @@ interface StartScreenProps {
 
 export function StartScreen({
   isDark,
+  update,
+  updateInstalling,
+  onInstallUpdate,
   onNewCourse,
   onOpenCourse,
   onToggleTheme,
   onToggleLocale,
 }: StartScreenProps) {
   const messages = useMessages();
+  const confirm = useConfirm();
+  const t = messages.update;
+
+  const reviewUpdate = async () => {
+    if (!update || updateInstalling) return;
+    const ok = await confirm({
+      title: t.dialogTitle(update.version),
+      description: update.notes.trim() === "" ? t.noNotes : update.notes,
+      confirmLabel: t.installRestart,
+    });
+    if (ok) onInstallUpdate();
+  };
 
   return (
     <main className={styles.hub}>
       <div className={styles.tools}>
+        {update ? (
+          <button
+            type="button"
+            className={styles.updateChip}
+            disabled={updateInstalling}
+            onClick={() => {
+              void reviewUpdate();
+            }}
+          >
+            <span className={styles.updateDot} aria-hidden="true" />
+            {updateInstalling ? t.installing : t.available}
+          </button>
+        ) : null}
         <IconButton aria-label={messages.switchLanguage} onClick={onToggleLocale}>
           <Icon name="language" size={18} />
         </IconButton>

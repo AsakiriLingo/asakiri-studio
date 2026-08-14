@@ -9,7 +9,49 @@
 .tools {
   display: flex;
   gap: var(--space-1);
+  align-items: center;
   justify-content: flex-end;
+}
+
+.updateChip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  height: var(--control-height-sm);
+  margin-right: var(--space-2);
+  padding-inline: var(--space-3);
+  border: var(--border-hairline) solid transparent;
+  border-radius: var(--radius-full);
+  background: var(--color-surface-subtle);
+  color: var(--color-brand);
+  font-size: var(--font-size-200);
+  font-weight: var(--font-weight-bold);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color var(--duration-normal) var(--ease-out);
+}
+
+.updateChip:disabled {
+  cursor: default;
+  opacity: 0.7;
+}
+
+.updateChip:focus-visible {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 2px;
+}
+
+.updateDot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: var(--radius-full);
+  background: var(--color-brand);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .updateChip:not(:disabled):hover {
+    background: var(--color-success-surface);
+  }
 }
 
 .main {
