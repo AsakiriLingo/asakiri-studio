@@ -35,6 +35,10 @@ function orderLabel(index: number): string {
   return String(index + 1).padStart(2, "0");
 }
 
+function chevronClass(collapsed: boolean): string {
+  return [styles.unitChevron, collapsed ? styles.chevronCollapsed : ""].filter(Boolean).join(" ");
+}
+
 function LessonRow({
   lesson,
   index,
@@ -94,7 +98,9 @@ function UnitBlock({
   unit,
   index,
   lessons,
+  collapsed,
   addingLesson,
+  onToggleCollapsed,
   onAddLesson,
   onOpenSettings,
   onOpenLesson,
@@ -103,7 +109,9 @@ function UnitBlock({
   readonly unit: OutlineSection;
   readonly index: number;
   readonly lessons: readonly Lesson[];
+  readonly collapsed: boolean;
   readonly addingLesson: boolean;
+  readonly onToggleCollapsed: () => void;
   readonly onAddLesson: () => void;
   readonly onOpenSettings: () => void;
   readonly onOpenLesson: (lessonId: string) => void;
@@ -118,6 +126,7 @@ function UnitBlock({
     transform: CSS.Transform.toString(transform),
     transition,
   };
+  const lessonsId = `unit-lessons-${unit.id}`;
 
   return (
     <article
@@ -136,10 +145,25 @@ function UnitBlock({
           <Icon name="grip" size={18} />
         </button>
         <span className={styles.orderIndex}>{orderLabel(index)}</span>
-        <span>
-          <span className={styles.unitName}>{unit.title}</span>
-          <span className={styles.rowDetail}>{t.unitLessons(lessons.length)}</span>
-        </span>
+        <button
+          type="button"
+          className={styles.unitToggle}
+          aria-expanded={!collapsed}
+          aria-controls={lessonsId}
+          aria-label={collapsed ? t.expandUnit(unit.title) : t.collapseUnit(unit.title)}
+          onClick={onToggleCollapsed}
+        >
+          <Icon
+            aria-hidden="true"
+            className={chevronClass(collapsed)}
+            name="chevron-down"
+            size={18}
+          />
+          <span className={styles.unitHeading}>
+            <span className={styles.unitName}>{unit.title}</span>
+            <span className={styles.rowDetail}>{t.unitLessons(lessons.length)}</span>
+          </span>
+        </button>
         <div className={styles.unitActions}>
           <Button variant="ghost" disabled={addingLesson} onClick={onAddLesson}>
             <Icon name="plus" size={18} />
@@ -151,27 +175,29 @@ function UnitBlock({
         </div>
       </header>
 
-      <SortableContext
-        items={lessons.map((lesson) => lesson.id)}
-        strategy={verticalListSortingStrategy}
-      >
-        <div className={styles.lessonOrder} aria-label={t.lessonsAria(unit.title)}>
-          {lessons.length === 0 ? <p className={styles.unitEmpty}>{t.unitEmpty}</p> : null}
-          {lessons.map((lesson, lessonIndex) => (
-            <LessonRow
-              key={lesson.id}
-              lesson={lesson}
-              index={lessonIndex}
-              onOpen={() => {
-                onOpenLesson(lesson.id);
-              }}
-              onOpenSettings={() => {
-                onOpenLessonSettings(lesson.id);
-              }}
-            />
-          ))}
-        </div>
-      </SortableContext>
+      {collapsed ? null : (
+        <SortableContext
+          items={lessons.map((lesson) => lesson.id)}
+          strategy={verticalListSortingStrategy}
+        >
+          <div className={styles.lessonOrder} id={lessonsId} aria-label={t.lessonsAria(unit.title)}>
+            {lessons.length === 0 ? <p className={styles.unitEmpty}>{t.unitEmpty}</p> : null}
+            {lessons.map((lesson, lessonIndex) => (
+              <LessonRow
+                key={lesson.id}
+                lesson={lesson}
+                index={lessonIndex}
+                onOpen={() => {
+                  onOpenLesson(lesson.id);
+                }}
+                onOpenSettings={() => {
+                  onOpenLessonSettings(lesson.id);
+                }}
+              />
+            ))}
+          </div>
+        </SortableContext>
+      )}
     </article>
   );
 }
@@ -258,6 +284,36 @@ export function CourseStructure({
   const [failed, setFailed] = useState(false);
   const [settingsUnitId, setSettingsUnitId] = useState<string | null>(null);
   const [settingsLessonId, setSettingsLessonId] = useState<string | null>(null);
+  const [collapsedUnitIds, setCollapsedUnitIds] = useState<ReadonlySet<string>>(
+    () => new Set<string>(),
+  );
+
+  const toggleUnitCollapsed = (unitId: string) => {
+    setCollapsedUnitIds((current) => {
+      const next = new Set(current);
+      if (!next.delete(unitId)) next.add(unitId);
+      return next;
+    });
+  };
+
+  const expandUnit = (unitId: string) => {
+    setCollapsedUnitIds((current) => {
+      if (!current.has(unitId)) return current;
+      const next = new Set(current);
+      next.delete(unitId);
+      return next;
+    });
+  };
+
+  const allCollapsed =
+    course.outline.length > 0 &&
+    course.outline.every((section) => collapsedUnitIds.has(section.id));
+
+  const toggleAllUnits = () => {
+    setCollapsedUnitIds(
+      allCollapsed ? new Set<string>() : new Set(course.outline.map((section) => section.id)),
+    );
+  };
 
   const settingsUnit =
     settingsUnitId === null
@@ -425,6 +481,7 @@ export function CourseStructure({
       commitLayout(outlineToLayout(course.outline));
       return;
     }
+    expandUnit(container);
     const unit = current.find((entry) => entry.id === container);
     let next = current;
     if (unit) {
@@ -456,6 +513,17 @@ export function CourseStructure({
         actions={
           <>
             {failed ? <Status tone="warning">{messages.common.saveFailed}</Status> : null}
+            {course.outline.length > 0 ? (
+              <Button variant="ghost" onClick={toggleAllUnits}>
+                <Icon
+                  aria-hidden="true"
+                  className={chevronClass(allCollapsed)}
+                  name="chevron-down"
+                  size={18}
+                />
+                {allCollapsed ? t.expandAll : t.collapseAll}
+              </Button>
+            ) : null}
             <Button
               disabled={creating}
               onClick={() => {
@@ -500,8 +568,13 @@ export function CourseStructure({
                     unit={unit}
                     index={unitIndex}
                     lessons={lessons}
+                    collapsed={collapsedUnitIds.has(unit.id)}
                     addingLesson={addingUnitId === unit.id}
+                    onToggleCollapsed={() => {
+                      toggleUnitCollapsed(unit.id);
+                    }}
                     onAddLesson={() => {
+                      expandUnit(unit.id);
                       void createLesson(unit.id);
                     }}
                     onOpenSettings={() => {
