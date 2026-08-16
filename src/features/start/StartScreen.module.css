@@ -172,22 +172,6 @@
   font-size: var(--font-size-300);
 }
 
-.supportAction {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-  height: var(--control-height-sm);
-  padding-inline: var(--space-3);
-  border: 0;
-  border-radius: var(--radius-full);
-  background: var(--color-brand);
-  color: var(--color-on-brand);
-  font-size: var(--font-size-200);
-  font-weight: var(--font-weight-bold);
-  white-space: nowrap;
-  cursor: pointer;
-  transition: opacity var(--duration-normal) var(--ease-out);
-}
 
 .supportLater,
 .supportDismiss {
@@ -203,7 +187,6 @@
   transition: color var(--duration-normal) var(--ease-out);
 }
 
-.supportAction:focus-visible,
 .supportLater:focus-visible,
 .supportDismiss:focus-visible {
   outline: 2px solid var(--color-focus-ring);
@@ -211,10 +194,6 @@
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .supportAction:hover {
-    opacity: 0.9;
-  }
-
   .supportLater:hover,
   .supportDismiss:hover {
     color: var(--color-text);

@@ -1,0 +1,36 @@
+.root {
+  display: grid;
+  gap: var(--space-2);
+  width: 100%;
+}
+
+.label {
+  font-size: var(--font-size-300);
+  font-weight: var(--font-weight-bold);
+}
+
+.track {
+  overflow: hidden;
+  height: 0.5rem;
+  border-radius: 999px;
+  background: var(--color-surface-subtle);
+}
+
+.indicator {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--color-brand);
+  transition: width var(--duration-normal) ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .indicator {
+    transition: none;
+  }
+}
+
+.detail {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-200);
+  font-variant-numeric: tabular-nums;
+}

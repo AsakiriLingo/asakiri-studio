@@ -114,3 +114,174 @@ pub fn download_media_file(url: String, file_name: String) -> Result<String, Str
         .map(|path| path.to_string())
         .ok_or_else(|| "unknown".to_string())
 }
+
+#[derive(serde::Serialize)]
+pub struct FolderFile {
+    pub path: String,
+    pub name: String,
+}
+
+const MAX_FOLDER_DEPTH: usize = 8;
+const MAX_FOLDER_FILES: usize = 5000;
+
+fn collect_files(dir: &std::path::Path, depth: usize, out: &mut Vec<FolderFile>) {
+    if depth > MAX_FOLDER_DEPTH || out.len() >= MAX_FOLDER_FILES {
+        return;
+    }
+    let Ok(entries) = fs::read_dir(dir) else {
+        return;
+    };
+    let mut sorted: Vec<_> = entries.filter_map(Result::ok).collect();
+    sorted.sort_by_key(std::fs::DirEntry::file_name);
+    for entry in sorted {
+        if out.len() >= MAX_FOLDER_FILES {
+            return;
+        }
+        let path = entry.path();
+        let Ok(kind) = entry.file_type() else { continue };
+        if kind.is_symlink() {
+            continue;
+        }
+        if kind.is_dir() {
+            collect_files(&path, depth + 1, out);
+        } else if kind.is_file() {
+            let name = entry.file_name().to_string_lossy().to_string();
+            if name.starts_with('.') {
+                continue;
+            }
+            out.push(FolderFile {
+                path: path.to_string_lossy().to_string(),
+                name,
+            });
+        }
+    }
+}
+
+#[tauri::command]
+pub fn list_folder_files(folder_path: String) -> Result<Vec<FolderFile>, String> {
+    let root = PathBuf::from(&folder_path);
+    if !root.is_dir() {
+        return Err("notFound".to_string());
+    }
+    let mut out = Vec::new();
+    collect_files(&root, 0, &mut out);
+    Ok(out)
+}
+
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DocumentTable {
+    pub header_rows: usize,
+    pub rows: Vec<Vec<String>>,
+}
+
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ReadDocument {
+    pub format: String,
+    pub markdown: String,
+    pub tables: Vec<DocumentTable>,
+    pub image_count: usize,
+}
+
+fn cell_text(cell: &anydoc::model::Cell) -> String {
+    cell.blocks
+        .iter()
+        .filter_map(|block| match block {
+            anydoc::model::Block::Paragraph(inlines) => {
+                Some(anydoc::model::inlines_to_plain_text(inlines))
+            }
+            anydoc::model::Block::Heading { content, .. } => {
+                Some(anydoc::model::inlines_to_plain_text(content))
+            }
+            _ => None,
+        })
+        .collect::<Vec<_>>()
+        .join(" ")
+        .trim()
+        .to_string()
+}
+
+fn data_tables(document: &anydoc::model::Document) -> Vec<DocumentTable> {
+    document
+        .blocks
+        .iter()
+        .filter_map(|block| match block {
+            anydoc::model::Block::Table(table)
+                if table.kind == anydoc::model::TableKind::Data =>
+            {
+                Some(DocumentTable {
+                    header_rows: table.header_rows,
+                    rows: table
+                        .grid
+                        .iter()
+                        .map(|row| {
+                            row.iter()
+                                .map(|slot| match slot {
+                                    anydoc::model::CellSlot::Origin(cell) => cell_text(cell),
+                                    _ => String::new(),
+                                })
+                                .collect()
+                        })
+                        .collect(),
+                })
+            }
+            _ => None,
+        })
+        .collect()
+}
+
+fn detect_format(path: &std::path::Path, bytes: &[u8]) -> Option<anydoc::Format> {
+    anydoc::Format::from_bytes(bytes).or_else(|| {
+        path.extension()
+            .and_then(|value| value.to_str())
+            .and_then(anydoc::Format::from_extension)
+    })
+}
+
+#[tauri::command]
+pub fn read_document(source_path: String) -> Result<ReadDocument, String> {
+    let path = PathBuf::from(&source_path);
+    if !path.is_file() {
+        return Err("notFound".to_string());
+    }
+    let bytes = fs::read(&path).map_err(|_| "unreadable".to_string())?;
+    let format = detect_format(&path, &bytes).ok_or_else(|| "unsupportedFormat".to_string())?;
+
+    let document = anydoc::to_document(&bytes, Some(format))
+        .map_err(|error| format!("convertFailed: {error}"))?;
+    let markdown = anydoc::to_markdown_bytes(&bytes, Some(format))
+        .map_err(|error| format!("convertFailed: {error}"))?;
+
+    Ok(ReadDocument {
+        format: format!("{format:?}").to_lowercase(),
+        markdown,
+        tables: data_tables(&document),
+        image_count: document.assets.len(),
+    })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    const CSV: &[u8] = "Japanese,English\n\u{732b},cat\n\u{72ac},dog\n".as_bytes();
+
+    #[test]
+    fn reads_a_spreadsheet_into_a_grid() {
+        let format = anydoc::Format::from_extension("csv").unwrap();
+        let document = anydoc::to_document(CSV, Some(format)).unwrap();
+        let tables = data_tables(&document);
+
+        assert_eq!(tables.len(), 1);
+        assert_eq!(tables[0].header_rows, 1);
+        assert_eq!(tables[0].rows[0], vec!["Japanese", "English"]);
+        assert_eq!(tables[0].rows[1], vec!["\u{732b}", "cat"]);
+    }
+
+    #[test]
+    fn falls_back_to_the_extension_when_bytes_do_not_identify_the_format() {
+        assert!(anydoc::Format::from_bytes(CSV).is_none());
+        assert!(detect_format(std::path::Path::new("vocab.csv"), CSV).is_some());
+    }
+}

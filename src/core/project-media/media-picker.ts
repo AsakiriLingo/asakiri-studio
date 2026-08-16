@@ -11,4 +11,5 @@ export interface PickedMediaFile {
  */
 export interface MediaPicker {
   pickMediaFiles(): Promise<readonly PickedMediaFile[]>;
+  pickMediaFolder(): Promise<readonly PickedMediaFile[]>;
 }

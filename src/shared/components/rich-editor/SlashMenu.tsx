@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { CheckChoice, RadioChoice, RadioChoices } from "@shared/components/choice";
 import { Icon, type IconName } from "@shared/components/icon";
 import { useMessages } from "@shared/i18n";
 import type {
@@ -415,38 +416,36 @@ function ConfigureScreen({
     <div className={styles.slashPanel}>
       <MenuHeader title={record.label} onBack={onBack} backLabel={t.back} />
       <p className={styles.slashSectionLabel}>{t.primaryLabel}</p>
-      <div className={styles.slashList}>
-        {fields.map((field) => (
-          <label key={field.id} className={styles.slashChoice}>
-            <input
-              type="radio"
-              name="slash-primary"
-              checked={field.id === primaryFieldId}
-              onChange={() => {
-                setPrimaryFieldId(field.id);
-              }}
-            />
-            <span className={styles.slashRowLabel}>{field.name}</span>
-            <span className={styles.slashRowMeta}>{record.fieldText[field.id]}</span>
-          </label>
-        ))}
-      </div>
+      <RadioChoices
+        aria-label={t.primaryLabel}
+        value={primaryFieldId}
+        onValueChange={setPrimaryFieldId}
+      >
+        <div className={styles.slashList}>
+          {fields.map((field) => (
+            <RadioChoice key={field.id} className={styles.slashChoice} value={field.id}>
+              <span className={styles.slashRowLabel}>{field.name}</span>
+              <span className={styles.slashRowMeta}>{record.fieldText[field.id]}</span>
+            </RadioChoice>
+          ))}
+        </div>
+      </RadioChoices>
       {columnFields.length > 0 ? (
         <>
           <p className={styles.slashSectionLabel}>{t.columnsLabel}</p>
           <div className={styles.slashList}>
             {columnFields.map((field) => (
-              <label key={field.id} className={styles.slashChoice}>
-                <input
-                  type="checkbox"
-                  checked={visible[field.id] ?? true}
-                  onChange={(event) => {
-                    setVisible((current) => ({ ...current, [field.id]: event.target.checked }));
-                  }}
-                />
+              <CheckChoice
+                key={field.id}
+                className={styles.slashChoice}
+                checked={visible[field.id] ?? true}
+                onCheckedChange={(checked) => {
+                  setVisible((current) => ({ ...current, [field.id]: checked }));
+                }}
+              >
                 <span className={styles.slashRowLabel}>{field.name}</span>
                 <span className={styles.slashRowMeta}>{record.fieldText[field.id]}</span>
-              </label>
+              </CheckChoice>
             ))}
           </div>
         </>

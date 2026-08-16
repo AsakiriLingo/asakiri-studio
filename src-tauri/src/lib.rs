@@ -31,6 +31,8 @@ pub fn run() {
             media::http_get_text,
             media::download_media_file,
             media::write_temp_media,
+            media::list_folder_files,
+            media::read_document,
             tts::list_tts_voices,
             tts::synthesize_tts
         ])

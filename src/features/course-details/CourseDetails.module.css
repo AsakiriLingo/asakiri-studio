@@ -275,25 +275,77 @@
   min-width: 0;
 }
 
-.roleSet {
+.roleTrigger {
+  composes: input from "../../shared/components/form/Form.module.css";
   display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-1) var(--space-3);
-  min-width: 0;
-  margin: 0;
-  padding: 0;
-  border: 0;
-}
-
-.roleLegend {
-  padding: 0;
-  color: var(--color-text-muted);
-  font-size: var(--font-size-100);
-}
-
-.roleChoice {
-  display: inline-flex;
   align-items: center;
-  gap: var(--space-1);
+  justify-content: space-between;
+  gap: var(--space-2);
+  overflow: hidden;
+  text-align: start;
+  cursor: pointer;
+}
+
+.roleSummary,
+.rolePlaceholder {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rolePlaceholder {
+  color: var(--color-text-muted);
+}
+
+.rolePositioner {
+  z-index: var(--z-dropdown);
+}
+
+.rolePopup {
+  display: grid;
+  min-width: 12rem;
+  padding: var(--space-1);
+  border: var(--border-hairline) solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.roleItem {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  border-radius: var(--radius-sm);
   font-size: var(--font-size-200);
+  cursor: pointer;
+}
+
+.roleItem[data-highlighted] {
+  background: var(--color-surface-subtle);
+}
+
+.roleBox {
+  display: grid;
+  flex: none;
+  width: 1.125rem;
+  height: 1.125rem;
+  place-items: center;
+  border: var(--border-hairline) solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-on-brand);
+}
+
+.roleBox > * {
+  display: grid;
+  place-items: center;
+}
+
+.roleBox svg {
+  display: block;
+}
+
+.roleItem[data-checked] .roleBox {
+  border-color: var(--color-brand);
+  background: var(--color-brand);
 }

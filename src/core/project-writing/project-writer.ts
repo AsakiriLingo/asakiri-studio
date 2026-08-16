@@ -110,6 +110,11 @@ export interface ProjectWriter {
     recordPath: string,
     record: ContentRecord,
   ): Promise<ProjectWriteResult>;
+  createRecords(
+    session: ProjectSession,
+    collectionPath: string,
+    entries: readonly { readonly path: string; readonly record: ContentRecord }[],
+  ): Promise<ProjectWriteResult>;
   /** Removes a record from its collection's recordFiles and deletes the file. */
   deleteRecord(
     session: ProjectSession,

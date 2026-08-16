@@ -1,0 +1,64 @@
+.choice {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--font-size-200);
+  cursor: pointer;
+}
+
+.box,
+.dot {
+  display: grid;
+  flex: none;
+  width: 1.125rem;
+  height: 1.125rem;
+  place-items: center;
+  padding: 0;
+  border: var(--border-hairline) solid var(--color-border-strong);
+  background: var(--color-surface);
+  color: var(--color-on-brand);
+  outline: 2px solid transparent;
+  outline-offset: 1px;
+}
+
+.box {
+  border-radius: var(--radius-sm);
+}
+
+.dot {
+  border-radius: 999px;
+}
+
+.box[data-checked],
+.dot[data-checked] {
+  border-color: var(--color-brand);
+  background: var(--color-brand);
+}
+
+.box:focus-visible,
+.dot:focus-visible {
+  border-color: var(--color-text-muted);
+  outline-color: var(--color-focus-ring);
+}
+
+.box[data-disabled],
+.dot[data-disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.mark {
+  display: grid;
+  place-items: center;
+}
+
+.mark svg {
+  display: block;
+}
+
+.dotMark {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 999px;
+  background: var(--color-on-brand);
+}

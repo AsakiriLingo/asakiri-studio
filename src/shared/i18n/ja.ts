@@ -34,6 +34,14 @@ export const jaMessages = {
     remove: (label: string) => `${label}を削除`,
   },
 
+  datePicker: {
+    choose: "日付を選ぶ",
+    previousMonth: "前の月",
+    nextMonth: "次の月",
+    today: "今日",
+    clear: "クリア",
+  },
+
   flag: {
     add: "旗を追加",
     change: "旗を変更",
@@ -139,6 +147,7 @@ export const jaMessages = {
     contributorsTitle: "貢献者",
     contributorsDescription: "コースページにクレジットされます。各人にリンクを追加してください。",
     roleLabel: "役割",
+    rolePlaceholder: "役割を選ぶ",
     roleHelp: "この人が担当した役割をすべて選んでください。",
     nameLabel: "名前",
     linkLabel: "リンク",
@@ -270,10 +279,49 @@ export const jaMessages = {
     confirmDeleteFieldBody: (name: string) =>
       `「${name}」を削除すると、コレクション内のすべての項目からこのフィールドと値が削除されます。`,
     linkAsset: "メディアをリンク",
-    importNewFile: "ファイルを取り込む…",
+    importNewFile: "ファイルを取り込む",
     clearAsset: "クリア",
     importing: "取り込み中…",
     importFailed: "ファイルを取り込めませんでした",
+  },
+
+  importer: {
+    title: "スプレッドシートを取り込む",
+    source: (file: string, rows: number) => `${file} · ${String(rows)}行`,
+    tableLabel: "テーブル",
+    tableOption: (index: number, rows: number) => `テーブル${String(index)} · ${String(rows)}行`,
+    targetLabel: "追加先",
+    targetHelp: "既存のコレクションを選ぶと更新し、新規を選ぶと作成します。",
+    newCollection: "新しいコレクション",
+    nameLabel: "コレクション名",
+    columnHeader: "列",
+    fieldHeader: "フィールド",
+    localeHeader: "言語",
+    keyHeader: "照合キー",
+    unnamedColumn: "名称未設定の列",
+    skipColumn: "取り込まない",
+    newField: "新しいフィールド",
+    noLocale: "言語を指定しない",
+    useAsKey: "使う",
+    fieldFor: (column: string) => `${column}のフィールド`,
+    localeFor: (column: string) => `${column}の言語`,
+    summaryCreated: (count: number) => `新規${String(count)}件`,
+    summaryUpdated: (count: number) => `更新${String(count)}件`,
+    summaryUnchanged: (count: number) => `変更なし${String(count)}件`,
+    summarySkipped: (count: number) => `スキップ${String(count)}件`,
+    noKeyWarning:
+      "照合キーの列が選ばれていないため、すべての行が新規の項目として取り込まれます。同じファイルを再度取り込むと重複します。",
+    progressDetail: (written: number, total: number) =>
+      `${String(total)}件中${String(written)}件を書き込みました`,
+    progressNote: "完了するまでStudioを開いたままにしてください。",
+    importFailed: (written: number, total: number) =>
+      `${String(total)}件中${String(written)}件を書き込んだ時点で停止しました。書き込み済みの項目はそのまま残ります。`,
+    retry: "もう一度試す",
+    importAction: "取り込む",
+    importing: "取り込み中…",
+    importSpreadsheet: "スプレッドシートを取り込む",
+    readFailed: "このファイルを読み込めませんでした。",
+    noTables: "このファイルにテーブルが見つかりませんでした。",
   },
 
   media: {
@@ -281,7 +329,8 @@ export const jaMessages = {
     description: "項目やレッスンで使う、ローカルの画像・音声・動画を管理します。",
     importMedia: "メディアを取り込む",
     addMedia: "メディアを追加",
-    importFromDevice: "デバイスから取り込む",
+    importFromDevice: "ファイルを取り込む",
+    importFolder: "フォルダを取り込む",
     searchUnsplashImages: "Unsplashの画像を検索",
     searchTatoebaAudio: "Tatoebaの音声を追加",
     addTts: "TTS音声を追加",
@@ -489,7 +538,7 @@ export const jaMessages = {
     slash: {
       title: "挿入",
       empty: "一致するものがありません",
-      importMedia: "ファイルを読み込む…",
+      importMedia: "ファイルを読み込む",
       assetsSection: "メディア",
       collectionsSection: "コレクション",
       back: "戻る",

@@ -1,3 +1,4 @@
+import { invoke } from "@tauri-apps/api/core";
 import { open } from "@tauri-apps/plugin-dialog";
 import { SUPPORTED_MEDIA_EXTENSIONS } from "@core/course";
 import type { MediaPicker, PickedMediaFile } from "@core/project-media";
@@ -19,5 +20,19 @@ export function createMediaPicker(): MediaPicker {
       const paths = Array.isArray(picked) ? picked : [picked];
       return paths.map((path) => ({ path, name: baseName(path) }));
     },
+
+    async pickMediaFolder(): Promise<readonly PickedMediaFile[]> {
+      const folder = await open({ multiple: false, directory: true });
+      if (typeof folder !== "string") return [];
+      const files = await invoke<readonly PickedMediaFile[]>("list_folder_files", {
+        folderPath: folder,
+      });
+      return files.filter((file) => isSupportedMedia(file.name));
+    },
   };
+}
+
+function isSupportedMedia(name: string): boolean {
+  const extension = name.split(".").pop()?.toLowerCase() ?? "";
+  return SUPPORTED_MEDIA_EXTENSIONS.includes(extension);
 }

@@ -31,6 +31,14 @@ export const enMessages = {
     remove: (label: string) => `Remove ${label}`,
   },
 
+  datePicker: {
+    choose: "Choose a date",
+    previousMonth: "Previous month",
+    nextMonth: "Next month",
+    today: "Today",
+    clear: "Clear",
+  },
+
   flag: {
     add: "Add flag",
     change: "Change flag",
@@ -136,6 +144,7 @@ export const enMessages = {
     contributorsTitle: "Contributors",
     contributorsDescription: "Credited on the course page. Add a link for each person.",
     roleLabel: "Roles",
+    rolePlaceholder: "Choose roles",
     roleHelp: "Pick every role this person had.",
     nameLabel: "Name",
     linkLabel: "Link",
@@ -267,10 +276,50 @@ export const enMessages = {
     confirmDeleteFieldBody: (name: string) =>
       `Deleting “${name}” removes this field and its values from every entry in the collection.`,
     linkAsset: "Link media",
-    importNewFile: "Import file…",
+    importNewFile: "Import file",
     clearAsset: "Clear",
     importing: "Importing…",
     importFailed: "Could not import the file",
+  },
+
+  importer: {
+    title: "Import a spreadsheet",
+    source: (file: string, rows: number) => `${file} · ${String(rows)} rows`,
+    tableLabel: "Table",
+    tableOption: (index: number, rows: number) => `Table ${String(index)} · ${String(rows)} rows`,
+    targetLabel: "Add to",
+    targetHelp: "Choose an existing collection to update it, or create a new one.",
+    newCollection: "New collection",
+    nameLabel: "Collection name",
+    columnHeader: "Column",
+    fieldHeader: "Field",
+    localeHeader: "Language",
+    keyHeader: "Match on",
+    unnamedColumn: "Untitled column",
+    skipColumn: "Do not import",
+    newField: "New field",
+    noLocale: "Not language specific",
+    useAsKey: "Use",
+    fieldFor: (column: string) => `Field for ${column}`,
+    localeFor: (column: string) => `Language for ${column}`,
+    summaryCreated: (count: number) =>
+      count === 1 ? "1 new entry" : `${String(count)} new entries`,
+    summaryUpdated: (count: number) => `${String(count)} updated`,
+    summaryUnchanged: (count: number) => `${String(count)} unchanged`,
+    summarySkipped: (count: number) => `${String(count)} skipped`,
+    noKeyWarning:
+      "No column is set to match on, so every row is imported as a new entry. Importing this file again will duplicate them.",
+    progressDetail: (written: number, total: number) =>
+      `${String(written)} of ${String(total)} entries written`,
+    progressNote: "Keep Studio open until this finishes.",
+    importFailed: (written: number, total: number) =>
+      `Stopped after writing ${String(written)} of ${String(total)} entries. The entries already written were kept.`,
+    retry: "Try again",
+    importAction: "Import",
+    importing: "Importing…",
+    importSpreadsheet: "Import a spreadsheet",
+    readFailed: "That file could not be read.",
+    noTables: "No table was found in that file.",
   },
 
   media: {
@@ -278,7 +327,8 @@ export const enMessages = {
     description: "Manage the local images, audio, and video that entries and lessons use.",
     importMedia: "Import media",
     addMedia: "Add media",
-    importFromDevice: "Import from device",
+    importFromDevice: "Import files",
+    importFolder: "Import a folder",
     searchUnsplashImages: "Search Unsplash images",
     searchTatoebaAudio: "Add Tatoeba audio",
     addTts: "Add TTS audio",
@@ -488,7 +538,7 @@ export const enMessages = {
     slash: {
       title: "Insert",
       empty: "No matches",
-      importMedia: "Import file…",
+      importMedia: "Import file",
       assetsSection: "Media",
       collectionsSection: "Collections",
       back: "Back",

@@ -4,6 +4,7 @@ import { localeOptions, useLocale, useMessages } from "@shared/i18n";
 import type { Locale } from "@shared/i18n";
 import { useConfirm } from "@shared/components/confirm-dialog";
 import { Icon } from "@shared/components/icon";
+import { Button } from "@shared/components/button";
 import { IconButton } from "@shared/components/icon-button";
 import { Select } from "@shared/components/select";
 import styles from "@features/start/StartScreen.module.css";
@@ -149,10 +150,10 @@ export function StartScreen({
             <Icon name="heart" size={18} />
           </span>
           <p className={styles.supportMessage}>{messages.support.message}</p>
-          <button type="button" className={styles.supportAction} onClick={onSupport}>
+          <Button size="sm" onClick={onSupport}>
             {messages.support.action}
             <Icon name="external" size={16} />
-          </button>
+          </Button>
           <button type="button" className={styles.supportLater} onClick={onSupportLater}>
             {messages.support.later}
           </button>

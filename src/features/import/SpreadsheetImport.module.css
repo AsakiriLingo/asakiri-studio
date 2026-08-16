@@ -1,0 +1,125 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal);
+  display: grid;
+  place-items: center;
+  padding: var(--space-4);
+  background: var(--color-overlay);
+}
+
+.dialog {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  width: min(100%, 58rem);
+  max-height: min(90vh, 52rem);
+  border: var(--border-hairline) solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+}
+
+.header {
+  padding: var(--space-5);
+  border-bottom: var(--border-hairline) solid var(--color-border);
+}
+
+.title {
+  margin: 0;
+  font-size: var(--font-size-500);
+  font-weight: var(--font-weight-bold);
+}
+
+.source {
+  margin: var(--space-1) 0 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-200);
+}
+
+.body {
+  display: grid;
+  gap: var(--space-4);
+  padding: var(--space-5);
+  overflow-y: auto;
+}
+
+.columns {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-size-200);
+}
+
+.columns th {
+  padding-bottom: var(--space-2);
+  color: var(--color-text-muted);
+  font-weight: var(--font-weight-regular);
+  text-align: start;
+}
+
+.columns td {
+  padding: var(--space-1) var(--space-2) var(--space-1) 0;
+  vertical-align: top;
+}
+
+.columns td:first-child {
+  padding-inline-start: 0;
+}
+
+.columnName {
+  display: block;
+  font-weight: var(--font-weight-bold);
+}
+
+.sample {
+  display: block;
+  overflow: hidden;
+  max-width: 12rem;
+  color: var(--color-text-muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.keyChoice {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.keyLabel {
+  color: var(--color-text-muted);
+}
+
+.summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-4);
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-subtle);
+  font-size: var(--font-size-200);
+}
+
+.skipped {
+  color: var(--color-text-muted);
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  padding: var(--space-5);
+  border-top: var(--border-hairline) solid var(--color-border);
+}
+
+.running {
+  display: grid;
+  gap: var(--space-3);
+  align-content: center;
+  min-height: 12rem;
+  padding: var(--space-6) var(--space-5);
+}
+
+.runningNote {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-200);
+}
