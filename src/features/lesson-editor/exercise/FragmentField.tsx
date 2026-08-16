@@ -109,7 +109,7 @@ export function FragmentField({
         ) : source === "content" ? (
           <>
             <Select
-              aria-label={t.record}
+              aria-label={t.entry}
               placeholder={t.pickRecord}
               value={recordId}
               onValueChange={(id) => {

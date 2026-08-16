@@ -64,7 +64,30 @@
         "contributors": {
           "type": "array",
           "items": {
-            "type": "object"
+            "type": "object",
+            "properties": {
+              "id": {
+                "$ref": "common.schema.json#/$defs/id"
+              },
+              "name": {
+                "type": "string"
+              },
+              "role": {
+                "type": "string"
+              },
+              "roles": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "links": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "funding": {
@@ -78,6 +101,14 @@
           "items": {
             "type": "object"
           }
+        },
+        "version": {
+          "type": "string",
+          "description": "The course author's own version, unrelated to formatVersion."
+        },
+        "releasedOn": {
+          "type": "string",
+          "description": "Release date of this course version, as YYYY-MM-DD."
         }
       }
     },

@@ -19,6 +19,8 @@ const PROJECT: CourseProject = {
   taughtFlag: "jp",
   level: "a1",
   estimatedLength: "2 units",
+  version: "",
+  releasedOn: "",
   license: "bySa",
   copyrightHolder: "Alok Singh",
   copyrightYear: "2026",

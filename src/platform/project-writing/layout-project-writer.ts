@@ -212,6 +212,8 @@ export function createLayoutProjectWriter(resolveRaw: ResolveProjectFileAccess):
             taughtFlag: project.taughtFlag,
             level: project.level,
             estimatedLength: project.estimatedLength,
+            version: project.version,
+            releasedOn: project.releasedOn,
             license: project.license,
             copyrightHolder: project.copyrightHolder,
             copyrightYear: project.copyrightYear,
@@ -219,7 +221,8 @@ export function createLayoutProjectWriter(resolveRaw: ResolveProjectFileAccess):
             contributors: project.contributors.map((item) => ({
               id: item.id,
               name: item.name,
-              role: item.role,
+              role: item.roles?.[0] ?? item.role,
+              ...(item.roles !== undefined ? { roles: [...item.roles] } : {}),
               links: [...item.links],
             })),
             funding: project.funding.map((item) => ({

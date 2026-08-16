@@ -6,7 +6,14 @@ export interface Contributor {
   readonly id: string;
   readonly name: string;
   readonly role: string;
+  readonly roles?: readonly string[];
   readonly links: readonly string[];
+}
+
+export function contributorRoles(contributor: Contributor): readonly string[] {
+  const roles = contributor.roles ?? [];
+  if (roles.length > 0) return roles;
+  return contributor.role === "" ? [] : [contributor.role];
 }
 
 export interface FundingLink {
@@ -32,6 +39,8 @@ export interface CourseProject {
   readonly taughtFlag: string;
   readonly level: string;
   readonly estimatedLength: string;
+  readonly version: string;
+  readonly releasedOn: string;
   readonly license: string;
   readonly copyrightHolder: string;
   readonly copyrightYear: string;

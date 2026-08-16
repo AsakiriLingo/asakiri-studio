@@ -629,10 +629,12 @@ function parseAsset(value: unknown, context: string): Asset {
 
 function parseContributor(value: unknown): Contributor {
   const data = isObject(value) ? value : {};
+  const roles = strListOr(data.roles);
   return {
     id: strOr(data.id),
     name: strOr(data.name),
-    role: strOr(data.role),
+    role: strOr(data.role, roles[0] ?? ""),
+    ...(roles.length > 0 ? { roles } : {}),
     links: strListOr(data.links),
   };
 }
@@ -668,6 +670,8 @@ function parseProject(value: unknown, context: string, locale: string): CoursePr
     taughtFlag: strOr(data.taughtFlag),
     level: strOr(data.level),
     estimatedLength: strOr(data.estimatedLength),
+    version: strOr(data.version),
+    releasedOn: strOr(data.releasedOn),
     license: strOr(data.license),
     copyrightHolder: strOr(data.copyrightHolder),
     copyrightYear: strOr(data.copyrightYear),

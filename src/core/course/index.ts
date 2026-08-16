@@ -50,7 +50,7 @@ export type {
   CourseSources,
   LoadedCourse,
 } from "@core/course/course";
-export { partSourceKey } from "@core/course/course";
+export { partSourceKey, contributorRoles } from "@core/course/course";
 export type { CourseFileReader } from "@core/course/parse-course";
 export {
   parseCourse,
