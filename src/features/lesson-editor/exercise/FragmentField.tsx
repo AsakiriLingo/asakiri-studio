@@ -136,6 +136,7 @@ export function FragmentField({
           </>
         ) : (
           <Select
+            searchable
             aria-label={t.asset}
             placeholder={t.pickAsset}
             value={assetId}

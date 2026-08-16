@@ -4,7 +4,7 @@
 
 .unitStack {
   display: grid;
-  gap: var(--space-8);
+  gap: var(--space-6);
 }
 
 .empty {
@@ -14,7 +14,10 @@
 
 .unitBlock {
   min-width: 0;
-  border-block: var(--border-hairline) solid var(--color-border);
+  overflow: clip;
+  border: 0;
+  border-radius: var(--radius-lg);
+  background: var(--color-canvas);
 }
 
 .unitBlock.dragging {
@@ -31,7 +34,7 @@
   gap: var(--space-2);
   min-height: 4rem;
   padding: var(--space-2) var(--space-3);
-  background: var(--color-canvas);
+  background: transparent;
 }
 
 .unitHeader > .unitActions {
@@ -90,7 +93,10 @@
 }
 
 .lessonOrder {
-  border-top: var(--border-hairline) solid var(--color-border);
+  display: grid;
+  gap: var(--space-1);
+  padding: 0 var(--space-2) var(--space-2);
+  border: 0;
 }
 
 .orderedRow {
@@ -101,11 +107,9 @@
   min-width: 0;
   min-height: 3.75rem;
   padding: var(--space-2) var(--space-3);
-  border-bottom: var(--border-hairline) solid var(--color-border);
-}
-
-.orderedRow:last-child {
-  border-bottom: 0;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
 }
 
 .orderedRow.dragging {
@@ -189,7 +193,7 @@
   }
 
   .orderedRow:hover {
-    background: var(--color-canvas);
+    background: var(--color-row-hover);
   }
 
   .unitToggle:hover .unitChevron {

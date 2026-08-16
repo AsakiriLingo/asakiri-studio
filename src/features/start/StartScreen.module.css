@@ -3,7 +3,7 @@
   padding: max(var(--space-4), env(safe-area-inset-top))
     max(var(--space-4), env(safe-area-inset-right)) max(var(--space-8), env(safe-area-inset-bottom))
     max(var(--space-4), env(safe-area-inset-left));
-  background: var(--color-surface);
+  background: var(--color-canvas);
 }
 
 .tools {
@@ -67,7 +67,8 @@
 }
 
 .list {
-  border-block: var(--border-hairline) solid var(--color-border);
+  display: grid;
+  gap: var(--space-2);
 }
 
 .recent {
@@ -89,21 +90,17 @@
   align-items: center;
   gap: var(--space-3);
   width: 100%;
-  min-height: 4rem;
-  padding: var(--space-2) var(--space-3);
+  min-height: 4.5rem;
+  padding: var(--space-3) var(--space-4);
   border: 0;
-  border-bottom: var(--border-hairline) solid var(--color-border);
-  background: transparent;
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
   color: var(--color-text);
   text-align: left;
   cursor: pointer;
   transition:
     background-color var(--duration-normal) var(--ease-out),
     transform var(--duration-fast) var(--ease-out);
-}
-
-.row:last-child {
-  border-bottom: 0;
 }
 
 .row:active {
@@ -138,7 +135,7 @@
 
 @media (hover: hover) and (pointer: fine) {
   .row:hover {
-    background: var(--color-surface-subtle);
+    background: var(--color-row-hover);
   }
 }
 

@@ -1,5 +1,7 @@
 .frame {
+  overflow: clip;
   border: var(--border-hairline) solid var(--color-border);
+  border-radius: var(--radius-lg);
   background: var(--color-surface);
 }
 
@@ -10,8 +12,8 @@
   min-height: 3rem;
   padding: var(--space-2);
   overflow-x: auto;
-  border-bottom: var(--border-hairline) solid var(--color-border);
-  background: var(--color-canvas);
+  border-bottom: 0;
+  background: var(--color-control);
 }
 
 .urlOverlay {
@@ -174,7 +176,7 @@
   min-height: 34rem;
   max-width: 46rem;
   margin-inline: auto;
-  padding: clamp(var(--space-6), 6vw, var(--space-16));
+  padding: clamp(var(--space-4), 3vw, var(--space-8));
   outline: 0;
 }
 

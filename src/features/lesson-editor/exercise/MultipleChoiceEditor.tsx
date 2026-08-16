@@ -125,7 +125,7 @@ export function MultipleChoiceEditor({
 
       <div>
         <PanelHeader title={te.answerOptionsTitle} description={te.answerOptionsDesc} />
-        <div className={styles.optionList}>
+        <div className={[styles.optionList, styles.exerciseOptionList].join(" ")}>
           {ex.options.map((option, index) => (
             <div key={option.id} className={styles.exerciseOption}>
               <span className={styles.optionIndex}>{optionLetter(index)}</span>

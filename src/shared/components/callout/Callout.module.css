@@ -3,8 +3,9 @@
   align-items: flex-start;
   gap: var(--space-3);
   padding: var(--space-4);
-  border: var(--border-hairline) solid var(--color-border);
-  background: var(--color-canvas);
+  border: 0;
+  border-radius: var(--radius-md);
+  background: var(--color-control);
   color: var(--color-text-muted);
   font-size: var(--font-size-300);
 }

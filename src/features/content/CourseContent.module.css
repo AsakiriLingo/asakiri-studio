@@ -1,6 +1,9 @@
 .layout {
   display: grid;
-  border-block: var(--border-hairline) solid var(--color-border);
+  align-items: start;
+  gap: var(--space-6);
+  border: 0;
+  background: transparent;
 }
 
 .layout > * {
@@ -9,14 +12,18 @@
 
 .collectionList {
   align-self: start;
-  border-bottom: var(--border-hairline) solid var(--color-border);
+  border: 0;
+  background: transparent;
 }
 
 .list {
+  display: grid;
+  gap: var(--space-2);
   border-block: 0;
 }
 
 .listRow {
+  position: relative;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   gap: var(--space-4);
@@ -26,18 +33,24 @@
   align-items: center;
   padding: var(--space-3) var(--space-4);
   border: 0;
-  border-bottom: var(--border-hairline) solid var(--color-border);
+  border-radius: var(--radius-md);
   background: transparent;
   color: var(--color-text);
   text-align: left;
 }
 
-.listRow:last-child {
-  border-bottom: 0;
-}
-
 .listRow.selected {
   background: var(--color-surface-subtle);
+}
+
+.listRow.selected::before {
+  position: absolute;
+  inset-block: var(--space-2);
+  inset-inline-start: 0;
+  width: 3px;
+  border-radius: var(--radius-sm);
+  background: var(--color-brand);
+  content: "";
 }
 
 .rowTitle {
@@ -56,8 +69,17 @@
 }
 
 .count {
+  align-self: start;
+  padding-top: var(--space-1);
   color: var(--color-text-muted);
+  font-size: var(--font-size-200);
   font-variant-numeric: tabular-nums;
+}
+
+.layout > section {
+  min-width: 0;
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
 }
 
 .addBar {
@@ -68,8 +90,8 @@
   display: flex;
   align-items: center;
   gap: var(--space-2) var(--space-3);
-  padding: var(--space-3) var(--space-4);
-  border-bottom: var(--border-hairline) solid var(--color-border);
+  padding: var(--space-4) var(--space-4) var(--space-2);
+  border: 0;
 }
 
 .collectionBar {
@@ -283,18 +305,24 @@
 
 @media (hover: hover) and (pointer: fine) {
   .listRow:hover {
-    background: var(--color-canvas);
+    background: var(--color-control);
+  }
+
+  .listRow.selected:hover {
+    background: var(--color-surface-subtle);
   }
 }
 
 @media (min-width: 48rem) {
   .layout {
-    grid-template-columns: minmax(11rem, 0.24fr) minmax(0, 1fr);
+    grid-template-columns: minmax(14rem, 17rem) minmax(0, 1fr);
   }
 
   .collectionList {
-    height: 100%;
-    border-right: var(--border-hairline) solid var(--color-border);
+    position: sticky;
+    top: var(--space-6);
+    height: auto;
+    border-right: 0;
     border-bottom: 0;
   }
 }

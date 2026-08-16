@@ -537,6 +537,7 @@ export function CourseContent({
                       styles.listRow,
                       entry.id === collection.id ? styles.selected : undefined,
                     )}
+                    aria-pressed={entry.id === collection.id}
                     onClick={() => {
                       setSelectedId(entry.id);
                     }}

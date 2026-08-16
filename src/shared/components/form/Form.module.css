@@ -16,11 +16,11 @@
 .input,
 .textarea {
   width: 100%;
-  border: var(--border-hairline) solid var(--color-border);
+  border: var(--border-hairline) solid transparent;
   border-radius: var(--radius-md);
   outline: 2px solid transparent;
   outline-offset: 1px;
-  background: var(--color-surface);
+  background: var(--color-control);
   color: var(--color-text);
 }
 
@@ -37,7 +37,7 @@
 
 .input:focus-visible,
 .textarea:focus-visible {
-  border-color: var(--color-text-muted);
+  border-color: transparent;
   outline-color: var(--color-focus-ring);
 }
 
@@ -49,6 +49,6 @@
 @media (hover: hover) and (pointer: fine) {
   .input:hover,
   .textarea:hover {
-    background: var(--color-canvas);
+    background: var(--color-control-hover);
   }
 }

@@ -6,11 +6,11 @@
   width: 100%;
   min-height: var(--control-height-md);
   padding-inline: var(--space-3);
-  border: var(--border-hairline) solid var(--color-border);
+  border: var(--border-hairline) solid transparent;
   border-radius: var(--radius-md);
   outline: 2px solid transparent;
   outline-offset: 1px;
-  background: var(--color-surface);
+  background: var(--color-control);
   color: var(--color-text);
   font: inherit;
   text-align: left;
@@ -19,7 +19,7 @@
 
 .trigger[data-popup-open],
 .trigger:focus-visible {
-  border-color: var(--color-text-muted);
+  border-color: transparent;
   outline-color: var(--color-focus-ring);
 }
 
@@ -35,9 +35,68 @@
   color: var(--color-text-muted);
 }
 
+.searchGroup {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: var(--control-height-md);
+  border: var(--border-hairline) solid transparent;
+  border-radius: var(--radius-md);
+  outline: 2px solid transparent;
+  outline-offset: 1px;
+  background: var(--color-control);
+  color: var(--color-text);
+}
+
+.searchGroup:focus-within {
+  outline-color: var(--color-focus-ring);
+}
+
+.searchIcon {
+  position: absolute;
+  inset-inline-start: var(--space-3);
+  color: var(--color-text-muted);
+  pointer-events: none;
+}
+
+.searchInput {
+  width: 100%;
+  min-width: 0;
+  min-height: var(--control-height-md);
+  padding: 0 2.5rem 0 2.5rem;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--color-text);
+  font: inherit;
+}
+
+.searchInput::placeholder {
+  color: var(--color-text-muted);
+}
+
+.searchInput::-webkit-search-cancel-button {
+  display: none;
+}
+
+.searchTrigger {
+  position: absolute;
+  inset-inline-end: var(--space-1);
+  display: grid;
+  width: var(--control-height-sm);
+  height: var(--control-height-sm);
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-text-muted);
+}
+
 @media (hover: hover) and (pointer: fine) {
   .trigger:hover {
-    background: var(--color-canvas);
+    background: var(--color-control-hover);
   }
 }
 
@@ -58,6 +117,16 @@
   border: var(--border-hairline) solid var(--color-border);
   border-radius: var(--radius-md);
   background: var(--color-surface);
+}
+
+.list {
+  display: grid;
+}
+
+.empty {
+  padding: var(--space-3);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-200);
 }
 
 .item {
