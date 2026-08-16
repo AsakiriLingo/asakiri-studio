@@ -1,5 +1,15 @@
 [
   {
+    "date": "2026-08-17",
+    "scope": "page",
+    "macrostructure": "Workbench master-detail",
+    "theme": "custom",
+    "theme_axes": "light and dark / roman-serif / chromatic-green",
+    "vibe": "calm compact library workspace",
+    "enrichment": "none",
+    "brief": "Refine Library hierarchy, measure, search alignment, and record density"
+  },
+  {
     "date": "2026-08-07",
     "scope": "app",
     "macrostructure": "Workbench",
