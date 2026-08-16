@@ -21,7 +21,7 @@
     "id": { "$ref": "common.schema.json#/$defs/id" },
     "kind": { "enum": ["image", "audio", "video"] },
     "label": { "type": "string" },
-    "availability": { "enum": ["ready", "placeholder", "missing"] },
+    "availability": { "enum": ["ready", "placeholder"] },
     "file": { "type": ["string", "null"] },
     "expectedFile": { "type": "string" },
     "mimeType": { "type": "string" },
