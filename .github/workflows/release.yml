@@ -92,5 +92,5 @@ jobs:
           releaseName: "Asakiri Studio v__VERSION__"
           releaseBody: "Download the installer for your platform, or let an existing install update itself."
           releaseDraft: true
-          prerelease: false
+          prerelease: true
           includeUpdaterJson: true
