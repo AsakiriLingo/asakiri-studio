@@ -57,6 +57,7 @@ function scrollParentOf(element: Element | null): Element | null {
 export interface CourseMediaProps {
   readonly course: Course;
   readonly onImportMedia: () => Promise<ProjectWriteResult | null>;
+  readonly onImportMediaFolder: () => Promise<ProjectWriteResult | null>;
   readonly onDeleteAsset: (assetId: string) => Promise<ProjectWriteResult>;
   readonly onLoadPreview: (assetId: string) => Promise<string | null>;
   readonly onSearchImages: (query: string, page: number) => Promise<SearchPage<ImageSearchResult>>;
@@ -83,6 +84,7 @@ export interface CourseMediaProps {
 export function CourseMedia({
   course,
   onImportMedia,
+  onImportMediaFolder,
   onDeleteAsset,
   onLoadPreview,
   onSearchImages,
@@ -191,6 +193,17 @@ export function CourseMedia({
     };
   }, [hasMore, filtered.length]);
 
+  const runFolderImport = () => {
+    setImporting(true);
+    void onImportMediaFolder()
+      .then((result) => {
+        if (result) setSaveState(result.status === "saved" ? "saved" : "failed");
+      })
+      .finally(() => {
+        setImporting(false);
+      });
+  };
+
   const runImport = () => {
     setImporting(true);
     void onImportMedia()
@@ -262,6 +275,10 @@ export function CourseMedia({
                   <Menu.Item className={styles.menuItem} onClick={runImport}>
                     <Icon name="upload" size={18} />
                     {t.importFromDevice}
+                  </Menu.Item>
+                  <Menu.Item className={styles.menuItem} onClick={runFolderImport}>
+                    <Icon name="folder" size={18} />
+                    {t.importFolder}
                   </Menu.Item>
                   <Menu.Item
                     className={styles.menuItem}

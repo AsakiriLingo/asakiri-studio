@@ -965,6 +965,16 @@ export function App() {
     return allOk ? { status: "saved" } : { status: "failed", code: "unknown" };
   };
 
+  const importMediaFolder = async (): Promise<ProjectWriteResult | null> => {
+    if (!project || courseState?.status !== "ready") {
+      return { status: "failed", code: "unavailable" };
+    }
+    const picked = await services.mediaPicker.pickMediaFolder();
+    if (picked.length === 0) return null;
+    const { allOk } = await importPickedMedia(picked);
+    return allOk ? { status: "saved" } : { status: "failed", code: "unknown" };
+  };
+
   const importAssetForField = async (): Promise<Asset | null> => {
     if (!project || courseState?.status !== "ready") return null;
     const picked = await services.mediaPicker.pickMediaFiles();
@@ -1241,6 +1251,7 @@ export function App() {
             <CourseMedia
               course={course}
               onImportMedia={importMedia}
+              onImportMediaFolder={importMediaFolder}
               onDeleteAsset={deleteAsset}
               onLoadPreview={loadAssetPreview}
               onSearchImages={(query, page) => services.mediaSearch.searchImages(query, page)}
