@@ -225,6 +225,7 @@ export interface CourseContentProps {
   readonly onUpdateCollection: (collection: Collection) => Promise<ProjectWriteResult>;
   readonly onDeleteCollection: (collectionId: string) => Promise<ProjectWriteResult>;
   readonly onImportAsset: ImportAsset;
+  readonly onImportSpreadsheet: () => Promise<void>;
   readonly onLoadPreview: LoadPreview;
 }
 
@@ -237,6 +238,7 @@ export function CourseContent({
   onUpdateCollection,
   onDeleteCollection,
   onImportAsset,
+  onImportSpreadsheet,
   onLoadPreview,
 }: CourseContentProps) {
   const messages = useMessages();
@@ -248,6 +250,14 @@ export function CourseContent({
   const [newCollectionName, setNewCollectionName] = useState("");
   const [editingRecordId, setEditingRecordId] = useState<string | null>(null);
   const [showingSettings, setShowingSettings] = useState(false);
+  const [importing, setImporting] = useState(false);
+
+  const runSpreadsheetImport = () => {
+    setImporting(true);
+    void onImportSpreadsheet().finally(() => {
+      setImporting(false);
+    });
+  };
 
   const collection =
     course.collections.find((entry) => entry.id === selectedId) ?? course.collections[0] ?? null;
@@ -497,10 +507,16 @@ export function CourseContent({
         title={t.title}
         description={t.description}
         actions={
-          <Button onClick={openNewCollection}>
-            <Icon name="plus" size={18} />
-            {t.newCollection}
-          </Button>
+          <>
+            <Button variant="ghost" disabled={importing} onClick={runSpreadsheetImport}>
+              <Icon name="upload" size={18} />
+              {messages.importer.importSpreadsheet}
+            </Button>
+            <Button onClick={openNewCollection}>
+              <Icon name="plus" size={18} />
+              {t.newCollection}
+            </Button>
+          </>
         }
       />
 

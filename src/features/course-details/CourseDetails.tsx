@@ -6,6 +6,7 @@ import type { ProjectWriteResult } from "@core/project-writing";
 import { useMessages, type StudioMessages } from "@shared/i18n";
 import { Button } from "@shared/components/button";
 import { Callout } from "@shared/components/callout";
+import { CheckChoice } from "@shared/components/choice";
 import { Field, TextArea, TextInput } from "@shared/components/form";
 import { FlagPicker } from "@shared/components/flag";
 import { Select, type SelectOption } from "@shared/components/select";
@@ -47,19 +48,19 @@ function RoleChecklist({
     <fieldset className={styles.roleSet}>
       <legend className={styles.roleLegend}>{label}</legend>
       {order.map((value) => (
-        <label key={value} className={styles.roleChoice}>
-          <input
-            type="checkbox"
-            checked={selected.includes(value)}
-            onChange={(event) => {
-              const next = event.target.checked
+        <CheckChoice
+          key={value}
+          checked={selected.includes(value)}
+          onCheckedChange={(checked) => {
+            onChange(
+              checked
                 ? order.filter((role) => role === value || selected.includes(role))
-                : selected.filter((role) => role !== value);
-              onChange(next);
-            }}
-          />
-          <span>{options[value]}</span>
-        </label>
+                : selected.filter((role) => role !== value),
+            );
+          }}
+        >
+          {options[value]}
+        </CheckChoice>
       ))}
     </fieldset>
   );

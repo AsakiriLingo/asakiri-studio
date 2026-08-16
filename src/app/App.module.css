@@ -12,3 +12,30 @@
 .messageBody {
   color: var(--color-text-muted);
 }
+
+.importNotice {
+  position: fixed;
+  inset-block-end: var(--space-4);
+  inset-inline: 0;
+  z-index: var(--z-toast);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  width: fit-content;
+  margin-inline: auto;
+  padding: var(--space-3) var(--space-4);
+  border: var(--border-hairline) solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  font-size: var(--font-size-200);
+}
+
+.importDismiss {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-brand);
+  font: inherit;
+  cursor: pointer;
+}

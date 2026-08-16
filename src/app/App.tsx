@@ -19,11 +19,14 @@ import type { ProjectReadErrorCode } from "@core/project-reading";
 import type { GitStatus } from "@core/project-system";
 import type { ProjectWriteResult } from "@core/project-writing";
 import { createProjectSession, type ProjectDirectory, type RecentProject } from "@core/projects";
-import { I18nProvider, getMessages, type Locale } from "@shared/i18n";
+import { I18nProvider, getMessages, useMessages, type Locale } from "@shared/i18n";
 import { ConfirmProvider } from "@shared/components/confirm-dialog";
 import { StartScreen } from "@features/start";
 import { NewCourseDialog } from "@features/new-course";
 import { WorkspaceShell, type WorkspaceSection } from "@features/workspace-shell";
+import { SpreadsheetImport, type SpreadsheetImportRequest } from "@features/import";
+import type { DocumentTable } from "@core/documents";
+import { SPREADSHEET_EXTENSIONS } from "@core/documents";
 import { CourseStructure } from "@features/course-structure";
 import { CourseContent } from "@features/content";
 import { CourseMedia } from "@features/media";
@@ -59,6 +62,8 @@ type CourseState =
   | { readonly status: "ready"; readonly course: Course; readonly sources: CourseSources }
   | { readonly status: "failed"; readonly code: ProjectReadErrorCode };
 
+const IMPORT_BATCH = 50;
+
 export function App() {
   const [services] = useState(createAppServices);
   const [isDark, setIsDark] = useState(initialDark);
@@ -68,6 +73,11 @@ export function App() {
   const [openLessonId, setOpenLessonId] = useState<string | null>(null);
   const [project, setProject] = useState<ProjectDirectory | null>(null);
   const [courseState, setCourseState] = useState<CourseState | null>(null);
+  const [spreadsheet, setSpreadsheet] = useState<{
+    readonly fileName: string;
+    readonly tables: readonly DocumentTable[];
+  } | null>(null);
+  const [importNotice, setImportNotice] = useState<"readFailed" | "noTables" | null>(null);
   const [update, setUpdate] = useState<AvailableUpdate | null>(null);
   const [updateInstalling, setUpdateInstalling] = useState(false);
   const [supportHidden, setSupportHidden] = useState(initialSupportHidden);
@@ -493,6 +503,109 @@ export function App() {
       );
     }
     return result;
+  };
+
+  const pickSpreadsheet = async (): Promise<void> => {
+    setImportNotice(null);
+    const picked = await services.documents.pickDocument(SPREADSHEET_EXTENSIONS);
+    if (!picked) return;
+    const read = await services.documents.readDocument(picked.path);
+    if (read.status !== "ready") {
+      setImportNotice("readFailed");
+      return;
+    }
+    if (read.document.tables.length === 0) {
+      setImportNotice("noTables");
+      return;
+    }
+    setSpreadsheet({ fileName: picked.name, tables: read.document.tables });
+  };
+
+  const commitSpreadsheet = async (
+    request: SpreadsheetImportRequest,
+    onProgress: (written: number) => void,
+  ): Promise<ProjectWriteResult> => {
+    if (!project || courseState?.status !== "ready") {
+      return { status: "failed", code: "unavailable" };
+    }
+    const session = createProjectSession(project);
+    const { course, sources } = courseState;
+
+    let collection = course.collections.find((entry) => entry.id === request.collectionId) ?? null;
+    let collectionPath = collection ? sources.collections[collection.id] : undefined;
+
+    if (collection === null) {
+      collection = {
+        id: `collection_${crypto.randomUUID()}`,
+        name: request.collectionName,
+        fields: request.fields.map((field) => field.definition),
+      };
+      collectionPath = `content/collections/${collection.id}.json`;
+      const created = await services.writer.createCollection(session, collectionPath, collection);
+      if (created.status !== "saved") return created;
+    } else if (collectionPath !== undefined) {
+      const added = request.fields.filter((field) => field.isNew).map((field) => field.definition);
+      if (added.length > 0) {
+        collection = { ...collection, fields: [...collection.fields, ...added] };
+        const updated = await services.writer.updateCollection(session, collectionPath, collection);
+        if (updated.status !== "saved") return updated;
+      }
+    }
+
+    if (collectionPath === undefined) return { status: "failed", code: "unavailable" };
+
+    const created = request.created.map((record) => ({
+      path: `content/records/${record.id}.json`,
+      record: { ...record, collectionId: collection.id },
+    }));
+
+    let written = 0;
+    for (let index = 0; index < created.length; index += IMPORT_BATCH) {
+      const batch = created.slice(index, index + IMPORT_BATCH);
+      const result = await services.writer.createRecords(session, collectionPath, batch);
+      if (result.status !== "saved") return result;
+      written += batch.length;
+      onProgress(written);
+    }
+
+    for (const record of request.updated) {
+      const path = sources.records[record.id];
+      if (path === undefined) continue;
+      const result = await services.writer.updateRecord(session, path, record);
+      if (result.status !== "saved") return result;
+      written += 1;
+      onProgress(written);
+    }
+
+    setCourseState((current) =>
+      current?.status === "ready"
+        ? {
+            ...current,
+            course: {
+              ...current.course,
+              collections: [
+                ...current.course.collections.filter((entry) => entry.id !== collection.id),
+                collection,
+              ],
+              records: [
+                ...current.course.records.map(
+                  (entry) => request.updated.find((record) => record.id === entry.id) ?? entry,
+                ),
+                ...created.map((entry) => entry.record),
+              ],
+            },
+            sources: {
+              ...current.sources,
+              collections: { ...current.sources.collections, [collection.id]: collectionPath },
+              records: {
+                ...current.sources.records,
+                ...Object.fromEntries(created.map((entry) => [entry.record.id, entry.path])),
+              },
+            },
+          }
+        : current,
+    );
+    return { status: "saved" };
   };
 
   const addCollection = async (collection: Collection): Promise<ProjectWriteResult> => {
@@ -1245,6 +1358,7 @@ export function App() {
               onUpdateCollection={updateCollection}
               onDeleteCollection={deleteCollection}
               onImportAsset={importAssetForField}
+              onImportSpreadsheet={pickSpreadsheet}
               onLoadPreview={loadAssetPreview}
             />
           ) : section === "media" ? (
@@ -1308,10 +1422,63 @@ export function App() {
     );
   }
 
+  const importDialog = spreadsheet ? (
+    <SpreadsheetImport
+      fileName={spreadsheet.fileName}
+      tables={spreadsheet.tables}
+      collections={courseState?.status === "ready" ? courseState.course.collections : []}
+      records={courseState?.status === "ready" ? courseState.course.records : []}
+      locales={
+        courseState?.status === "ready"
+          ? [
+              courseState.course.project.defaultLocale,
+              ...courseState.course.project.learningLocales,
+            ]
+          : ["en"]
+      }
+      defaultLocale={
+        courseState?.status === "ready" ? courseState.course.project.defaultLocale : "en"
+      }
+      onCancel={() => {
+        setSpreadsheet(null);
+      }}
+      onImport={commitSpreadsheet}
+    />
+  ) : null;
+
   return (
     <I18nProvider locale={locale}>
-      <ConfirmProvider>{renderView()}</ConfirmProvider>
+      <ConfirmProvider>
+        {renderView()}
+        {importDialog}
+        {importNotice !== null ? (
+          <ImportNotice
+            code={importNotice}
+            onDismiss={() => {
+              setImportNotice(null);
+            }}
+          />
+        ) : null}
+      </ConfirmProvider>
     </I18nProvider>
+  );
+}
+
+function ImportNotice({
+  code,
+  onDismiss,
+}: {
+  readonly code: "readFailed" | "noTables";
+  readonly onDismiss: () => void;
+}) {
+  const messages = useMessages();
+  return (
+    <div className={styles.importNotice} role="alert">
+      <span>{code === "noTables" ? messages.importer.noTables : messages.importer.readFailed}</span>
+      <button type="button" className={styles.importDismiss} onClick={onDismiss}>
+        {messages.common.done}
+      </button>
+    </div>
   );
 }
 

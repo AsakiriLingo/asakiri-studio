@@ -103,6 +103,72 @@ function readWritten(files: Map<string, string>, path: string): unknown {
 }
 
 describe("layout project writer", () => {
+  it("writes many records and links them into the collection with one rewrite", async () => {
+    const collectionPath = "content/collections/vocabulary.json";
+    const files = new Map([
+      ["project.json", MANIFEST],
+      [
+        collectionPath,
+        JSON.stringify({ id: "c1", name: "Vocabulary", fields: [], recordFiles: [] }),
+      ],
+    ]);
+    let collectionWrites = 0;
+    const access = fileAccess(files);
+    const writer = createLayoutProjectWriter(() => ({
+      ...access,
+      writeTextFile(path, contents) {
+        if (path === collectionPath) collectionWrites += 1;
+        return access.writeTextFile(path, contents);
+      },
+    }));
+
+    const entries = [1, 2, 3].map((index) => ({
+      path: `content/records/r${String(index)}.json`,
+      record: {
+        id: `r${String(index)}`,
+        collectionId: "c1",
+        fields: { f1: { kind: "text" as const, value: `word ${String(index)}` } },
+      },
+    }));
+
+    const result = await writer.createRecords(SESSION, collectionPath, entries);
+
+    expect(result).toEqual({ status: "saved" });
+    expect(collectionWrites).toBe(1);
+    expect(readWritten(files, collectionPath)).toMatchObject({
+      recordFiles: ["../records/r1.json", "../records/r2.json", "../records/r3.json"],
+    });
+    expect(readWritten(files, "content/records/r2.json")).toMatchObject({ id: "r2" });
+  });
+
+  it("keeps records already linked when a second batch lands", async () => {
+    const collectionPath = "content/collections/vocabulary.json";
+    const files = new Map([
+      ["project.json", MANIFEST],
+      [
+        collectionPath,
+        JSON.stringify({
+          id: "c1",
+          name: "Vocabulary",
+          fields: [],
+          recordFiles: ["../records/existing.json"],
+        }),
+      ],
+    ]);
+    const writer = createLayoutProjectWriter(() => fileAccess(files));
+
+    await writer.createRecords(SESSION, collectionPath, [
+      {
+        path: "content/records/new.json",
+        record: { id: "new", collectionId: "c1", fields: {} },
+      },
+    ]);
+
+    expect(readWritten(files, collectionPath)).toMatchObject({
+      recordFiles: ["../records/existing.json", "../records/new.json"],
+    });
+  });
+
   it("keeps translations for locales the editor is not showing", async () => {
     const lessonPath = "lessons/intro/lesson.json";
     const files = new Map([

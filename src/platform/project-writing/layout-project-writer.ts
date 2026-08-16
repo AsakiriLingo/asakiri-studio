@@ -574,6 +574,38 @@ export function createLayoutProjectWriter(resolveRaw: ResolveProjectFileAccess):
       }
     },
 
+    async createRecords(session, collectionPath, entries): Promise<ProjectWriteResult> {
+      const files = resolve(session);
+      if (!files) {
+        return { status: "failed", code: "unavailable" };
+      }
+      if (entries.length === 0) return { status: "saved" };
+
+      try {
+        for (const entry of entries) {
+          await files.writeTextFile(
+            entry.path,
+            `${JSON.stringify(serializeRecord(entry.record), null, 2)}\n`,
+          );
+        }
+        const parsed: unknown = JSON.parse(await files.readTextFile(collectionPath));
+        if (!isRecord(parsed)) {
+          return { status: "failed", code: "unknown" };
+        }
+        const recordFiles = [
+          ...stringArray(parsed.recordFiles),
+          ...entries.map((entry) => relativeFromDir(collectionPath, entry.path)),
+        ];
+        await files.writeTextFile(
+          collectionPath,
+          `${JSON.stringify({ ...parsed, recordFiles }, null, 2)}\n`,
+        );
+        return { status: "saved" };
+      } catch {
+        return { status: "failed", code: "unknown" };
+      }
+    },
+
     async deleteRecord(session, collectionPath, recordPath): Promise<ProjectWriteResult> {
       const files = resolve(session);
       if (!files) {
