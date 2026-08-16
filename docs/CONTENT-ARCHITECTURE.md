@@ -337,7 +337,6 @@ Media can likewise be uploaded in the Media area or from any field that accepts 
 
 The following remain intentionally undecided until realistic course fixtures are available:
 
-- canonical JSON file boundaries and directory layout;
 - collection sharding for very large content sets;
 - schema-template format and custom-field constraints;
 - whether record changes require revision history beyond Git;
@@ -348,4 +347,4 @@ These choices must remain behind repository and resolver ports so they do not le
 
 ## Working fixture
 
-[`examples/courses/japanese-starter`](../examples/courses/japanese-starter) exercises these ideas with reusable vocabulary, local image media, audio placeholders, a Tiptap document, a rich-media composition, a detached literal, and an exercise. It is intentionally labeled as a draft fixture rather than a canonical storage format. Its manifest declares collections, assets, and lessons explicitly; collections declare their record files. `pnpm check:example` validates its schema and references.
+[`examples/courses/japanese-starter`](../examples/courses/japanese-starter) exercises these ideas with reusable vocabulary, local image media, audio placeholders, a Tiptap document, a rich-media composition, a detached literal, and an exercise. It matches the canonical format described in [COURSE-FORMAT.md](COURSE-FORMAT.md). Its manifest declares collections, assets, and lessons explicitly; collections declare their record files. `pnpm check:example` validates its schema and references.

@@ -20,6 +20,10 @@ export interface TauriProjectFileWriterOptions {
     sourcePath: string,
   ) => Promise<void>;
   readonly removeDir?: (rootPath: string, relativePath: string) => Promise<void>;
+  readonly hashFile?: (
+    rootPath: string,
+    relativePath: string,
+  ) => Promise<{ sha256: string; byteSize: number }>;
 }
 
 function joinPath(rootPath: string, relativePath: string): string {
@@ -67,6 +71,13 @@ async function invokeRemoveDir(rootPath: string, relativePath: string): Promise<
   await invoke("remove_course_dir", { rootPath, relativePath });
 }
 
+async function invokeHash(
+  rootPath: string,
+  relativePath: string,
+): Promise<{ sha256: string; byteSize: number }> {
+  return await invoke("hash_course_file", { rootPath, relativePath });
+}
+
 export function createTauriProjectFileWriter({
   rootPath,
   readTextFile: read = readTextFile,
@@ -76,6 +87,7 @@ export function createTauriProjectFileWriter({
   copyFile = invokeCopy,
   copyImage = invokeCopyImage,
   removeDir = invokeRemoveDir,
+  hashFile = invokeHash,
 }: TauriProjectFileWriterOptions): ProjectFileAccess {
   return {
     async readTextFile(relativePath) {
@@ -106,6 +118,10 @@ export function createTauriProjectFileWriter({
     async removeDir(relativePath) {
       projectRelativePathSegments(relativePath);
       await removeDir(rootPath, relativePath);
+    },
+    async hashFile(relativePath) {
+      projectRelativePathSegments(relativePath);
+      return await hashFile(rootPath, relativePath);
     },
   };
 }

@@ -1,7 +1,6 @@
 {
-  "$comment": "Provisional fixture, not a canonical Asakiri storage schema.",
-  "format": "asakiri-example",
-  "formatVersion": "0.1-draft",
+  "format": "asakiri-course",
+  "formatVersion": 1,
   "project": {
     "id": "course_japanese_starter",
     "title": "Japanese Starter",
@@ -31,7 +30,10 @@
     },
     {
       "id": "section_hiragana",
-      "title": "Hiragana",
+      "title": {
+        "en": "Hiragana",
+        "ja": "ひらがな"
+      },
       "lessonIds": ["lesson_hiragana_vowels"]
     }
   ]

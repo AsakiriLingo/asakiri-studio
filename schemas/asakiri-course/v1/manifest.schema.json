@@ -1,0 +1,125 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://asakiri.com/schemas/asakiri-course/v1/manifest.schema.json",
+  "title": "Course manifest (project.json)",
+  "type": "object",
+  "allOf": [
+    {
+      "$ref": "common.schema.json#/$defs/envelope"
+    }
+  ],
+  "required": ["format", "formatVersion", "project", "collections"],
+  "properties": {
+    "format": true,
+    "formatVersion": true,
+    "$comment": true,
+    "project": {
+      "type": "object",
+      "required": ["id", "title", "description", "defaultLocale", "learningLocales"],
+      "properties": {
+        "id": {
+          "$ref": "common.schema.json#/$defs/id"
+        },
+        "title": {
+          "$ref": "common.schema.json#/$defs/localizedText"
+        },
+        "subtitle": {
+          "$ref": "common.schema.json#/$defs/localizedText"
+        },
+        "description": {
+          "$ref": "common.schema.json#/$defs/localizedText"
+        },
+        "defaultLocale": {
+          "type": "string",
+          "minLength": 2
+        },
+        "learningLocales": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 2
+          }
+        },
+        "taughtFlag": {
+          "type": "string"
+        },
+        "level": {
+          "type": "string"
+        },
+        "estimatedLength": {
+          "type": "string"
+        },
+        "license": {
+          "type": "string"
+        },
+        "copyrightHolder": {
+          "type": "string"
+        },
+        "copyrightYear": {
+          "type": "string"
+        },
+        "coverAssetId": {
+          "type": ["string", "null"]
+        },
+        "contributors": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        },
+        "funding": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        },
+        "sponsors": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    "collections": {
+      "type": "array",
+      "items": {
+        "$ref": "common.schema.json#/$defs/relativePath"
+      }
+    },
+    "assets": {
+      "type": "array",
+      "items": {
+        "$ref": "common.schema.json#/$defs/relativePath"
+      }
+    },
+    "lessons": {
+      "type": "array",
+      "items": {
+        "$ref": "common.schema.json#/$defs/relativePath"
+      }
+    },
+    "outline": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "title", "lessonIds"],
+        "properties": {
+          "id": {
+            "$ref": "common.schema.json#/$defs/id"
+          },
+          "title": {
+            "$ref": "common.schema.json#/$defs/localizedText"
+          },
+          "lessonIds": {
+            "type": "array",
+            "items": {
+              "$ref": "common.schema.json#/$defs/id"
+            }
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  }
+}

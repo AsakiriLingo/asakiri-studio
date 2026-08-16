@@ -1,21 +1,32 @@
 {
+  "format": "asakiri-course",
+  "formatVersion": 1,
   "id": "lesson_meet_neko",
   "title": "Meet 猫",
   "parts": [
     {
       "id": "part_intro",
       "title": "Meet your first word",
-      "content": { "kind": "tiptap", "file": "parts/intro/document.json" }
+      "content": {
+        "kind": "tiptap",
+        "file": "parts/intro/document.json"
+      }
     },
     {
       "id": "part_in_media",
       "title": "Cat in words, sound, and image",
-      "content": { "kind": "composition", "file": "parts/in-media/composition.json" }
+      "content": {
+        "kind": "composition",
+        "file": "parts/in-media/composition.json"
+      }
     },
     {
       "id": "part_choose",
       "title": "Choose the matching word",
-      "content": { "kind": "exercise", "file": "parts/choose/exercise.json" }
+      "content": {
+        "kind": "exercise",
+        "file": "parts/choose/exercise.json"
+      }
     }
   ]
 }

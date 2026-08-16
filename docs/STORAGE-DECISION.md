@@ -1,11 +1,10 @@
 # Storage layout decision record
 
-Status: **Accepted 2026-08-07** (roadmap slice 5.1). Approved layout: **Option A — record-per-file**.
+Status: **Superseded 2026-08-16.** The layout chosen here is now canonical and specified in [COURSE-FORMAT.md](COURSE-FORMAT.md). This record is kept for the reasoning behind the choice.
 
-This record compares JSON file-boundary options for an Asakiri course project and proposes a
-provisional layout. Nothing here is canonical until the user approves it; the
-[`japanese-starter`](../examples/courses/japanese-starter) example course remains an explicitly
-provisional fixture (`"format": "asakiri-example"`, `"formatVersion": "0.1-draft"`) until then.
+This record compares JSON file-boundary options for an Asakiri course project. Option A was
+adopted and is now the canonical layout, stamped `"format": "asakiri-course"`,
+`"formatVersion": 1`.
 
 ## Context
 

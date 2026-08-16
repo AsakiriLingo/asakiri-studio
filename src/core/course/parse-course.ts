@@ -11,6 +11,7 @@ import type {
   RecordPresentation,
 } from "@core/course/content";
 import type { Composition, CompositionBlock, CompositionBlockType } from "@core/course/composition";
+import { COMPOSITION_BLOCK_TYPES } from "@core/course/composition";
 import type {
   Contributor,
   Course,
@@ -40,8 +41,12 @@ import type {
   SpokenResponseEvaluation,
   TypedAnswerEvaluation,
 } from "@core/course/exercise";
+import { EXERCISE_TYPES } from "@core/course/exercise";
 import type { Lesson, Part, PartContent } from "@core/course/lesson";
 import type { Asset, AssetAvailability, AssetKind } from "@core/course/media";
+import type { CourseFileKind } from "@core/course/format";
+import { migrateFile } from "@core/course/migrations";
+import { isLocaleMap, resolveLocalized } from "@core/course/localized";
 
 export interface CourseFileReader {
   readTextFile(relativePath: string): Promise<string>;
@@ -67,6 +72,17 @@ function obj(value: unknown, context: string): Record<string, unknown> {
 function str(value: unknown, context: string): string {
   if (typeof value !== "string") fail(`${context} must be a string`);
   return value;
+}
+
+function text(value: unknown, context: string, locale: string): string {
+  if (typeof value === "string") return value;
+  if (isLocaleMap(value)) return resolveLocalized(value, locale);
+  return fail(`${context} must be a string or a locale map`);
+}
+
+function textOr(value: unknown, locale: string, fallback = ""): string {
+  if (typeof value === "string") return value;
+  return isLocaleMap(value) ? resolveLocalized(value, locale, fallback) : fallback;
 }
 
 function strOr(value: unknown, fallback = ""): string {
@@ -117,7 +133,22 @@ async function readJson(files: CourseFileReader, path: string): Promise<unknown>
   }
 }
 
-function parseBinding(value: unknown, context: string): Binding {
+async function readCourseFile(
+  files: CourseFileReader,
+  path: string,
+  kind: CourseFileKind,
+): Promise<Record<string, unknown>> {
+  const raw = await readJson(files, path);
+  return migrateFile(kind, obj(raw, path), path).data;
+}
+
+function resolveLiteral(value: unknown, locale: string): unknown {
+  if (!isObject(value)) return value;
+  if (value.type !== "text" || !isLocaleMap(value.text)) return value;
+  return { ...value, text: resolveLocalized(value.text, locale) };
+}
+
+function parseBinding(value: unknown, context: string, locale: string): Binding {
   const data = obj(value, context);
   const kind = str(data.kind, `${context}.kind`);
   switch (kind) {
@@ -138,46 +169,47 @@ function parseBinding(value: unknown, context: string): Binding {
       };
     case "asset":
       return { kind, assetId: str(data.assetId, `${context}.assetId`) };
-    case "literal":
+    case "literal": {
       if (!("value" in data)) fail(`${context}.value is required`);
-      return { kind, value: data.value as PortableValue };
+      return { kind, value: resolveLiteral(data.value, locale) as PortableValue };
+    }
     default:
       return fail(`${context} has unsupported binding kind: ${kind}`);
   }
 }
 
-function parseFragment(value: unknown, context: string): RenderFragment {
+function parseFragment(value: unknown, context: string, locale: string): RenderFragment {
   const data = obj(value, context);
   return {
     id: str(data.id, `${context}.id`),
     role: str(data.role, `${context}.role`),
-    binding: parseBinding(data.binding, `${context}.binding`),
+    binding: parseBinding(data.binding, `${context}.binding`, locale),
   };
 }
 
-function parseFragments(value: unknown, context: string): RenderFragment[] {
+function parseFragments(value: unknown, context: string, locale: string): RenderFragment[] {
   return arr(value, context).map((item, index) =>
-    parseFragment(item, `${context}[${String(index)}]`),
+    parseFragment(item, `${context}[${String(index)}]`, locale),
   );
 }
 
-function parseChoice(value: unknown, context: string): ChoiceOption {
+function parseChoice(value: unknown, context: string, locale: string): ChoiceOption {
   const data = obj(value, context);
   return {
     id: str(data.id, `${context}.id`),
-    body: parseFragments(data.body, `${context}.body`),
+    body: parseFragments(data.body, `${context}.body`, locale),
   };
 }
 
-function parseChoices(value: unknown, context: string): ChoiceOption[] {
+function parseChoices(value: unknown, context: string, locale: string): ChoiceOption[] {
   return arr(value, context).map((item, index) =>
-    parseChoice(item, `${context}[${String(index)}]`),
+    parseChoice(item, `${context}[${String(index)}]`, locale),
   );
 }
 
-function parseAcceptedValue(value: unknown, context: string): AcceptedValue {
+function parseAcceptedValue(value: unknown, context: string, locale: string): AcceptedValue {
   const data = obj(value, context);
-  return { binding: parseBinding(data.binding, `${context}.binding`) };
+  return { binding: parseBinding(data.binding, `${context}.binding`, locale) };
 }
 
 function parseNormalize(value: unknown): NormalizationRules | undefined {
@@ -194,7 +226,7 @@ function parseNormalize(value: unknown): NormalizationRules | undefined {
   };
 }
 
-function parseBlankAnswer(value: unknown, context: string): BlankAnswer {
+function parseBlankAnswer(value: unknown, context: string, locale: string): BlankAnswer {
   const data = obj(value, context);
   const blankId = str(data.blankId, `${context}.blankId`);
   let accepted: BlankAnswer["accepted"];
@@ -202,7 +234,7 @@ function parseBlankAnswer(value: unknown, context: string): BlankAnswer {
     const normalize = parseNormalize(data.accepted.normalize);
     accepted = {
       values: arr(data.accepted.values, `${context}.accepted.values`).map((item, index) =>
-        parseAcceptedValue(item, `${context}.accepted.values[${String(index)}]`),
+        parseAcceptedValue(item, `${context}.accepted.values[${String(index)}]`, locale),
       ),
       ...(normalize ? { normalize } : {}),
     };
@@ -216,7 +248,7 @@ function parseBlankAnswer(value: unknown, context: string): BlankAnswer {
   };
 }
 
-function parseEvaluation(value: unknown, context: string): Evaluation {
+function parseEvaluation(value: unknown, context: string, locale: string): Evaluation {
   const data = obj(value, context);
   const kind = str(data.kind, `${context}.kind`);
   switch (kind) {
@@ -252,7 +284,7 @@ function parseEvaluation(value: unknown, context: string): Evaluation {
       const evaluation: FilledBlanksEvaluation = {
         kind,
         blanks: arr(data.blanks, `${context}.blanks`).map((item, index) =>
-          parseBlankAnswer(item, `${context}.blanks[${String(index)}]`),
+          parseBlankAnswer(item, `${context}.blanks[${String(index)}]`, locale),
         ),
       };
       return evaluation;
@@ -262,7 +294,7 @@ function parseEvaluation(value: unknown, context: string): Evaluation {
       const evaluation: TypedAnswerEvaluation = {
         kind,
         accepted: arr(data.accepted, `${context}.accepted`).map((item, index) =>
-          parseAcceptedValue(item, `${context}.accepted[${String(index)}]`),
+          parseAcceptedValue(item, `${context}.accepted[${String(index)}]`, locale),
         ),
         ...(normalize ? { normalize } : {}),
       };
@@ -295,20 +327,24 @@ function parsePresentation(value: Record<string, unknown>): ExercisePresentation
   };
 }
 
-function parseFeedback(value: Record<string, unknown>, context: string): ExerciseFeedback {
+function parseFeedback(
+  value: Record<string, unknown>,
+  context: string,
+  locale: string,
+): ExerciseFeedback {
   return {
     ...(Array.isArray(value.correct)
-      ? { correct: parseFragments(value.correct, `${context}.correct`) }
+      ? { correct: parseFragments(value.correct, `${context}.correct`, locale) }
       : {}),
     ...(Array.isArray(value.incorrect)
-      ? { incorrect: parseFragments(value.incorrect, `${context}.incorrect`) }
+      ? { incorrect: parseFragments(value.incorrect, `${context}.incorrect`, locale) }
       : {}),
     ...(isObject(value.perOption)
       ? {
           perOption: Object.fromEntries(
             Object.entries(value.perOption).map(([key, fragments]) => [
               key,
-              parseFragments(fragments, `${context}.perOption.${key}`),
+              parseFragments(fragments, `${context}.perOption.${key}`, locale),
             ]),
           ),
         }
@@ -316,11 +352,11 @@ function parseFeedback(value: Record<string, unknown>, context: string): Exercis
   };
 }
 
-function parseBlankSegment(value: unknown, context: string): BlankSegment {
+function parseBlankSegment(value: unknown, context: string, locale: string): BlankSegment {
   const data = obj(value, context);
   const kind = str(data.kind, `${context}.kind`);
   if (kind === "text") {
-    return { kind, fragment: parseFragment(data.fragment, `${context}.fragment`) };
+    return { kind, fragment: parseFragment(data.fragment, `${context}.fragment`, locale) };
   }
   if (kind === "blank") {
     return { kind, id: str(data.id, `${context}.id`) };
@@ -328,35 +364,37 @@ function parseBlankSegment(value: unknown, context: string): BlankSegment {
   return fail(`${context} has unsupported segment kind: ${kind}`);
 }
 
-export function parseExercise(value: unknown, context: string): Exercise {
+export function parseExercise(value: unknown, context: string, locale = "en"): Exercise {
   const data = obj(value, context);
   const type = str(data.type, `${context}.type`);
   const base = {
     id: str(data.id, `${context}.id`),
-    prompt: parseFragments(data.prompt, `${context}.prompt`),
-    ...(typeof data.instruction === "string" ? { instruction: data.instruction } : {}),
+    prompt: parseFragments(data.prompt, `${context}.prompt`, locale),
+    ...(data.instruction === undefined
+      ? {}
+      : { instruction: text(data.instruction, `${context}.instruction`, locale) }),
     ...(isObject(data.settings) ? { settings: parseSettings(data.settings) } : {}),
     ...(isObject(data.presentation) ? { presentation: parsePresentation(data.presentation) } : {}),
     ...(isObject(data.feedback)
-      ? { feedback: parseFeedback(data.feedback, `${context}.feedback`) }
+      ? { feedback: parseFeedback(data.feedback, `${context}.feedback`, locale) }
       : {}),
   };
-  const evaluation = parseEvaluation(data.evaluation, `${context}.evaluation`);
+  const evaluation = parseEvaluation(data.evaluation, `${context}.evaluation`, locale);
   switch (type) {
     case "multiple-choice":
     case "select-image":
       return {
         ...base,
         type,
-        options: parseChoices(data.options, `${context}.options`),
+        options: parseChoices(data.options, `${context}.options`, locale),
         evaluation: evaluation as SelectedOptionsEvaluation,
       };
     case "match-pairs":
       return {
         ...base,
         type,
-        left: parseChoices(data.left, `${context}.left`),
-        right: parseChoices(data.right, `${context}.right`),
+        left: parseChoices(data.left, `${context}.left`, locale),
+        right: parseChoices(data.right, `${context}.right`, locale),
         evaluation: evaluation as MatchedPairsEvaluation,
       };
     case "fill-blank":
@@ -364,11 +402,13 @@ export function parseExercise(value: unknown, context: string): Exercise {
         ...base,
         type,
         stem: arr(data.stem, `${context}.stem`).map((item, index) =>
-          parseBlankSegment(item, `${context}.stem[${String(index)}]`),
+          parseBlankSegment(item, `${context}.stem[${String(index)}]`, locale),
         ),
-        ...(data.bank !== undefined ? { bank: parseChoices(data.bank, `${context}.bank`) } : {}),
+        ...(data.bank !== undefined
+          ? { bank: parseChoices(data.bank, `${context}.bank`, locale) }
+          : {}),
         ...(isObject(data.translation)
-          ? { translation: parseFragment(data.translation, `${context}.translation`) }
+          ? { translation: parseFragment(data.translation, `${context}.translation`, locale) }
           : {}),
         evaluation: evaluation as FilledBlanksEvaluation,
       };
@@ -376,9 +416,9 @@ export function parseExercise(value: unknown, context: string): Exercise {
       return {
         ...base,
         type,
-        tokens: parseChoices(data.tokens, `${context}.tokens`),
+        tokens: parseChoices(data.tokens, `${context}.tokens`, locale),
         ...(data.distractors !== undefined
-          ? { distractors: parseChoices(data.distractors, `${context}.distractors`) }
+          ? { distractors: parseChoices(data.distractors, `${context}.distractors`, locale) }
           : {}),
         evaluation: evaluation as OrderedTokensEvaluation,
       };
@@ -386,10 +426,10 @@ export function parseExercise(value: unknown, context: string): Exercise {
       return {
         ...base,
         type,
-        stimulus: parseFragment(data.stimulus, `${context}.stimulus`),
+        stimulus: parseFragment(data.stimulus, `${context}.stimulus`, locale),
         answerMode: str(data.answerMode, `${context}.answerMode`) as "select" | "type",
         ...(data.options !== undefined
-          ? { options: parseChoices(data.options, `${context}.options`) }
+          ? { options: parseChoices(data.options, `${context}.options`, locale) }
           : {}),
         evaluation: evaluation as SelectedOptionsEvaluation | TypedAnswerEvaluation,
       };
@@ -397,7 +437,7 @@ export function parseExercise(value: unknown, context: string): Exercise {
       return {
         ...base,
         type,
-        target: parseFragment(data.target, `${context}.target`),
+        target: parseFragment(data.target, `${context}.target`, locale),
         evaluation: evaluation as SpokenResponseEvaluation,
       };
     default:
@@ -442,21 +482,21 @@ function parseTiptapDocument(value: unknown, context: string): TiptapDocument {
   return node as TiptapDocument;
 }
 
-function parseBlock(value: unknown, context: string): CompositionBlock {
+function parseBlock(value: unknown, context: string, locale: string): CompositionBlock {
   const data = obj(value, context);
   return {
     id: str(data.id, `${context}.id`),
     type: str(data.type, `${context}.type`) as CompositionBlockType,
-    binding: parseBinding(data.binding, `${context}.binding`),
+    binding: parseBinding(data.binding, `${context}.binding`, locale),
     ...(isObject(data.presentation) ? { presentation: data.presentation } : {}),
   };
 }
 
-function parseComposition(value: unknown, context: string): Composition {
+function parseComposition(value: unknown, context: string, locale: string): Composition {
   const data = obj(value, context);
   return {
     blocks: arr(data.blocks, `${context}.blocks`).map((item, index) =>
-      parseBlock(item, `${context}.blocks[${String(index)}]`),
+      parseBlock(item, `${context}.blocks[${String(index)}]`, locale),
     ),
   };
 }
@@ -581,6 +621,8 @@ function parseAsset(value: unknown, context: string): Asset {
     file: data.file === null ? null : str(data.file, `${context}.file`),
     mimeType: str(data.mimeType, `${context}.mimeType`),
     ...(typeof data.expectedFile === "string" ? { expectedFile: data.expectedFile } : {}),
+    ...(typeof data.sha256 === "string" ? { sha256: data.sha256 } : {}),
+    ...(typeof data.byteSize === "number" ? { byteSize: data.byteSize } : {}),
     ...(isObject(data.metadata) ? { metadata: data.metadata } : {}),
   };
 }
@@ -614,13 +656,13 @@ function parseList<T>(value: unknown, parseItem: (item: unknown) => T): T[] {
   return Array.isArray(value) ? value.map(parseItem) : [];
 }
 
-function parseProject(value: unknown, context: string): CourseProject {
+function parseProject(value: unknown, context: string, locale: string): CourseProject {
   const data = obj(value, context);
   return {
     id: str(data.id, `${context}.id`),
-    title: str(data.title, `${context}.title`),
-    subtitle: strOr(data.subtitle),
-    description: str(data.description, `${context}.description`),
+    title: text(data.title, `${context}.title`, locale),
+    subtitle: textOr(data.subtitle, locale),
+    description: text(data.description, `${context}.description`, locale),
     defaultLocale: str(data.defaultLocale, `${context}.defaultLocale`),
     learningLocales: strArr(data.learningLocales, `${context}.learningLocales`),
     taughtFlag: strOr(data.taughtFlag),
@@ -636,15 +678,35 @@ function parseProject(value: unknown, context: string): CourseProject {
   };
 }
 
-function parseOutline(value: unknown, context: string): OutlineSection[] {
+function parseOutline(value: unknown, context: string, locale: string): OutlineSection[] {
   return arr(value, context).map((item, index) => {
     const section = obj(item, `${context}[${String(index)}]`);
     return {
       id: str(section.id, `${context}[${String(index)}].id`),
-      title: str(section.title, `${context}[${String(index)}].title`),
+      title: text(section.title, `${context}[${String(index)}].title`, locale),
       lessonIds: strArr(section.lessonIds, `${context}[${String(index)}].lessonIds`),
     };
   });
+}
+
+function unsupportedType(body: unknown, known: readonly string[]): string | null {
+  if (!isObject(body)) return null;
+  const type = body.type;
+  if (typeof type !== "string") return null;
+  return known.includes(type) ? null : type;
+}
+
+function unsupportedBlockType(body: unknown): string | null {
+  if (!isObject(body) || !Array.isArray(body.blocks)) return null;
+  for (const block of body.blocks) {
+    const type = unsupportedType(block, COMPOSITION_BLOCK_TYPES);
+    if (type !== null) return type;
+  }
+  return null;
+}
+
+function preserved(kind: string, declaredType: string | null, body: unknown): PartContent {
+  return { kind: "unknown", declaredKind: kind, declaredType, raw: body };
 }
 
 function parsePartContent(
@@ -652,6 +714,7 @@ function parsePartContent(
   body: unknown,
   context: string,
   title: string | undefined,
+  locale: string,
 ): PartContent {
   if (kind === "tiptap") {
     return {
@@ -661,12 +724,16 @@ function parsePartContent(
     };
   }
   if (kind === "composition") {
-    return { kind, composition: parseComposition(body, context) };
+    const blockType = unsupportedBlockType(body);
+    if (blockType !== null) return preserved(kind, blockType, body);
+    return { kind, composition: parseComposition(body, context, locale) };
   }
   if (kind === "exercise") {
-    return { kind, exercise: parseExercise(body, context) };
+    const exerciseType = unsupportedType(body, EXERCISE_TYPES);
+    if (exerciseType !== null) return preserved(kind, exerciseType, body);
+    return { kind, exercise: parseExercise(body, context, locale) };
   }
-  return fail(`${context} has unsupported content kind: ${kind}`);
+  return preserved(kind, null, body);
 }
 
 async function parsePart(
@@ -674,19 +741,27 @@ async function parsePart(
   value: unknown,
   lessonPath: string,
   index: number,
+  locale: string,
 ): Promise<{ part: Part; bodyPath: string }> {
   const context = `${lessonPath} parts[${String(index)}]`;
   const data = obj(value, context);
   const content = obj(data.content, `${context}.content`);
   const contentKind = str(content.kind, `${context}.content.kind`);
   const bodyPath = resolvePath(lessonPath, str(content.file, `${context}.content.file`));
-  const body = await readJson(files, bodyPath);
-  const contentTitle = typeof content.title === "string" ? content.title : undefined;
+  const body = await readCourseFile(
+    files,
+    bodyPath,
+    contentKind === "tiptap" ? "document" : "part",
+  );
+  const contentTitle =
+    content.title === undefined
+      ? undefined
+      : text(content.title, `${context}.content.title`, locale);
   return {
     part: {
       id: str(data.id, `${context}.id`),
-      title: str(data.title, `${context}.title`),
-      content: parsePartContent(contentKind, body, bodyPath, contentTitle),
+      title: text(data.title, `${context}.title`, locale),
+      content: parsePartContent(contentKind, body, bodyPath, contentTitle, locale),
     },
     bodyPath,
   };
@@ -695,19 +770,20 @@ async function parsePart(
 async function parseLesson(
   files: CourseFileReader,
   lessonPath: string,
+  locale: string,
 ): Promise<{ lesson: Lesson; partPaths: Record<string, string> }> {
-  const data = obj(await readJson(files, lessonPath), `lesson ${lessonPath}`);
+  const data = await readCourseFile(files, lessonPath, "lesson");
   const parts: Part[] = [];
   const partPaths: Record<string, string> = {};
   for (const [index, part] of arr(data.parts, `${lessonPath} parts`).entries()) {
-    const { part: parsed, bodyPath } = await parsePart(files, part, lessonPath, index);
+    const { part: parsed, bodyPath } = await parsePart(files, part, lessonPath, index, locale);
     parts.push(parsed);
     partPaths[parsed.id] = bodyPath;
   }
   return {
     lesson: {
       id: str(data.id, `${lessonPath} id`),
-      title: str(data.title, `${lessonPath} title`),
+      title: text(data.title, `${lessonPath} title`, locale),
       parts,
     },
     partPaths,
@@ -715,8 +791,12 @@ async function parseLesson(
 }
 
 export async function parseCourseWithSources(files: CourseFileReader): Promise<LoadedCourse> {
-  const manifest = obj(await readJson(files, MANIFEST_PATH), MANIFEST_PATH);
-  const project = parseProject(manifest.project, `${MANIFEST_PATH} project`);
+  const manifest = await readCourseFile(files, MANIFEST_PATH, "manifest");
+  const locale = strOr(
+    isObject(manifest.project) ? manifest.project.defaultLocale : undefined,
+    "en",
+  );
+  const project = parseProject(manifest.project, `${MANIFEST_PATH} project`, locale);
   const collectionPaths = strArr(manifest.collections, `${MANIFEST_PATH} collections`).map((path) =>
     resolvePath(MANIFEST_PATH, path),
   );
@@ -726,19 +806,22 @@ export async function parseCourseWithSources(files: CourseFileReader): Promise<L
   const lessonPaths = strArr(manifest.lessons ?? [], `${MANIFEST_PATH} lessons`).map((path) =>
     resolvePath(MANIFEST_PATH, path),
   );
-  const outline = parseOutline(manifest.outline ?? [], `${MANIFEST_PATH} outline`);
+  const outline = parseOutline(manifest.outline ?? [], `${MANIFEST_PATH} outline`, locale);
 
   const collections: Collection[] = [];
   const records: ContentRecord[] = [];
   const collectionSources: Record<string, string> = {};
   const recordSources: Record<string, string> = {};
   for (const collectionPath of collectionPaths) {
-    const parsed = parseCollection(await readJson(files, collectionPath), collectionPath);
+    const parsed = parseCollection(
+      await readCourseFile(files, collectionPath, "collection"),
+      collectionPath,
+    );
     collections.push(parsed.collection);
     collectionSources[parsed.collection.id] = collectionPath;
     for (const recordFile of parsed.recordFiles) {
       const recordPath = resolvePath(collectionPath, recordFile);
-      const record = parseRecord(await readJson(files, recordPath), recordPath);
+      const record = parseRecord(await readCourseFile(files, recordPath, "record"), recordPath);
       records.push(record);
       recordSources[record.id] = recordPath;
     }
@@ -747,7 +830,7 @@ export async function parseCourseWithSources(files: CourseFileReader): Promise<L
   const assets: Asset[] = [];
   const assetSources: Record<string, string> = {};
   for (const assetPath of assetPaths) {
-    const asset = parseAsset(await readJson(files, assetPath), assetPath);
+    const asset = parseAsset(await readCourseFile(files, assetPath, "asset"), assetPath);
     assets.push(asset);
     assetSources[asset.id] = assetPath;
   }
@@ -756,7 +839,7 @@ export async function parseCourseWithSources(files: CourseFileReader): Promise<L
   const lessonSources: Record<string, string> = {};
   const partSources: Record<string, string> = {};
   for (const lessonPath of lessonPaths) {
-    const { lesson, partPaths } = await parseLesson(files, lessonPath);
+    const { lesson, partPaths } = await parseLesson(files, lessonPath, locale);
     lessons.push(lesson);
     lessonSources[lesson.id] = lessonPath;
     for (const [partId, bodyPath] of Object.entries(partPaths)) {

@@ -26,6 +26,7 @@ serde_json = "1"
 base64 = "0.22"
 img-parts = "0.3"
 ureq = "2"
+sha2 = "0.10"
 
 [target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
 tauri-plugin-updater = "2"

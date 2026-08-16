@@ -14,7 +14,7 @@ import { useMessages } from "@shared/i18n";
 import { Icon } from "@shared/components/icon";
 import { RichContent, type LoadAssetPreview } from "@shared/components/rich-editor";
 import { Status } from "@shared/components/status";
-import { partKind, type PartKind } from "@features/lesson-editor/parts";
+import { partKind, type PartDisplayKind } from "@features/lesson-editor/parts";
 import { courseToRichLibrary } from "@features/lesson-editor/rich-library";
 import styles from "@features/lesson-editor/LessonEditor.module.css";
 
@@ -418,7 +418,7 @@ function PreviewBody({
   course,
   onLoadAssetPreview,
 }: {
-  readonly kind: PartKind;
+  readonly kind: PartDisplayKind;
   readonly part: Part;
   readonly course: Course;
   readonly onLoadAssetPreview: LoadAssetPreview;
@@ -444,7 +444,18 @@ function PreviewBody({
       return <ListenPreview part={part} course={course} />;
     case "speak":
       return <SpeakPreview part={part} course={course} />;
+    case "unknown":
+      return <UnsupportedPreview />;
   }
+}
+
+function UnsupportedPreview() {
+  const t = useMessages().lesson;
+  return (
+    <p className={styles.previewEmpty} role="note">
+      {t.unsupportedTitle}
+    </p>
+  );
 }
 
 export function PartPreview({

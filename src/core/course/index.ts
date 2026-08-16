@@ -60,3 +60,16 @@ export {
 } from "@core/course/parse-course";
 export type { ResolvedValue, BindingResolver } from "@core/course/resolve-binding";
 export { createBindingResolver } from "@core/course/resolve-binding";
+export {
+  COURSE_FORMAT,
+  COURSE_FORMAT_VERSION,
+  CourseFormatError,
+  readFormatVersion,
+  stampFormat,
+  withFormatFirst,
+} from "@core/course/format";
+export type { CourseFileKind } from "@core/course/format";
+export { migrateFile, MIGRATIONS } from "@core/course/migrations";
+export type { MigrationOutcome, MigrationStep } from "@core/course/migrations";
+export { isLocaleMap, localesOf, resolveLocalized, withLocale } from "@core/course/localized";
+export type { LocaleMap, LocalizedText } from "@core/course/localized";

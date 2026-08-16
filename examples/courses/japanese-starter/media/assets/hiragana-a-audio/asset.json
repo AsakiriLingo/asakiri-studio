@@ -1,4 +1,6 @@
 {
+  "format": "asakiri-course",
+  "formatVersion": 1,
   "id": "asset_hiragana_a_audio",
   "kind": "audio",
   "label": "あ — pronunciation",

@@ -220,3 +220,8 @@
     color: var(--color-text);
   }
 }
+
+.language {
+  width: auto;
+  min-width: 8.5rem;
+}

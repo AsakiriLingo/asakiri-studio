@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://asakiri.com/schemas/asakiri-course/v1/composition.schema.json",
+  "title": "Composition part body",
+  "type": "object",
+  "allOf": [{ "$ref": "common.schema.json#/$defs/envelope" }],
+  "required": ["format", "formatVersion", "blocks"],
+  "properties": {
+    "format": true,
+    "formatVersion": true,
+    "$comment": true,
+    "blocks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "type", "binding"],
+        "properties": {
+          "id": { "$ref": "common.schema.json#/$defs/id" },
+          "type": { "type": "string", "minLength": 1 },
+          "binding": { "$ref": "common.schema.json#/$defs/binding" },
+          "presentation": { "type": "object" }
+        },
+        "additionalProperties": false
+      }
+    }
+  }
+}

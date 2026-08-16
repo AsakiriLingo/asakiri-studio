@@ -15,7 +15,7 @@ These instructions apply to this entire repository.
 - Use a content-first domain model with context-first authoring: reusable records can be created in Content or inline from lessons and exercises.
 - Content records, media assets, and lesson/exercise compositions are separate concepts. Compositions reference stable IDs; never embed binary data or absolute paths.
 - Treat content tables as authoring views, not as a requirement that one table equals one JSON file.
-- The course storage schema is intentionally undecided. Do not introduce a single `course.json` or finalize a course-file layout without an explicit product decision.
+- The course storage layout is canonical as of format version 1: record-per-file with a `project.json` manifest, an envelope on every file, and ID-based references. See [docs/COURSE-FORMAT.md](docs/COURSE-FORMAT.md). Changing an existing key means bumping `formatVersion` and adding a migration step; adding optional keys or new activity types does not.
 - Do not add AI, publishing, learner-app, cloud-sync, or persistent Git UI features.
 
 ## Architecture rules

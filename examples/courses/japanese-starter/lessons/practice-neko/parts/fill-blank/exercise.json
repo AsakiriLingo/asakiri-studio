@@ -1,4 +1,6 @@
 {
+  "format": "asakiri-course",
+  "formatVersion": 1,
   "id": "exercise_cat_fill_blank",
   "type": "fill-blank",
   "instruction": "Drop the right word into the blank.",
@@ -6,7 +8,13 @@
     {
       "id": "prompt_fill_intro",
       "role": "primary",
-      "binding": { "kind": "literal", "value": { "type": "text", "text": "This is a cat." } }
+      "binding": {
+        "kind": "literal",
+        "value": {
+          "type": "text",
+          "text": "This is a cat."
+        }
+      }
     }
   ],
   "stem": [
@@ -15,23 +23,44 @@
       "fragment": {
         "id": "stem_kore_wa",
         "role": "primary",
-        "binding": { "kind": "literal", "value": { "type": "text", "text": "これは" } }
+        "binding": {
+          "kind": "literal",
+          "value": {
+            "type": "text",
+            "text": "これは"
+          }
+        }
       }
     },
-    { "kind": "blank", "id": "blank_animal" },
+    {
+      "kind": "blank",
+      "id": "blank_animal"
+    },
     {
       "kind": "text",
       "fragment": {
         "id": "stem_desu",
         "role": "primary",
-        "binding": { "kind": "literal", "value": { "type": "text", "text": "です。" } }
+        "binding": {
+          "kind": "literal",
+          "value": {
+            "type": "text",
+            "text": "です。"
+          }
+        }
       }
     }
   ],
   "translation": {
     "id": "fill_translation",
     "role": "translation",
-    "binding": { "kind": "literal", "value": { "type": "text", "text": "This is a cat." } }
+    "binding": {
+      "kind": "literal",
+      "value": {
+        "type": "text",
+        "text": "This is a cat."
+      }
+    }
   },
   "bank": [
     {
@@ -40,7 +69,11 @@
         {
           "id": "bank_neko_text",
           "role": "primary",
-          "binding": { "kind": "field", "recordId": "record_cat", "fieldId": "field_japanese" }
+          "binding": {
+            "kind": "field",
+            "recordId": "record_cat",
+            "fieldId": "field_japanese"
+          }
         }
       ]
     },
@@ -50,7 +83,11 @@
         {
           "id": "bank_inu_text",
           "role": "primary",
-          "binding": { "kind": "field", "recordId": "record_dog", "fieldId": "field_japanese" }
+          "binding": {
+            "kind": "field",
+            "recordId": "record_dog",
+            "fieldId": "field_japanese"
+          }
         }
       ]
     },
@@ -60,13 +97,22 @@
         {
           "id": "bank_tori_text",
           "role": "primary",
-          "binding": { "kind": "field", "recordId": "record_bird", "fieldId": "field_japanese" }
+          "binding": {
+            "kind": "field",
+            "recordId": "record_bird",
+            "fieldId": "field_japanese"
+          }
         }
       ]
     }
   ],
   "evaluation": {
     "kind": "filled-blanks",
-    "blanks": [{ "blankId": "blank_animal", "correctOptionIds": ["bank_neko"] }]
+    "blanks": [
+      {
+        "blankId": "blank_animal",
+        "correctOptionIds": ["bank_neko"]
+      }
+    ]
   }
 }

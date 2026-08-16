@@ -1,4 +1,6 @@
 {
+  "format": "asakiri-course",
+  "formatVersion": 1,
   "id": "exercise_cat_word_order",
   "type": "word-order",
   "instruction": "Put the tiles in order to say \"This is a cat.\"",
@@ -8,7 +10,10 @@
       "role": "primary",
       "binding": {
         "kind": "literal",
-        "value": { "type": "text", "text": "Build this sentence: \"This is a cat.\"" }
+        "value": {
+          "type": "text",
+          "text": "Build this sentence: \"This is a cat.\""
+        }
       }
     }
   ],
@@ -19,7 +24,13 @@
         {
           "id": "token_kore_text",
           "role": "primary",
-          "binding": { "kind": "literal", "value": { "type": "text", "text": "これ" } }
+          "binding": {
+            "kind": "literal",
+            "value": {
+              "type": "text",
+              "text": "これ"
+            }
+          }
         }
       ]
     },
@@ -29,7 +40,11 @@
         {
           "id": "token_wa_text",
           "role": "primary",
-          "binding": { "kind": "field", "recordId": "record_hiragana_ha", "fieldId": "field_char" }
+          "binding": {
+            "kind": "field",
+            "recordId": "record_hiragana_ha",
+            "fieldId": "field_char"
+          }
         }
       ]
     },
@@ -39,7 +54,11 @@
         {
           "id": "token_neko_text",
           "role": "primary",
-          "binding": { "kind": "field", "recordId": "record_cat", "fieldId": "field_japanese" }
+          "binding": {
+            "kind": "field",
+            "recordId": "record_cat",
+            "fieldId": "field_japanese"
+          }
         }
       ]
     },
@@ -49,7 +68,13 @@
         {
           "id": "token_desu_text",
           "role": "primary",
-          "binding": { "kind": "literal", "value": { "type": "text", "text": "です" } }
+          "binding": {
+            "kind": "literal",
+            "value": {
+              "type": "text",
+              "text": "です"
+            }
+          }
         }
       ]
     }
@@ -61,7 +86,11 @@
         {
           "id": "distractor_ka_text",
           "role": "primary",
-          "binding": { "kind": "field", "recordId": "record_hiragana_ka", "fieldId": "field_char" }
+          "binding": {
+            "kind": "field",
+            "recordId": "record_hiragana_ka",
+            "fieldId": "field_char"
+          }
         }
       ]
     },
@@ -71,7 +100,11 @@
         {
           "id": "distractor_inu_text",
           "role": "primary",
-          "binding": { "kind": "field", "recordId": "record_dog", "fieldId": "field_japanese" }
+          "binding": {
+            "kind": "field",
+            "recordId": "record_dog",
+            "fieldId": "field_japanese"
+          }
         }
       ]
     }

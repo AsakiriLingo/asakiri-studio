@@ -1,4 +1,6 @@
 {
+  "format": "asakiri-course",
+  "formatVersion": 1,
   "id": "collection_hiragana",
   "name": "Hiragana",
   "description": "A writing-system collection: each record is one hiragana character, reused across lessons and drills.",

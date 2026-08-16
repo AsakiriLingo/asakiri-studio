@@ -1,7 +1,6 @@
 export const enMessages = {
   localeName: "English",
-  alternateLocaleName: "日本語",
-  switchLanguage: "Switch language to Japanese",
+  switchLanguage: "Interface language",
 
   common: {
     cancel: "Cancel",
@@ -448,7 +447,11 @@ export const enMessages = {
       "word-order": "Word order",
       listen: "Listen & tap",
       speak: "Speak aloud",
+      unknown: "Unsupported",
     },
+    unsupportedTitle: "This part needs a newer Studio",
+    unsupportedBody: (type: string) =>
+      `This part uses "${type}", which this version cannot open. It stays exactly as written and is left untouched when you save.`,
     tabWrite: "Write",
     tabReferences: "References",
     tabOptions: "Options",

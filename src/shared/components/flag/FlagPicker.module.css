@@ -5,7 +5,7 @@
   min-height: var(--control-height-md);
   max-width: 100%;
   padding-inline: var(--space-3);
-  border: var(--border-hairline) solid var(--color-border-strong);
+  border: var(--border-hairline) solid var(--color-border);
   border-radius: var(--radius-md);
   outline: 2px solid transparent;
   outline-offset: 1px;

@@ -1,0 +1,160 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://asakiri.com/schemas/asakiri-course/v1/common.schema.json",
+  "title": "Shared definitions",
+  "$defs": {
+    "envelope": {
+      "type": "object",
+      "required": ["format", "formatVersion"],
+      "properties": {
+        "format": {
+          "const": "asakiri-course"
+        },
+        "formatVersion": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "$comment": {
+          "type": "string"
+        }
+      }
+    },
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9_.:-]+$"
+    },
+    "relativePath": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[^/][^\\\\]*$"
+    },
+    "binding": {
+      "type": "object",
+      "required": ["kind"],
+      "oneOf": [
+        {
+          "properties": {
+            "kind": {
+              "const": "record"
+            },
+            "recordId": {
+              "$ref": "#/$defs/id"
+            }
+          },
+          "required": ["recordId"],
+          "additionalProperties": false
+        },
+        {
+          "properties": {
+            "kind": {
+              "const": "field"
+            },
+            "recordId": {
+              "$ref": "#/$defs/id"
+            },
+            "fieldId": {
+              "$ref": "#/$defs/id"
+            }
+          },
+          "required": ["recordId", "fieldId"],
+          "additionalProperties": false
+        },
+        {
+          "properties": {
+            "kind": {
+              "const": "item"
+            },
+            "recordId": {
+              "$ref": "#/$defs/id"
+            },
+            "fieldId": {
+              "$ref": "#/$defs/id"
+            },
+            "itemId": {
+              "$ref": "#/$defs/id"
+            }
+          },
+          "required": ["recordId", "fieldId", "itemId"],
+          "additionalProperties": false
+        },
+        {
+          "properties": {
+            "kind": {
+              "const": "asset"
+            },
+            "assetId": {
+              "$ref": "#/$defs/id"
+            }
+          },
+          "required": ["assetId"],
+          "additionalProperties": false
+        },
+        {
+          "properties": {
+            "kind": {
+              "const": "literal"
+            },
+            "value": {}
+          },
+          "required": ["value"],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "fragment": {
+      "type": "object",
+      "required": ["id", "role", "binding"],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "role": {
+          "type": "string",
+          "minLength": 1
+        },
+        "binding": {
+          "$ref": "#/$defs/binding"
+        }
+      },
+      "additionalProperties": false
+    },
+    "fragments": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/fragment"
+      }
+    },
+    "choiceOption": {
+      "type": "object",
+      "required": ["id", "body"],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "body": {
+          "$ref": "#/$defs/fragments"
+        }
+      },
+      "additionalProperties": false
+    },
+    "localizedText": {
+      "description": "Either a plain string in the course default locale, or a map of locale tag to string.",
+      "oneOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "object",
+          "minProperties": 1,
+          "propertyNames": {
+            "pattern": "^[a-z]{2,3}(-[A-Za-z0-9]{2,8})*$"
+          },
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      ]
+    }
+  }
+}

@@ -2,8 +2,7 @@ import type { StudioMessages } from "@shared/i18n/types";
 
 export const jaMessages = {
   localeName: "日本語",
-  alternateLocaleName: "English",
-  switchLanguage: "言語を英語に切り替える",
+  switchLanguage: "表示言語",
 
   common: {
     cancel: "キャンセル",
@@ -449,7 +448,11 @@ export const jaMessages = {
       "word-order": "語順",
       listen: "聞いて選ぶ",
       speak: "声に出す",
+      unknown: "未対応",
     },
+    unsupportedTitle: "このパートには新しいStudioが必要です",
+    unsupportedBody: (type: string) =>
+      `このパートは「${type}」を使用しており、このバージョンでは開けません。内容はそのまま保持され、保存時にも変更されません。`,
     tabWrite: "書く",
     tabReferences: "参照",
     tabOptions: "選択肢",

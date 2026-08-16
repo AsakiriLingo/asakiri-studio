@@ -1,8 +1,9 @@
+import { createHash } from "node:crypto";
 import { access, readFile } from "node:fs/promises";
 import { dirname, relative, resolve, sep } from "node:path";
 
-const SUPPORTED_FORMAT = "asakiri-example";
-const SUPPORTED_VERSION = "0.1-draft";
+const SUPPORTED_FORMAT = "asakiri-course";
+const SUPPORTED_VERSION = 1;
 const FIELD_KINDS = new Set(["asset", "text"]);
 const CARDINALITIES = new Set(["one", "many"]);
 const ASSET_KINDS = new Set(["audio", "image", "video"]);
@@ -176,6 +177,16 @@ export async function validateExampleCourse(courseRoot) {
       const mediaPath = resolveInsideCourse(dirname(file), asset.file, `${assetId}.file`);
       if (!mediaPath || !(await pathExists(mediaPath))) {
         report(`${assetId} is ready but its local file is missing`);
+      } else {
+        const bytes = await readFile(mediaPath);
+        if (typeof asset.sha256 !== "string") {
+          report(`${assetId} is ready but records no sha256`);
+        } else if (createHash("sha256").update(bytes).digest("hex") !== asset.sha256) {
+          report(`${assetId} sha256 does not match its file`);
+        }
+        if (asset.byteSize !== bytes.length) {
+          report(`${assetId} byteSize does not match its file`);
+        }
       }
     } else if (asset.availability === "placeholder") {
       placeholderAssets += 1;

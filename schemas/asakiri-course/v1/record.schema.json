@@ -1,0 +1,90 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://asakiri.com/schemas/asakiri-course/v1/record.schema.json",
+  "title": "Content record",
+  "type": "object",
+  "allOf": [{ "$ref": "common.schema.json#/$defs/envelope" }],
+  "required": ["format", "formatVersion", "id", "collectionId", "fields"],
+  "properties": {
+    "format": true,
+    "formatVersion": true,
+    "$comment": true,
+    "id": { "$ref": "common.schema.json#/$defs/id" },
+    "collectionId": { "$ref": "common.schema.json#/$defs/id" },
+    "fields": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["kind"],
+        "oneOf": [
+          {
+            "properties": {
+              "kind": { "const": "text" },
+              "value": { "type": "string" },
+              "locale": { "type": "string" }
+            },
+            "required": ["value"],
+            "additionalProperties": false
+          },
+          {
+            "properties": {
+              "kind": { "const": "asset" },
+              "assetId": { "$ref": "common.schema.json#/$defs/id" },
+              "label": { "type": "string" },
+              "locale": { "type": "string" }
+            },
+            "required": ["assetId"],
+            "additionalProperties": false
+          },
+          {
+            "properties": {
+              "kind": { "const": "list" },
+              "items": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": ["id", "kind"],
+                  "properties": {
+                    "id": { "$ref": "common.schema.json#/$defs/id" },
+                    "kind": { "enum": ["text", "asset"] },
+                    "value": { "type": "string" },
+                    "assetId": { "$ref": "common.schema.json#/$defs/id" },
+                    "label": { "type": "string" },
+                    "locale": { "type": "string" }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": ["items"],
+            "additionalProperties": false
+          }
+        ]
+      }
+    },
+    "presentations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "primaryFieldId"],
+        "properties": {
+          "id": { "$ref": "common.schema.json#/$defs/id" },
+          "primaryFieldId": { "$ref": "common.schema.json#/$defs/id" },
+          "columns": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["fieldId"],
+              "properties": {
+                "fieldId": { "$ref": "common.schema.json#/$defs/id" },
+                "visible": { "type": "boolean" }
+              },
+              "additionalProperties": false
+            }
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  }
+}

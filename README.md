@@ -23,8 +23,8 @@ src/
 └── shared/       Product-agnostic components and utilities
 ```
 
-See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) before adding a feature, [docs/UI-SYSTEM.md](docs/UI-SYSTEM.md) before creating interface components, and [docs/CONTENT-ARCHITECTURE.md](docs/CONTENT-ARCHITECTURE.md) before changing reusable content, media bindings, or exercises. Repository-wide agent rules are in [AGENTS.md](AGENTS.md).
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) before adding a feature, [docs/UI-SYSTEM.md](docs/UI-SYSTEM.md) before creating interface components, [docs/CONTENT-ARCHITECTURE.md](docs/CONTENT-ARCHITECTURE.md) before changing reusable content, media bindings, or exercises, and [docs/COURSE-FORMAT.md](docs/COURSE-FORMAT.md) before changing anything that is written to disk. Repository-wide agent rules are in [AGENTS.md](AGENTS.md).
 
-The on-disk course structure is intentionally deferred. This repository does not assume a single `course.json` file.
+The on-disk course format is canonical at version 1 and specified in [docs/COURSE-FORMAT.md](docs/COURSE-FORMAT.md), with JSON Schemas in [schemas/asakiri-course/v1](schemas/asakiri-course/v1). A course is a directory of small JSON files, not a single `course.json`.
 
-A provisional, validated data fixture lives at [examples/courses/japanese-starter](examples/courses/japanese-starter). It exists to test architectural decisions and is not a committed storage specification.
+A validated reference course lives at [examples/courses/japanese-starter](examples/courses/japanese-starter). `pnpm check` validates it against both the parser and the published schemas.

@@ -10,6 +10,8 @@ export interface Asset {
   readonly file: string | null;
   readonly expectedFile?: string;
   readonly mimeType: string;
+  readonly sha256?: string;
+  readonly byteSize?: number;
   readonly metadata?: Readonly<Record<string, unknown>>;
 }
 
