@@ -9,7 +9,9 @@
 }
 
 .partOrder {
-  border-top: var(--border-hairline) solid var(--color-border);
+  display: grid;
+  gap: var(--space-1);
+  border: 0;
 }
 
 .orderedRow {
@@ -20,11 +22,9 @@
   min-width: 0;
   min-height: 3.75rem;
   padding: var(--space-2) var(--space-3);
-  border-bottom: var(--border-hairline) solid var(--color-border);
-}
-
-.orderedRow:last-child {
-  border-bottom: 0;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
 }
 
 .orderedRow.selected {
@@ -165,21 +165,33 @@
   flex: 0 0 auto;
 }
 
+.fragmentField > .fragmentSource {
+  width: 8rem;
+}
+
 .fragmentField > :not(.fragmentSource) {
   flex: 1 1 12rem;
   min-width: 0;
 }
 
+.exerciseOptionList {
+  gap: 0;
+  overflow: clip;
+  border: var(--border-hairline) solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
 .exerciseOption {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto auto;
-  align-items: center;
+  align-items: start;
   gap: var(--space-3);
-  padding: var(--space-3) 0;
-  border-bottom: var(--border-hairline) solid var(--color-border);
+  padding: var(--space-3);
+  border: 0;
+  background: var(--color-surface);
 }
 
-.exerciseOption:first-child {
+.exerciseOption + .exerciseOption {
   border-top: var(--border-hairline) solid var(--color-border);
 }
 
@@ -229,8 +241,8 @@
 }
 
 .optionRole {
-  flex: 0 0 auto;
-  min-width: 11rem;
+  width: 10rem;
+  min-width: 10rem;
 }
 
 .matchToggle {
@@ -250,11 +262,9 @@
   align-items: start;
   gap: var(--space-3);
   padding: var(--space-4);
-  border-bottom: var(--border-hairline) solid var(--color-border);
-}
-
-.optionRow:first-child {
-  border-top: var(--border-hairline) solid var(--color-border);
+  border: 0;
+  border-radius: var(--radius-md);
+  background: var(--color-control);
 }
 
 .optionIndex {
@@ -319,13 +329,13 @@
   gap: var(--space-2);
   min-height: var(--control-height-sm);
   padding-inline: var(--space-3);
-  border: var(--border-hairline) solid var(--color-border-strong);
+  border: var(--border-hairline) solid transparent;
   border-radius: var(--radius-md);
-  background: var(--color-surface);
+  background: var(--color-control);
   color: var(--color-text);
   font-size: var(--font-size-300);
   font-weight: var(--font-weight-bold);
-  box-shadow: 0 1.5px 0 var(--color-border);
+  box-shadow: none;
 }
 
 .token .orderIndex {
@@ -342,8 +352,9 @@
   align-items: flex-start;
   gap: var(--space-3);
   padding: var(--space-4);
-  border: var(--border-hairline) solid var(--color-border);
-  background: var(--color-canvas);
+  border: 0;
+  border-radius: var(--radius-md);
+  background: var(--color-control);
   color: var(--color-text-muted);
   font-size: var(--font-size-300);
 }
@@ -358,7 +369,9 @@
 
 /* Settings toggles */
 .settingGroup {
-  border-block: var(--border-hairline) solid var(--color-border);
+  display: grid;
+  gap: var(--space-2);
+  border: 0;
 }
 
 .settingRow {
@@ -368,11 +381,9 @@
   gap: var(--space-4);
   min-height: 4rem;
   padding: var(--space-3) var(--space-4);
-  border-bottom: var(--border-hairline) solid var(--color-border);
-}
-
-.settingRow:last-child {
-  border-bottom: 0;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: var(--color-control);
 }
 
 .settingName {
@@ -393,8 +404,10 @@
 }
 
 .previewSurface {
+  overflow: clip;
   border: var(--border-hairline) solid var(--color-border);
-  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  background: var(--color-preview-surface);
 }
 
 .previewHeader {
@@ -403,7 +416,7 @@
   justify-content: space-between;
   gap: var(--space-3);
   padding: var(--space-3) var(--space-4);
-  border-bottom: var(--border-hairline) solid var(--color-border);
+  border-bottom: 0;
   color: var(--color-text-muted);
   font-size: var(--font-size-100);
 }
@@ -434,9 +447,9 @@
   width: 100%;
   margin-top: var(--space-2);
   padding: var(--space-3);
-  border: var(--border-hairline) solid var(--color-border);
+  border: var(--border-hairline) solid transparent;
   border-radius: var(--radius-md);
-  background: var(--color-surface);
+  background: var(--color-control);
   color: var(--color-text);
   text-align: left;
 }
@@ -753,11 +766,27 @@
   .imageChoice:hover,
   .audioPlay:hover,
   .micButton:hover {
-    background: var(--color-canvas);
+    background: var(--color-row-hover);
   }
 
   .skipLink:hover {
     color: var(--color-text);
+  }
+}
+
+@media (max-width: 44rem) {
+  .exerciseOption {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+  }
+
+  .exerciseOption > .fragmentGroup {
+    grid-column: 2 / -1;
+  }
+
+  .exerciseOption > .optionRole {
+    grid-column: 2;
+    width: 100%;
+    min-width: 0;
   }
 }
 

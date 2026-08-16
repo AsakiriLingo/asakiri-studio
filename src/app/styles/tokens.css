@@ -76,7 +76,11 @@
 
   --color-canvas: oklch(0.975 0.01 145);
   --color-surface: oklch(0.992 0.005 145);
+  --color-preview-surface: oklch(0.992 0 0);
   --color-surface-subtle: oklch(0.945 0.014 145);
+  --color-control: oklch(0.96 0.012 145);
+  --color-control-hover: oklch(0.94 0.014 145);
+  --color-row-hover: oklch(0.975 0.009 145);
   --color-text: oklch(0.22 0.018 155);
   --color-text-muted: oklch(0.44 0.018 155);
   --color-border: oklch(0.875 0.014 150);
@@ -102,7 +106,11 @@
   color-scheme: dark;
   --color-canvas: oklch(0.155 0.006 155);
   --color-surface: oklch(0.195 0.007 155);
+  --color-preview-surface: oklch(0.195 0 0);
   --color-surface-subtle: oklch(0.245 0.009 155);
+  --color-control: oklch(0.235 0.009 155);
+  --color-control-hover: oklch(0.265 0.01 155);
+  --color-row-hover: oklch(0.215 0.008 155);
   --color-text: oklch(0.94 0.008 155);
   --color-text-muted: oklch(0.72 0.012 155);
   --color-border: oklch(0.275 0.009 155);

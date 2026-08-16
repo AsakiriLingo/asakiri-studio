@@ -495,6 +495,7 @@ export function CourseDetails({
                 {coverAsset ? (coverAsset.file ?? coverAsset.label) : t.noCover}
               </span>
               <Select
+                searchable
                 aria-label={t.chooseMedia}
                 items={coverItems}
                 placeholder={t.chooseMedia}
@@ -690,38 +691,46 @@ export function CourseDetails({
           titleId="project-title"
           description={t.projectDescription}
         >
-          <div className={styles.settingRow}>
-            <span>
-              <span className={styles.settingName}>{t.folder}</span>
-              <span className={joinClassNames(styles.settingDetail, styles.mono)}>{location}</span>
-            </span>
-            <Button variant="ghost" onClick={onRevealFolder}>
-              {messages.common.reveal}
-            </Button>
-          </div>
-          <div className={styles.settingRow}>
-            <span>
-              <span className={styles.settingName}>{t.versionControl}</span>
-              <span className={styles.settingDetail}>
-                {git === null ? "" : git.initialized ? t.gitInitialized(git.commitCount) : t.noGit}
+          <div className={styles.settingList}>
+            <div className={styles.settingRow}>
+              <span>
+                <span className={styles.settingName}>{t.folder}</span>
+                <span className={joinClassNames(styles.settingDetail, styles.mono)}>
+                  {location}
+                </span>
               </span>
-            </span>
-            {git?.initialized ? (
-              git.clean ? (
-                <Status>{t.clean}</Status>
-              ) : (
-                <Status tone="warning">{t.uncommitted}</Status>
-              )
-            ) : null}
-          </div>
-          <div className={styles.settingRow}>
-            <span>
-              <span className={styles.settingName}>{t.contentRecords}</span>
-              <span className={styles.settingDetail}>
-                {t.recordSummary(recordCount, primaryCollection?.name ?? t.noCollections)} ·{" "}
-                {t.mediaFiles(course.assets.length)}
+              <Button variant="ghost" onClick={onRevealFolder}>
+                {messages.common.reveal}
+              </Button>
+            </div>
+            <div className={styles.settingRow}>
+              <span>
+                <span className={styles.settingName}>{t.versionControl}</span>
+                <span className={styles.settingDetail}>
+                  {git === null
+                    ? ""
+                    : git.initialized
+                      ? t.gitInitialized(git.commitCount)
+                      : t.noGit}
+                </span>
               </span>
-            </span>
+              {git?.initialized ? (
+                git.clean ? (
+                  <Status>{t.clean}</Status>
+                ) : (
+                  <Status tone="warning">{t.uncommitted}</Status>
+                )
+              ) : null}
+            </div>
+            <div className={styles.settingRow}>
+              <span>
+                <span className={styles.settingName}>{t.contentRecords}</span>
+                <span className={styles.settingDetail}>
+                  {t.recordSummary(recordCount, primaryCollection?.name ?? t.noCollections)} ·{" "}
+                  {t.mediaFiles(course.assets.length)}
+                </span>
+              </span>
+            </div>
           </div>
         </SectionGroup>
       </div>

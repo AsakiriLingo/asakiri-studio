@@ -118,6 +118,7 @@ export function AssetFieldControl({
     <span className={styles.assetControl}>
       {assetId ? <AssetPreview asset={asset} loadPreview={loadPreview} /> : null}
       <Select
+        searchable
         aria-label={field.name || t.linkAsset}
         placeholder={importing ? t.importing : t.chooseAsset}
         items={items}
@@ -191,6 +192,7 @@ export function AssetListFieldControl({
         );
       })}
       <Select
+        searchable
         aria-label={field.name || t.linkAsset}
         placeholder={importing ? t.importing : t.addItem}
         items={[

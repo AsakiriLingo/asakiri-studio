@@ -1,15 +1,19 @@
 .header {
   display: flex;
+  flex-direction: column;
   flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-3);
-  min-height: 3.25rem;
-  padding: var(--space-3) var(--space-4);
-  border-bottom: var(--border-hairline) solid var(--color-border);
+  align-items: flex-start;
+  gap: var(--space-1);
+  min-height: 0;
+  padding: 0 0 var(--space-3);
+  border: 0;
 }
 
 .spread {
+  flex-direction: row;
+  align-items: center;
   justify-content: space-between;
+  gap: var(--space-3);
 }
 
 .title {

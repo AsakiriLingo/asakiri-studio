@@ -63,9 +63,9 @@
   min-width: 0;
   flex-direction: column;
   overflow: hidden;
-  border: var(--border-hairline) solid var(--color-border);
+  border: 0;
   border-radius: var(--radius-lg);
-  background: var(--color-surface);
+  background: var(--color-control);
 }
 
 .thumb {
