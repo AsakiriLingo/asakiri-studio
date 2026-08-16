@@ -1,4 +1,6 @@
 {
+  "format": "asakiri-course",
+  "formatVersion": 1,
   "id": "record_cat",
   "collectionId": "collection_vocabulary",
   "fields": {
@@ -75,7 +77,12 @@
     {
       "id": "presentation_cat_primary",
       "primaryFieldId": "field_japanese",
-      "columns": [{ "fieldId": "field_english", "visible": true }]
+      "columns": [
+        {
+          "fieldId": "field_english",
+          "visible": true
+        }
+      ]
     }
   ]
 }

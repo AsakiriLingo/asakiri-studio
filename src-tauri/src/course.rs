@@ -1,6 +1,7 @@
 use std::fs;
 use std::path::Path;
 use std::process::Command;
+use sha2::{Digest, Sha256};
 
 use base64::engine::general_purpose::STANDARD;
 use base64::Engine as _;
@@ -156,6 +157,32 @@ pub fn delete_course_file(root_path: String, relative_path: String) -> Result<()
 
 /// Copies an arbitrary absolute file (e.g. one the user picked) into the project
 /// at a guarded, project-relative destination, creating parent directories.
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct FileDigest {
+    pub sha256: String,
+    pub byte_size: u64,
+}
+
+#[tauri::command]
+pub fn hash_course_file(root_path: String, relative_path: String) -> Result<FileDigest, String> {
+    let target =
+        resolve_course_path(&root_path, &relative_path).ok_or_else(|| "invalidPath".to_string())?;
+
+    let bytes = fs::read(&target).map_err(|error| match error.kind() {
+        std::io::ErrorKind::NotFound => "notFound".to_string(),
+        _ => "unknown".to_string(),
+    })?;
+
+    let mut hasher = Sha256::new();
+    hasher.update(&bytes);
+
+    Ok(FileDigest {
+        sha256: format!("{:x}", hasher.finalize()),
+        byte_size: bytes.len() as u64,
+    })
+}
+
 #[tauri::command]
 pub fn copy_course_file(
     root_path: String,

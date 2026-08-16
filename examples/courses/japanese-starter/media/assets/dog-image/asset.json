@@ -1,4 +1,6 @@
 {
+  "format": "asakiri-course",
+  "formatVersion": 1,
   "id": "asset_dog_image",
   "kind": "image",
   "label": "Dog illustration",

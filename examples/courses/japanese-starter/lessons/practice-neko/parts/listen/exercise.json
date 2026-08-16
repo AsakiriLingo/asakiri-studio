@@ -1,14 +1,25 @@
 {
+  "format": "asakiri-course",
+  "formatVersion": 1,
   "id": "exercise_cat_listen",
   "type": "listening",
   "instruction": "Play the audio and type the English word.",
   "answerMode": "type",
-  "settings": { "slowReplay": true, "allowSkip": true },
+  "settings": {
+    "slowReplay": true,
+    "allowSkip": true
+  },
   "prompt": [
     {
       "id": "prompt_listen_intro",
       "role": "primary",
-      "binding": { "kind": "literal", "value": { "type": "text", "text": "Type what you hear." } }
+      "binding": {
+        "kind": "literal",
+        "value": {
+          "type": "text",
+          "text": "Type what you hear."
+        }
+      }
     }
   ],
   "stimulus": {
@@ -23,9 +34,18 @@
   },
   "evaluation": {
     "kind": "typed-answer",
-    "normalize": { "ignoreCase": true, "ignoreWhitespace": true },
+    "normalize": {
+      "ignoreCase": true,
+      "ignoreWhitespace": true
+    },
     "accepted": [
-      { "binding": { "kind": "field", "recordId": "record_cat", "fieldId": "field_english" } },
+      {
+        "binding": {
+          "kind": "field",
+          "recordId": "record_cat",
+          "fieldId": "field_english"
+        }
+      },
       {
         "binding": {
           "kind": "item",

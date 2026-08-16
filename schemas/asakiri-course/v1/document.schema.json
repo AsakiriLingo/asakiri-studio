@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://asakiri.com/schemas/asakiri-course/v1/document.schema.json",
+  "title": "Rich-text part body (Tiptap document)",
+  "type": "object",
+  "allOf": [{ "$ref": "common.schema.json#/$defs/envelope" }],
+  "required": ["format", "formatVersion", "type"],
+  "properties": {
+    "format": true,
+    "formatVersion": true,
+    "$comment": true,
+    "type": { "const": "doc" },
+    "content": { "type": "array" },
+    "attrs": { "type": "object" }
+  }
+}

@@ -1,31 +1,51 @@
 {
+  "format": "asakiri-course",
+  "formatVersion": 1,
   "id": "lesson_practice_neko",
-  "title": "Practice 猫",
+  "title": {
+    "en": "Practice 猫",
+    "ja": "猫の練習"
+  },
   "parts": [
     {
       "id": "part_select_image",
       "title": "Tap the picture for 猫",
-      "content": { "kind": "exercise", "file": "parts/select-image/exercise.json" }
+      "content": {
+        "kind": "exercise",
+        "file": "parts/select-image/exercise.json"
+      }
     },
     {
       "id": "part_fill_blank",
       "title": "Complete the sentence",
-      "content": { "kind": "exercise", "file": "parts/fill-blank/exercise.json" }
+      "content": {
+        "kind": "exercise",
+        "file": "parts/fill-blank/exercise.json"
+      }
     },
     {
       "id": "part_word_order",
       "title": "Build the sentence",
-      "content": { "kind": "exercise", "file": "parts/word-order/exercise.json" }
+      "content": {
+        "kind": "exercise",
+        "file": "parts/word-order/exercise.json"
+      }
     },
     {
       "id": "part_listen",
       "title": "Type what you hear",
-      "content": { "kind": "exercise", "file": "parts/listen/exercise.json" }
+      "content": {
+        "kind": "exercise",
+        "file": "parts/listen/exercise.json"
+      }
     },
     {
       "id": "part_speak",
       "title": "Say it aloud",
-      "content": { "kind": "exercise", "file": "parts/speak/exercise.json" }
+      "content": {
+        "kind": "exercise",
+        "file": "parts/speak/exercise.json"
+      }
     }
   ]
 }

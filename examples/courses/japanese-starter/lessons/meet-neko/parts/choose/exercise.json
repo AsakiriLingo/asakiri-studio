@@ -1,4 +1,6 @@
 {
+  "format": "asakiri-course",
+  "formatVersion": 1,
   "id": "exercise_identify_cat",
   "type": "multiple-choice",
   "instruction": "Choose the English word that matches the image and audio.",

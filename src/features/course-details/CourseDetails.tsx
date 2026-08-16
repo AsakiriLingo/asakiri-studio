@@ -1,5 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
 import type { Contributor, Course, CourseProject, FundingLink, Sponsor } from "@core/course";
+import { contributorRoles } from "@core/course";
 import type { GitStatus } from "@core/project-system";
 import type { ProjectWriteResult } from "@core/project-writing";
 import { useMessages, type StudioMessages } from "@shared/i18n";
@@ -28,6 +29,40 @@ function joinClassNames(...classNames: (string | undefined)[]) {
 
 function recordItems(record: Readonly<Record<string, string>>): SelectOption[] {
   return Object.entries(record).map(([value, label]) => ({ value, label }));
+}
+
+function RoleChecklist({
+  label,
+  options,
+  selected,
+  onChange,
+}: {
+  readonly label: string;
+  readonly options: Readonly<Record<string, string>>;
+  readonly selected: readonly string[];
+  readonly onChange: (roles: readonly string[]) => void;
+}) {
+  const order = Object.keys(options);
+  return (
+    <fieldset className={styles.roleSet}>
+      <legend className={styles.roleLegend}>{label}</legend>
+      {order.map((value) => (
+        <label key={value} className={styles.roleChoice}>
+          <input
+            type="checkbox"
+            checked={selected.includes(value)}
+            onChange={(event) => {
+              const next = event.target.checked
+                ? order.filter((role) => role === value || selected.includes(role))
+                : selected.filter((role) => role !== value);
+              onChange(next);
+            }}
+          />
+          <span>{options[value]}</span>
+        </label>
+      ))}
+    </fieldset>
+  );
 }
 
 function initials(name: string): string {
@@ -88,12 +123,12 @@ function ContributorRow({
               }
             }}
           />
-          <Select
-            aria-label={t.roleLabel}
-            items={recordItems(t.roles)}
-            value={contributor.role}
-            onValueChange={(role) => {
-              onChange({ role });
+          <RoleChecklist
+            label={t.roleLabel}
+            options={t.roles}
+            selected={contributorRoles(contributor)}
+            onChange={(roles) => {
+              onChange({ roles, role: roles[0] ?? "" });
             }}
           />
           <TextInput
@@ -274,6 +309,8 @@ export function CourseDetails({
       | "subtitle"
       | "description"
       | "estimatedLength"
+      | "version"
+      | "releasedOn"
       | "copyrightHolder"
       | "copyrightYear",
     value: string,
@@ -398,6 +435,28 @@ export function CourseDetails({
                 autoComplete="off"
                 onBlur={(event) => {
                   patchField("estimatedLength", event.currentTarget.value);
+                }}
+              />
+            </Field>
+            <Field label={t.fieldVersion} help={t.fieldVersionHelp}>
+              <TextInput
+                name="version"
+                defaultValue={project.version}
+                placeholder={t.versionPlaceholder}
+                autoComplete="off"
+                onBlur={(event) => {
+                  patchField("version", event.currentTarget.value);
+                }}
+              />
+            </Field>
+            <Field label={t.fieldReleased} help={t.fieldReleasedHelp}>
+              <TextInput
+                name="released"
+                type="date"
+                defaultValue={project.releasedOn}
+                autoComplete="off"
+                onBlur={(event) => {
+                  patchField("releasedOn", event.currentTarget.value);
                 }}
               />
             </Field>

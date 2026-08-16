@@ -5,7 +5,13 @@ import type { Exercise } from "@core/course/exercise";
 export type PartContent =
   | { readonly kind: "tiptap"; readonly title?: string; readonly document: TiptapDocument }
   | { readonly kind: "composition"; readonly composition: Composition }
-  | { readonly kind: "exercise"; readonly exercise: Exercise };
+  | { readonly kind: "exercise"; readonly exercise: Exercise }
+  | {
+      readonly kind: "unknown";
+      readonly declaredKind: string;
+      readonly declaredType: string | null;
+      readonly raw: unknown;
+    };
 
 export interface Part {
   readonly id: string;

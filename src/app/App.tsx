@@ -141,8 +141,8 @@ export function App() {
     setIsDark((value) => !value);
   };
 
-  const toggleLocale = () => {
-    setLocale((value) => (value === "en" ? "ja" : "en"));
+  const selectLocale = (next: Locale) => {
+    setLocale(next);
   };
 
   const enterWorkspace = (directory: ProjectDirectory) => {
@@ -1170,7 +1170,7 @@ export function App() {
             void openRecent(id);
           }}
           onToggleTheme={toggleTheme}
-          onToggleLocale={toggleLocale}
+          onSelectLocale={selectLocale}
         />
       );
     }

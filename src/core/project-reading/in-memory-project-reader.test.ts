@@ -16,6 +16,8 @@ const course: Course = {
     taughtFlag: "",
     level: "",
     estimatedLength: "",
+    version: "",
+    releasedOn: "",
     license: "",
     copyrightHolder: "",
     copyrightYear: "",

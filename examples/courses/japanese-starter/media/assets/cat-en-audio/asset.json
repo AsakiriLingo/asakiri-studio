@@ -1,4 +1,6 @@
 {
+  "format": "asakiri-course",
+  "formatVersion": 1,
   "id": "asset_cat_en_audio",
   "kind": "audio",
   "label": "Cat — English pronunciation",

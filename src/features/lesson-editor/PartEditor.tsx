@@ -1,6 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { JSONContent } from "@tiptap/react";
-import type { Asset, ContentRecord, Course, Exercise, Part, TiptapDocument } from "@core/course";
+import type {
+  Asset,
+  ContentRecord,
+  Course,
+  Exercise,
+  Part,
+  PartContent,
+  TiptapDocument,
+} from "@core/course";
 import type { ProjectWriteResult } from "@core/project-writing";
 import { useMessages } from "@shared/i18n";
 import { Field, TextInput } from "@shared/components/form";
@@ -14,7 +22,7 @@ import {
   type SaveRecordPresentation,
 } from "@shared/components/rich-editor";
 import { Status } from "@shared/components/status";
-import { partKind, type PartKind } from "@features/lesson-editor/parts";
+import { partKind, type PartDisplayKind } from "@features/lesson-editor/parts";
 import { FillBlankEditor } from "@features/lesson-editor/exercise/FillBlankEditor";
 import { ListeningEditor } from "@features/lesson-editor/exercise/ListeningEditor";
 import { MatchPairsEditor } from "@features/lesson-editor/exercise/MatchPairsEditor";
@@ -229,7 +237,20 @@ function EditorBody({
       return exercise?.type === "speaking" ? (
         <SpeakingEditor exercise={exercise} library={library} onChange={onPersistExercise} />
       ) : null;
+    case "unknown":
+      return <UnsupportedPart content={part.content} />;
   }
+}
+
+function UnsupportedPart({ content }: { readonly content: PartContent }) {
+  const t = useMessages().lesson;
+  const label = content.kind === "unknown" ? (content.declaredType ?? content.declaredKind) : "";
+  return (
+    <div className={styles.unsupported} role="note">
+      <p className={styles.unsupportedTitle}>{t.unsupportedTitle}</p>
+      <p className={styles.unsupportedBody}>{t.unsupportedBody(label)}</p>
+    </div>
+  );
 }
 
 type SaveState = "idle" | "saving" | "saved" | "failed";
@@ -248,7 +269,7 @@ export interface PartEditorProps {
   readonly onImportMedia: () => Promise<Asset | null>;
 }
 
-const REAL_EXERCISE_EDITORS = new Set<PartKind>([
+const REAL_EXERCISE_EDITORS = new Set<PartDisplayKind>([
   "multiple-choice",
   "select-image",
   "word-order",

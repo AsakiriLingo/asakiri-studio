@@ -1,4 +1,6 @@
 {
+  "format": "asakiri-course",
+  "formatVersion": 1,
   "id": "collection_vocabulary",
   "name": "Vocabulary",
   "description": "Reusable vocabulary records shown as a table in the Content area.",

@@ -1,9 +1,11 @@
 import type { AvailableUpdate } from "@core/app-update";
 import type { RecentProject } from "@core/projects";
-import { useMessages } from "@shared/i18n";
+import { localeOptions, useLocale, useMessages } from "@shared/i18n";
+import type { Locale } from "@shared/i18n";
 import { useConfirm } from "@shared/components/confirm-dialog";
 import { Icon } from "@shared/components/icon";
 import { IconButton } from "@shared/components/icon-button";
+import { Select } from "@shared/components/select";
 import styles from "@features/start/StartScreen.module.css";
 
 interface StartScreenProps {
@@ -20,7 +22,7 @@ interface StartScreenProps {
   readonly onOpenCourse: () => void;
   readonly onOpenRecent: (id: string) => void;
   readonly onToggleTheme: () => void;
-  readonly onToggleLocale: () => void;
+  readonly onSelectLocale: (locale: Locale) => void;
 }
 
 export function StartScreen({
@@ -37,11 +39,13 @@ export function StartScreen({
   onOpenCourse,
   onOpenRecent,
   onToggleTheme,
-  onToggleLocale,
+  onSelectLocale,
 }: StartScreenProps) {
   const messages = useMessages();
   const confirm = useConfirm();
+  const locale = useLocale();
   const t = messages.update;
+  const languages = localeOptions();
 
   const reviewUpdate = async () => {
     if (!update || updateInstalling) return;
@@ -69,9 +73,16 @@ export function StartScreen({
             {updateInstalling ? t.installing : t.available}
           </button>
         ) : null}
-        <IconButton aria-label={messages.switchLanguage} onClick={onToggleLocale}>
-          <Icon name="language" size={18} />
-        </IconButton>
+        <Select
+          className={styles.language}
+          items={languages}
+          value={locale}
+          aria-label={messages.switchLanguage}
+          onValueChange={(next) => {
+            const picked = languages.find((entry) => entry.value === next);
+            if (picked) onSelectLocale(picked.value);
+          }}
+        />
         <IconButton
           aria-label={isDark ? messages.common.useLightTheme : messages.common.useDarkTheme}
           onClick={onToggleTheme}

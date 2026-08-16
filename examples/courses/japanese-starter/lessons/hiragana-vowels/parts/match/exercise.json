@@ -1,4 +1,6 @@
 {
+  "format": "asakiri-course",
+  "formatVersion": 1,
   "id": "exercise_hiragana_vowels_match",
   "type": "match-pairs",
   "instruction": "Match each hiragana vowel to its romaji.",
@@ -8,7 +10,10 @@
       "role": "primary",
       "binding": {
         "kind": "literal",
-        "value": { "type": "text", "text": "Tap a character, then its romaji." }
+        "value": {
+          "type": "text",
+          "text": "Tap a character, then its romaji."
+        }
       }
     }
   ],
@@ -19,7 +24,11 @@
         {
           "id": "left_a_char",
           "role": "primary",
-          "binding": { "kind": "field", "recordId": "record_hiragana_a", "fieldId": "field_char" }
+          "binding": {
+            "kind": "field",
+            "recordId": "record_hiragana_a",
+            "fieldId": "field_char"
+          }
         }
       ]
     },
@@ -29,7 +38,11 @@
         {
           "id": "left_i_char",
           "role": "primary",
-          "binding": { "kind": "field", "recordId": "record_hiragana_i", "fieldId": "field_char" }
+          "binding": {
+            "kind": "field",
+            "recordId": "record_hiragana_i",
+            "fieldId": "field_char"
+          }
         }
       ]
     },
@@ -39,7 +52,11 @@
         {
           "id": "left_u_char",
           "role": "primary",
-          "binding": { "kind": "field", "recordId": "record_hiragana_u", "fieldId": "field_char" }
+          "binding": {
+            "kind": "field",
+            "recordId": "record_hiragana_u",
+            "fieldId": "field_char"
+          }
         }
       ]
     },
@@ -49,7 +66,11 @@
         {
           "id": "left_e_char",
           "role": "primary",
-          "binding": { "kind": "field", "recordId": "record_hiragana_e", "fieldId": "field_char" }
+          "binding": {
+            "kind": "field",
+            "recordId": "record_hiragana_e",
+            "fieldId": "field_char"
+          }
         }
       ]
     },
@@ -59,7 +80,11 @@
         {
           "id": "left_o_char",
           "role": "primary",
-          "binding": { "kind": "field", "recordId": "record_hiragana_o", "fieldId": "field_char" }
+          "binding": {
+            "kind": "field",
+            "recordId": "record_hiragana_o",
+            "fieldId": "field_char"
+          }
         }
       ]
     }
@@ -71,7 +96,11 @@
         {
           "id": "right_a_romaji",
           "role": "primary",
-          "binding": { "kind": "field", "recordId": "record_hiragana_a", "fieldId": "field_romaji" }
+          "binding": {
+            "kind": "field",
+            "recordId": "record_hiragana_a",
+            "fieldId": "field_romaji"
+          }
         }
       ]
     },
@@ -81,7 +110,11 @@
         {
           "id": "right_i_romaji",
           "role": "primary",
-          "binding": { "kind": "field", "recordId": "record_hiragana_i", "fieldId": "field_romaji" }
+          "binding": {
+            "kind": "field",
+            "recordId": "record_hiragana_i",
+            "fieldId": "field_romaji"
+          }
         }
       ]
     },
@@ -91,7 +124,11 @@
         {
           "id": "right_u_romaji",
           "role": "primary",
-          "binding": { "kind": "field", "recordId": "record_hiragana_u", "fieldId": "field_romaji" }
+          "binding": {
+            "kind": "field",
+            "recordId": "record_hiragana_u",
+            "fieldId": "field_romaji"
+          }
         }
       ]
     },
@@ -101,7 +138,11 @@
         {
           "id": "right_e_romaji",
           "role": "primary",
-          "binding": { "kind": "field", "recordId": "record_hiragana_e", "fieldId": "field_romaji" }
+          "binding": {
+            "kind": "field",
+            "recordId": "record_hiragana_e",
+            "fieldId": "field_romaji"
+          }
         }
       ]
     },
@@ -111,7 +152,11 @@
         {
           "id": "right_o_romaji",
           "role": "primary",
-          "binding": { "kind": "field", "recordId": "record_hiragana_o", "fieldId": "field_romaji" }
+          "binding": {
+            "kind": "field",
+            "recordId": "record_hiragana_o",
+            "fieldId": "field_romaji"
+          }
         }
       ]
     }
@@ -119,11 +164,26 @@
   "evaluation": {
     "kind": "matched-pairs",
     "pairs": [
-      { "leftId": "left_a", "rightId": "right_a" },
-      { "leftId": "left_i", "rightId": "right_i" },
-      { "leftId": "left_u", "rightId": "right_u" },
-      { "leftId": "left_e", "rightId": "right_e" },
-      { "leftId": "left_o", "rightId": "right_o" }
+      {
+        "leftId": "left_a",
+        "rightId": "right_a"
+      },
+      {
+        "leftId": "left_i",
+        "rightId": "right_i"
+      },
+      {
+        "leftId": "left_u",
+        "rightId": "right_u"
+      },
+      {
+        "leftId": "left_e",
+        "rightId": "right_e"
+      },
+      {
+        "leftId": "left_o",
+        "rightId": "right_o"
+      }
     ]
   }
 }

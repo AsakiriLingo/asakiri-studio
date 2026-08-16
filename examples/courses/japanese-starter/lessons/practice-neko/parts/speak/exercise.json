@@ -1,22 +1,40 @@
 {
+  "format": "asakiri-course",
+  "formatVersion": 1,
   "id": "exercise_cat_speak",
   "type": "speaking",
-  "instruction": "Say this word in Japanese.",
-  "settings": { "showRomaji": true, "allowSkip": true },
+  "instruction": {
+    "en": "Say this word in Japanese.",
+    "ja": "この単語を日本語で言ってください。"
+  },
+  "settings": {
+    "showRomaji": true,
+    "allowSkip": true
+  },
   "prompt": [
     {
       "id": "prompt_speak_intro",
       "role": "primary",
       "binding": {
         "kind": "literal",
-        "value": { "type": "text", "text": "Say this word in Japanese. Graded on device." }
+        "value": {
+          "type": "text",
+          "text": {
+            "en": "Say this word in Japanese. Graded on device.",
+            "ja": "この単語を日本語で言ってください。端末で採点します。"
+          }
+        }
       }
     }
   ],
   "target": {
     "id": "speak_target",
     "role": "primary",
-    "binding": { "kind": "field", "recordId": "record_cat", "fieldId": "field_japanese" }
+    "binding": {
+      "kind": "field",
+      "recordId": "record_cat",
+      "fieldId": "field_japanese"
+    }
   },
   "evaluation": {
     "kind": "spoken-response",

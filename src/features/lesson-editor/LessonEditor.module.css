@@ -851,3 +851,32 @@
     overflow: auto;
   }
 }
+
+.unsupported {
+  display: grid;
+  gap: var(--space-2);
+  max-width: 40rem;
+  padding: var(--space-5);
+  border: var(--border-hairline) solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-subtle);
+}
+
+.unsupportedTitle {
+  margin: 0;
+  font-size: var(--font-size-300);
+  font-weight: var(--font-weight-bold);
+}
+
+.unsupportedBody {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-200);
+}
+
+.previewEmpty {
+  margin: 0;
+  padding: var(--space-5);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-200);
+}

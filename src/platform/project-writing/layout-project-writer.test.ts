@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { COURSE_FORMAT, COURSE_FORMAT_VERSION } from "@core/course";
 import type { Collection, ContentRecord, CourseProject, TiptapDocument } from "@core/course";
 import type { ProjectSession } from "@core/projects";
 import {
@@ -18,6 +19,8 @@ const PROJECT: CourseProject = {
   taughtFlag: "jp",
   level: "a1",
   estimatedLength: "2 units",
+  version: "",
+  releasedOn: "",
   license: "bySa",
   copyrightHolder: "Alok Singh",
   copyrightYear: "2026",
@@ -29,7 +32,7 @@ const PROJECT: CourseProject = {
 
 const MANIFEST = JSON.stringify({
   format: "asakiri-course",
-  formatVersion: "0.1",
+  formatVersion: 1,
   project: {
     id: "course_japanese",
     title: "Old Title",
@@ -45,6 +48,10 @@ const MANIFEST = JSON.stringify({
 
 function fileAccess(files: Map<string, string>): ProjectFileAccess {
   return {
+    hashFile(path) {
+      const contents = files.get(path) ?? "";
+      return Promise.resolve({ sha256: `sha-${path}`, byteSize: contents.length });
+    },
     readTextFile(path) {
       const contents = files.get(path);
       return contents === undefined
@@ -86,7 +93,56 @@ function fileAccess(files: Map<string, string>): ProjectFileAccess {
   };
 }
 
+function readWritten(files: Map<string, string>, path: string): unknown {
+  const parsed: unknown = JSON.parse(files.get(path) ?? "");
+  if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) return parsed;
+  const { format, formatVersion, ...rest } = parsed as Record<string, unknown>;
+  expect(format).toBe(COURSE_FORMAT);
+  expect(formatVersion).toBe(COURSE_FORMAT_VERSION);
+  return rest;
+}
+
 describe("layout project writer", () => {
+  it("keeps translations for locales the editor is not showing", async () => {
+    const lessonPath = "lessons/intro/lesson.json";
+    const files = new Map([
+      ["project.json", MANIFEST],
+      [
+        lessonPath,
+        JSON.stringify({
+          id: "l1",
+          title: { en: "Old title", ja: "\u53e4\u3044\u30bf\u30a4\u30c8\u30eb" },
+          parts: [],
+        }),
+      ],
+    ]);
+    const writer = createLayoutProjectWriter(() => fileAccess(files));
+
+    const result = await writer.updateLesson(SESSION, lessonPath, {
+      id: "l1",
+      title: "New title",
+      parts: [],
+    });
+
+    expect(result).toEqual({ status: "saved" });
+    expect(readWritten(files, lessonPath)).toMatchObject({
+      title: { en: "New title", ja: "\u53e4\u3044\u30bf\u30a4\u30c8\u30eb" },
+    });
+  });
+
+  it("writes a plain string when the file had no translations", async () => {
+    const lessonPath = "lessons/intro/lesson.json";
+    const files = new Map([
+      ["project.json", MANIFEST],
+      [lessonPath, JSON.stringify({ id: "l1", title: "Old title", parts: [] })],
+    ]);
+    const writer = createLayoutProjectWriter(() => fileAccess(files));
+
+    await writer.updateLesson(SESSION, lessonPath, { id: "l1", title: "New title", parts: [] });
+
+    expect(readWritten(files, lessonPath)).toMatchObject({ title: "New title" });
+  });
+
   it("merges the project block and preserves other manifest keys", async () => {
     const files = new Map([["project.json", MANIFEST]]);
     const writer = createLayoutProjectWriter(() => fileAccess(files));
@@ -94,10 +150,8 @@ describe("layout project writer", () => {
     const result = await writer.updateProject(SESSION, PROJECT);
 
     expect(result).toEqual({ status: "saved" });
-    const written: unknown = JSON.parse(files.get("project.json") ?? "");
+    const written: unknown = readWritten(files, "project.json");
     expect(written).toMatchObject({
-      format: "asakiri-course",
-      formatVersion: "0.1",
       project: {
         id: "course_japanese",
         title: "Renamed Course",
@@ -139,7 +193,7 @@ describe("layout project writer", () => {
     ]);
 
     expect(result).toEqual({ status: "saved" });
-    const written: unknown = JSON.parse(files.get("project.json") ?? "");
+    const written: unknown = readWritten(files, "project.json");
     expect(written).toMatchObject({
       collections: ["content/collections/vocabulary.json"],
       lessons: ["lessons/intro/lesson.json"],
@@ -176,7 +230,7 @@ describe("layout project writer", () => {
     const result = await writer.updateRecord(SESSION, path, record);
 
     expect(result).toEqual({ status: "saved" });
-    const written: unknown = JSON.parse(files.get(path) ?? "");
+    const written: unknown = readWritten(files, path);
     expect(written).toEqual({
       $comment: "keep me",
       id: "record_cat",
@@ -218,7 +272,7 @@ describe("layout project writer", () => {
     const result = await writer.updateRecord(SESSION, path, record);
 
     expect(result).toEqual({ status: "saved" });
-    const written: unknown = JSON.parse(files.get(path) ?? "");
+    const written: unknown = readWritten(files, path);
     expect(written).toEqual({
       legacy: { itemId: "abc" },
       id: "record_cat",
@@ -249,7 +303,7 @@ describe("layout project writer", () => {
     const result = await writer.updatePartDocument(SESSION, path, document);
 
     expect(result).toEqual({ status: "saved" });
-    const written: unknown = JSON.parse(files.get(path) ?? "");
+    const written: unknown = readWritten(files, path);
     expect(written).toEqual(document);
   });
 
@@ -266,9 +320,9 @@ describe("layout project writer", () => {
     );
 
     expect(result).toEqual({ status: "saved" });
-    const lessonWritten: unknown = JSON.parse(files.get(lessonPath) ?? "");
+    const lessonWritten: unknown = readWritten(files, lessonPath);
     expect(lessonWritten).toEqual({ id: "lesson_new", title: "New lesson", parts: [] });
-    const manifest: unknown = JSON.parse(files.get("project.json") ?? "");
+    const manifest: unknown = readWritten(files, "project.json");
     expect(manifest).toMatchObject({
       lessons: ["lessons/intro/lesson.json", lessonPath],
       outline: [{ id: "u1", title: "Unit 1", lessonIds: ["l1", "lesson_new"] }],
@@ -297,7 +351,7 @@ describe("layout project writer", () => {
     });
 
     expect(result).toEqual({ status: "saved" });
-    const written: unknown = JSON.parse(files.get(lessonPath) ?? "");
+    const written: unknown = readWritten(files, lessonPath);
     expect(written).toEqual({
       id: "l1",
       title: "Getting started",
@@ -322,7 +376,7 @@ describe("layout project writer", () => {
 
     const set = await writer.updatePartContentTitle(SESSION, lessonPath, "p1", "First words");
     expect(set).toEqual({ status: "saved" });
-    expect(JSON.parse(files.get(lessonPath) ?? "")).toEqual({
+    expect(readWritten(files, lessonPath)).toEqual({
       id: "l1",
       title: "Intro",
       parts: [
@@ -336,7 +390,7 @@ describe("layout project writer", () => {
 
     const cleared = await writer.updatePartContentTitle(SESSION, lessonPath, "p1", "");
     expect(cleared).toEqual({ status: "saved" });
-    expect(JSON.parse(files.get(lessonPath) ?? "")).toEqual({
+    expect(readWritten(files, lessonPath)).toEqual({
       id: "l1",
       title: "Intro",
       parts: [{ id: "p1", title: "Section", content: { kind: "tiptap", file: "a.json" } }],
@@ -364,7 +418,7 @@ describe("layout project writer", () => {
     const result = await writer.updatePartTitle(SESSION, lessonPath, "p2", "Check yourself");
 
     expect(result).toEqual({ status: "saved" });
-    const written: unknown = JSON.parse(files.get(lessonPath) ?? "");
+    const written: unknown = readWritten(files, lessonPath);
     expect(written).toEqual({
       id: "l1",
       title: "Intro",
@@ -402,8 +456,8 @@ describe("layout project writer", () => {
     );
 
     expect(result).toEqual({ status: "saved" });
-    expect(JSON.parse(files.get(bodyPath) ?? "")).toEqual(document);
-    const written: unknown = JSON.parse(files.get(lessonPath) ?? "");
+    expect(readWritten(files, bodyPath)).toEqual(document);
+    const written: unknown = readWritten(files, lessonPath);
     expect(written).toEqual({
       id: "l1",
       title: "Intro",
@@ -444,7 +498,7 @@ describe("layout project writer", () => {
     });
 
     expect(result).toEqual({ status: "saved" });
-    expect(JSON.parse(files.get(path) ?? "")).toEqual({
+    expect(readWritten(files, path)).toEqual({
       id: "ex_quiz",
       type: "multiple-choice",
       prompt: [
@@ -494,14 +548,14 @@ describe("layout project writer", () => {
     );
 
     expect(result).toEqual({ status: "saved" });
-    expect(JSON.parse(files.get(bodyPath) ?? "")).toEqual({
+    expect(readWritten(files, bodyPath)).toEqual({
       id: "ex_quiz",
       type: "multiple-choice",
       prompt: [],
       options: [],
       evaluation: { kind: "selected-options", correctOptionIds: [] },
     });
-    const lesson: unknown = JSON.parse(files.get(lessonPath) ?? "");
+    const lesson: unknown = readWritten(files, lessonPath);
     expect(lesson).toEqual({
       id: "l1",
       title: "Intro",
@@ -538,7 +592,7 @@ describe("layout project writer", () => {
     const result = await writer.reorderParts(SESSION, lessonPath, ["p3", "p1", "p2"]);
 
     expect(result).toEqual({ status: "saved" });
-    const written: unknown = JSON.parse(files.get(lessonPath) ?? "");
+    const written: unknown = readWritten(files, lessonPath);
     expect(written).toEqual({
       id: "l1",
       title: "Intro",
@@ -581,7 +635,7 @@ describe("layout project writer", () => {
     expect(result).toEqual({ status: "saved" });
     expect(files.has(bodyPath)).toBe(false);
     expect(files.has("lessons/intro/parts/warm/a.json")).toBe(true);
-    const written: unknown = JSON.parse(files.get(lessonPath) ?? "");
+    const written: unknown = readWritten(files, lessonPath);
     expect(written).toEqual({
       id: "l1",
       title: "Intro",
@@ -608,7 +662,7 @@ describe("layout project writer", () => {
     expect(result).toEqual({ status: "saved" });
     expect(files.has(lessonPath)).toBe(false);
     expect(files.has("lessons/intro/parts/intro/document.json")).toBe(false);
-    const manifest: unknown = JSON.parse(files.get("project.json") ?? "");
+    const manifest: unknown = readWritten(files, "project.json");
     expect(manifest).toMatchObject({
       lessons: [],
       outline: [{ id: "u1", title: "Unit 1", lessonIds: [] }],
@@ -643,13 +697,13 @@ describe("layout project writer", () => {
     );
 
     expect(result).toEqual({ status: "saved" });
-    const recordWritten: unknown = JSON.parse(files.get("content/records/record_dog.json") ?? "");
+    const recordWritten: unknown = readWritten(files, "content/records/record_dog.json");
     expect(recordWritten).toMatchObject({
       id: "record_dog",
       collectionId: "vocabulary",
       fields: { english: { kind: "text", value: "Dog" } },
     });
-    const collectionWritten: unknown = JSON.parse(files.get(collectionPath) ?? "");
+    const collectionWritten: unknown = readWritten(files, collectionPath);
     expect(collectionWritten).toMatchObject({
       recordFiles: ["../records/cat.json", "../records/record_dog.json"],
     });
@@ -676,7 +730,7 @@ describe("layout project writer", () => {
 
     expect(result).toEqual({ status: "saved" });
     expect(files.has(recordPath)).toBe(false);
-    const collectionWritten: unknown = JSON.parse(files.get(collectionPath) ?? "");
+    const collectionWritten: unknown = readWritten(files, collectionPath);
     expect(collectionWritten).toMatchObject({ recordFiles: ["../records/dog.json"] });
   });
 
@@ -703,7 +757,7 @@ describe("layout project writer", () => {
     const result = await writer.createCollection(SESSION, collectionPath, collection);
 
     expect(result).toEqual({ status: "saved" });
-    const written: unknown = JSON.parse(files.get(collectionPath) ?? "");
+    const written: unknown = readWritten(files, collectionPath);
     expect(written).toMatchObject({
       id: "hiragana",
       name: "Hiragana",
@@ -712,7 +766,7 @@ describe("layout project writer", () => {
         { id: "field_kana", name: "Kana", kind: "text", cardinality: "one", required: true },
       ],
     });
-    const manifest: unknown = JSON.parse(files.get("project.json") ?? "");
+    const manifest: unknown = readWritten(files, "project.json");
     expect(manifest).toMatchObject({
       collections: ["content/collections/vocabulary.json", "content/collections/hiragana.json"],
     });
@@ -738,15 +792,17 @@ describe("layout project writer", () => {
     expect(result).toEqual({ status: "saved" });
     // Image imports route through copyImage (EXIF stripped), not copyFile.
     expect(files.get(binaryPath)).toBe("stripped:/tmp/photo.png");
-    const descriptor: unknown = JSON.parse(files.get(assetPath) ?? "");
+    const descriptor: unknown = readWritten(files, assetPath);
     expect(descriptor).toMatchObject({
       id: "asset_1",
       kind: "image",
       file: "photo.png",
       mimeType: "image/png",
       availability: "ready",
+      sha256: `sha-${binaryPath}`,
+      byteSize: "stripped:/tmp/photo.png".length,
     });
-    const manifest: unknown = JSON.parse(files.get("project.json") ?? "");
+    const manifest: unknown = readWritten(files, "project.json");
     expect(manifest).toMatchObject({ assets: [assetPath] });
   });
 
@@ -796,7 +852,7 @@ describe("layout project writer", () => {
     expect(result).toEqual({ status: "saved" });
     expect(files.has("media/assets/asset_1/photo.png")).toBe(false);
     expect(files.get("media/assets/asset_1/cat.png")).toBe("binary");
-    const descriptor: unknown = JSON.parse(files.get(assetPath) ?? "");
+    const descriptor: unknown = readWritten(files, assetPath);
     expect(descriptor).toMatchObject({ id: "asset_1", label: "cat", file: "cat.png" });
   });
 
@@ -820,7 +876,7 @@ describe("layout project writer", () => {
     expect(result).toEqual({ status: "saved" });
     expect(files.has(assetPath)).toBe(false);
     expect(files.has("media/assets/asset_1/photo.png")).toBe(false);
-    const manifest: unknown = JSON.parse(files.get("project.json") ?? "");
+    const manifest: unknown = readWritten(files, "project.json");
     expect(manifest).toMatchObject({ assets: ["media/assets/keep/asset.json"] });
   });
 });

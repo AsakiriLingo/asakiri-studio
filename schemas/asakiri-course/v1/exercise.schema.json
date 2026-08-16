@@ -1,0 +1,148 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://asakiri.com/schemas/asakiri-course/v1/exercise.schema.json",
+  "title": "Exercise part body",
+  "type": "object",
+  "allOf": [
+    {
+      "$ref": "common.schema.json#/$defs/envelope"
+    }
+  ],
+  "required": ["format", "formatVersion", "id", "type"],
+  "properties": {
+    "format": true,
+    "formatVersion": true,
+    "$comment": true,
+    "id": {
+      "$ref": "common.schema.json#/$defs/id"
+    },
+    "type": {
+      "type": "string",
+      "minLength": 1
+    },
+    "instruction": {
+      "$ref": "common.schema.json#/$defs/localizedText"
+    },
+    "prompt": {
+      "$ref": "common.schema.json#/$defs/fragments"
+    },
+    "options": {
+      "type": "array",
+      "items": {
+        "$ref": "common.schema.json#/$defs/choiceOption"
+      }
+    },
+    "left": {
+      "type": "array",
+      "items": {
+        "$ref": "common.schema.json#/$defs/choiceOption"
+      }
+    },
+    "right": {
+      "type": "array",
+      "items": {
+        "$ref": "common.schema.json#/$defs/choiceOption"
+      }
+    },
+    "tokens": {
+      "type": "array",
+      "items": {
+        "$ref": "common.schema.json#/$defs/choiceOption"
+      }
+    },
+    "distractors": {
+      "type": "array",
+      "items": {
+        "$ref": "common.schema.json#/$defs/choiceOption"
+      }
+    },
+    "bank": {
+      "type": "array",
+      "items": {
+        "$ref": "common.schema.json#/$defs/choiceOption"
+      }
+    },
+    "stem": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["kind"],
+        "oneOf": [
+          {
+            "properties": {
+              "kind": {
+                "const": "text"
+              },
+              "fragment": {
+                "$ref": "common.schema.json#/$defs/fragment"
+              }
+            },
+            "required": ["fragment"],
+            "additionalProperties": false
+          },
+          {
+            "properties": {
+              "kind": {
+                "const": "blank"
+              },
+              "id": {
+                "$ref": "common.schema.json#/$defs/id"
+              }
+            },
+            "required": ["id"],
+            "additionalProperties": false
+          }
+        ]
+      }
+    },
+    "stimulus": {
+      "$ref": "common.schema.json#/$defs/fragment"
+    },
+    "target": {
+      "$ref": "common.schema.json#/$defs/fragment"
+    },
+    "translation": {
+      "$ref": "common.schema.json#/$defs/fragment"
+    },
+    "answerMode": {
+      "enum": ["select", "type"]
+    },
+    "settings": {
+      "type": "object"
+    },
+    "presentation": {
+      "type": "object"
+    },
+    "feedback": {
+      "type": "object"
+    },
+    "evaluation": {
+      "type": "object",
+      "required": ["kind"],
+      "properties": {
+        "kind": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    }
+  },
+  "if": {
+    "properties": {
+      "type": {
+        "enum": [
+          "multiple-choice",
+          "select-image",
+          "match-pairs",
+          "fill-blank",
+          "word-order",
+          "listening",
+          "speaking"
+        ]
+      }
+    }
+  },
+  "then": {
+    "required": ["prompt", "evaluation"]
+  }
+}

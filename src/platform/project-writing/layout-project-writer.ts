@@ -5,6 +5,7 @@ import type {
   FieldDefinition,
   OutlineSection,
 } from "@core/course";
+import { isLocaleMap, withFormatFirst, withLocale } from "@core/course";
 import type { ProjectWriter, ProjectWriteResult } from "@core/project-writing";
 import type { ProjectSession } from "@core/projects";
 import { serializeExercise } from "@platform/project-writing/serialize-exercise";
@@ -20,6 +21,7 @@ export interface ProjectFileAccess {
   copyImage(sourcePath: string, relativePath: string): Promise<void>;
   /** Recursively removes a project-relative directory. Missing is a no-op. */
   removeDir(relativePath: string): Promise<void>;
+  hashFile(relativePath: string): Promise<{ sha256: string; byteSize: number }>;
 }
 
 export type ResolveProjectFileAccess = (session: ProjectSession) => ProjectFileAccess | null;
@@ -99,6 +101,8 @@ function serializeAsset(asset: Asset): Record<string, unknown> {
     file: asset.file,
     mimeType: asset.mimeType,
     ...(asset.expectedFile !== undefined ? { expectedFile: asset.expectedFile } : {}),
+    ...(asset.sha256 !== undefined ? { sha256: asset.sha256 } : {}),
+    ...(asset.byteSize !== undefined ? { byteSize: asset.byteSize } : {}),
     ...(asset.metadata !== undefined ? { metadata: asset.metadata } : {}),
   };
 }
@@ -108,7 +112,77 @@ function dirOf(filePath: string): string {
   return filePath.split("/").slice(0, -1).join("/");
 }
 
-export function createLayoutProjectWriter(resolve: ResolveProjectFileAccess): ProjectWriter {
+function stampContents(contents: string): string {
+  try {
+    const parsed: unknown = JSON.parse(contents);
+    if (!isRecord(parsed)) return contents;
+    return `${JSON.stringify(withFormatFirst(parsed), null, 2)}\n`;
+  } catch {
+    return contents;
+  }
+}
+
+function mergeLocalized(previous: unknown, next: unknown, locale: string): unknown {
+  if (isLocaleMap(previous) && typeof next === "string") {
+    return withLocale(previous, locale, next);
+  }
+  if (Array.isArray(previous) && Array.isArray(next)) {
+    const before: readonly unknown[] = previous;
+    return (next as readonly unknown[]).map((item) => {
+      const id = isRecord(item) ? item.id : undefined;
+      const match =
+        id === undefined ? undefined : before.find((entry) => isRecord(entry) && entry.id === id);
+      return match === undefined ? item : mergeLocalized(match, item, locale);
+    });
+  }
+  if (isRecord(previous) && isRecord(next)) {
+    return Object.fromEntries(
+      Object.entries(next).map(([key, value]) => [
+        key,
+        mergeLocalized(previous[key], value, locale),
+      ]),
+    );
+  }
+  return next;
+}
+
+async function localeOf(files: ProjectFileAccess): Promise<string> {
+  try {
+    const parsed: unknown = JSON.parse(await files.readTextFile(MANIFEST_PATH));
+    if (!isRecord(parsed) || !isRecord(parsed.project)) return "en";
+    const locale = parsed.project.defaultLocale;
+    return typeof locale === "string" ? locale : "en";
+  } catch {
+    return "en";
+  }
+}
+
+function stampingAccess(files: ProjectFileAccess): ProjectFileAccess {
+  return {
+    ...files,
+    async writeTextFile(path, contents) {
+      let merged = contents;
+      try {
+        const previous: unknown = JSON.parse(await files.readTextFile(path));
+        const next: unknown = JSON.parse(contents);
+        if (isRecord(previous) && isRecord(next)) {
+          const locale = await localeOf(files);
+          merged = JSON.stringify(mergeLocalized(previous, next, locale), null, 2);
+        }
+      } catch {
+        merged = contents;
+      }
+      await files.writeTextFile(path, stampContents(merged));
+    },
+  };
+}
+
+export function createLayoutProjectWriter(resolveRaw: ResolveProjectFileAccess): ProjectWriter {
+  const resolve: ResolveProjectFileAccess = (session) => {
+    const files = resolveRaw(session);
+    return files === null ? null : stampingAccess(files);
+  };
+
   return {
     async updateProject(session, project): Promise<ProjectWriteResult> {
       const files = resolve(session);
@@ -138,6 +212,8 @@ export function createLayoutProjectWriter(resolve: ResolveProjectFileAccess): Pr
             taughtFlag: project.taughtFlag,
             level: project.level,
             estimatedLength: project.estimatedLength,
+            version: project.version,
+            releasedOn: project.releasedOn,
             license: project.license,
             copyrightHolder: project.copyrightHolder,
             copyrightYear: project.copyrightYear,
@@ -145,7 +221,8 @@ export function createLayoutProjectWriter(resolve: ResolveProjectFileAccess): Pr
             contributors: project.contributors.map((item) => ({
               id: item.id,
               name: item.name,
-              role: item.role,
+              role: item.roles?.[0] ?? item.role,
+              ...(item.roles !== undefined ? { roles: [...item.roles] } : {}),
               links: [...item.links],
             })),
             funding: project.funding.map((item) => ({
@@ -609,7 +686,12 @@ export function createLayoutProjectWriter(resolve: ResolveProjectFileAccess): Pr
         // Images are stripped of EXIF/metadata; other kinds copy verbatim.
         if (asset.kind === "image") await files.copyImage(sourcePath, binaryPath);
         else await files.copyFile(sourcePath, binaryPath);
-        await files.writeTextFile(assetPath, `${JSON.stringify(serializeAsset(asset), null, 2)}\n`);
+        const digest = await files.hashFile(binaryPath).catch(() => null);
+        const stamped = digest === null ? asset : { ...asset, ...digest };
+        await files.writeTextFile(
+          assetPath,
+          `${JSON.stringify(serializeAsset(stamped), null, 2)}\n`,
+        );
         const parsed: unknown = JSON.parse(await files.readTextFile(MANIFEST_PATH));
         if (!isRecord(parsed)) {
           return { status: "failed", code: "unknown" };

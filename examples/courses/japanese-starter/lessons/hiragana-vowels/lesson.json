@@ -1,11 +1,16 @@
 {
+  "format": "asakiri-course",
+  "formatVersion": 1,
   "id": "lesson_hiragana_vowels",
   "title": "Hiragana vowels",
   "parts": [
     {
       "id": "part_vowels_match",
       "title": "Match the hiragana vowels",
-      "content": { "kind": "exercise", "file": "parts/match/exercise.json" }
+      "content": {
+        "kind": "exercise",
+        "file": "parts/match/exercise.json"
+      }
     }
   ]
 }

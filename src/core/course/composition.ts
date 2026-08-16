@@ -1,6 +1,8 @@
 import type { Binding } from "@core/course/binding";
 
-export type CompositionBlockType = "content-card" | "media" | "callout";
+export const COMPOSITION_BLOCK_TYPES = ["content-card", "media", "callout"] as const;
+
+export type CompositionBlockType = (typeof COMPOSITION_BLOCK_TYPES)[number];
 
 export interface CompositionBlock {
   readonly id: string;

@@ -8,8 +8,14 @@ const CATALOG: Record<Locale, StudioMessages> = {
   ja: jaMessages,
 };
 
+export const LOCALES: readonly Locale[] = ["en", "ja"];
+
 export function getMessages(locale: Locale): StudioMessages {
   return CATALOG[locale];
+}
+
+export function localeOptions(): readonly { readonly value: Locale; readonly label: string }[] {
+  return LOCALES.map((locale) => ({ value: locale, label: CATALOG[locale].localeName }));
 }
 
 export const MessagesContext = createContext<StudioMessages>(enMessages);

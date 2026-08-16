@@ -537,7 +537,7 @@
   width: 100%;
   margin-bottom: var(--space-2);
   padding: var(--space-2) var(--space-3);
-  border: var(--border-hairline) solid var(--color-border-strong);
+  border: var(--border-hairline) solid var(--color-border);
   border-radius: var(--radius-sm);
   background: var(--color-canvas);
   color: var(--color-text);

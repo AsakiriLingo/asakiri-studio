@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://asakiri.com/schemas/asakiri-course/v1/asset.schema.json",
+  "title": "Media asset (asset.json)",
+  "type": "object",
+  "allOf": [{ "$ref": "common.schema.json#/$defs/envelope" }],
+  "required": [
+    "format",
+    "formatVersion",
+    "id",
+    "kind",
+    "label",
+    "availability",
+    "file",
+    "mimeType"
+  ],
+  "properties": {
+    "format": true,
+    "formatVersion": true,
+    "$comment": true,
+    "id": { "$ref": "common.schema.json#/$defs/id" },
+    "kind": { "enum": ["image", "audio", "video"] },
+    "label": { "type": "string" },
+    "availability": { "enum": ["ready", "placeholder"] },
+    "file": { "type": ["string", "null"] },
+    "expectedFile": { "type": "string" },
+    "mimeType": { "type": "string" },
+    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "byteSize": { "type": "integer", "minimum": 0 },
+    "metadata": { "type": "object" }
+  }
+}

@@ -1,10 +1,14 @@
 {
+  "format": "asakiri-course",
+  "formatVersion": 1,
   "id": "asset_cat_image",
   "kind": "image",
   "label": "Cat illustration",
   "availability": "ready",
   "file": "original.svg",
   "mimeType": "image/svg+xml",
+  "sha256": "f1f53575998a8c612b6d974dd1b6cc6d65bf8e0a55f92df6040e570009071cca",
+  "byteSize": 1124,
   "metadata": {
     "width": 640,
     "height": 480,

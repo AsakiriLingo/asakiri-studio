@@ -1,13 +1,16 @@
 import type { AcceptedValue, RenderFragment } from "@core/course/binding";
 
-export type ExerciseType =
-  | "multiple-choice"
-  | "select-image"
-  | "match-pairs"
-  | "fill-blank"
-  | "word-order"
-  | "listening"
-  | "speaking";
+export const EXERCISE_TYPES = [
+  "multiple-choice",
+  "select-image",
+  "match-pairs",
+  "fill-blank",
+  "word-order",
+  "listening",
+  "speaking",
+] as const;
+
+export type ExerciseType = (typeof EXERCISE_TYPES)[number];
 
 export interface ChoiceOption {
   readonly id: string;

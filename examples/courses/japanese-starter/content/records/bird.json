@@ -1,4 +1,6 @@
 {
+  "format": "asakiri-course",
+  "formatVersion": 1,
   "id": "record_bird",
   "collectionId": "collection_vocabulary",
   "fields": {

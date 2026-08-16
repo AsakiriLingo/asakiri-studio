@@ -64,6 +64,7 @@ dependencies = [
  "img-parts",
  "serde",
  "serde_json",
+ "sha2",
  "tauri",
  "tauri-build",
  "tauri-plugin-dialog",

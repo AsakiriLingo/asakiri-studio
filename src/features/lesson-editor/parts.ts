@@ -35,7 +35,12 @@ export function exerciseTypeForKind(kind: Exclude<PartKind, "rich-text">): Exerc
   return EXERCISE_TYPE_BY_KIND[kind];
 }
 
-export function partKind(content: PartContent): PartKind {
+export type PartDisplayKind = PartKind | "unknown";
+
+export function partKind(content: PartContent): PartDisplayKind {
+  if (content.kind === "unknown") {
+    return "unknown";
+  }
   if (content.kind === "tiptap" || content.kind === "composition") {
     return "rich-text";
   }

@@ -1,4 +1,6 @@
 {
+  "format": "asakiri-course",
+  "formatVersion": 1,
   "blocks": [
     {
       "id": "block_cat_card",
