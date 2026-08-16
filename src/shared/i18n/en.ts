@@ -31,6 +31,14 @@ export const enMessages = {
     remove: (label: string) => `Remove ${label}`,
   },
 
+  datePicker: {
+    choose: "Choose a date",
+    previousMonth: "Previous month",
+    nextMonth: "Next month",
+    today: "Today",
+    clear: "Clear",
+  },
+
   flag: {
     add: "Add flag",
     change: "Change flag",
@@ -136,6 +144,7 @@ export const enMessages = {
     contributorsTitle: "Contributors",
     contributorsDescription: "Credited on the course page. Add a link for each person.",
     roleLabel: "Roles",
+    rolePlaceholder: "Choose roles",
     roleHelp: "Pick every role this person had.",
     nameLabel: "Name",
     linkLabel: "Link",

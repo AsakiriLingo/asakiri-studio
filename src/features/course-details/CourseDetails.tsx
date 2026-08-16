@@ -4,9 +4,10 @@ import { contributorRoles } from "@core/course";
 import type { GitStatus } from "@core/project-system";
 import type { ProjectWriteResult } from "@core/project-writing";
 import { useMessages, type StudioMessages } from "@shared/i18n";
+import { Menu } from "@base-ui/react/menu";
 import { Button } from "@shared/components/button";
 import { Callout } from "@shared/components/callout";
-import { CheckChoice } from "@shared/components/choice";
+import { DatePicker } from "@shared/components/date-picker";
 import { Field, TextArea, TextInput } from "@shared/components/form";
 import { FlagPicker } from "@shared/components/flag";
 import { Select, type SelectOption } from "@shared/components/select";
@@ -34,35 +35,58 @@ function recordItems(record: Readonly<Record<string, string>>): SelectOption[] {
 
 function RoleChecklist({
   label,
+  placeholder,
   options,
   selected,
   onChange,
 }: {
   readonly label: string;
+  readonly placeholder: string;
   readonly options: Readonly<Record<string, string>>;
   readonly selected: readonly string[];
   readonly onChange: (roles: readonly string[]) => void;
 }) {
   const order = Object.keys(options);
+  const chosen = order.filter((role) => selected.includes(role));
+  const summary = chosen.map((role) => options[role]).join(", ");
+
   return (
-    <fieldset className={styles.roleSet}>
-      <legend className={styles.roleLegend}>{label}</legend>
-      {order.map((value) => (
-        <CheckChoice
-          key={value}
-          checked={selected.includes(value)}
-          onCheckedChange={(checked) => {
-            onChange(
-              checked
-                ? order.filter((role) => role === value || selected.includes(role))
-                : selected.filter((role) => role !== value),
-            );
-          }}
-        >
-          {options[value]}
-        </CheckChoice>
-      ))}
-    </fieldset>
+    <Menu.Root>
+      <Menu.Trigger className={styles.roleTrigger} aria-label={label}>
+        <span className={chosen.length === 0 ? styles.rolePlaceholder : styles.roleSummary}>
+          {chosen.length === 0 ? placeholder : summary}
+        </span>
+        <Icon aria-hidden="true" name="chevron-down" size={16} />
+      </Menu.Trigger>
+      <Menu.Portal>
+        <Menu.Positioner className={styles.rolePositioner} sideOffset={4} align="start">
+          <Menu.Popup className={styles.rolePopup}>
+            {order.map((value) => (
+              <Menu.CheckboxItem
+                key={value}
+                className={styles.roleItem}
+                closeOnClick={false}
+                checked={selected.includes(value)}
+                onCheckedChange={(checked) => {
+                  onChange(
+                    checked
+                      ? order.filter((role) => role === value || selected.includes(role))
+                      : selected.filter((role) => role !== value),
+                  );
+                }}
+              >
+                <span className={styles.roleBox}>
+                  <Menu.CheckboxItemIndicator>
+                    <Icon aria-hidden="true" name="check" size={14} />
+                  </Menu.CheckboxItemIndicator>
+                </span>
+                {options[value]}
+              </Menu.CheckboxItem>
+            ))}
+          </Menu.Popup>
+        </Menu.Positioner>
+      </Menu.Portal>
+    </Menu.Root>
   );
 }
 
@@ -126,6 +150,7 @@ function ContributorRow({
           />
           <RoleChecklist
             label={t.roleLabel}
+            placeholder={t.rolePlaceholder}
             options={t.roles}
             selected={contributorRoles(contributor)}
             onChange={(roles) => {
@@ -451,13 +476,11 @@ export function CourseDetails({
               />
             </Field>
             <Field label={t.fieldReleased} help={t.fieldReleasedHelp}>
-              <TextInput
-                name="released"
-                type="date"
-                defaultValue={project.releasedOn}
-                autoComplete="off"
-                onBlur={(event) => {
-                  patchField("releasedOn", event.currentTarget.value);
+              <DatePicker
+                aria-label={t.fieldReleased}
+                value={project.releasedOn}
+                onValueChange={(released) => {
+                  patchField("releasedOn", released);
                 }}
               />
             </Field>

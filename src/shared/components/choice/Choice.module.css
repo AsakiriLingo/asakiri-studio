@@ -52,6 +52,10 @@
   place-items: center;
 }
 
+.mark svg {
+  display: block;
+}
+
 .dotMark {
   width: 0.5rem;
   height: 0.5rem;

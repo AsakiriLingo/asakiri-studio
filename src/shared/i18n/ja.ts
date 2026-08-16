@@ -34,6 +34,14 @@ export const jaMessages = {
     remove: (label: string) => `${label}を削除`,
   },
 
+  datePicker: {
+    choose: "日付を選ぶ",
+    previousMonth: "前の月",
+    nextMonth: "次の月",
+    today: "今日",
+    clear: "クリア",
+  },
+
   flag: {
     add: "旗を追加",
     change: "旗を変更",
@@ -139,6 +147,7 @@ export const jaMessages = {
     contributorsTitle: "貢献者",
     contributorsDescription: "コースページにクレジットされます。各人にリンクを追加してください。",
     roleLabel: "役割",
+    rolePlaceholder: "役割を選ぶ",
     roleHelp: "この人が担当した役割をすべて選んでください。",
     nameLabel: "名前",
     linkLabel: "リンク",
