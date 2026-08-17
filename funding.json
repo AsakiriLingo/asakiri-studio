@@ -8,7 +8,8 @@
     "email": "alok@asakiri.com",
     "description": "Independent developer and language learner building Asakiri: free and open source tools for making and studying language courses. Asakiri Studio is a local-first desktop course editor; a companion learner application is in development.",
     "webpageUrl": {
-      "url": "https://www.asakiri.com"
+      "url": "https://www.asakiri.com",
+      "wellKnown": "https://www.asakiri.com/.well-known/funding-manifest-urls"
     }
   },
   "projects": [
@@ -17,12 +18,15 @@
       "name": "Asakiri Studio",
       "description": "A local-first desktop course editor for language courses. A course is a directory of plain JSON files on the author's own disk, with no account, no cloud sync, and no lock-in: reusable content records, media, rich text, and seven kinds of graded exercise, all editable offline and versionable with Git. Built with Tauri, React, and TypeScript, and published under an open course format with machine-readable JSON Schemas so anyone can build editors, validators, or learner apps against it.",
       "webpageUrl": {
-        "url": "https://www.asakiri.com"
+        "url": "https://www.asakiri.com",
+        "wellKnown": "https://www.asakiri.com/.well-known/funding-manifest-urls"
       },
       "repositoryUrl": {
         "url": "https://github.com/AsakiriLingo/asakiri-studio"
       },
-      "licenses": ["spdx:MPL-2.0"],
+      "licenses": [
+        "spdx:MPL-2.0"
+      ],
       "tags": [
         "language-learning",
         "education",
@@ -55,7 +59,9 @@
         "amount": 0,
         "currency": "USD",
         "frequency": "monthly",
-        "channels": ["patreon"]
+        "channels": [
+          "patreon"
+        ]
       }
     ]
   }
