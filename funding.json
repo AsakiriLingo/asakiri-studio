@@ -24,9 +24,7 @@
       "repositoryUrl": {
         "url": "https://github.com/AsakiriLingo/asakiri-studio"
       },
-      "licenses": [
-        "spdx:MPL-2.0"
-      ],
+      "licenses": ["spdx:MPL-2.0"],
       "tags": [
         "language-learning",
         "education",
@@ -59,9 +57,7 @@
         "amount": 0,
         "currency": "USD",
         "frequency": "monthly",
-        "channels": [
-          "patreon"
-        ]
+        "channels": ["patreon"]
       }
     ]
   }
