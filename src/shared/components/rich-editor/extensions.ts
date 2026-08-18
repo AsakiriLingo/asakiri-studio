@@ -20,13 +20,23 @@ export const ImageWithAsset = Image.extend({
   },
 });
 
+export const YoutubeWithFallback = Youtube.extend({
+  renderHTML(props) {
+    const src: unknown = props.HTMLAttributes.src;
+    if (typeof src === "string" && src !== "") {
+      return this.parent?.(props) ?? ["div", { "data-youtube-video": "" }];
+    }
+    return ["div", { "data-youtube-video": "", "data-missing-src": "" }, "YouTube"];
+  },
+});
+
 export const baseExtensions = [
   StarterKit.configure({ link: { openOnClick: false, autolink: true } }),
   TextStyle,
   Color,
   Highlight.configure({ multicolor: true }),
   ImageWithAsset,
-  Youtube.configure({ nocookie: true }),
+  YoutubeWithFallback.configure({ nocookie: true }),
   TableKit.configure({ table: { resizable: false } }),
   ContentRecord,
   AudioNode,
