@@ -1,9 +1,5 @@
-import type { enMessages } from "@shared/i18n/en";
+import enMessages from "@shared/i18n/en.json";
 
-export type Locale = "en" | "ja";
+export type Locale = "en" | "es" | "it" | "pt" | "ru" | "ja";
 
-/**
- * The English catalog is the source of truth for the message shape. Other
- * locales are checked against it with `satisfies StudioMessages`.
- */
 export type StudioMessages = typeof enMessages;

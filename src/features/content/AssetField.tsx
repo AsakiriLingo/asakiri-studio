@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { Asset, FieldDefinition, RecordFieldItem, RecordFieldValue } from "@core/course";
-import { useMessages } from "@shared/i18n";
+import { useFormat, useMessages } from "@shared/i18n";
 import { Icon } from "@shared/components/icon";
 import { Select, type SelectOption } from "@shared/components/select";
 import styles from "@features/content/CourseContent.module.css";
@@ -138,6 +138,7 @@ export function AssetListFieldControl({
   onChange,
 }: AssetControlProps) {
   const messages = useMessages();
+  const format = useFormat();
   const t = messages.content;
   const [importing, setImporting] = useState(false);
   const items = value?.kind === "list" ? value.items : [];
@@ -181,7 +182,7 @@ export function AssetListFieldControl({
             <button
               type="button"
               className={styles.chipRemove}
-              aria-label={messages.common.remove(label)}
+              aria-label={format(messages.common.remove, { label })}
               onClick={() => {
                 onChange({ kind: "list", items: items.filter((entry) => entry.id !== item.id) });
               }}

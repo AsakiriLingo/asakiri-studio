@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { ChoiceOption, FillBlankExercise, RenderFragment } from "@core/course";
 import type { RichEditorLibrary } from "@shared/components/rich-editor";
-import { useMessages } from "@shared/i18n";
+import { useFormat, useMessages } from "@shared/i18n";
 import { Button } from "@shared/components/button";
 import { Field, TextArea } from "@shared/components/form";
 import { Icon } from "@shared/components/icon";
@@ -26,6 +26,7 @@ export interface FillBlankEditorProps {
 
 export function FillBlankEditor({ exercise, library, onChange }: FillBlankEditorProps) {
   const messages = useMessages();
+  const format = useFormat();
   const t = messages.lesson;
   const te = t.exercise;
   const [ex, setEx] = useState<FillBlankExercise>(exercise);
@@ -108,7 +109,7 @@ export function FillBlankEditor({ exercise, library, onChange }: FillBlankEditor
     { value: "", label: te.blankNone },
     ...bank.map((tile, index) => ({
       value: tile.id,
-      label: fragmentLabel(tile.body[0], library) || te.tileLabel(String(index + 1)),
+      label: fragmentLabel(tile.body[0], library) || format(te.tileLabel, { token: index + 1 }),
     })),
   ];
 
@@ -145,10 +146,10 @@ export function FillBlankEditor({ exercise, library, onChange }: FillBlankEditor
                 onChange={(fragment) => {
                   setTileBody(tile.id, fragment);
                 }}
-                ariaLabel={te.tileLabel(String(index + 1))}
+                ariaLabel={format(te.tileLabel, { token: index + 1 })}
               />
               <IconButton
-                aria-label={te.removeTile(String(index + 1))}
+                aria-label={format(te.removeTile, { token: index + 1 })}
                 size="sm"
                 onClick={() => {
                   removeTile(tile.id);
@@ -173,9 +174,11 @@ export function FillBlankEditor({ exercise, library, onChange }: FillBlankEditor
           <div className={styles.settingGroup}>
             {ex.evaluation.blanks.map((blank, index) => (
               <div key={blank.blankId} className={styles.settingRow}>
-                <span className={styles.settingName}>{te.blankLabel(String(index + 1))}</span>
+                <span className={styles.settingName}>
+                  {format(te.blankLabel, { blank: index + 1 })}
+                </span>
                 <Select
-                  aria-label={te.blankCorrectFor(String(index + 1))}
+                  aria-label={format(te.blankCorrectFor, { blank: index + 1 })}
                   className={styles.optionRole}
                   value={blank.correctOptionIds?.[0] ?? ""}
                   onValueChange={(tileId) => {

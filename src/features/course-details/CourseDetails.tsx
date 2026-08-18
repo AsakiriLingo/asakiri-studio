@@ -3,7 +3,7 @@ import type { Contributor, Course, CourseProject, FundingLink, Sponsor } from "@
 import { contributorRoles } from "@core/course";
 import type { GitStatus } from "@core/project-system";
 import type { ProjectWriteResult } from "@core/project-writing";
-import { useMessages, type StudioMessages } from "@shared/i18n";
+import { useFormat, useMessages, type StudioMessages } from "@shared/i18n";
 import { Menu } from "@base-ui/react/menu";
 import { Button } from "@shared/components/button";
 import { Callout } from "@shared/components/callout";
@@ -130,6 +130,7 @@ function ContributorRow({
   readonly onRemove: () => void;
 }) {
   const t = messages.details;
+  const format = useFormat();
   return (
     <div className={styles.contributorRow}>
       <span className={styles.contributorAvatar} aria-hidden="true">
@@ -174,7 +175,9 @@ function ContributorRow({
         </span>
       </span>
       <IconButton
-        aria-label={messages.common.remove(contributor.name || t.contributorsTitle)}
+        aria-label={format(messages.common.remove, {
+          label: contributor.name || t.contributorsTitle,
+        })}
         onClick={onRemove}
       >
         <Icon name="trash" size={18} />
@@ -195,6 +198,7 @@ function FundingRow({
   readonly onRemove: () => void;
 }) {
   const t = messages.details;
+  const format = useFormat();
   return (
     <div className={styles.fundingRow}>
       <span className={styles.fundingBadge}>
@@ -224,7 +228,10 @@ function FundingRow({
           />
         </span>
       </span>
-      <IconButton aria-label={messages.common.remove(t.fundingTitle)} onClick={onRemove}>
+      <IconButton
+        aria-label={format(messages.common.remove, { label: t.fundingTitle })}
+        onClick={onRemove}
+      >
         <Icon name="trash" size={18} />
       </IconButton>
     </div>
@@ -243,6 +250,7 @@ function SponsorRow({
   readonly onRemove: () => void;
 }) {
   const t = messages.details;
+  const format = useFormat();
   return (
     <div className={styles.sponsorRow}>
       <span className={styles.sponsorLogo}>
@@ -284,7 +292,7 @@ function SponsorRow({
         </span>
       </span>
       <IconButton
-        aria-label={messages.common.remove(sponsor.name || t.sponsorsTitle)}
+        aria-label={format(messages.common.remove, { label: sponsor.name || t.sponsorsTitle })}
         onClick={onRemove}
       >
         <Icon name="trash" size={18} />
@@ -309,6 +317,7 @@ export function CourseDetails({
   onReadGitStatus,
 }: CourseDetailsProps) {
   const messages = useMessages();
+  const format = useFormat();
   const t = messages.details;
   const { project } = course;
   const [git, setGit] = useState<GitStatus | null>(null);
@@ -710,7 +719,7 @@ export function CourseDetails({
                   {git === null
                     ? ""
                     : git.initialized
-                      ? t.gitInitialized(git.commitCount)
+                      ? format(t.gitInitialized, { count: git.commitCount })
                       : t.noGit}
                 </span>
               </span>
@@ -726,8 +735,11 @@ export function CourseDetails({
               <span>
                 <span className={styles.settingName}>{t.contentRecords}</span>
                 <span className={styles.settingDetail}>
-                  {t.recordSummary(recordCount, primaryCollection?.name ?? t.noCollections)} ·{" "}
-                  {t.mediaFiles(course.assets.length)}
+                  {format(t.recordSummary, {
+                    count: recordCount,
+                    collection: primaryCollection?.name ?? t.noCollections,
+                  })}{" "}
+                  · {format(t.mediaFiles, { count: course.assets.length })}
                 </span>
               </span>
             </div>

@@ -10,7 +10,7 @@ import type {
   TiptapDocument,
 } from "@core/course";
 import type { ProjectWriteResult } from "@core/project-writing";
-import { useMessages } from "@shared/i18n";
+import { useFormat, useMessages } from "@shared/i18n";
 import { Field, TextInput } from "@shared/components/form";
 import {
   RichEditor,
@@ -244,11 +244,12 @@ function EditorBody({
 
 function UnsupportedPart({ content }: { readonly content: PartContent }) {
   const t = useMessages().lesson;
+  const format = useFormat();
   const label = content.kind === "unknown" ? (content.declaredType ?? content.declaredKind) : "";
   return (
     <div className={styles.unsupported} role="note">
       <p className={styles.unsupportedTitle}>{t.unsupportedTitle}</p>
-      <p className={styles.unsupportedBody}>{t.unsupportedBody(label)}</p>
+      <p className={styles.unsupportedBody}>{format(t.unsupportedBody, { type: label })}</p>
     </div>
   );
 }
@@ -290,6 +291,7 @@ export function PartEditor({
   onImportMedia,
 }: PartEditorProps) {
   const messages = useMessages();
+  const format = useFormat();
   const t = messages.lesson;
   const kind = partKind(part.content);
   const tabLabels =
@@ -369,7 +371,7 @@ export function PartEditor({
       <div className={styles.partHeading}>
         <span>
           <span className={styles.partName}>{part.title}</span>
-          <span className={styles.rowDetail}>{t.partHeading(t.kind[kind])}</span>
+          <span className={styles.rowDetail}>{format(t.partHeading, { kind: t.kind[kind] })}</span>
         </span>
         <Status tone={saveState === "failed" ? "warning" : "default"}>{statusLabel}</Status>
       </div>

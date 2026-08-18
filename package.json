@@ -13,6 +13,8 @@
     "check:schemas": "node scripts/check-schemas.mjs",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
+    "i18n:push": "lokalise2 --config lokalise.yml file upload --file src/shared/i18n/en.json --lang-iso en --detect-icu-plurals --replace-modified --cleanup-mode --poll",
+    "i18n:pull": "lokalise2 --config lokalise.yml file download --format json --filter-langs en,es,it,pt,ru,ja --placeholder-format icu --plural-format icu --original-filenames=false --bundle-structure \"src/shared/i18n/%LANG_ISO%.json\" --indentation 2sp && prettier --write \"src/shared/i18n/*.json\"",
     "lint": "eslint . --max-warnings 0",
     "lint:fix": "eslint . --fix --max-warnings 0",
     "test": "vitest run",

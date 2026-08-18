@@ -10,7 +10,7 @@ import type {
   RecordFieldValue,
 } from "@core/course";
 import type { ProjectWriteResult } from "@core/project-writing";
-import { useMessages } from "@shared/i18n";
+import { useFormat, useMessages } from "@shared/i18n";
 import { Button } from "@shared/components/button";
 import { useConfirm } from "@shared/components/confirm-dialog";
 import { DataTable } from "@shared/components/data-table";
@@ -242,6 +242,7 @@ export function CourseContent({
   onLoadPreview,
 }: CourseContentProps) {
   const messages = useMessages();
+  const format = useFormat();
   const t = messages.content;
   const confirm = useConfirm();
   const [selectedId, setSelectedId] = useState(course.collections[0]?.id ?? "");
@@ -392,7 +393,7 @@ export function CourseContent({
     const field = collection.fields.find((entry) => entry.id === fieldId);
     const ok = await confirm({
       title: t.confirmDeleteFieldTitle,
-      description: field ? t.confirmDeleteFieldBody(field.name) : undefined,
+      description: field ? format(t.confirmDeleteFieldBody, { name: field.name }) : undefined,
     });
     if (!ok) return;
     saveCollection({
@@ -576,7 +577,7 @@ export function CourseContent({
             <DataTable
               columns={columns}
               data={displayRecords}
-              ariaLabel={t.recordsAria(collection.name)}
+              ariaLabel={format(t.recordsAria, { collection: collection.name })}
               searchable
               onEditCell={handleEditCell}
             />
@@ -749,7 +750,7 @@ export function CourseContent({
                   }}
                 />
                 <IconButton
-                  aria-label={messages.common.remove(field.name)}
+                  aria-label={format(messages.common.remove, { label: field.name })}
                   size="sm"
                   onClick={() => {
                     void removeFieldDef(field.id);
@@ -773,7 +774,7 @@ export function CourseContent({
                 void (async () => {
                   const ok = await confirm({
                     title: t.confirmDeleteCollectionTitle,
-                    description: t.confirmDeleteCollectionBody(collection.name),
+                    description: format(t.confirmDeleteCollectionBody, { name: collection.name }),
                     confirmLabel: t.deleteCollection,
                   });
                   if (!ok) return;

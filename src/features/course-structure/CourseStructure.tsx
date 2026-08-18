@@ -21,7 +21,7 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import type { Course, Lesson, OutlineSection } from "@core/course";
 import type { ProjectWriteResult } from "@core/project-writing";
-import { useMessages } from "@shared/i18n";
+import { useFormat, useMessages } from "@shared/i18n";
 import { Button } from "@shared/components/button";
 import { useConfirm } from "@shared/components/confirm-dialog";
 import { Field, TextInput } from "@shared/components/form";
@@ -52,6 +52,7 @@ function LessonRow({
 }) {
   const messages = useMessages();
   const t = messages.structure;
+  const format = useFormat();
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: lesson.id,
   });
@@ -69,7 +70,7 @@ function LessonRow({
       <button
         type="button"
         className={styles.reorderHandle}
-        aria-label={messages.common.reorder(lesson.title)}
+        aria-label={format(messages.common.reorder, { label: lesson.title })}
         {...attributes}
         {...listeners}
       >
@@ -78,9 +79,12 @@ function LessonRow({
       <span className={styles.orderIndex}>{orderLabel(index)}</span>
       <button type="button" className={styles.orderedMain} onClick={onOpen}>
         <span className={styles.rowTitle}>{lesson.title}</span>
-        <span className={styles.rowDetail}>{t.parts(lesson.parts.length)}</span>
+        <span className={styles.rowDetail}>{format(t.parts, { count: lesson.parts.length })}</span>
       </button>
-      <IconButton aria-label={t.lessonSettings(lesson.title)} onClick={onOpenSettings}>
+      <IconButton
+        aria-label={format(t.lessonSettings, { lesson: lesson.title })}
+        onClick={onOpenSettings}
+      >
         <Icon name="edit" size={18} />
       </IconButton>
     </div>
@@ -119,6 +123,7 @@ function UnitBlock({
 }) {
   const messages = useMessages();
   const t = messages.structure;
+  const format = useFormat();
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: unit.id,
   });
@@ -138,7 +143,7 @@ function UnitBlock({
         <button
           type="button"
           className={styles.reorderHandle}
-          aria-label={messages.common.reorder(unit.title)}
+          aria-label={format(messages.common.reorder, { label: unit.title })}
           {...attributes}
           {...listeners}
         >
@@ -150,7 +155,11 @@ function UnitBlock({
           className={styles.unitToggle}
           aria-expanded={!collapsed}
           aria-controls={lessonsId}
-          aria-label={collapsed ? t.expandUnit(unit.title) : t.collapseUnit(unit.title)}
+          aria-label={
+            collapsed
+              ? format(t.expandUnit, { unit: unit.title })
+              : format(t.collapseUnit, { unit: unit.title })
+          }
           onClick={onToggleCollapsed}
         >
           <Icon
@@ -161,7 +170,9 @@ function UnitBlock({
           />
           <span className={styles.unitHeading}>
             <span className={styles.unitName}>{unit.title}</span>
-            <span className={styles.rowDetail}>{t.unitLessons(lessons.length)}</span>
+            <span className={styles.rowDetail}>
+              {format(t.unitLessons, { count: lessons.length })}
+            </span>
           </span>
         </button>
         <div className={styles.unitActions}>
@@ -169,7 +180,10 @@ function UnitBlock({
             <Icon name="plus" size={18} />
             {t.addLesson}
           </Button>
-          <IconButton aria-label={t.unitSettings(unit.title)} onClick={onOpenSettings}>
+          <IconButton
+            aria-label={format(t.unitSettings, { unit: unit.title })}
+            onClick={onOpenSettings}
+          >
             <Icon name="edit" size={18} />
           </IconButton>
         </div>
@@ -180,7 +194,11 @@ function UnitBlock({
           items={lessons.map((lesson) => lesson.id)}
           strategy={verticalListSortingStrategy}
         >
-          <div className={styles.lessonOrder} id={lessonsId} aria-label={t.lessonsAria(unit.title)}>
+          <div
+            className={styles.lessonOrder}
+            id={lessonsId}
+            aria-label={format(t.lessonsAria, { unit: unit.title })}
+          >
             {lessons.length === 0 ? <p className={styles.unitEmpty}>{t.unitEmpty}</p> : null}
             {lessons.map((lesson, lessonIndex) => (
               <LessonRow
@@ -278,6 +296,7 @@ export function CourseStructure({
 }: CourseStructureProps) {
   const messages = useMessages();
   const t = messages.structure;
+  const format = useFormat();
   const confirm = useConfirm();
   const [creating, setCreating] = useState(false);
   const [addingUnitId, setAddingUnitId] = useState<string | null>(null);
@@ -342,7 +361,7 @@ export function CourseStructure({
   const removeUnit = async (unit: OutlineSection) => {
     const ok = await confirm({
       title: t.confirmDeleteUnitTitle,
-      description: t.confirmDeleteUnitBody(unit.title),
+      description: format(t.confirmDeleteUnitBody, { unit: unit.title }),
       confirmLabel: t.deleteUnit,
       tone: "danger",
     });
@@ -378,7 +397,7 @@ export function CourseStructure({
   const removeLesson = async (lesson: Lesson) => {
     const ok = await confirm({
       title: t.confirmDeleteLessonTitle,
-      description: t.confirmDeleteLessonBody(lesson.title),
+      description: format(t.confirmDeleteLessonBody, { lesson: lesson.title }),
       confirmLabel: t.deleteLesson,
       tone: "danger",
     });
@@ -600,7 +619,9 @@ export function CourseStructure({
                 <span className={styles.orderIndex} />
                 <span className={styles.orderedMain}>
                   <span className={styles.rowTitle}>{activeLesson.title}</span>
-                  <span className={styles.rowDetail}>{t.parts(activeLesson.parts.length)}</span>
+                  <span className={styles.rowDetail}>
+                    {format(t.parts, { count: activeLesson.parts.length })}
+                  </span>
                 </span>
               </div>
             ) : null}

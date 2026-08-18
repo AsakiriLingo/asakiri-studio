@@ -4,7 +4,7 @@ import type { Asset, ContentRecord, Course } from "@core/course";
 import type { AudioSearchResult, ImageSearchResult, SearchPage } from "@core/media-search";
 import type { ProjectWriteResult } from "@core/project-writing";
 import type { TtsVoice } from "@core/tts";
-import { useMessages, type StudioMessages } from "@shared/i18n";
+import { useFormat, useMessages, type StudioMessages } from "@shared/i18n";
 import { Button } from "@shared/components/button";
 import { useConfirm } from "@shared/components/confirm-dialog";
 import { Field, TextInput } from "@shared/components/form";
@@ -96,6 +96,7 @@ export function CourseMedia({
   onAddRecording,
 }: CourseMediaProps) {
   const messages = useMessages();
+  const format = useFormat();
   const t = messages.media;
   const confirm = useConfirm();
   const [importing, setImporting] = useState(false);
@@ -220,7 +221,10 @@ export function CourseMedia({
     const uses = usage.get(asset.id) ?? 0;
     void confirm({
       title: uses > 0 ? t.inUseTitle : t.confirmDeleteTitle,
-      description: uses > 0 ? t.inUseBody(uses, name) : t.confirmDeleteBody(name),
+      description:
+        uses > 0
+          ? format(t.inUseBody, { count: uses, name })
+          : format(t.confirmDeleteBody, { name }),
       confirmLabel: t.deleteMedia,
     }).then((ok) => {
       if (!ok) return;
@@ -327,7 +331,10 @@ export function CourseMedia({
         <PanelHeader
           title={t.projectMedia}
           titleId="media-title"
-          description={t.showing(Math.min(visibleCount, filtered.length), filtered.length)}
+          description={format(t.showing, {
+            shown: Math.min(visibleCount, filtered.length),
+            total: filtered.length,
+          })}
           actions={status}
         />
 
@@ -510,11 +517,12 @@ function MediaCard({
   onRename,
 }: MediaCardProps) {
   const t = messages.media;
+  const format = useFormat();
   const name = assetName(asset);
   const ready = asset.availability === "ready" && Boolean(asset.file);
   const author = typeof asset.metadata?.author === "string" ? asset.metadata.author : "";
   const license = typeof asset.metadata?.license === "string" ? asset.metadata.license : "";
-  const credit = author && license ? t.credit(author, license) : author || license;
+  const credit = author && license ? format(t.credit, { author, license }) : author || license;
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
 
@@ -554,7 +562,7 @@ function MediaCard({
           <button
             type="button"
             className={styles.playButton}
-            aria-label={playing ? t.stop(name) : t.play(name)}
+            aria-label={playing ? format(t.stop, { name }) : format(t.play, { name })}
             onClick={() => {
               void toggleAudio();
             }}
@@ -585,7 +593,11 @@ function MediaCard({
           <IconButton aria-label={t.renameMedia} size="sm" onClick={onRename}>
             <Icon name="edit" size={18} />
           </IconButton>
-          <IconButton aria-label={messages.common.remove(name)} size="sm" onClick={onDelete}>
+          <IconButton
+            aria-label={format(messages.common.remove, { label: name })}
+            size="sm"
+            onClick={onDelete}
+          >
             <Icon name="trash" size={18} />
           </IconButton>
         </div>

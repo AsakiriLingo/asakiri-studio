@@ -26,7 +26,7 @@ import type {
   TiptapDocument,
 } from "@core/course";
 import type { ProjectWriteResult } from "@core/project-writing";
-import { useMessages } from "@shared/i18n";
+import { useFormat, useMessages } from "@shared/i18n";
 import { Button } from "@shared/components/button";
 import { useConfirm } from "@shared/components/confirm-dialog";
 import { Field, TextInput } from "@shared/components/form";
@@ -61,6 +61,7 @@ function SortablePartRow({
   readonly onOpenSettings: () => void;
 }) {
   const messages = useMessages();
+  const format = useFormat();
   const t = messages.lesson;
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: part.id,
@@ -80,7 +81,7 @@ function SortablePartRow({
       <button
         type="button"
         className={styles.reorderHandle}
-        aria-label={messages.common.reorder(part.title)}
+        aria-label={format(messages.common.reorder, { label: part.title })}
         {...attributes}
         {...listeners}
       >
@@ -96,7 +97,11 @@ function SortablePartRow({
         <span className={styles.rowTitle}>{part.title}</span>
         <span className={styles.rowDetail}>{t.kind[partKind(part.content)]}</span>
       </button>
-      <IconButton aria-label={t.partSettings(part.title)} size="sm" onClick={onOpenSettings}>
+      <IconButton
+        aria-label={format(t.partSettings, { title: part.title })}
+        size="sm"
+        onClick={onOpenSettings}
+      >
         <Icon name="edit" size={18} />
       </IconButton>
     </div>
@@ -167,6 +172,7 @@ export function LessonEditor({
   onImportMedia,
 }: LessonEditorProps) {
   const messages = useMessages();
+  const format = useFormat();
   const t = messages.lesson;
   const confirm = useConfirm();
   const parts = lesson.parts;
@@ -223,7 +229,7 @@ export function LessonEditor({
   const removePart = async (part: Part) => {
     const ok = await confirm({
       title: t.confirmDeletePartTitle,
-      description: t.confirmDeletePartBody(part.title),
+      description: format(t.confirmDeletePartBody, { title: part.title }),
       confirmLabel: t.deletePart,
       tone: "danger",
     });
@@ -233,7 +239,9 @@ export function LessonEditor({
   };
 
   const unitTitle = course.outline.find((section) => section.lessonIds.includes(lesson.id))?.title;
-  const description = [unitTitle, t.parts(parts.length)].filter(Boolean).join(" · ");
+  const description = [unitTitle, format(t.parts, { count: parts.length })]
+    .filter(Boolean)
+    .join(" · ");
 
   return (
     <WorkInner>
