@@ -108,7 +108,7 @@ jobs:
           # case-sensitive (inherited by the dirs cmake/git create under it).
           New-Item -ItemType Directory -Force -Path build | Out-Null
           fsutil.exe file setCaseSensitiveInfo build enable
-          cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$PWD/install" -DCMAKE_POLICY_VERSION_MINIMUM=3.5
+          cmake -B build "-DCMAKE_BUILD_TYPE=Release" "-DCMAKE_INSTALL_PREFIX=$PWD/install" "-DCMAKE_POLICY_VERSION_MINIMUM=3.5"
           cmake --build build --config Release
           cmake --install build --config Release
           $dest = "$env:GITHUB_WORKSPACE/src-tauri/piper"
