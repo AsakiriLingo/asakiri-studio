@@ -1,7 +1,6 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { type ReactNode } from "react";
 import type { Contributor, Course, CourseProject, FundingLink, Sponsor } from "@core/course";
 import { contributorRoles } from "@core/course";
-import type { GitStatus } from "@core/project-system";
 import type { ProjectWriteResult } from "@core/project-writing";
 import { useFormat, useMessages, type StudioMessages } from "@shared/i18n";
 import { Menu } from "@base-ui/react/menu";
@@ -14,7 +13,6 @@ import { Select, type SelectOption } from "@shared/components/select";
 import { Icon } from "@shared/components/icon";
 import { IconButton } from "@shared/components/icon-button";
 import { PanelHeader } from "@shared/components/panel";
-import { Status } from "@shared/components/status";
 import { WorkHeader, WorkInner } from "@shared/components/work-surface";
 import styles from "@features/course-details/CourseDetails.module.css";
 
@@ -306,7 +304,6 @@ export interface CourseDetailsProps {
   readonly location: string;
   readonly onSaveProject: (project: CourseProject) => Promise<ProjectWriteResult>;
   readonly onRevealFolder: () => void;
-  readonly onReadGitStatus: () => Promise<GitStatus>;
 }
 
 export function CourseDetails({
@@ -314,23 +311,10 @@ export function CourseDetails({
   location,
   onSaveProject,
   onRevealFolder,
-  onReadGitStatus,
 }: CourseDetailsProps) {
   const messages = useMessages();
-  const format = useFormat();
   const t = messages.details;
   const { project } = course;
-  const [git, setGit] = useState<GitStatus | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    void onReadGitStatus().then((status) => {
-      if (!cancelled) setGit(status);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [onReadGitStatus]);
 
   const save = (next: CourseProject) => {
     void onSaveProject(next);
@@ -359,11 +343,6 @@ export function CourseDetails({
     value: asset.id,
     label: asset.file ?? asset.label,
   }));
-
-  const primaryCollection = course.collections[0];
-  const recordCount = primaryCollection
-    ? course.records.filter((record) => record.collectionId === primaryCollection.id).length
-    : 0;
 
   return (
     <WorkInner>
@@ -711,37 +690,6 @@ export function CourseDetails({
               <Button variant="ghost" onClick={onRevealFolder}>
                 {messages.common.reveal}
               </Button>
-            </div>
-            <div className={styles.settingRow}>
-              <span>
-                <span className={styles.settingName}>{t.versionControl}</span>
-                <span className={styles.settingDetail}>
-                  {git === null
-                    ? ""
-                    : git.initialized
-                      ? format(t.gitInitialized, { count: git.commitCount })
-                      : t.noGit}
-                </span>
-              </span>
-              {git?.initialized ? (
-                git.clean ? (
-                  <Status>{t.clean}</Status>
-                ) : (
-                  <Status tone="warning">{t.uncommitted}</Status>
-                )
-              ) : null}
-            </div>
-            <div className={styles.settingRow}>
-              <span>
-                <span className={styles.settingName}>{t.contentRecords}</span>
-                <span className={styles.settingDetail}>
-                  {format(t.recordSummary, {
-                    count: recordCount,
-                    collection: primaryCollection?.name ?? t.noCollections,
-                  })}{" "}
-                  · {format(t.mediaFiles, { count: course.assets.length })}
-                </span>
-              </span>
             </div>
           </div>
         </SectionGroup>

@@ -16,7 +16,6 @@ import { createDefaultExercise, labelForFile, mediaTypeForFile, partSourceKey } 
 import type { AvailableUpdate } from "@core/app-update";
 import type { PickedMediaFile } from "@core/project-media";
 import type { ProjectReadErrorCode } from "@core/project-reading";
-import type { GitStatus } from "@core/project-system";
 import type { ProjectWriteResult } from "@core/project-writing";
 import { createProjectSession, type ProjectDirectory, type RecentProject } from "@core/projects";
 import {
@@ -205,13 +204,6 @@ export function App() {
     if (project) {
       void services.system.revealFolder(createProjectSession(project));
     }
-  }, [project, services]);
-
-  const readGitStatus = useCallback((): Promise<GitStatus> => {
-    if (!project) {
-      return Promise.resolve({ initialized: false, commitCount: 0, clean: true });
-    }
-    return services.system.readGitStatus(createProjectSession(project));
   }, [project, services]);
 
   const saveProject = async (nextProject: CourseProject): Promise<ProjectWriteResult> => {
@@ -1361,7 +1353,6 @@ export function App() {
               location={projectLocation}
               onSaveProject={saveProject}
               onRevealFolder={revealFolder}
-              onReadGitStatus={readGitStatus}
             />
           ) : section === "content" ? (
             <CourseContent
