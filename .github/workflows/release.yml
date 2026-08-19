@@ -66,6 +66,84 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Bundle Piper engine (Linux)
+        if: matrix.platform == 'ubuntu-22.04'
+        env:
+          PIPER_VERSION: "2023.11.14-2"
+        run: |
+          set -euo pipefail
+          url="https://github.com/rhasspy/piper/releases/download/${PIPER_VERSION}/piper_linux_x86_64.tar.gz"
+          tmp="$(mktemp -d)"
+          curl -fsSL "$url" | tar xz -C "$tmp"
+          cp -R "$tmp/piper/." src-tauri/piper/
+          chmod +x src-tauri/piper/piper
+          rm -rf "$tmp"
+
+      - name: Bundle Piper engine (Windows)
+        if: matrix.platform == 'windows-latest'
+        shell: pwsh
+        env:
+          PIPER_VERSION: "2023.11.14-2"
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $url = "https://github.com/rhasspy/piper/releases/download/$env:PIPER_VERSION/piper_windows_amd64.zip"
+          $zip = Join-Path $env:RUNNER_TEMP 'piper.zip'
+          $tmp = Join-Path $env:RUNNER_TEMP 'piper'
+          Invoke-WebRequest -Uri $url -OutFile $zip
+          Expand-Archive -Path $zip -DestinationPath $tmp -Force
+          Copy-Item -Path (Join-Path $tmp 'piper\*') -Destination 'src-tauri\piper' -Recurse -Force
+
+      - name: Bundle Piper engine (macOS, universal + signed)
+        if: matrix.platform == 'macos-latest'
+        env:
+          PIPER_VERSION: "2023.11.14-2"
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+        run: |
+          set -euo pipefail
+          base="https://github.com/rhasspy/piper/releases/download/${PIPER_VERSION}"
+          arm="$(mktemp -d)"
+          x64="$(mktemp -d)"
+          curl -fsSL "$base/piper_macos_aarch64.tar.gz" | tar xz -C "$arm"
+          curl -fsSL "$base/piper_macos_x64.tar.gz" | tar xz -C "$x64"
+          find "$arm" "$x64" -type d -name '*.dSYM' -exec rm -rf {} + || true
+          dest="$PWD/src-tauri/piper"
+          (
+            cd "$arm/piper"
+            find . -type d -mindepth 1 -exec mkdir -p "$dest/{}" \;
+            find . -type f -print0 | while IFS= read -r -d '' f; do
+              mkdir -p "$dest/$(dirname "$f")"
+              if file -b "$f" | grep -q 'Mach-O' && [ -f "$x64/piper/$f" ]; then
+                lipo -create "$f" "$x64/piper/$f" -output "$dest/$f"
+              else
+                cp -p "$f" "$dest/$f"
+              fi
+            done
+          )
+          chmod +x "$dest/piper"
+
+          # Developer-ID sign the nested binaries so the notarized app bundle passes.
+          keychain="$RUNNER_TEMP/piper-signing.keychain-db"
+          keychain_password="$(openssl rand -base64 24)"
+          security create-keychain -p "$keychain_password" "$keychain"
+          security set-keychain-settings -lut 21600 "$keychain"
+          security unlock-keychain -p "$keychain_password" "$keychain"
+          printf '%s' "$APPLE_CERTIFICATE" | base64 --decode > "$RUNNER_TEMP/piper-cert.p12"
+          security import "$RUNNER_TEMP/piper-cert.p12" -k "$keychain" -P "$APPLE_CERTIFICATE_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$keychain_password" "$keychain" >/dev/null
+          rm -f "$RUNNER_TEMP/piper-cert.p12"
+          sign() {
+            codesign --force --options runtime --timestamp \
+              --keychain "$keychain" --sign "$APPLE_SIGNING_IDENTITY" "$1"
+          }
+          find "$dest" -type f \( -name '*.dylib' -o -name '*.so' -o -name '*.so.*' \) -print0 |
+            while IFS= read -r -d '' lib; do sign "$lib"; done
+          for exe in piper piper_phonemize espeak-ng; do
+            [ -f "$dest/$exe" ] && sign "$dest/$exe"
+          done
+          security delete-keychain "$keychain" || true
+
       - name: Write notarization API key
         if: matrix.platform == 'macos-latest'
         run: |
