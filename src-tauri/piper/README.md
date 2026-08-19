@@ -4,45 +4,41 @@ This folder is bundled into the app as a Tauri resource (`bundle.resources` in
 `tauri.conf.json`) and resolved at runtime via `resource_dir()/piper`.
 
 Committed here: `voices.json` (the downloadable-voice catalog snapshot) and this
-README. The engine binaries are **not** committed — the release workflow
-downloads the right one per platform at build time (see below). For local dev
-you drop them in by hand.
+README. The engine is **not** committed — the release workflow builds it from
+source per platform at build time (see below). For local dev you build/copy it
+in by hand.
 
-## Upstream source (important)
+## Engine source
 
-The standalone Piper binaries come from **`rhasspy/piper`**, which is now
-**archived**. We pin its last release, `2023.11.14-2`; the assets still download
-and its `piper --model X.onnx --output_file Y.wav` CLI is what
-`src-tauri/src/tts.rs` shells out to.
+Built from **OHF-Voice/piper1-gpl** (the maintained Piper, `libpiper`), pinned to
+`v1.7.0`. Its CMake build compiles espeak-ng from source and downloads the
+onnxruntime shared library. `src-tauri/src/tts.rs` shells out to the resulting
+`piper_exe` CLI (`--model X.onnx --output_file Y.wav --espeak_data <dir>`, text
+on stdin), which writes a `.wav`.
 
-Active development has moved to **`OHF-Voice/piper1-gpl`**, but that project now
-ships as **Python wheels** (`pip install piper-tts`), not standalone native
-binaries — adopting it means bundling a Python runtime and changing the Rust
-invocation. That is a future migration, tracked separately. The voice models and
-catalog (`rhasspy/piper-voices` on HuggingFace) are unchanged across both.
+The archived `rhasspy/piper` project is no longer used (it is archived, its macOS
+release was missing its dylibs, and it shipped no native arm64 macOS build).
 
-## Engine (added at build time, per platform)
+## Build (done at release time, per platform)
 
-The release workflow (`.github/workflows/release.yml`) downloads and extracts the
-matching archive from `https://github.com/rhasspy/piper/releases/tag/2023.11.14-2`
-into this folder before the Tauri build, and Developer-ID signs the nested
-binaries on macOS so the notarized app bundle passes.
-
-**macOS is x86_64 only.** `rhasspy/piper` never shipped a native arm64 macOS
-build — its `aarch64` archive actually contains the same x86_64 binaries as the
-`x64` one — so the bundled engine is x86_64: native on Intel, and run under
-**Rosetta 2** on Apple Silicon. TTS on Apple Silicon therefore needs Rosetta
-installed. A native arm64 engine would require the `piper1-gpl` (Python)
-migration or building Piper from source.
-
-For a local build, do the same by hand:
+The release workflow (`.github/workflows/release.yml`) runs, for each platform:
 
 ```
-src-tauri/piper/
-  piper(.exe)          # `piper.exe` on Windows, `piper` on macOS/Linux
-  espeak-ng-data/      # ships inside the piper release archive
-  <the .dll / .dylib / .so files from the archive>
+cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=install
+cmake --build build --config Release
+cmake --install build
 ```
+
+then copies `piper_exe`, `libpiper`, `libonnxruntime`, and `espeak-ng-data` into
+this folder, sets loader-relative rpaths, and (on macOS) Developer-ID signs the
+binaries so the notarized app passes.
+
+**macOS is arm64 only.** The engine is built natively on the Apple Silicon
+runner. The app bundle stays universal, so TTS runs natively on Apple Silicon
+and is unavailable on Intel Macs. Linux is x86_64, Windows is amd64.
+
+For a local build, do the same by hand (`libpiper/README.md` upstream has the
+steps) and drop `piper_exe(.exe)`, its shared libs, and `espeak-ng-data/` here.
 
 ## Voice models (downloaded on demand, in app)
 

@@ -59,7 +59,6 @@ export function TtsDialog({
   const [text, setText] = useState("");
   const [saving, setSaving] = useState(false);
   const [failed, setFailed] = useState(false);
-  const [speaking, setSpeaking] = useState(false);
 
   const [mode, setMode] = useState<"compose" | "manage">("compose");
   const [catalog, setCatalog] = useState<readonly CatalogVoice[] | null>(null);
@@ -71,14 +70,6 @@ export function TtsDialog({
   const [downloadFailed, setDownloadFailed] = useState(false);
   const [playingSample, setPlayingSample] = useState<string | null>(null);
   const sampleAudio = useRef<HTMLAudioElement | null>(null);
-
-  const synth = typeof window === "undefined" ? null : window.speechSynthesis;
-
-  useEffect(() => {
-    return () => {
-      synth?.cancel();
-    };
-  }, [synth]);
 
   useEffect(() => {
     return () => {
@@ -238,8 +229,6 @@ export function TtsDialog({
 
   const save = () => {
     if (text.trim() === "" || voice === "" || saving) return;
-    synth?.cancel();
-    setSpeaking(false);
     setSaving(true);
     setFailed(false);
     void onAddTtsAudio(text.trim(), voice, fileNameFromText(text))
@@ -255,35 +244,8 @@ export function TtsDialog({
       });
   };
 
-  const stopPreview = () => {
-    synth?.cancel();
-    setSpeaking(false);
-  };
-
-  const togglePreview = () => {
-    if (!synth || text.trim() === "") return;
-    if (speaking) {
-      stopPreview();
-      return;
-    }
-    synth.cancel();
-    const utterance = new SpeechSynthesisUtterance(text.trim());
-    utterance.lang = locale.replace("_", "-");
-    const match = synth.getVoices().find((item) => item.name === voice);
-    if (match) utterance.voice = match;
-    utterance.onend = () => {
-      setSpeaking(false);
-    };
-    utterance.onerror = () => {
-      setSpeaking(false);
-    };
-    setSpeaking(true);
-    synth.speak(utterance);
-  };
-
   const noVoices = voices !== null && voices.length === 0;
   const canSave = !saving && !noVoices && voice !== "" && text.trim() !== "";
-  const canPreview = synth !== null && !noVoices && text.trim() !== "";
 
   return (
     <div className={styles.overlay} role="presentation" onClick={onClose}>
@@ -473,16 +435,14 @@ export function TtsDialog({
             </div>
           ) : (
             <>
-              <Button type="button" variant="ghost" disabled={!canPreview} onClick={togglePreview}>
-                <Icon name={speaking ? "stop" : "play"} size={18} />
-                {speaking ? t.ttsStopPreview : t.ttsPreview}
-              </Button>
+              {noVoices ? (
+                <span />
+              ) : (
+                <Button type="button" variant="ghost" onClick={openManage}>
+                  {t.ttsManageVoices}
+                </Button>
+              )}
               <div className={styles.footerActions}>
-                {noVoices ? null : (
-                  <Button type="button" variant="ghost" onClick={openManage}>
-                    {t.ttsManageVoices}
-                  </Button>
-                )}
                 <Button type="button" variant="secondary" onClick={onClose}>
                   {t.ttsCancel}
                 </Button>
