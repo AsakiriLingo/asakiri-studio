@@ -103,6 +103,11 @@ jobs:
           Invoke-WebRequest "https://github.com/OHF-Voice/piper1-gpl/archive/refs/tags/v$env:PIPER1_VERSION.tar.gz" -OutFile "$root/p1.tgz"
           tar -xzf "$root/p1.tgz" -C $root
           Set-Location "$root/piper1-gpl-$env:PIPER1_VERSION/libpiper"
+          # espeak-ng's phoneme sources contain filenames that differ only in
+          # case; NTFS is case-insensitive by default, so mark the build tree
+          # case-sensitive (inherited by the dirs cmake/git create under it).
+          New-Item -ItemType Directory -Force -Path build | Out-Null
+          fsutil.exe file setCaseSensitiveInfo build enable
           cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$PWD/install"
           cmake --build build --config Release
           cmake --install build --config Release
@@ -125,9 +130,15 @@ jobs:
           # universal, so TTS runs natively on Apple Silicon and is unavailable on
           # Intel Macs.
           dest="$PWD/src-tauri/piper"
-          src="$(mktemp -d)"
-          curl -fsSL "https://github.com/OHF-Voice/piper1-gpl/archive/refs/tags/v${PIPER1_VERSION}.tar.gz" | tar xz -C "$src"
-          cd "$src/piper1-gpl-${PIPER1_VERSION}/libpiper"
+          # espeak-ng's phoneme sources contain filenames that differ only in
+          # case (e.g. vwl_en_us_nyc), which collide on macOS's default
+          # case-insensitive filesystem and break its build. Build on a
+          # case-sensitive disk image instead.
+          img="$RUNNER_TEMP/piperbuild.sparseimage"
+          hdiutil create -size 8g -type SPARSE -fs 'Case-sensitive HFS+' -volname piperbuild "$img" >/dev/null
+          vol="$(hdiutil attach "$img" | awk -F'\t' '/\/Volumes\//{print $NF}' | tail -1)"
+          curl -fsSL "https://github.com/OHF-Voice/piper1-gpl/archive/refs/tags/v${PIPER1_VERSION}.tar.gz" | tar xz -C "$vol"
+          cd "$vol/piper1-gpl-${PIPER1_VERSION}/libpiper"
           cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$PWD/install" -DCMAKE_OSX_ARCHITECTURES=arm64
           cmake --build build --config Release
           cmake --install build
@@ -139,6 +150,9 @@ jobs:
           # loader-relative rpaths so they resolve to the folder they sit in.
           install_name_tool -add_rpath @executable_path "$dest/piper_exe" 2>/dev/null || true
           find "$dest" -name 'libpiper.dylib' -exec install_name_tool -add_rpath @loader_path {} \; 2>/dev/null || true
+          # Done with the build image (artifacts are now in $dest on the repo FS).
+          cd "$GITHUB_WORKSPACE"
+          hdiutil detach "$vol" >/dev/null 2>&1 || true
 
           # Developer-ID sign the nested binaries so the notarized app bundle passes.
           keychain="$RUNNER_TEMP/piper-signing.keychain-db"
