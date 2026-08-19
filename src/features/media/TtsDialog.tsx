@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { ProjectWriteResult } from "@core/project-writing";
-import type { CatalogVoice, TtsVoice } from "@core/tts";
+import type { CatalogVoice, TtsSaveResult, TtsVoice } from "@core/tts";
 import { useLocale, useMessages } from "@shared/i18n";
 import { Button } from "@shared/components/button";
 import { Field, TextArea, TextInput } from "@shared/components/form";
@@ -13,17 +12,14 @@ import styles from "@features/media/TtsDialog.module.css";
 export interface TtsDialogProps {
   readonly onClose: () => void;
   readonly onListVoices: () => Promise<readonly TtsVoice[]>;
+  readonly onPreviewVoice: (text: string, voice: string) => Promise<string>;
   readonly onListAvailableVoices: () => Promise<readonly CatalogVoice[]>;
   readonly onDownloadVoice: (
     voiceId: string,
     onProgress?: (downloaded: number, total: number) => void,
   ) => Promise<boolean>;
   readonly onRemoveVoice: (voiceId: string) => Promise<boolean>;
-  readonly onAddTtsAudio: (
-    text: string,
-    voice: string,
-    fileName: string,
-  ) => Promise<ProjectWriteResult | null>;
+  readonly onAddTtsAudio: (text: string, voice: string, fileName: string) => Promise<TtsSaveResult>;
 }
 
 function fileNameFromText(text: string): string {
@@ -44,6 +40,7 @@ function formatSize(bytes: number): string {
 export function TtsDialog({
   onClose,
   onListVoices,
+  onPreviewVoice,
   onListAvailableVoices,
   onDownloadVoice,
   onRemoveVoice,
@@ -59,6 +56,9 @@ export function TtsDialog({
   const [text, setText] = useState("");
   const [saving, setSaving] = useState(false);
   const [failed, setFailed] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [previewing, setPreviewing] = useState(false);
+  const previewAudio = useRef<HTMLAudioElement | null>(null);
 
   const [mode, setMode] = useState<"compose" | "manage">("compose");
   const [catalog, setCatalog] = useState<readonly CatalogVoice[] | null>(null);
@@ -75,6 +75,8 @@ export function TtsDialog({
     return () => {
       sampleAudio.current?.pause();
       sampleAudio.current = null;
+      previewAudio.current?.pause();
+      previewAudio.current = null;
     };
   }, []);
 
@@ -231,21 +233,53 @@ export function TtsDialog({
     if (text.trim() === "" || voice === "" || saving) return;
     setSaving(true);
     setFailed(false);
+    setErrorMessage(null);
     void onAddTtsAudio(text.trim(), voice, fileNameFromText(text))
       .then((result) => {
-        if (result?.status === "saved") {
+        if (result.ok) {
           onClose();
         } else {
           setFailed(true);
+          setErrorMessage(result.error);
         }
+      })
+      .catch((error: unknown) => {
+        setFailed(true);
+        setErrorMessage(String(error));
       })
       .finally(() => {
         setSaving(false);
       });
   };
 
+  const preview = () => {
+    if (text.trim() === "" || voice === "" || previewing) return;
+    previewAudio.current?.pause();
+    setFailed(false);
+    setErrorMessage(null);
+    setPreviewing(true);
+    void onPreviewVoice(text.trim(), voice)
+      .then((dataUrl) => {
+        const audio = new Audio(dataUrl);
+        previewAudio.current = audio;
+        audio.onended = () => {
+          setPreviewing(false);
+        };
+        audio.onerror = () => {
+          setPreviewing(false);
+        };
+        return audio.play();
+      })
+      .catch((error: unknown) => {
+        setPreviewing(false);
+        setFailed(true);
+        setErrorMessage(String(error));
+      });
+  };
+
   const noVoices = voices !== null && voices.length === 0;
   const canSave = !saving && !noVoices && voice !== "" && text.trim() !== "";
+  const canPreview = !previewing && !saving && !noVoices && voice !== "" && text.trim() !== "";
 
   return (
     <div className={styles.overlay} role="presentation" onClick={onClose}>
@@ -417,7 +451,7 @@ export function TtsDialog({
               </Field>
             </>
           )}
-          {failed ? <Status tone="warning">{t.ttsFailed}</Status> : null}
+          {failed ? <Status tone="warning">{errorMessage ?? t.ttsFailed}</Status> : null}
         </div>
 
         <footer className={styles.footer}>
@@ -443,6 +477,10 @@ export function TtsDialog({
                 </Button>
               )}
               <div className={styles.footerActions}>
+                <Button type="button" variant="ghost" disabled={!canPreview} onClick={preview}>
+                  <Icon name="play" size={18} />
+                  {previewing ? t.ttsSaving : t.ttsPreview}
+                </Button>
                 <Button type="button" variant="secondary" onClick={onClose}>
                   {t.ttsCancel}
                 </Button>

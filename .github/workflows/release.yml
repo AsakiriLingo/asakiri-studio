@@ -81,7 +81,7 @@ jobs:
           src="$(mktemp -d)"
           curl -fsSL "https://github.com/OHF-Voice/piper1-gpl/archive/refs/tags/v${PIPER1_VERSION}.tar.gz" | tar xz -C "$src"
           cd "$src/piper1-gpl-${PIPER1_VERSION}/libpiper"
-          cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$PWD/install"
+          cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$PWD/install" -DCMAKE_POLICY_VERSION_MINIMUM=3.5
           cmake --build build --config Release
           cmake --install build
           dest="$GITHUB_WORKSPACE/src-tauri/piper"
@@ -108,7 +108,7 @@ jobs:
           # case-sensitive (inherited by the dirs cmake/git create under it).
           New-Item -ItemType Directory -Force -Path build | Out-Null
           fsutil.exe file setCaseSensitiveInfo build enable
-          cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$PWD/install"
+          cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$PWD/install" -DCMAKE_POLICY_VERSION_MINIMUM=3.5
           cmake --build build --config Release
           cmake --install build --config Release
           $dest = "$env:GITHUB_WORKSPACE/src-tauri/piper"
@@ -139,7 +139,7 @@ jobs:
           vol="$(hdiutil attach "$img" | awk -F'\t' '/\/Volumes\//{print $NF}' | tail -1)"
           curl -fsSL "https://github.com/OHF-Voice/piper1-gpl/archive/refs/tags/v${PIPER1_VERSION}.tar.gz" | tar xz -C "$vol"
           cd "$vol/piper1-gpl-${PIPER1_VERSION}/libpiper"
-          cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$PWD/install" -DCMAKE_OSX_ARCHITECTURES=arm64
+          cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$PWD/install" -DCMAKE_POLICY_VERSION_MINIMUM=3.5 -DCMAKE_OSX_ARCHITECTURES=arm64
           cmake --build build --config Release
           cmake --install build
           find install -name 'piper_exe' -type f -exec cp {} "$dest/piper_exe" \;

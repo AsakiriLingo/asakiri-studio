@@ -14,6 +14,7 @@ import type {
 } from "@core/course";
 import { createDefaultExercise, labelForFile, mediaTypeForFile, partSourceKey } from "@core/course";
 import type { AvailableUpdate } from "@core/app-update";
+import type { TtsSaveResult } from "@core/tts";
 import type { PickedMediaFile } from "@core/project-media";
 import type { ProjectReadErrorCode } from "@core/project-reading";
 import type { ProjectWriteResult } from "@core/project-writing";
@@ -1121,15 +1122,22 @@ export function App() {
     text: string,
     voice: string,
     fileName: string,
-  ): Promise<ProjectWriteResult | null> => {
+  ): Promise<TtsSaveResult> => {
     if (!project || courseState?.status !== "ready") {
-      return { status: "failed", code: "unavailable" };
+      return { ok: false, error: "Project is not ready." };
     }
-    const picked = await services.tts.synthesizeToTemp(text, voice, fileName);
-    if (!picked) return { status: "failed", code: "unknown" };
+    let picked;
+    try {
+      picked = await services.tts.synthesizeToTemp(text, voice, fileName);
+    } catch (error) {
+      return { ok: false, error: String(error) };
+    }
     const { allOk } = await importPickedMedia([picked]);
-    return allOk ? { status: "saved" } : { status: "failed", code: "unknown" };
+    return allOk ? { ok: true } : { ok: false, error: "Could not import the generated audio." };
   };
+
+  const previewTtsVoice = (text: string, voice: string): Promise<string> =>
+    services.tts.previewVoice(text, voice);
 
   const addRecording = async (
     bytes: Uint8Array,
@@ -1381,6 +1389,7 @@ export function App() {
               onAddRemoteMedia={addRemoteMedia}
               onRenameAsset={renameAsset}
               onListTtsVoices={() => services.tts.listVoices()}
+              onPreviewTtsVoice={previewTtsVoice}
               onListAvailableVoices={() => services.tts.listAvailableVoices()}
               onDownloadVoice={(voiceId, onProgress) =>
                 services.tts.downloadVoice(voiceId, onProgress)

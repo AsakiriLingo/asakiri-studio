@@ -4,6 +4,8 @@ use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 use std::time::{SystemTime, UNIX_EPOCH};
 
+use base64::engine::general_purpose::STANDARD;
+use base64::Engine as _;
 use serde::Serialize;
 use tauri::ipc::Channel;
 use tauri::Manager;
@@ -97,6 +99,27 @@ pub fn synthesize_tts(
     voice: String,
     file_name: String,
 ) -> Result<String, String> {
+    let target = synthesize_to_temp(&app, &text, &voice, &file_name)?;
+    target
+        .to_str()
+        .map(|path| path.to_string())
+        .ok_or_else(|| "unknown".to_string())
+}
+
+#[tauri::command]
+pub fn preview_tts(app: tauri::AppHandle, text: String, voice: String) -> Result<String, String> {
+    let target = synthesize_to_temp(&app, &text, &voice, "preview.wav")?;
+    let bytes = fs::read(&target).map_err(|error| error.to_string())?;
+    let _ = fs::remove_file(&target);
+    Ok(format!("data:audio/wav;base64,{}", STANDARD.encode(&bytes)))
+}
+
+fn synthesize_to_temp(
+    app: &tauri::AppHandle,
+    text: &str,
+    voice: &str,
+    file_name: &str,
+) -> Result<PathBuf, String> {
     if text.trim().is_empty() {
         return Err("emptyText".to_string());
     }
@@ -105,7 +128,7 @@ pub fn synthesize_tts(
         return Err("voiceMissing".to_string());
     }
 
-    let model = voices_dir(&app)?.join(format!("{voice}.onnx"));
+    let model = voices_dir(app)?.join(format!("{voice}.onnx"));
     if !model.exists() {
         return Err("voiceMissing".to_string());
     }
@@ -125,13 +148,13 @@ pub fn synthesize_tts(
     fs::create_dir_all(&dir).map_err(|_| "unknown".to_string())?;
     let target = dir.join(&safe_name);
 
-    let binary = piper_binary(&app)?;
+    let binary = piper_binary(app)?;
     ensure_executable(&binary);
 
     let mut command = Command::new(&binary);
     command.arg("--model").arg(&model);
     command.arg("--output_file").arg(&target);
-    let espeak_data = piper_dir(&app)?.join("espeak-ng-data");
+    let espeak_data = piper_dir(app)?.join("espeak-ng-data");
     if espeak_data.exists() {
         command.arg("--espeak_data").arg(&espeak_data);
     }
@@ -153,10 +176,7 @@ pub fn synthesize_tts(
         return Err("ttsFailed".to_string());
     }
 
-    target
-        .to_str()
-        .map(|path| path.to_string())
-        .ok_or_else(|| "unknown".to_string())
+    Ok(target)
 }
 
 const VOICES_BASE_URL: &str = "https://huggingface.co/rhasspy/piper-voices/resolve/main/";

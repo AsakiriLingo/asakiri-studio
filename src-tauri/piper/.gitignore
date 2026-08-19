@@ -1,0 +1,7 @@
+# The Piper engine (piper_exe, libpiper, libonnxruntime, espeak-ng-data, …) is
+# built per platform in CI and dropped in here at build time — never committed.
+# Keep only the voice catalog and docs.
+*
+!.gitignore
+!README.md
+!voices.json

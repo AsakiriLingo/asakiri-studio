@@ -12,13 +12,13 @@ export function createTauriTtsGateway(): TtsGateway {
       }
     },
 
-    async synthesizeToTemp(text, voice, fileName): Promise<PickedMediaFile | null> {
-      try {
-        const path = await invoke<string>("synthesize_tts", { text, voice, fileName });
-        return { path, name: fileName };
-      } catch {
-        return null;
-      }
+    async synthesizeToTemp(text, voice, fileName): Promise<PickedMediaFile> {
+      const path = await invoke<string>("synthesize_tts", { text, voice, fileName });
+      return { path, name: fileName };
+    },
+
+    async previewVoice(text, voice): Promise<string> {
+      return await invoke<string>("preview_tts", { text, voice });
     },
 
     async listAvailableVoices(): Promise<readonly CatalogVoice[]> {

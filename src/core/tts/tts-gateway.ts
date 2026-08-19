@@ -21,9 +21,12 @@ export interface CatalogVoice {
 
 export type DownloadProgress = (downloaded: number, total: number) => void;
 
+export type TtsSaveResult = { readonly ok: true } | { readonly ok: false; readonly error: string };
+
 export interface TtsGateway {
   listVoices(): Promise<readonly TtsVoice[]>;
-  synthesizeToTemp(text: string, voice: string, fileName: string): Promise<PickedMediaFile | null>;
+  synthesizeToTemp(text: string, voice: string, fileName: string): Promise<PickedMediaFile>;
+  previewVoice(text: string, voice: string): Promise<string>;
   listAvailableVoices(): Promise<readonly CatalogVoice[]>;
   downloadVoice(voiceId: string, onProgress?: DownloadProgress): Promise<boolean>;
   removeVoice(voiceId: string): Promise<boolean>;

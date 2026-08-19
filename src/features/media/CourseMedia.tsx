@@ -3,7 +3,7 @@ import { Menu } from "@base-ui/react/menu";
 import type { Asset, ContentRecord, Course } from "@core/course";
 import type { AudioSearchResult, ImageSearchResult, SearchPage } from "@core/media-search";
 import type { ProjectWriteResult } from "@core/project-writing";
-import type { CatalogVoice, DownloadProgress, TtsVoice } from "@core/tts";
+import type { CatalogVoice, DownloadProgress, TtsSaveResult, TtsVoice } from "@core/tts";
 import { useFormat, useMessages, type StudioMessages } from "@shared/i18n";
 import { Button } from "@shared/components/button";
 import { useConfirm } from "@shared/components/confirm-dialog";
@@ -69,14 +69,11 @@ export interface CourseMediaProps {
   ) => Promise<ProjectWriteResult | null>;
   readonly onRenameAsset: (assetId: string, name: string) => Promise<ProjectWriteResult>;
   readonly onListTtsVoices: () => Promise<readonly TtsVoice[]>;
+  readonly onPreviewTtsVoice: (text: string, voice: string) => Promise<string>;
   readonly onListAvailableVoices: () => Promise<readonly CatalogVoice[]>;
   readonly onDownloadVoice: (voiceId: string, onProgress?: DownloadProgress) => Promise<boolean>;
   readonly onRemoveVoice: (voiceId: string) => Promise<boolean>;
-  readonly onAddTtsAudio: (
-    text: string,
-    voice: string,
-    fileName: string,
-  ) => Promise<ProjectWriteResult | null>;
+  readonly onAddTtsAudio: (text: string, voice: string, fileName: string) => Promise<TtsSaveResult>;
   readonly onAddRecording: (
     bytes: Uint8Array,
     mimeType: string,
@@ -95,6 +92,7 @@ export function CourseMedia({
   onAddRemoteMedia,
   onRenameAsset,
   onListTtsVoices,
+  onPreviewTtsVoice,
   onListAvailableVoices,
   onDownloadVoice,
   onRemoveVoice,
@@ -423,12 +421,13 @@ export function CourseMedia({
             setShowTts(false);
           }}
           onListVoices={onListTtsVoices}
+          onPreviewVoice={onPreviewTtsVoice}
           onListAvailableVoices={onListAvailableVoices}
           onDownloadVoice={onDownloadVoice}
           onRemoveVoice={onRemoveVoice}
           onAddTtsAudio={(text, voice, fileName) =>
             onAddTtsAudio(text, voice, fileName).then((result) => {
-              if (result) setSaveState(result.status === "saved" ? "saved" : "failed");
+              setSaveState(result.ok ? "saved" : "failed");
               return result;
             })
           }
