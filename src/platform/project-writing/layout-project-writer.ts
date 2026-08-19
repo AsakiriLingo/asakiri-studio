@@ -210,6 +210,7 @@ export function createLayoutProjectWriter(resolveRaw: ResolveProjectFileAccess):
             defaultLocale: project.defaultLocale,
             learningLocales: [...project.learningLocales],
             taughtFlag: project.taughtFlag,
+            taughtFlagAssetId: project.taughtFlagAssetId,
             level: project.level,
             estimatedLength: project.estimatedLength,
             version: project.version,

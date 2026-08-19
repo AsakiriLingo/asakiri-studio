@@ -135,7 +135,7 @@
 
 @media (hover: hover) and (pointer: fine) {
   .row:hover {
-    background: var(--color-row-hover);
+    background: var(--color-surface-subtle);
   }
 }
 

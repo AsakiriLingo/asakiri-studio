@@ -81,3 +81,61 @@
   gap: var(--space-2);
   margin-inline-start: auto;
 }
+
+.emptyActions {
+  margin-top: var(--space-3);
+}
+
+.voiceList {
+  display: flex;
+  flex-direction: column;
+}
+
+.voiceRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) 0;
+  border-bottom: var(--border-hairline) solid var(--color-border);
+}
+
+.voiceInfo {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.voiceActions {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.voiceLang {
+  font-size: var(--font-size-300);
+  font-weight: var(--font-weight-medium);
+}
+
+.voiceSub {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-200);
+}
+
+.progressTrack {
+  display: block;
+  height: 3px;
+  margin-top: 4px;
+  overflow: hidden;
+  border-radius: 2px;
+  background: var(--color-border);
+}
+
+.progressFill {
+  display: block;
+  height: 100%;
+  background: var(--color-brand);
+  transition: width 120ms linear;
+}

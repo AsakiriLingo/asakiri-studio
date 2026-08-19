@@ -9,3 +9,4 @@ src-tauri/Cargo.lock
 src-tauri/target/
 src-tauri/gen/
 src-tauri/icons/
+src-tauri/piper/voices.json

@@ -18,6 +18,7 @@ function makeCourse(): Course {
       defaultLocale: "en",
       learningLocales: [],
       taughtFlag: "",
+      taughtFlagAssetId: null,
       level: "",
       estimatedLength: "",
       version: "",

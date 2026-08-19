@@ -27,6 +27,7 @@ base64 = "0.22"
 img-parts = "0.3"
 ureq = "2"
 sha2 = "0.10"
+md5 = "0.7"
 anydoc = "0.1.9"
 
 [target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]

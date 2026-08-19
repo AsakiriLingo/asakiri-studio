@@ -34,7 +34,10 @@ pub fn run() {
             media::list_folder_files,
             media::read_document,
             tts::list_tts_voices,
-            tts::synthesize_tts
+            tts::synthesize_tts,
+            tts::list_available_voices,
+            tts::download_voice,
+            tts::remove_voice
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

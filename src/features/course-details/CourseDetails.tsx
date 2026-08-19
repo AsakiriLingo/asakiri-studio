@@ -1,5 +1,5 @@
-import { type ReactNode } from "react";
-import type { Contributor, Course, CourseProject, FundingLink, Sponsor } from "@core/course";
+import { useEffect, useState, type ReactNode } from "react";
+import type { Asset, Contributor, Course, CourseProject, FundingLink, Sponsor } from "@core/course";
 import { contributorRoles } from "@core/course";
 import type { ProjectWriteResult } from "@core/project-writing";
 import { useFormat, useMessages, type StudioMessages } from "@shared/i18n";
@@ -299,11 +299,37 @@ function SponsorRow({
   );
 }
 
+function FlagAssetPreview({
+  asset,
+  loadPreview,
+}: {
+  readonly asset: Asset;
+  readonly loadPreview: (assetId: string) => Promise<string | null>;
+}) {
+  const [loaded, setLoaded] = useState<{ readonly id: string; readonly url: string } | null>(null);
+  const previewable = asset.kind === "image" ? asset.id : null;
+  useEffect(() => {
+    if (!previewable) return;
+    let cancelled = false;
+    void loadPreview(previewable).then((next) => {
+      if (!cancelled && next) setLoaded({ id: previewable, url: next });
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [previewable, loadPreview]);
+  const url = loaded?.id === previewable ? loaded.url : null;
+  if (!url) return <Icon name="image" size={16} />;
+  return <img className={styles.flagThumb} src={url} alt="" loading="lazy" decoding="async" />;
+}
+
 export interface CourseDetailsProps {
   readonly course: Course;
   readonly location: string;
   readonly onSaveProject: (project: CourseProject) => Promise<ProjectWriteResult>;
   readonly onRevealFolder: () => void;
+  readonly onImportImage: () => Promise<Asset | null>;
+  readonly onLoadAssetPreview: (assetId: string) => Promise<string | null>;
 }
 
 export function CourseDetails({
@@ -311,6 +337,8 @@ export function CourseDetails({
   location,
   onSaveProject,
   onRevealFolder,
+  onImportImage,
+  onLoadAssetPreview,
 }: CourseDetailsProps) {
   const messages = useMessages();
   const t = messages.details;
@@ -343,6 +371,25 @@ export function CourseDetails({
     value: asset.id,
     label: asset.file ?? asset.label,
   }));
+
+  const taughtFlagAsset =
+    course.assets.find((asset) => asset.id === project.taughtFlagAssetId) ?? null;
+
+  const importCover = () => {
+    void onImportImage().then((asset) => {
+      if (asset?.kind === "image") {
+        patch({ coverAssetId: asset.id });
+      }
+    });
+  };
+
+  const importFlag = () => {
+    void onImportImage().then((asset) => {
+      if (asset?.kind === "image") {
+        patch({ taughtFlagAssetId: asset.id });
+      }
+    });
+  };
 
   return (
     <WorkInner>
@@ -380,6 +427,7 @@ export function CourseDetails({
                 name="description"
                 rows={3}
                 defaultValue={project.description}
+                placeholder={t.fieldDescriptionPlaceholder}
                 onBlur={(event) => {
                   patchField("description", event.currentTarget.value);
                 }}
@@ -408,12 +456,31 @@ export function CourseDetails({
                     }
                   }}
                 />
-                <FlagPicker
-                  value={project.taughtFlag}
-                  onChange={(code) => {
-                    patch({ taughtFlag: code });
-                  }}
-                />
+                {taughtFlagAsset ? (
+                  <span className={styles.assetRef}>
+                    <FlagAssetPreview asset={taughtFlagAsset} loadPreview={onLoadAssetPreview} />
+                    {taughtFlagAsset.file ?? taughtFlagAsset.label}
+                    <IconButton
+                      aria-label={t.remove}
+                      onClick={() => {
+                        patch({ taughtFlagAssetId: null });
+                      }}
+                    >
+                      <Icon name="close" size={14} />
+                    </IconButton>
+                  </span>
+                ) : (
+                  <FlagPicker
+                    value={project.taughtFlag}
+                    onChange={(code) => {
+                      patch({ taughtFlag: code, taughtFlagAssetId: null });
+                    }}
+                  />
+                )}
+                <Button variant="ghost" size="sm" onClick={importFlag} title={t.flagHint}>
+                  <Icon name="upload" size={16} />
+                  {t.flagUpload}
+                </Button>
               </div>
             </Field>
             <Field label={t.fieldExplained} help={t.fieldExplainedHelp}>
@@ -435,6 +502,9 @@ export function CourseDetails({
                   { value: "a1", label: t.levelA1 },
                   { value: "a2", label: t.levelA2 },
                   { value: "b1", label: t.levelB1 },
+                  { value: "b2", label: t.levelB2 },
+                  { value: "c1", label: t.levelC1 },
+                  { value: "c2", label: t.levelC2 },
                 ]}
                 value={project.level}
                 onValueChange={(level) => {
@@ -482,16 +552,21 @@ export function CourseDetails({
                 <Icon name="image" size={16} />
                 {coverAsset ? (coverAsset.file ?? coverAsset.label) : t.noCover}
               </span>
-              <Select
-                searchable
-                aria-label={t.chooseMedia}
-                items={coverItems}
-                placeholder={t.chooseMedia}
-                value={project.coverAssetId ?? ""}
-                onValueChange={(assetId) => {
-                  patch({ coverAssetId: assetId || null });
-                }}
-              />
+              {imageAssets.length > 0 ? (
+                <Select
+                  searchable
+                  aria-label={t.chooseMedia}
+                  items={coverItems}
+                  placeholder={t.chooseMedia}
+                  value={project.coverAssetId ?? ""}
+                  onValueChange={(assetId) => {
+                    patch({ coverAssetId: assetId || null });
+                  }}
+                />
+              ) : null}
+              <Button variant="secondary" onClick={importCover}>
+                {t.coverImport}
+              </Button>
               {project.coverAssetId === null ? null : (
                 <Button
                   variant="ghost"

@@ -668,6 +668,7 @@ function parseProject(value: unknown, context: string, locale: string): CoursePr
     defaultLocale: str(data.defaultLocale, `${context}.defaultLocale`),
     learningLocales: strArr(data.learningLocales, `${context}.learningLocales`),
     taughtFlag: strOr(data.taughtFlag),
+    taughtFlagAssetId: typeof data.taughtFlagAssetId === "string" ? data.taughtFlagAssetId : null,
     level: strOr(data.level),
     estimatedLength: strOr(data.estimatedLength),
     version: strOr(data.version),

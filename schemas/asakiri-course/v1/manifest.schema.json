@@ -43,6 +43,9 @@
         "taughtFlag": {
           "type": "string"
         },
+        "taughtFlagAssetId": {
+          "type": ["string", "null"]
+        },
         "level": {
           "type": "string"
         },

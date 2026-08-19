@@ -1353,6 +1353,8 @@ export function App() {
               location={projectLocation}
               onSaveProject={saveProject}
               onRevealFolder={revealFolder}
+              onImportImage={importAssetForField}
+              onLoadAssetPreview={loadAssetPreview}
             />
           ) : section === "content" ? (
             <CourseContent
@@ -1379,6 +1381,11 @@ export function App() {
               onAddRemoteMedia={addRemoteMedia}
               onRenameAsset={renameAsset}
               onListTtsVoices={() => services.tts.listVoices()}
+              onListAvailableVoices={() => services.tts.listAvailableVoices()}
+              onDownloadVoice={(voiceId, onProgress) =>
+                services.tts.downloadVoice(voiceId, onProgress)
+              }
+              onRemoveVoice={(voiceId) => services.tts.removeVoice(voiceId)}
               onAddTtsAudio={addTtsAudio}
               onAddRecording={addRecording}
             />

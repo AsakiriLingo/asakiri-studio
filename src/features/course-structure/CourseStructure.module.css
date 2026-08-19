@@ -193,7 +193,7 @@
   }
 
   .orderedRow:hover {
-    background: var(--color-row-hover);
+    background: var(--color-surface-subtle);
   }
 
   .unitToggle:hover .unitChevron {

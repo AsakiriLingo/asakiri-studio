@@ -14,6 +14,7 @@ const course: Course = {
     defaultLocale: "en",
     learningLocales: ["ja"],
     taughtFlag: "",
+    taughtFlagAssetId: null,
     level: "",
     estimatedLength: "",
     version: "",

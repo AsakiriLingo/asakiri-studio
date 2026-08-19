@@ -288,6 +288,7 @@
 @media (min-width: 48rem) {
   .formGrid.two {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
   }
 
   .contributorAdd {
@@ -322,6 +323,13 @@
 .taughtInput {
   flex: 1 1 auto;
   min-width: 0;
+}
+
+.flagThumb {
+  width: 20px;
+  height: 20px;
+  object-fit: cover;
+  border-radius: 3px;
 }
 
 .roleTrigger {

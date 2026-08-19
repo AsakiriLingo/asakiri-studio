@@ -495,26 +495,55 @@ export function CourseStructure({
       return;
     }
 
-    const container = containerOf(overId) ?? containerOf(activeIdStr);
-    if (!container) {
+    const toUnit = containerOf(overId);
+    const originUnit =
+      course.outline.find((section) => section.lessonIds.includes(activeIdStr))?.id ??
+      containerOf(activeIdStr);
+    if (!toUnit || !originUnit) {
       commitLayout(outlineToLayout(course.outline));
       return;
     }
-    expandUnit(container);
-    const unit = current.find((entry) => entry.id === container);
-    let next = current;
-    if (unit) {
-      const ids = [...unit.lessonIds];
-      const from = ids.indexOf(activeIdStr);
-      const to = isUnitId(overId) ? ids.length - 1 : ids.indexOf(overId);
-      if (from !== -1 && to !== -1 && from !== to) {
-        const reordered = arrayMove(ids, from, to);
-        next = current.map((entry) =>
-          entry.id === container ? { ...entry, lessonIds: reordered } : entry,
-        );
-        commitLayout(next);
+    expandUnit(toUnit);
+
+    if (originUnit === toUnit) {
+      const unit = current.find((entry) => entry.id === toUnit);
+      let next = current;
+      if (unit) {
+        const ids = [...unit.lessonIds];
+        const from = ids.indexOf(activeIdStr);
+        const to = isUnitId(overId) ? ids.length - 1 : ids.indexOf(overId);
+        if (from !== -1 && to !== -1 && from !== to) {
+          const reordered = arrayMove(ids, from, to);
+          next = current.map((entry) =>
+            entry.id === toUnit ? { ...entry, lessonIds: reordered } : entry,
+          );
+          commitLayout(next);
+        }
       }
+      persistLayout(next);
+      return;
     }
+
+    const target = current.find((entry) => entry.id === toUnit);
+    if (!target) {
+      commitLayout(outlineToLayout(course.outline));
+      return;
+    }
+    const baseIds = target.lessonIds.filter((id) => id !== activeIdStr);
+    const overIndex = isUnitId(overId) ? baseIds.length : baseIds.indexOf(overId);
+    const insertAt = overIndex < 0 ? baseIds.length : overIndex;
+    const next = current.map((unit) => {
+      if (unit.id === toUnit) {
+        const ids = unit.lessonIds.filter((id) => id !== activeIdStr);
+        ids.splice(insertAt, 0, activeIdStr);
+        return { ...unit, lessonIds: ids };
+      }
+      if (unit.id === originUnit) {
+        return { ...unit, lessonIds: unit.lessonIds.filter((id) => id !== activeIdStr) };
+      }
+      return unit;
+    });
+    commitLayout(next);
     persistLayout(next);
   };
 
