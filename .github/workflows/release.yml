@@ -143,7 +143,10 @@ jobs:
           cmake --build build --config Release
           cmake --install build
           find install -name 'piper_exe' -type f -exec cp {} "$dest/piper_exe" \;
-          find install \( -name 'libpiper.dylib' -o -name 'libonnxruntime*.dylib' \) -exec cp -a {} "$dest/" \;
+          # Exclude *.dSYM: onnxruntime ships a debug bundle whose inner DWARF file
+          # has the same name as the real dylib and would otherwise clobber it.
+          find install \( -name 'libpiper.dylib' -o -name 'libonnxruntime*.dylib' \) \
+            -not -path '*.dSYM/*' -exec cp -a {} "$dest/" \;
           cp -R "$(find install -type d -name espeak-ng-data | head -1)" "$dest/espeak-ng-data"
           chmod +x "$dest/piper_exe"
           # Both piper_exe and libpiper reference their dylibs via @rpath; add
