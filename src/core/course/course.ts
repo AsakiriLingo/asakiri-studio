@@ -37,6 +37,7 @@ export interface CourseProject {
   readonly defaultLocale: string;
   readonly learningLocales: readonly string[];
   readonly taughtFlag: string;
+  readonly taughtFlagAssetId: string | null;
   readonly level: string;
   readonly estimatedLength: string;
   readonly version: string;

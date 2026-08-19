@@ -27,6 +27,7 @@
     "active": true,
     "targets": "all",
     "createUpdaterArtifacts": true,
+    "resources": ["piper"],
     "macOS": {
       "signingIdentity": "Developer ID Application: Alok Ram Singh (6ZBB7468M8)",
       "hardenedRuntime": true,

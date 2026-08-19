@@ -6,6 +6,7 @@ import { TextInput } from "@shared/components/form";
 import { ScrollArea } from "@shared/components/scroll-area";
 import { Flag } from "@shared/components/flag/Flag";
 import { FLAG_CODES } from "@shared/components/flag/flags";
+import { regionalFlag } from "@shared/components/flag/flag-names";
 import styles from "@shared/components/flag/FlagPicker.module.css";
 
 function joinClassNames(...classNames: (string | undefined)[]) {
@@ -15,11 +16,16 @@ function joinClassNames(...classNames: (string | undefined)[]) {
 interface FlagOption {
   readonly code: string;
   readonly name: string;
+  readonly aliases: readonly string[];
 }
 
 function buildOptions(locale: string): FlagOption[] {
   const display = new Intl.DisplayNames([locale], { type: "region" });
   return FLAG_CODES.map((code) => {
+    const regional = regionalFlag(code);
+    if (regional) {
+      return { code, name: regional.name, aliases: regional.aliases };
+    }
     let name = code;
     if (/^[a-z]{2}$/.test(code)) {
       try {
@@ -28,7 +34,7 @@ function buildOptions(locale: string): FlagOption[] {
         name = code;
       }
     }
-    return { code, name };
+    return { code, name, aliases: [] };
   });
 }
 
@@ -48,7 +54,10 @@ export function FlagPicker({ value, onChange }: FlagPickerProps) {
     const q = query.trim().toLowerCase();
     if (!q) return options;
     return options.filter(
-      (option) => option.name.toLowerCase().includes(q) || option.code.includes(q),
+      (option) =>
+        option.name.toLowerCase().includes(q) ||
+        option.code.includes(q) ||
+        option.aliases.some((alias) => alias.toLowerCase().includes(q)),
     );
   }, [options, query]);
 

@@ -17,6 +17,7 @@ const PROJECT: CourseProject = {
   defaultLocale: "en",
   learningLocales: ["ja", "ko"],
   taughtFlag: "jp",
+  taughtFlagAssetId: null,
   level: "a1",
   estimatedLength: "2 units",
   version: "",
