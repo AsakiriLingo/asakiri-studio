@@ -52,7 +52,13 @@ jobs:
       - name: Install Linux dependencies
         if: matrix.platform == 'ubuntu-22.04'
         run: |
-          sudo apt-get update
+          # GitHub runners resolve apt sources through a mirrorlist that puts the
+          # often-flaky Azure mirror first; rewrite it (and any classic sources) to
+          # archive.ubuntu.com, and add retries/timeouts so apt never stalls on it.
+          sudo sed -i 's|azure.archive.ubuntu.com|archive.ubuntu.com|g' \
+            /etc/apt/apt-mirrors.txt /etc/apt/sources.list /etc/apt/sources.list.d/*.list 2>/dev/null || true
+          echo 'Acquire::Retries "5";' | sudo tee /etc/apt/apt.conf.d/80-retries >/dev/null
+          sudo apt-get update -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30
           sudo apt-get install -y \
             libwebkit2gtk-4.1-dev \
             libgtk-3-dev \
@@ -66,52 +72,73 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Bundle Piper engine (Linux)
+      - name: Build Piper engine (Linux)
         if: matrix.platform == 'ubuntu-22.04'
         env:
-          PIPER_VERSION: "2023.11.14-2"
+          PIPER1_VERSION: "1.7.0"
         run: |
           set -euo pipefail
-          url="https://github.com/rhasspy/piper/releases/download/${PIPER_VERSION}/piper_linux_x86_64.tar.gz"
-          tmp="$(mktemp -d)"
-          curl -fsSL "$url" | tar xz -C "$tmp"
-          cp -R "$tmp/piper/." src-tauri/piper/
-          chmod +x src-tauri/piper/piper
-          rm -rf "$tmp"
+          src="$(mktemp -d)"
+          curl -fsSL "https://github.com/OHF-Voice/piper1-gpl/archive/refs/tags/v${PIPER1_VERSION}.tar.gz" | tar xz -C "$src"
+          cd "$src/piper1-gpl-${PIPER1_VERSION}/libpiper"
+          cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$PWD/install"
+          cmake --build build --config Release
+          cmake --install build
+          dest="$GITHUB_WORKSPACE/src-tauri/piper"
+          find install -name 'piper_exe' -type f -exec cp {} "$dest/piper_exe" \;
+          find install \( -name 'libpiper.so*' -o -name 'libonnxruntime.so*' \) -exec cp -a {} "$dest/" \;
+          cp -R "$(find install -type d -name espeak-ng-data | head -1)" "$dest/espeak-ng-data"
+          chmod +x "$dest/piper_exe"
+          patchelf --set-rpath '$ORIGIN' "$dest/piper_exe"
+          find "$dest" -name 'libpiper.so*' -type f -exec patchelf --set-rpath '$ORIGIN' {} \;
 
-      - name: Bundle Piper engine (Windows)
+      - name: Build Piper engine (Windows)
         if: matrix.platform == 'windows-latest'
         shell: pwsh
         env:
-          PIPER_VERSION: "2023.11.14-2"
+          PIPER1_VERSION: "1.7.0"
         run: |
           $ErrorActionPreference = 'Stop'
-          $url = "https://github.com/rhasspy/piper/releases/download/$env:PIPER_VERSION/piper_windows_amd64.zip"
-          $zip = Join-Path $env:RUNNER_TEMP 'piper.zip'
-          $tmp = Join-Path $env:RUNNER_TEMP 'piper'
-          Invoke-WebRequest -Uri $url -OutFile $zip
-          Expand-Archive -Path $zip -DestinationPath $tmp -Force
-          Copy-Item -Path (Join-Path $tmp 'piper\*') -Destination 'src-tauri\piper' -Recurse -Force
+          $root = $env:RUNNER_TEMP
+          Invoke-WebRequest "https://github.com/OHF-Voice/piper1-gpl/archive/refs/tags/v$env:PIPER1_VERSION.tar.gz" -OutFile "$root/p1.tgz"
+          tar -xzf "$root/p1.tgz" -C $root
+          Set-Location "$root/piper1-gpl-$env:PIPER1_VERSION/libpiper"
+          cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$PWD/install"
+          cmake --build build --config Release
+          cmake --install build --config Release
+          $dest = "$env:GITHUB_WORKSPACE/src-tauri/piper"
+          Get-ChildItem -Recurse install -Filter piper_exe.exe | Select-Object -First 1 | Copy-Item -Destination "$dest/piper_exe.exe" -Force
+          Get-ChildItem -Recurse install -Filter *.dll | Copy-Item -Destination $dest -Force
+          $data = Get-ChildItem -Recurse -Directory install -Filter espeak-ng-data | Select-Object -First 1
+          Copy-Item $data.FullName -Destination "$dest/espeak-ng-data" -Recurse -Force
 
-      - name: Bundle Piper engine (macOS, universal + signed)
+      - name: Build Piper engine (macOS, arm64 + signed)
         if: matrix.platform == 'macos-latest'
         env:
-          PIPER_VERSION: "2023.11.14-2"
+          PIPER1_VERSION: "1.7.0"
           APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
           APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
           APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
         run: |
           set -euo pipefail
-          # rhasspy/piper never shipped a native arm64 macOS build (both the
-          # aarch64 and x64 archives contain the same x86_64 binaries), so we
-          # bundle x86_64 — native on Intel, Rosetta 2 on Apple Silicon.
-          url="https://github.com/rhasspy/piper/releases/download/${PIPER_VERSION}/piper_macos_x64.tar.gz"
-          tmp="$(mktemp -d)"
-          curl -fsSL "$url" | tar xz -C "$tmp"
-          find "$tmp" -type d -name '*.dSYM' -exec rm -rf {} + || true
+          # Native arm64 build (macos-latest is Apple Silicon). The app bundle is
+          # universal, so TTS runs natively on Apple Silicon and is unavailable on
+          # Intel Macs.
           dest="$PWD/src-tauri/piper"
-          cp -R "$tmp/piper/." "$dest/"
-          chmod +x "$dest/piper"
+          src="$(mktemp -d)"
+          curl -fsSL "https://github.com/OHF-Voice/piper1-gpl/archive/refs/tags/v${PIPER1_VERSION}.tar.gz" | tar xz -C "$src"
+          cd "$src/piper1-gpl-${PIPER1_VERSION}/libpiper"
+          cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$PWD/install" -DCMAKE_OSX_ARCHITECTURES=arm64
+          cmake --build build --config Release
+          cmake --install build
+          find install -name 'piper_exe' -type f -exec cp {} "$dest/piper_exe" \;
+          find install \( -name 'libpiper.dylib' -o -name 'libonnxruntime*.dylib' \) -exec cp -a {} "$dest/" \;
+          cp -R "$(find install -type d -name espeak-ng-data | head -1)" "$dest/espeak-ng-data"
+          chmod +x "$dest/piper_exe"
+          # Both piper_exe and libpiper reference their dylibs via @rpath; add
+          # loader-relative rpaths so they resolve to the folder they sit in.
+          install_name_tool -add_rpath @executable_path "$dest/piper_exe" 2>/dev/null || true
+          find "$dest" -name 'libpiper.dylib' -exec install_name_tool -add_rpath @loader_path {} \; 2>/dev/null || true
 
           # Developer-ID sign the nested binaries so the notarized app bundle passes.
           keychain="$RUNNER_TEMP/piper-signing.keychain-db"
@@ -132,11 +159,9 @@ jobs:
             codesign --force --options runtime --timestamp \
               --keychain "$keychain" --sign "$APPLE_SIGNING_IDENTITY" "$1"
           }
-          find "$dest" -type f \( -name '*.dylib' -o -name '*.so' -o -name '*.so.*' \) -print0 |
+          find "$dest" -type f -name '*.dylib' -print0 |
             while IFS= read -r -d '' lib; do sign "$lib"; done
-          for exe in piper piper_phonemize espeak-ng; do
-            [ -f "$dest/$exe" ] && sign "$dest/$exe"
-          done
+          sign "$dest/piper_exe"
           # Restore the original search list and drop our keychain.
           security list-keychains -d user -s $orig_keychains
           security delete-keychain "$keychain" || true

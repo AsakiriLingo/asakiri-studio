@@ -30,7 +30,7 @@ fn piper_dir(app: &tauri::AppHandle) -> Result<PathBuf, String> {
 }
 
 fn piper_binary(app: &tauri::AppHandle) -> Result<PathBuf, String> {
-    let name = if cfg!(windows) { "piper.exe" } else { "piper" };
+    let name = if cfg!(windows) { "piper_exe.exe" } else { "piper_exe" };
     let binary = piper_dir(app)?.join(name);
     if !binary.exists() {
         return Err("piperMissing".to_string());
