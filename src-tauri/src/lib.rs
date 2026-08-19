@@ -35,6 +35,7 @@ pub fn run() {
             media::read_document,
             tts::list_tts_voices,
             tts::synthesize_tts,
+            tts::preview_tts,
             tts::list_available_voices,
             tts::download_voice,
             tts::remove_voice
