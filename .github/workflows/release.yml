@@ -102,25 +102,15 @@ jobs:
           APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
         run: |
           set -euo pipefail
-          base="https://github.com/rhasspy/piper/releases/download/${PIPER_VERSION}"
-          arm="$(mktemp -d)"
-          x64="$(mktemp -d)"
-          curl -fsSL "$base/piper_macos_aarch64.tar.gz" | tar xz -C "$arm"
-          curl -fsSL "$base/piper_macos_x64.tar.gz" | tar xz -C "$x64"
-          find "$arm" "$x64" -type d -name '*.dSYM' -exec rm -rf {} + || true
+          # rhasspy/piper never shipped a native arm64 macOS build (both the
+          # aarch64 and x64 archives contain the same x86_64 binaries), so we
+          # bundle x86_64 — native on Intel, Rosetta 2 on Apple Silicon.
+          url="https://github.com/rhasspy/piper/releases/download/${PIPER_VERSION}/piper_macos_x64.tar.gz"
+          tmp="$(mktemp -d)"
+          curl -fsSL "$url" | tar xz -C "$tmp"
+          find "$tmp" -type d -name '*.dSYM' -exec rm -rf {} + || true
           dest="$PWD/src-tauri/piper"
-          (
-            cd "$arm/piper"
-            find . -type d -mindepth 1 -exec mkdir -p "$dest/{}" \;
-            find . -type f -print0 | while IFS= read -r -d '' f; do
-              mkdir -p "$dest/$(dirname "$f")"
-              if file -b "$f" | grep -q 'Mach-O' && [ -f "$x64/piper/$f" ]; then
-                lipo -create "$f" "$x64/piper/$f" -output "$dest/$f"
-              else
-                cp -p "$f" "$dest/$f"
-              fi
-            done
-          )
+          cp -R "$tmp/piper/." "$dest/"
           chmod +x "$dest/piper"
 
           # Developer-ID sign the nested binaries so the notarized app bundle passes.

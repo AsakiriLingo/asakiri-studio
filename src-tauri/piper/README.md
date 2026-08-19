@@ -25,9 +25,15 @@ catalog (`rhasspy/piper-voices` on HuggingFace) are unchanged across both.
 
 The release workflow (`.github/workflows/release.yml`) downloads and extracts the
 matching archive from `https://github.com/rhasspy/piper/releases/tag/2023.11.14-2`
-into this folder before the Tauri build. On macOS it `lipo`s the x64 + arm64
-binaries into a universal one and Developer-ID signs the nested binaries so the
-notarized app bundle passes.
+into this folder before the Tauri build, and Developer-ID signs the nested
+binaries on macOS so the notarized app bundle passes.
+
+**macOS is x86_64 only.** `rhasspy/piper` never shipped a native arm64 macOS
+build — its `aarch64` archive actually contains the same x86_64 binaries as the
+`x64` one — so the bundled engine is x86_64: native on Intel, and run under
+**Rosetta 2** on Apple Silicon. TTS on Apple Silicon therefore needs Rosetta
+installed. A native arm64 engine would require the `piper1-gpl` (Python)
+migration or building Piper from source.
 
 For a local build, do the same by hand:
 
