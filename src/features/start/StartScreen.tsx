@@ -1,6 +1,6 @@
 import type { AvailableUpdate } from "@core/app-update";
 import type { RecentProject } from "@core/projects";
-import { localeOptions, useLocale, useMessages } from "@shared/i18n";
+import { localeOptions, useLocale, useFormat, useMessages } from "@shared/i18n";
 import type { Locale } from "@shared/i18n";
 import { useConfirm } from "@shared/components/confirm-dialog";
 import { Icon } from "@shared/components/icon";
@@ -43,6 +43,7 @@ export function StartScreen({
   onSelectLocale,
 }: StartScreenProps) {
   const messages = useMessages();
+  const format = useFormat();
   const confirm = useConfirm();
   const locale = useLocale();
   const t = messages.update;
@@ -51,7 +52,7 @@ export function StartScreen({
   const reviewUpdate = async () => {
     if (!update || updateInstalling) return;
     const ok = await confirm({
-      title: t.dialogTitle(update.version),
+      title: format(t.dialogTitle, { version: update.version }),
       description: update.notes.trim() === "" ? t.noNotes : update.notes,
       confirmLabel: t.installRestart,
     });

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { ChoiceOption, MatchPairsExercise, RenderFragment } from "@core/course";
 import type { RichEditorLibrary } from "@shared/components/rich-editor";
-import { useMessages } from "@shared/i18n";
+import { useFormat, useMessages } from "@shared/i18n";
 import { Button } from "@shared/components/button";
 import { Icon } from "@shared/components/icon";
 import { IconButton } from "@shared/components/icon-button";
@@ -26,6 +26,7 @@ export interface MatchPairsEditorProps {
 
 export function MatchPairsEditor({ exercise, library, onChange }: MatchPairsEditorProps) {
   const messages = useMessages();
+  const format = useFormat();
   const t = messages.lesson;
   const te = t.exercise;
   const [ex, setEx] = useState<MatchPairsExercise>(exercise);
@@ -99,7 +100,7 @@ export function MatchPairsEditor({ exercise, library, onChange }: MatchPairsEdit
               <div className={styles.matchPairHead}>
                 <span className={styles.optionIndex}>{index + 1}</span>
                 <IconButton
-                  aria-label={te.removePair(String(index + 1))}
+                  aria-label={format(te.removePair, { pair: index + 1 })}
                   size="sm"
                   onClick={() => {
                     removePair(pair.leftId, pair.rightId);

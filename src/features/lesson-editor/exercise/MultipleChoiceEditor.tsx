@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { MultipleChoiceExercise, RenderFragment } from "@core/course";
 import type { RichEditorLibrary } from "@shared/components/rich-editor";
-import { useMessages } from "@shared/i18n";
+import { useFormat, useMessages } from "@shared/i18n";
 import { Button } from "@shared/components/button";
 import { Icon } from "@shared/components/icon";
 import { IconButton } from "@shared/components/icon-button";
@@ -34,6 +34,7 @@ export function MultipleChoiceEditor({
   optionSource,
 }: MultipleChoiceEditorProps) {
   const messages = useMessages();
+  const format = useFormat();
   const t = messages.lesson;
   const te = t.exercise;
   const [ex, setEx] = useState<MultipleChoiceExercise>(exercise);
@@ -140,7 +141,7 @@ export function MultipleChoiceEditor({
                 defaultSource={optionSource}
               />
               <Select
-                aria-label={te.answerRoleFor(optionLetter(index))}
+                aria-label={format(te.answerRoleFor, { option: optionLetter(index) })}
                 className={styles.optionRole}
                 value={isCorrect(option.id) ? "correct" : "distractor"}
                 onValueChange={(role) => {
@@ -152,7 +153,7 @@ export function MultipleChoiceEditor({
                 ]}
               />
               <IconButton
-                aria-label={te.removeOption(optionLetter(index))}
+                aria-label={format(te.removeOption, { option: optionLetter(index) })}
                 size="sm"
                 onClick={() => {
                   removeOption(option.id);

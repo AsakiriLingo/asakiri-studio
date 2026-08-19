@@ -50,9 +50,10 @@ in the pull request and explain why.
   product-agnostic. A feature may not import another feature. `pnpm check:boundaries`
   enforces this, so read [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) first.
 - **Strict TypeScript.** No `any`, no blanket assertions, no disabled checks.
-- **All user-facing text is localized.** Add strings to both `src/shared/i18n/en.ts` and
-  `ja.ts`. The English catalog defines the contract, so a missing Japanese string is a type
-  error.
+- **All user-facing text is localized.** Add strings to `src/shared/i18n/en.json` and to
+  every other locale catalog beside it. The English catalog defines the contract, so a
+  missing translation is a type error. Parameterized messages use ICU-style `{placeholder}`
+  syntax and are rendered with `useFormat()`.
 - **Accessibility.** Keyboard access, visible focus, semantic HTML, and reduced-motion
   behavior are requirements. Build interactive behavior on Base UI rather than hand-rolling
   it.

@@ -17,6 +17,7 @@ dist-ssr
 
 # Apple signing / notarization secrets
 *.p8
+lokalise.yml
 .backups/
 converted-courses/
 

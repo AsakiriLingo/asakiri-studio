@@ -11,7 +11,7 @@ import {
   type RowData,
   type SortingState,
 } from "@tanstack/react-table";
-import { useMessages } from "@shared/i18n";
+import { useFormat, useMessages } from "@shared/i18n";
 import { Button } from "@shared/components/button";
 import { Icon } from "@shared/components/icon";
 import { TextInput } from "@shared/components/form";
@@ -117,6 +117,7 @@ function DataTableInner<TData>({
   onEditCell,
 }: DataTableProps<TData>) {
   const messages = useMessages();
+  const format = useFormat();
   const [globalFilter, setGlobalFilter] = useState("");
   const [sorting, setSorting] = useState<SortingState>([]);
   const rows = useMemo(() => [...data], [data]);
@@ -186,7 +187,7 @@ function DataTableInner<TData>({
                     <button
                       type="button"
                       className={styles.sortHeader}
-                      aria-label={messages.common.sortBy(label)}
+                      aria-label={format(messages.common.sortBy, { column: label })}
                       onClick={header.column.getToggleSortingHandler()}
                     >
                       {content}
@@ -233,7 +234,10 @@ function DataTableInner<TData>({
       {pageCount > 1 ? (
         <div className={styles.pagination}>
           <span className={styles.pageInfo}>
-            {messages.common.pageOf(table.getState().pagination.pageIndex + 1, pageCount)}
+            {format(messages.common.pageOf, {
+              current: table.getState().pagination.pageIndex + 1,
+              total: pageCount,
+            })}
           </span>
           <span className={styles.pageControls}>
             <Button

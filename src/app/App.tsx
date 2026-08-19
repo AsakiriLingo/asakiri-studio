@@ -19,7 +19,14 @@ import type { ProjectReadErrorCode } from "@core/project-reading";
 import type { GitStatus } from "@core/project-system";
 import type { ProjectWriteResult } from "@core/project-writing";
 import { createProjectSession, type ProjectDirectory, type RecentProject } from "@core/projects";
-import { I18nProvider, getMessages, useMessages, type Locale } from "@shared/i18n";
+import {
+  I18nProvider,
+  LOCALES,
+  formatMessage,
+  getMessages,
+  useMessages,
+  type Locale,
+} from "@shared/i18n";
 import { ConfirmProvider } from "@shared/components/confirm-dialog";
 import { StartScreen } from "@features/start";
 import { NewCourseDialog } from "@features/new-course";
@@ -45,8 +52,10 @@ function initialDark(): boolean {
 
 function initialLocale(): Locale {
   const saved = localStorage.getItem("asakiri-locale");
-  if (saved === "en" || saved === "ja") return saved;
-  return navigator.language.toLowerCase().startsWith("ja") ? "ja" : "en";
+  const stored = LOCALES.find((locale) => locale === saved);
+  if (stored) return stored;
+  const language = navigator.language.toLowerCase();
+  return LOCALES.find((locale) => language.startsWith(locale)) ?? "en";
 }
 
 const PATREON_URL = "https://www.patreon.com/asakiri";
@@ -227,7 +236,9 @@ export function App() {
     }
     const unit: OutlineSection = {
       id: `unit_${crypto.randomUUID()}`,
-      title: messages.structure.defaultUnitTitle(courseState.course.outline.length + 1),
+      title: formatMessage(locale, messages.structure.defaultUnitTitle, {
+        order: courseState.course.outline.length + 1,
+      }),
       lessonIds: [],
     };
     const nextOutline = [...courseState.course.outline, unit];
@@ -291,7 +302,9 @@ export function App() {
     const lessonPath = `lessons/${lessonId}/lesson.json`;
     const lesson: Lesson = {
       id: lessonId,
-      title: messages.structure.defaultLessonTitle(unit.lessonIds.length + 1),
+      title: formatMessage(locale, messages.structure.defaultLessonTitle, {
+        order: unit.lessonIds.length + 1,
+      }),
       parts: [],
     };
     const nextOutline = courseState.course.outline.map((section) =>
@@ -917,7 +930,9 @@ export function App() {
     }
     const partId = `part_${crypto.randomUUID()}`;
     const lessonDir = lessonPath.split("/").slice(0, -1).join("/");
-    const title = messages.lesson.defaultPartTitle(lesson.parts.length + 1);
+    const title = formatMessage(locale, messages.lesson.defaultPartTitle, {
+      order: lesson.parts.length + 1,
+    });
     const session = createProjectSession(project);
 
     let bodyPath: string;

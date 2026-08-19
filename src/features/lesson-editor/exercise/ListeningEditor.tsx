@@ -6,7 +6,7 @@ import type {
   TypedAnswerEvaluation,
 } from "@core/course";
 import type { RichEditorLibrary } from "@shared/components/rich-editor";
-import { useMessages } from "@shared/i18n";
+import { useFormat, useMessages } from "@shared/i18n";
 import { Button } from "@shared/components/button";
 import { Icon } from "@shared/components/icon";
 import { IconButton } from "@shared/components/icon-button";
@@ -29,6 +29,7 @@ export interface ListeningEditorProps {
 
 export function ListeningEditor({ exercise, library, onChange }: ListeningEditorProps) {
   const messages = useMessages();
+  const format = useFormat();
   const t = messages.lesson;
   const te = t.exercise;
   const [ex, setEx] = useState<ListeningExercise>(exercise);
@@ -188,7 +189,7 @@ export function ListeningEditor({ exercise, library, onChange }: ListeningEditor
                   ariaLabel={te.optionContent}
                 />
                 <Select
-                  aria-label={te.answerRoleFor(optionLetter(index))}
+                  aria-label={format(te.answerRoleFor, { option: optionLetter(index) })}
                   className={styles.optionRole}
                   value={isCorrect(option.id) ? "correct" : "distractor"}
                   onValueChange={(role) => {
@@ -200,7 +201,7 @@ export function ListeningEditor({ exercise, library, onChange }: ListeningEditor
                   ]}
                 />
                 <IconButton
-                  aria-label={te.removeOption(optionLetter(index))}
+                  aria-label={format(te.removeOption, { option: optionLetter(index) })}
                   size="sm"
                   onClick={() => {
                     removeOption(option.id);

@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import type { Collection, ContentRecord } from "@core/course";
 import type { DocumentTable } from "@core/documents";
 import type { ProjectWriteResult } from "@core/project-writing";
-import { useMessages } from "@shared/i18n";
+import { useFormat, useMessages } from "@shared/i18n";
 import { Button } from "@shared/components/button";
 import { Field, TextInput } from "@shared/components/form";
 import { Select } from "@shared/components/select";
@@ -59,6 +59,7 @@ export function SpreadsheetImport({
 }: SpreadsheetImportProps) {
   const messages = useMessages();
   const t = messages.importer;
+  const format = useFormat();
 
   const [tableIndex, setTableIndex] = useState(0);
   const table = useMemo(
@@ -163,7 +164,9 @@ export function SpreadsheetImport({
       >
         <div className={styles.header}>
           <h2 className={styles.title}>{t.title}</h2>
-          <p className={styles.source}>{t.source(fileName, table.rows.length)}</p>
+          <p className={styles.source}>
+            {format(t.source, { file: fileName, rows: table.rows.length })}
+          </p>
         </div>
 
         {busy ? (
@@ -172,7 +175,7 @@ export function SpreadsheetImport({
               value={written}
               max={Math.max(total, 1)}
               label={t.importing}
-              detail={t.progressDetail(written, total)}
+              detail={format(t.progressDetail, { written, total })}
             />
             <p className={styles.runningNote}>{t.progressNote}</p>
           </div>
@@ -183,7 +186,7 @@ export function SpreadsheetImport({
                 <Select
                   items={tables.map((entry, index) => ({
                     value: String(index),
-                    label: t.tableOption(index + 1, entry.rows.length),
+                    label: format(t.tableOption, { index: index + 1, rows: entry.rows.length }),
                   }))}
                   value={String(tableIndex)}
                   onValueChange={(value) => {
@@ -248,7 +251,7 @@ export function SpreadsheetImport({
                         </td>
                         <td>
                           <Select
-                            aria-label={t.fieldFor(column.header)}
+                            aria-label={format(t.fieldFor, { column: column.header })}
                             items={[
                               { value: SKIP, label: t.skipColumn },
                               { value: NEW_COLLECTION, label: t.newField },
@@ -279,7 +282,7 @@ export function SpreadsheetImport({
                         <td>
                           {column.target.kind === "new" ? (
                             <Select
-                              aria-label={t.localeFor(column.header)}
+                              aria-label={format(t.localeFor, { column: column.header })}
                               items={[
                                 { value: NO_LOCALE, label: t.noLocale },
                                 ...locales.map((locale) => ({ value: locale, label: locale })),
@@ -312,17 +315,21 @@ export function SpreadsheetImport({
             </RadioChoices>
 
             <div className={styles.summary} role="status">
-              <span>{t.summaryCreated(plan.created.length)}</span>
-              <span>{t.summaryUpdated(plan.updated.length)}</span>
-              {plan.unchanged > 0 ? <span>{t.summaryUnchanged(plan.unchanged)}</span> : null}
+              <span>{format(t.summaryCreated, { count: plan.created.length })}</span>
+              <span>{format(t.summaryUpdated, { count: plan.updated.length })}</span>
+              {plan.unchanged > 0 ? (
+                <span>{format(t.summaryUnchanged, { count: plan.unchanged })}</span>
+              ) : null}
               {plan.skipped.length > 0 ? (
-                <span className={styles.skipped}>{t.summarySkipped(plan.skipped.length)}</span>
+                <span className={styles.skipped}>
+                  {format(t.summarySkipped, { count: plan.skipped.length })}
+                </span>
               ) : null}
             </div>
 
             {mapping.keyColumn === null ? <Status tone="warning">{t.noKeyWarning}</Status> : null}
             {phase === "failed" ? (
-              <Status tone="warning">{t.importFailed(written, total)}</Status>
+              <Status tone="warning">{format(t.importFailed, { written, total })}</Status>
             ) : null}
           </div>
         )}

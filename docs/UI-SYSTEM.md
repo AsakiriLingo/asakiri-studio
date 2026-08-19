@@ -37,16 +37,16 @@ The inline bootstrap in `index.html` resolves the theme before React loads to av
 
 ## Localization
 
-Localization is strict and feature-owned:
+Localization is strict and catalog-driven:
 
-1. A feature exports its complete message contract from its public API.
-2. App-level English and Japanese catalogs must satisfy that contract at compile time.
-3. The app injects the localized feature messages as a single feature dependency.
+1. All user-facing text lives in per-language JSON catalogs under `src/shared/i18n` (`en.json`, `es.json`, `it.json`, `pt.json`, `ru.json`, `ja.json`).
+2. English is the source of truth: `StudioMessages` is derived from `en.json`, and every other catalog must satisfy it at compile time.
+3. Components read text with `useMessages()`. Parameterized messages use ICU-style `{placeholder}` syntax, including `{count, plural, ...}` forms, and are rendered with `useFormat()` inside components or `formatMessage(locale, ...)` elsewhere.
 4. Platform adapters return typed error codes instead of user-facing error strings.
 5. Native dialog labels are passed into platform ports from the localized feature.
 
-Each supported language has its own catalog module under `src/app/localization/locales/`. The locale registry in that directory's `index.ts` is the only place that combines catalogs, and every catalog must independently satisfy `AppMessages`.
+Catalogs are translated in Lokalise. `pnpm i18n:push` uploads `en.json`; `pnpm i18n:pull` downloads every language back into `src/shared/i18n`. Both read the API token and project id from `lokalise.yml`, which is gitignored; copy the format from the Lokalise CLI docs and never commit it. `src/shared/i18n/catalog.test.ts` fails when catalogs disagree on keys or placeholders.
 
 Do not place user-facing text in feature components, hooks, platform adapters, or error objects. Brand names and non-verbal symbols are the only normal exceptions.
 
-When adding a message, update the feature contract and every catalog in the same change. `pnpm typecheck` must fail when a locale is incomplete.
+When adding a message, update every catalog in the same change. `pnpm typecheck` must fail when a locale is incomplete.

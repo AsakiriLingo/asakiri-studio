@@ -6,7 +6,7 @@ import type {
   SearchPage,
 } from "@core/media-search";
 import type { ProjectWriteResult } from "@core/project-writing";
-import { useMessages } from "@shared/i18n";
+import { useFormat, useMessages } from "@shared/i18n";
 import { Button } from "@shared/components/button";
 import { Icon } from "@shared/components/icon";
 import { IconButton } from "@shared/components/icon-button";
@@ -56,6 +56,7 @@ export function MediaSearchDialog({
   onAddRemoteMedia,
 }: MediaSearchDialogProps) {
   const messages = useMessages();
+  const format = useFormat();
   const t = messages.media;
 
   const [query, setQuery] = useState("");
@@ -241,7 +242,7 @@ export function MediaSearchDialog({
                         </div>
                         <figcaption className={styles.caption}>
                           <span className={styles.audioText}>
-                            {t.byAuthor(item.attribution.author)}
+                            {format(t.byAuthor, { name: item.attribution.author })}
                           </span>
                           <span className={styles.audioLang}>{item.attribution.license}</span>
                         </figcaption>
@@ -264,12 +265,18 @@ export function MediaSearchDialog({
                             onToggle={(next) => {
                               setPlayingId(next ? item.id : null);
                             }}
-                            label={playingId === item.id ? t.stop(item.text) : t.play(item.text)}
+                            label={
+                              playingId === item.id
+                                ? format(t.stop, { name: item.text })
+                                : format(t.play, { name: item.text })
+                            }
                           />
                         </div>
                         <figcaption className={styles.caption} title={item.text}>
                           <span className={styles.audioText}>{item.text}</span>
-                          <span className={styles.audioLang}>{t.resultLang(item.lang)}</span>
+                          <span className={styles.audioLang}>
+                            {format(t.resultLang, { lang: item.lang })}
+                          </span>
                         </figcaption>
                         <AddButton
                           added={added[item.id]}

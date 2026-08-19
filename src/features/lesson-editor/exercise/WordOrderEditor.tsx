@@ -18,7 +18,7 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import type { ChoiceOption, RenderFragment, WordOrderExercise } from "@core/course";
 import type { RichEditorLibrary } from "@shared/components/rich-editor";
-import { useMessages } from "@shared/i18n";
+import { useFormat, useMessages } from "@shared/i18n";
 import { Button } from "@shared/components/button";
 import { Icon } from "@shared/components/icon";
 import { IconButton } from "@shared/components/icon-button";
@@ -46,6 +46,7 @@ function SortableTokenRow({
   readonly onRemove: () => void;
 }) {
   const messages = useMessages();
+  const format = useFormat();
   const te = messages.lesson.exercise;
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: token.id,
@@ -61,7 +62,7 @@ function SortableTokenRow({
       <button
         type="button"
         className={styles.reorderHandle}
-        aria-label={messages.common.reorder(String(index + 1))}
+        aria-label={format(messages.common.reorder, { label: index + 1 })}
         {...attributes}
         {...listeners}
       >
@@ -75,7 +76,11 @@ function SortableTokenRow({
         onChange={onChange}
         ariaLabel={te.tokenContent}
       />
-      <IconButton aria-label={te.removeToken(String(index + 1))} size="sm" onClick={onRemove}>
+      <IconButton
+        aria-label={format(te.removeToken, { token: index + 1 })}
+        size="sm"
+        onClick={onRemove}
+      >
         <Icon name="close" size={18} />
       </IconButton>
     </div>
@@ -90,6 +95,7 @@ export interface WordOrderEditorProps {
 
 export function WordOrderEditor({ exercise, library, onChange }: WordOrderEditorProps) {
   const messages = useMessages();
+  const format = useFormat();
   const t = messages.lesson;
   const te = t.exercise;
   const [ex, setEx] = useState<WordOrderExercise>(exercise);
@@ -228,7 +234,7 @@ export function WordOrderEditor({ exercise, library, onChange }: WordOrderEditor
                 ariaLabel={te.distractorContent}
               />
               <IconButton
-                aria-label={te.removeDistractor(String(index + 1))}
+                aria-label={format(te.removeDistractor, { token: index + 1 })}
                 size="sm"
                 onClick={() => {
                   removeDistractor(token.id);

@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import type { Course } from "@core/course";
 import type { ProjectWriteResult } from "@core/project-writing";
-import { useMessages } from "@shared/i18n";
+import { useFormat, useMessages } from "@shared/i18n";
 import { Button } from "@shared/components/button";
 import { Icon } from "@shared/components/icon";
 import { Status } from "@shared/components/status";
@@ -20,6 +20,7 @@ export interface CourseAttributionProps {
 
 export function CourseAttribution({ course, onSaveAttribution }: CourseAttributionProps) {
   const messages = useMessages();
+  const format = useFormat();
   const t = messages.attribution;
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "failed">("idle");
 
@@ -59,7 +60,7 @@ export function CourseAttribution({ course, onSaveAttribution }: CourseAttributi
         <PanelHeader
           title={t.title}
           titleId="attribution-title"
-          description={t.count(entries.length)}
+          description={format(t.count, { count: entries.length })}
           actions={status}
         />
 
@@ -81,7 +82,7 @@ export function CourseAttribution({ course, onSaveAttribution }: CourseAttributi
                     <td className={styles.file}>{entry.file}</td>
                     <td>
                       <span className={styles.credit}>
-                        {entry.author ? t.by(entry.author) : entry.provider}
+                        {entry.author ? format(t.by, { author: entry.author }) : entry.provider}
                       </span>
                       {entry.author ? (
                         <span className={styles.provider}>{entry.provider}</span>
