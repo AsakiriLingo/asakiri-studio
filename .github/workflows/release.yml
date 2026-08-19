@@ -116,9 +116,14 @@ jobs:
           # Developer-ID sign the nested binaries so the notarized app bundle passes.
           keychain="$RUNNER_TEMP/piper-signing.keychain-db"
           keychain_password="$(openssl rand -base64 24)"
+          # Remember the current search list so we can restore it (and not clash
+          # with tauri-action's own signing keychain afterward).
+          orig_keychains="$(security list-keychains -d user | sed -e 's/^[[:space:]]*//' -e 's/"//g')"
           security create-keychain -p "$keychain_password" "$keychain"
           security set-keychain-settings -lut 21600 "$keychain"
           security unlock-keychain -p "$keychain_password" "$keychain"
+          # codesign looks up the identity via the search list, so add our keychain to it.
+          security list-keychains -d user -s "$keychain" $orig_keychains
           printf '%s' "$APPLE_CERTIFICATE" | base64 --decode > "$RUNNER_TEMP/piper-cert.p12"
           security import "$RUNNER_TEMP/piper-cert.p12" -k "$keychain" -P "$APPLE_CERTIFICATE_PASSWORD" -T /usr/bin/codesign
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$keychain_password" "$keychain" >/dev/null
@@ -132,6 +137,8 @@ jobs:
           for exe in piper piper_phonemize espeak-ng; do
             [ -f "$dest/$exe" ] && sign "$dest/$exe"
           done
+          # Restore the original search list and drop our keychain.
+          security list-keychains -d user -s $orig_keychains
           security delete-keychain "$keychain" || true
 
       - name: Write notarization API key
