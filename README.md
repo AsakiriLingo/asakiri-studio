@@ -2,6 +2,28 @@
 
 A local-first course editor for the desktop, built with React, TypeScript, Vite, and Tauri. The React frontend runs inside the Tauri desktop shell; local filesystem behavior is supplied by Tauri adapters kept behind ports.
 
+## Screenshots
+
+Structure the whole course. Group lessons into units and arrange each lesson's parts by dragging.
+
+![Asakiri Studio showing a Beginner Italian course outline with units and lessons.](docs/screenshots/studio-course-structure.webp)
+
+Write lessons with a live preview. A focused editor for rich text and references, with a learner preview beside every part.
+
+![The Asakiri Studio lesson editor with a rich text part and a learner preview panel.](docs/screenshots/studio-lesson-editor.webp)
+
+Build exercises that check themselves. Multiple choice, listening, matching, word order, and more, each previewing as you edit.
+
+![A multiple choice exercise being edited in Asakiri Studio with answer options and a preview.](docs/screenshots/studio-exercise-editor.webp)
+
+Reuse content everywhere. Keep vocabulary and phrases in collections, then pull the same entries into any lesson, media block, or exercise.
+
+![The Asakiri Studio content library listing Italian vocabulary with images and tags.](docs/screenshots/studio-content-library.webp)
+
+Bring in real media. Search Unsplash photos and Tatoeba audio, record your own, or import files. Everything stays local to your project.
+
+![The Asakiri Studio media library with photos and audio clips and an add media menu open.](docs/screenshots/studio-media-library.webp)
+
 ## Commands
 
 ```bash
