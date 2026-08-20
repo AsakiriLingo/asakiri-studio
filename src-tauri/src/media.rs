@@ -20,7 +20,7 @@ fn host_allowed(url: &str) -> bool {
         return false;
     };
     let host = rest.split(['/', '?', '#']).next().unwrap_or("");
-    ALLOWED_HOSTS.iter().any(|allowed| host == *allowed)
+    ALLOWED_HOSTS.contains(&host)
 }
 
 fn unique_stamp() -> u128 {

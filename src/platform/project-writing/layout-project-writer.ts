@@ -112,6 +112,17 @@ function dirOf(filePath: string): string {
   return filePath.split("/").slice(0, -1).join("/");
 }
 
+async function discardFiles(files: ProjectFileAccess, paths: readonly string[]): Promise<void> {
+  for (const path of paths) {
+    await files.deleteFile(path).catch(() => undefined);
+  }
+}
+
+async function discardDir(files: ProjectFileAccess, dir: string): Promise<void> {
+  if (dir === "") return;
+  await files.removeDir(dir).catch(() => undefined);
+}
+
 function stampContents(contents: string): string {
   try {
     const parsed: unknown = JSON.parse(contents);
@@ -395,8 +406,13 @@ export function createLayoutProjectWriter(resolveRaw: ResolveProjectFileAccess):
 
       try {
         await files.writeTextFile(bodyPath, `${JSON.stringify(document, null, 2)}\n`);
+      } catch {
+        return { status: "failed", code: "unknown" };
+      }
+      try {
         const parsed: unknown = JSON.parse(await files.readTextFile(lessonPath));
         if (!isRecord(parsed)) {
+          await discardDir(files, dirOf(bodyPath));
           return { status: "failed", code: "unknown" };
         }
         const existing = Array.isArray(parsed.parts) ? (parsed.parts as unknown[]) : [];
@@ -409,6 +425,7 @@ export function createLayoutProjectWriter(resolveRaw: ResolveProjectFileAccess):
         await files.writeTextFile(lessonPath, `${JSON.stringify(next, null, 2)}\n`);
         return { status: "saved" };
       } catch {
+        await discardDir(files, dirOf(bodyPath));
         return { status: "failed", code: "unknown" };
       }
     },
@@ -430,8 +447,13 @@ export function createLayoutProjectWriter(resolveRaw: ResolveProjectFileAccess):
           bodyPath,
           `${JSON.stringify(serializeExercise(exercise), null, 2)}\n`,
         );
+      } catch {
+        return { status: "failed", code: "unknown" };
+      }
+      try {
         const parsed: unknown = JSON.parse(await files.readTextFile(lessonPath));
         if (!isRecord(parsed)) {
+          await discardDir(files, dirOf(bodyPath));
           return { status: "failed", code: "unknown" };
         }
         const existing = Array.isArray(parsed.parts) ? (parsed.parts as unknown[]) : [];
@@ -444,6 +466,7 @@ export function createLayoutProjectWriter(resolveRaw: ResolveProjectFileAccess):
         await files.writeTextFile(lessonPath, `${JSON.stringify(next, null, 2)}\n`);
         return { status: "saved" };
       } catch {
+        await discardDir(files, dirOf(bodyPath));
         return { status: "failed", code: "unknown" };
       }
     },
@@ -494,8 +517,13 @@ export function createLayoutProjectWriter(resolveRaw: ResolveProjectFileAccess):
           lessonPath,
           `${JSON.stringify({ id: lesson.id, title: lesson.title, parts: [] }, null, 2)}\n`,
         );
+      } catch {
+        return { status: "failed", code: "unknown" };
+      }
+      try {
         const parsed: unknown = JSON.parse(await files.readTextFile(MANIFEST_PATH));
         if (!isRecord(parsed)) {
+          await discardDir(files, dirOf(lessonPath));
           return { status: "failed", code: "unknown" };
         }
         const lessons = [...stringArray(parsed.lessons), lessonPath];
@@ -505,6 +533,7 @@ export function createLayoutProjectWriter(resolveRaw: ResolveProjectFileAccess):
         );
         return { status: "saved" };
       } catch {
+        await discardDir(files, dirOf(lessonPath));
         return { status: "failed", code: "unknown" };
       }
     },
@@ -559,8 +588,13 @@ export function createLayoutProjectWriter(resolveRaw: ResolveProjectFileAccess):
           recordPath,
           `${JSON.stringify(serializeRecord(record), null, 2)}\n`,
         );
+      } catch {
+        return { status: "failed", code: "unknown" };
+      }
+      try {
         const parsed: unknown = JSON.parse(await files.readTextFile(collectionPath));
         if (!isRecord(parsed)) {
+          await discardFiles(files, [recordPath]);
           return { status: "failed", code: "unknown" };
         }
         const ref = relativeFromDir(collectionPath, recordPath);
@@ -571,6 +605,7 @@ export function createLayoutProjectWriter(resolveRaw: ResolveProjectFileAccess):
         );
         return { status: "saved" };
       } catch {
+        await discardFiles(files, [recordPath]);
         return { status: "failed", code: "unknown" };
       }
     },
@@ -582,15 +617,18 @@ export function createLayoutProjectWriter(resolveRaw: ResolveProjectFileAccess):
       }
       if (entries.length === 0) return { status: "saved" };
 
+      const written: string[] = [];
       try {
         for (const entry of entries) {
           await files.writeTextFile(
             entry.path,
             `${JSON.stringify(serializeRecord(entry.record), null, 2)}\n`,
           );
+          written.push(entry.path);
         }
         const parsed: unknown = JSON.parse(await files.readTextFile(collectionPath));
         if (!isRecord(parsed)) {
+          await discardFiles(files, written);
           return { status: "failed", code: "unknown" };
         }
         const recordFiles = [
@@ -603,6 +641,7 @@ export function createLayoutProjectWriter(resolveRaw: ResolveProjectFileAccess):
         );
         return { status: "saved" };
       } catch {
+        await discardFiles(files, written);
         return { status: "failed", code: "unknown" };
       }
     },
@@ -641,8 +680,13 @@ export function createLayoutProjectWriter(resolveRaw: ResolveProjectFileAccess):
           collectionPath,
           `${JSON.stringify(serializeCollection(collection, []), null, 2)}\n`,
         );
+      } catch {
+        return { status: "failed", code: "unknown" };
+      }
+      try {
         const parsed: unknown = JSON.parse(await files.readTextFile(MANIFEST_PATH));
         if (!isRecord(parsed)) {
+          await discardFiles(files, [collectionPath]);
           return { status: "failed", code: "unknown" };
         }
         const collections = [...stringArray(parsed.collections), collectionPath];
@@ -652,6 +696,7 @@ export function createLayoutProjectWriter(resolveRaw: ResolveProjectFileAccess):
         );
         return { status: "saved" };
       } catch {
+        await discardFiles(files, [collectionPath]);
         return { status: "failed", code: "unknown" };
       }
     },
@@ -714,11 +759,22 @@ export function createLayoutProjectWriter(resolveRaw: ResolveProjectFileAccess):
         return { status: "failed", code: "unavailable" };
       }
 
+      const discardImport = async () => {
+        await discardDir(files, dirOf(assetPath));
+        if (dirOf(binaryPath) !== dirOf(assetPath)) {
+          await discardFiles(files, [binaryPath]);
+        }
+      };
+
       try {
         // Copy the binary first; if that fails the manifest is never touched.
         // Images are stripped of EXIF/metadata; other kinds copy verbatim.
         if (asset.kind === "image") await files.copyImage(sourcePath, binaryPath);
         else await files.copyFile(sourcePath, binaryPath);
+      } catch {
+        return { status: "failed", code: "unknown" };
+      }
+      try {
         const digest = await files.hashFile(binaryPath).catch(() => null);
         const stamped = digest === null ? asset : { ...asset, ...digest };
         await files.writeTextFile(
@@ -727,6 +783,7 @@ export function createLayoutProjectWriter(resolveRaw: ResolveProjectFileAccess):
         );
         const parsed: unknown = JSON.parse(await files.readTextFile(MANIFEST_PATH));
         if (!isRecord(parsed)) {
+          await discardImport();
           return { status: "failed", code: "unknown" };
         }
         const assets = [...stringArray(parsed.assets), assetPath];
@@ -736,6 +793,7 @@ export function createLayoutProjectWriter(resolveRaw: ResolveProjectFileAccess):
         );
         return { status: "saved" };
       } catch {
+        await discardImport();
         return { status: "failed", code: "unknown" };
       }
     },

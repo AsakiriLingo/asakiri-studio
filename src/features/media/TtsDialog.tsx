@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { Dialog } from "@base-ui/react/dialog";
 import type { CatalogVoice, TtsSaveResult, TtsVoice } from "@core/tts";
 import { useLocale, useMessages } from "@shared/i18n";
 import { Button } from "@shared/components/button";
@@ -282,216 +283,221 @@ export function TtsDialog({
   const canPreview = !previewing && !saving && !noVoices && voice !== "" && text.trim() !== "";
 
   return (
-    <div className={styles.overlay} role="presentation" onClick={onClose}>
-      <div
-        className={styles.dialog}
-        role="dialog"
-        aria-modal="true"
-        aria-label={t.ttsTitle}
-        onClick={(event) => {
-          event.stopPropagation();
-        }}
-      >
-        <header className={styles.header}>
-          <div>
-            <h2 className={styles.title}>{mode === "manage" ? t.ttsManageVoices : t.ttsTitle}</h2>
-            <p className={styles.description}>
-              {mode === "manage" ? t.ttsManageHint : t.ttsDescription}
-            </p>
-          </div>
-          <IconButton aria-label={t.closeDialog} onClick={onClose}>
-            <Icon name="close" size={18} />
-          </IconButton>
-        </header>
-
-        <div className={styles.body}>
-          {mode === "manage" ? (
-            <>
-              <TextInput
-                type="search"
-                value={manageQuery}
-                placeholder={messages.common.searchPlaceholder}
-                aria-label={messages.common.search}
-                autoComplete="off"
-                onChange={(event) => {
-                  setManageQuery(event.currentTarget.value);
-                }}
-              />
-              {catalog === null ? (
-                <p className={styles.hint}>{t.ttsLoadingVoices}</p>
-              ) : filteredCatalog.length === 0 ? (
-                <p className={styles.hint}>
-                  {catalog.length === 0 ? t.ttsNoCatalog : messages.common.noResults}
-                </p>
-              ) : (
-                <div className={styles.voiceList}>
-                  {filteredCatalog.map((item) => {
-                    const isDownloading = busyVoice === item.id;
-                    const percent =
-                      isDownloading && progress.total > 0
-                        ? Math.round((progress.downloaded / progress.total) * 100)
-                        : null;
-                    const languageLabel = item.country
-                      ? `${item.languageEnglish} (${item.country})`
-                      : item.languageEnglish;
-                    const languageLine =
-                      item.languageNative && item.languageNative !== item.languageEnglish
-                        ? `${languageLabel} · ${item.languageNative}`
-                        : languageLabel;
-                    const detailLine = [
-                      item.languageCode,
-                      item.name,
-                      item.quality,
-                      formatSize(item.sizeBytes),
-                    ]
-                      .filter(Boolean)
-                      .join(" · ");
-                    return (
-                      <div key={item.id} className={styles.voiceRow}>
-                        <span className={styles.voiceInfo}>
-                          <span className={styles.voiceLang}>{languageLine}</span>
-                          <span className={styles.voiceSub}>{detailLine}</span>
-                          {isDownloading && percent !== null ? (
-                            <span className={styles.progressTrack}>
-                              <span
-                                className={styles.progressFill}
-                                style={{ width: `${String(percent)}%` }}
-                              />
-                            </span>
-                          ) : null}
-                        </span>
-                        <span className={styles.voiceActions}>
-                          {item.sampleUrl ? (
-                            <IconButton
-                              aria-label={t.ttsPreview}
-                              onClick={() => {
-                                toggleSample(item);
-                              }}
-                            >
-                              <Icon name={playingSample === item.id ? "stop" : "play"} size={16} />
-                            </IconButton>
-                          ) : null}
-                          {item.installed ? (
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              disabled={busyVoice === item.id}
-                              onClick={() => {
-                                remove(item.id);
-                              }}
-                            >
-                              {t.ttsRemove}
-                            </Button>
-                          ) : (
-                            <Button
-                              type="button"
-                              variant="secondary"
-                              disabled={busyVoice !== null}
-                              onClick={() => {
-                                download(item.id);
-                              }}
-                            >
-                              {isDownloading
-                                ? percent !== null
-                                  ? `${String(percent)}%`
-                                  : t.ttsDownloading
-                                : t.ttsDownload}
-                            </Button>
-                          )}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-              {downloadFailed ? <Status tone="warning">{t.ttsDownloadFailed}</Status> : null}
-            </>
-          ) : voices === null ? (
-            <p className={styles.hint}>{t.ttsLoadingVoices}</p>
-          ) : noVoices ? (
+    <Dialog.Root
+      open
+      onOpenChange={(next) => {
+        if (!next) onClose();
+      }}
+    >
+      <Dialog.Portal>
+        <Dialog.Backdrop className={styles.overlay} />
+        <Dialog.Popup className={styles.dialog}>
+          <header className={styles.header}>
             <div>
-              <p className={styles.hint}>{t.ttsNoVoices}</p>
-              <div className={styles.emptyActions}>
-                <Button type="button" onClick={openManage}>
-                  {t.ttsAddVoice}
-                </Button>
-              </div>
+              <Dialog.Title className={styles.title}>
+                {mode === "manage" ? t.ttsManageVoices : t.ttsTitle}
+              </Dialog.Title>
+              <Dialog.Description className={styles.description}>
+                {mode === "manage" ? t.ttsManageHint : t.ttsDescription}
+              </Dialog.Description>
             </div>
-          ) : (
-            <>
-              <div className={styles.row}>
-                <Field label={t.ttsLanguageLabel}>
-                  <Select
-                    items={languageOptions}
-                    value={locale}
-                    onValueChange={changeLocale}
-                    aria-label={t.ttsLanguageLabel}
-                    elevated
-                  />
-                </Field>
-                <Field label={t.ttsVoiceLabel}>
-                  <Select
-                    items={voiceOptions}
-                    value={voice}
-                    onValueChange={setVoice}
-                    aria-label={t.ttsVoiceLabel}
-                    elevated
-                  />
-                </Field>
-              </div>
-              <Field label={t.ttsTextLabel}>
-                <TextArea
-                  rows={4}
-                  value={text}
-                  placeholder={t.ttsTextPlaceholder}
+            <IconButton aria-label={t.closeDialog} onClick={onClose}>
+              <Icon name="close" size={18} />
+            </IconButton>
+          </header>
+
+          <div className={styles.body}>
+            {mode === "manage" ? (
+              <>
+                <TextInput
+                  type="search"
+                  value={manageQuery}
+                  placeholder={messages.common.searchPlaceholder}
+                  aria-label={messages.common.search}
+                  autoComplete="off"
                   onChange={(event) => {
-                    setText(event.currentTarget.value);
+                    setManageQuery(event.currentTarget.value);
                   }}
                 />
-              </Field>
-            </>
-          )}
-          {failed ? <Status tone="warning">{errorMessage ?? t.ttsFailed}</Status> : null}
-        </div>
+                {catalog === null ? (
+                  <p className={styles.hint}>{t.ttsLoadingVoices}</p>
+                ) : filteredCatalog.length === 0 ? (
+                  <p className={styles.hint}>
+                    {catalog.length === 0 ? t.ttsNoCatalog : messages.common.noResults}
+                  </p>
+                ) : (
+                  <div className={styles.voiceList}>
+                    {filteredCatalog.map((item) => {
+                      const isDownloading = busyVoice === item.id;
+                      const percent =
+                        isDownloading && progress.total > 0
+                          ? Math.round((progress.downloaded / progress.total) * 100)
+                          : null;
+                      const languageLabel = item.country
+                        ? `${item.languageEnglish} (${item.country})`
+                        : item.languageEnglish;
+                      const languageLine =
+                        item.languageNative && item.languageNative !== item.languageEnglish
+                          ? `${languageLabel} · ${item.languageNative}`
+                          : languageLabel;
+                      const detailLine = [
+                        item.languageCode,
+                        item.name,
+                        item.quality,
+                        formatSize(item.sizeBytes),
+                      ]
+                        .filter(Boolean)
+                        .join(" · ");
+                      return (
+                        <div key={item.id} className={styles.voiceRow}>
+                          <span className={styles.voiceInfo}>
+                            <span className={styles.voiceLang}>{languageLine}</span>
+                            <span className={styles.voiceSub}>{detailLine}</span>
+                            {isDownloading && percent !== null ? (
+                              <span className={styles.progressTrack}>
+                                <span
+                                  className={styles.progressFill}
+                                  style={{ width: `${String(percent)}%` }}
+                                />
+                              </span>
+                            ) : null}
+                          </span>
+                          <span className={styles.voiceActions}>
+                            {item.sampleUrl ? (
+                              <IconButton
+                                aria-label={t.ttsPreview}
+                                onClick={() => {
+                                  toggleSample(item);
+                                }}
+                              >
+                                <Icon
+                                  name={playingSample === item.id ? "stop" : "play"}
+                                  size={16}
+                                />
+                              </IconButton>
+                            ) : null}
+                            {item.installed ? (
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                disabled={busyVoice === item.id}
+                                onClick={() => {
+                                  remove(item.id);
+                                }}
+                              >
+                                {t.ttsRemove}
+                              </Button>
+                            ) : (
+                              <Button
+                                type="button"
+                                variant="secondary"
+                                disabled={busyVoice !== null}
+                                onClick={() => {
+                                  download(item.id);
+                                }}
+                              >
+                                {isDownloading
+                                  ? percent !== null
+                                    ? `${String(percent)}%`
+                                    : t.ttsDownloading
+                                  : t.ttsDownload}
+                              </Button>
+                            )}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+                {downloadFailed ? <Status tone="warning">{t.ttsDownloadFailed}</Status> : null}
+              </>
+            ) : voices === null ? (
+              <p className={styles.hint}>{t.ttsLoadingVoices}</p>
+            ) : noVoices ? (
+              <div>
+                <p className={styles.hint}>{t.ttsNoVoices}</p>
+                <div className={styles.emptyActions}>
+                  <Button type="button" onClick={openManage}>
+                    {t.ttsAddVoice}
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className={styles.row}>
+                  <Field label={t.ttsLanguageLabel}>
+                    <Select
+                      items={languageOptions}
+                      value={locale}
+                      onValueChange={changeLocale}
+                      aria-label={t.ttsLanguageLabel}
+                      elevated
+                    />
+                  </Field>
+                  <Field label={t.ttsVoiceLabel}>
+                    <Select
+                      items={voiceOptions}
+                      value={voice}
+                      onValueChange={setVoice}
+                      aria-label={t.ttsVoiceLabel}
+                      elevated
+                    />
+                  </Field>
+                </div>
+                <Field label={t.ttsTextLabel}>
+                  <TextArea
+                    rows={4}
+                    value={text}
+                    placeholder={t.ttsTextPlaceholder}
+                    onChange={(event) => {
+                      setText(event.currentTarget.value);
+                    }}
+                  />
+                </Field>
+              </>
+            )}
+            {failed ? <Status tone="warning">{errorMessage ?? t.ttsFailed}</Status> : null}
+          </div>
 
-        <footer className={styles.footer}>
-          {mode === "manage" ? (
-            <div className={styles.footerActions}>
-              <Button
-                type="button"
-                onClick={() => {
-                  stopSample();
-                  setMode("compose");
-                }}
-              >
-                {messages.common.done}
-              </Button>
-            </div>
-          ) : (
-            <>
-              {noVoices ? (
-                <span />
-              ) : (
-                <Button type="button" variant="ghost" onClick={openManage}>
-                  {t.ttsManageVoices}
-                </Button>
-              )}
+          <footer className={styles.footer}>
+            {mode === "manage" ? (
               <div className={styles.footerActions}>
-                <Button type="button" variant="ghost" disabled={!canPreview} onClick={preview}>
-                  <Icon name="play" size={18} />
-                  {previewing ? t.ttsSaving : t.ttsPreview}
-                </Button>
-                <Button type="button" variant="secondary" onClick={onClose}>
-                  {t.ttsCancel}
-                </Button>
-                <Button type="button" disabled={!canSave} onClick={save}>
-                  {saving ? t.ttsSaving : t.ttsSave}
+                <Button
+                  type="button"
+                  onClick={() => {
+                    stopSample();
+                    setMode("compose");
+                  }}
+                >
+                  {messages.common.done}
                 </Button>
               </div>
-            </>
-          )}
-        </footer>
-      </div>
-    </div>
+            ) : (
+              <>
+                {noVoices ? (
+                  <span />
+                ) : (
+                  <Button type="button" variant="ghost" onClick={openManage}>
+                    {t.ttsManageVoices}
+                  </Button>
+                )}
+                <div className={styles.footerActions}>
+                  <Button type="button" variant="ghost" disabled={!canPreview} onClick={preview}>
+                    <Icon name="play" size={18} />
+                    {previewing ? t.ttsSaving : t.ttsPreview}
+                  </Button>
+                  <Button type="button" variant="secondary" onClick={onClose}>
+                    {t.ttsCancel}
+                  </Button>
+                  <Button type="button" disabled={!canSave} onClick={save}>
+                    {saving ? t.ttsSaving : t.ttsSave}
+                  </Button>
+                </div>
+              </>
+            )}
+          </footer>
+        </Dialog.Popup>
+      </Dialog.Portal>
+    </Dialog.Root>
   );
 }

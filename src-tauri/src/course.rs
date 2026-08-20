@@ -117,12 +117,30 @@ pub fn create_course(parent_path: String, name: String) -> Result<CreatedCourse,
 }
 
 fn resolve_course_path(root_path: &str, relative_path: &str) -> Option<std::path::PathBuf> {
-    let mut target = Path::new(root_path).to_path_buf();
+    let root = Path::new(root_path);
+    let mut target = root.to_path_buf();
     for segment in relative_path.split('/') {
         if segment.is_empty() || segment == "." || segment == ".." || segment.contains('\\') {
             return None;
         }
         target.push(segment);
+    }
+
+    let Ok(canonical_root) = root.canonicalize() else {
+        return Some(target);
+    };
+    let mut probe = target.as_path();
+    while probe != root {
+        if probe.symlink_metadata().is_ok() {
+            let Ok(canonical) = probe.canonicalize() else {
+                return None;
+            };
+            if canonical.starts_with(&canonical_root) {
+                return Some(target);
+            }
+            return None;
+        }
+        probe = probe.parent()?;
     }
     Some(target)
 }
@@ -596,6 +614,95 @@ mod tests {
         assert_eq!(resolve_course_path("/courses/japanese", "a/../../b.json"), None);
         assert_eq!(resolve_course_path("/courses/japanese", "a\\b.json"), None);
         assert_eq!(resolve_course_path("/courses/japanese", ""), None);
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn rejects_a_symlinked_directory_that_escapes_the_course() {
+        let outside = std::env::temp_dir().join(format!("asakiri_outside_{}", std::process::id()));
+        let root = std::env::temp_dir().join(format!("asakiri_symdir_{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&outside);
+        let _ = std::fs::remove_dir_all(&root);
+        std::fs::create_dir_all(&outside).unwrap();
+        std::fs::create_dir_all(&root).unwrap();
+        std::os::unix::fs::symlink(&outside, root.join("media")).unwrap();
+
+        let result = write_course_file(
+            root.to_string_lossy().into_owned(),
+            "media/escape.json".to_string(),
+            "{}".to_string(),
+        );
+
+        assert_eq!(result, Err("invalidPath".to_string()));
+        assert!(!outside.join("escape.json").exists());
+
+        let _ = std::fs::remove_dir_all(&outside);
+        let _ = std::fs::remove_dir_all(&root);
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn rejects_a_symlinked_file_that_escapes_the_course() {
+        let outside_file =
+            std::env::temp_dir().join(format!("asakiri_target_{}.json", std::process::id()));
+        let root = std::env::temp_dir().join(format!("asakiri_symfile_{}", std::process::id()));
+        let _ = std::fs::remove_file(&outside_file);
+        let _ = std::fs::remove_dir_all(&root);
+        std::fs::write(&outside_file, "original").unwrap();
+        std::fs::create_dir_all(&root).unwrap();
+        std::os::unix::fs::symlink(&outside_file, root.join("project.json")).unwrap();
+
+        let result = write_course_file(
+            root.to_string_lossy().into_owned(),
+            "project.json".to_string(),
+            "{}".to_string(),
+        );
+
+        assert_eq!(result, Err("invalidPath".to_string()));
+        assert_eq!(std::fs::read_to_string(&outside_file).unwrap(), "original");
+
+        let _ = std::fs::remove_file(&outside_file);
+        let _ = std::fs::remove_dir_all(&root);
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn rejects_a_dangling_symlink_inside_the_course() {
+        let root = std::env::temp_dir().join(format!("asakiri_dangling_{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&root);
+        std::fs::create_dir_all(&root).unwrap();
+        let missing = std::env::temp_dir().join(format!("asakiri_missing_{}.json", std::process::id()));
+        let _ = std::fs::remove_file(&missing);
+        std::os::unix::fs::symlink(&missing, root.join("notes.json")).unwrap();
+
+        let result = write_course_file(
+            root.to_string_lossy().into_owned(),
+            "notes.json".to_string(),
+            "{}".to_string(),
+        );
+
+        assert_eq!(result, Err("invalidPath".to_string()));
+        assert!(!missing.exists());
+
+        let _ = std::fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn still_writes_inside_an_existing_course_directory() {
+        let root = std::env::temp_dir().join(format!("asakiri_inside_{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&root);
+        std::fs::create_dir_all(root.join("content")).unwrap();
+
+        let result = write_course_file(
+            root.to_string_lossy().into_owned(),
+            "content/records/new.json".to_string(),
+            "{}".to_string(),
+        );
+
+        assert_eq!(result, Ok(()));
+        assert!(root.join("content/records/new.json").exists());
+
+        let _ = std::fs::remove_dir_all(&root);
     }
 
     #[test]

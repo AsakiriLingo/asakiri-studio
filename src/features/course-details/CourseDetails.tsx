@@ -326,7 +326,9 @@ function FlagAssetPreview({
 export interface CourseDetailsProps {
   readonly course: Course;
   readonly location: string;
-  readonly onSaveProject: (project: CourseProject) => Promise<ProjectWriteResult>;
+  readonly onSaveProject: (
+    update: (current: CourseProject) => CourseProject,
+  ) => Promise<ProjectWriteResult>;
   readonly onRevealFolder: () => void;
   readonly onImportImage: () => Promise<Asset | null>;
   readonly onLoadAssetPreview: (assetId: string) => Promise<string | null>;
@@ -344,11 +346,13 @@ export function CourseDetails({
   const t = messages.details;
   const { project } = course;
 
-  const save = (next: CourseProject) => {
-    void onSaveProject(next);
-  };
-  const patch = (changes: Partial<CourseProject>) => {
-    save({ ...project, ...changes });
+  const patch = (
+    changes: Partial<CourseProject> | ((current: CourseProject) => Partial<CourseProject>),
+  ) => {
+    void onSaveProject((current) => ({
+      ...current,
+      ...(typeof changes === "function" ? changes(current) : changes),
+    }));
   };
   const patchField = (
     field:
@@ -452,7 +456,9 @@ export function CourseDetails({
                   onBlur={(event) => {
                     const value = event.currentTarget.value;
                     if (value !== (project.learningLocales[0] ?? "")) {
-                      patch({ learningLocales: [value, ...project.learningLocales.slice(1)] });
+                      patch((current) => ({
+                        learningLocales: [value, ...current.learningLocales.slice(1)],
+                      }));
                     }
                   }}
                 />
@@ -592,16 +598,16 @@ export function CourseDetails({
               contributor={contributor}
               messages={messages}
               onChange={(changes) => {
-                patch({
-                  contributors: project.contributors.map((item) =>
+                patch((current) => ({
+                  contributors: current.contributors.map((item) =>
                     item.id === contributor.id ? { ...item, ...changes } : item,
                   ),
-                });
+                }));
               }}
               onRemove={() => {
-                patch({
-                  contributors: project.contributors.filter((item) => item.id !== contributor.id),
-                });
+                patch((current) => ({
+                  contributors: current.contributors.filter((item) => item.id !== contributor.id),
+                }));
               }}
             />
           ))}
@@ -609,12 +615,12 @@ export function CourseDetails({
             <Button
               variant="secondary"
               onClick={() => {
-                patch({
+                patch((current) => ({
                   contributors: [
-                    ...project.contributors,
+                    ...current.contributors,
                     { id: crypto.randomUUID(), name: "", role: "author", links: [] },
                   ],
-                });
+                }));
               }}
             >
               <Icon name="plus" size={18} />
@@ -634,14 +640,16 @@ export function CourseDetails({
               entry={entry}
               messages={messages}
               onChange={(changes) => {
-                patch({
-                  funding: project.funding.map((item) =>
+                patch((current) => ({
+                  funding: current.funding.map((item) =>
                     item.id === entry.id ? { ...item, ...changes } : item,
                   ),
-                });
+                }));
               }}
               onRemove={() => {
-                patch({ funding: project.funding.filter((item) => item.id !== entry.id) });
+                patch((current) => ({
+                  funding: current.funding.filter((item) => item.id !== entry.id),
+                }));
               }}
             />
           ))}
@@ -649,12 +657,12 @@ export function CourseDetails({
             <Button
               variant="secondary"
               onClick={() => {
-                patch({
+                patch((current) => ({
                   funding: [
-                    ...project.funding,
+                    ...current.funding,
                     { id: crypto.randomUUID(), platform: "githubSponsors", url: "" },
                   ],
-                });
+                }));
               }}
             >
               <Icon name="plus" size={18} />
@@ -674,14 +682,16 @@ export function CourseDetails({
               sponsor={sponsor}
               messages={messages}
               onChange={(changes) => {
-                patch({
-                  sponsors: project.sponsors.map((item) =>
+                patch((current) => ({
+                  sponsors: current.sponsors.map((item) =>
                     item.id === sponsor.id ? { ...item, ...changes } : item,
                   ),
-                });
+                }));
               }}
               onRemove={() => {
-                patch({ sponsors: project.sponsors.filter((item) => item.id !== sponsor.id) });
+                patch((current) => ({
+                  sponsors: current.sponsors.filter((item) => item.id !== sponsor.id),
+                }));
               }}
             />
           ))}
@@ -689,12 +699,12 @@ export function CourseDetails({
             <Button
               variant="secondary"
               onClick={() => {
-                patch({
+                patch((current) => ({
                   sponsors: [
-                    ...project.sponsors,
+                    ...current.sponsors,
                     { id: crypto.randomUUID(), name: "", tier: "gold", url: "" },
                   ],
-                });
+                }));
               }}
             >
               <Icon name="plus" size={18} />

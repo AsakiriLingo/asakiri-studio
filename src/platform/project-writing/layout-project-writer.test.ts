@@ -947,3 +947,145 @@ describe("layout project writer", () => {
     expect(manifest).toMatchObject({ assets: ["media/assets/keep/asset.json"] });
   });
 });
+
+describe("layout project writer rollback", () => {
+  function failingWriteAccess(files: Map<string, string>, failPath: string): ProjectFileAccess {
+    const access = fileAccess(files);
+    return {
+      ...access,
+      writeTextFile(path, contents) {
+        if (path === failPath) return Promise.reject(new Error(`write failed: ${path}`));
+        return access.writeTextFile(path, contents);
+      },
+    };
+  }
+
+  const RECORD: ContentRecord = { id: "r9", collectionId: "c1", fields: {} };
+
+  it("removes the record file when linking it into the collection fails", async () => {
+    const collectionPath = "content/collections/vocabulary.json";
+    const collectionJson = JSON.stringify({
+      id: "c1",
+      name: "Vocabulary",
+      fields: [],
+      recordFiles: [],
+    });
+    const files = new Map([
+      ["project.json", MANIFEST],
+      [collectionPath, collectionJson],
+    ]);
+    const writer = createLayoutProjectWriter(() => failingWriteAccess(files, collectionPath));
+
+    const result = await writer.createRecord(
+      SESSION,
+      collectionPath,
+      "content/records/r9.json",
+      RECORD,
+    );
+
+    expect(result).toEqual({ status: "failed", code: "unknown" });
+    expect(files.has("content/records/r9.json")).toBe(false);
+    expect(files.get(collectionPath)).toBe(collectionJson);
+  });
+
+  it("removes every written record file when the batch link fails", async () => {
+    const collectionPath = "content/collections/vocabulary.json";
+    const files = new Map([
+      ["project.json", MANIFEST],
+      [
+        collectionPath,
+        JSON.stringify({ id: "c1", name: "Vocabulary", fields: [], recordFiles: [] }),
+      ],
+    ]);
+    const writer = createLayoutProjectWriter(() => failingWriteAccess(files, collectionPath));
+
+    const result = await writer.createRecords(SESSION, collectionPath, [
+      { path: "content/records/r1.json", record: { ...RECORD, id: "r1" } },
+      { path: "content/records/r2.json", record: { ...RECORD, id: "r2" } },
+    ]);
+
+    expect(result).toEqual({ status: "failed", code: "unknown" });
+    expect(files.has("content/records/r1.json")).toBe(false);
+    expect(files.has("content/records/r2.json")).toBe(false);
+  });
+
+  it("removes the lesson folder when linking it into the manifest fails", async () => {
+    const files = new Map([["project.json", MANIFEST]]);
+    const writer = createLayoutProjectWriter(() => failingWriteAccess(files, "project.json"));
+
+    const result = await writer.createLesson(
+      SESSION,
+      "lessons/l9/lesson.json",
+      { id: "l9", title: "New Lesson", parts: [] },
+      [],
+    );
+
+    expect(result).toEqual({ status: "failed", code: "unknown" });
+    expect(files.has("lessons/l9/lesson.json")).toBe(false);
+    expect(files.get("project.json")).toBe(MANIFEST);
+  });
+
+  it("removes the part folder when linking it into the lesson fails", async () => {
+    const lessonPath = "lessons/intro/lesson.json";
+    const lessonJson = JSON.stringify({ id: "l1", title: "Intro", parts: [] });
+    const files = new Map([
+      ["project.json", MANIFEST],
+      [lessonPath, lessonJson],
+    ]);
+    const writer = createLayoutProjectWriter(() => failingWriteAccess(files, lessonPath));
+    const document: TiptapDocument = { type: "doc", content: [] };
+
+    const result = await writer.createPart(
+      SESSION,
+      lessonPath,
+      "lessons/intro/parts/p9/document.json",
+      { id: "p9", title: "Part 9" },
+      document,
+    );
+
+    expect(result).toEqual({ status: "failed", code: "unknown" });
+    expect(files.has("lessons/intro/parts/p9/document.json")).toBe(false);
+    expect(files.get(lessonPath)).toBe(lessonJson);
+  });
+
+  it("removes the collection file when linking it into the manifest fails", async () => {
+    const files = new Map([["project.json", MANIFEST]]);
+    const writer = createLayoutProjectWriter(() => failingWriteAccess(files, "project.json"));
+    const collection: Collection = { id: "c9", name: "Grammar", fields: [] };
+
+    const result = await writer.createCollection(
+      SESSION,
+      "content/collections/grammar.json",
+      collection,
+    );
+
+    expect(result).toEqual({ status: "failed", code: "unknown" });
+    expect(files.has("content/collections/grammar.json")).toBe(false);
+    expect(files.get("project.json")).toBe(MANIFEST);
+  });
+
+  it("removes the copied binary and descriptor when linking the asset fails", async () => {
+    const files = new Map([["project.json", MANIFEST]]);
+    const writer = createLayoutProjectWriter(() => failingWriteAccess(files, "project.json"));
+
+    const result = await writer.importAsset(
+      SESSION,
+      "media/assets/asset_9/asset.json",
+      "media/assets/asset_9/cat.png",
+      "/tmp/cat.png",
+      {
+        id: "asset_9",
+        kind: "image",
+        label: "cat",
+        availability: "ready",
+        file: "cat.png",
+        mimeType: "image/png",
+      },
+    );
+
+    expect(result).toEqual({ status: "failed", code: "unknown" });
+    expect(files.has("media/assets/asset_9/cat.png")).toBe(false);
+    expect(files.has("media/assets/asset_9/asset.json")).toBe(false);
+    expect(files.get("project.json")).toBe(MANIFEST);
+  });
+});
