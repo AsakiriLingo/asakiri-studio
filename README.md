@@ -54,6 +54,10 @@ gate, and where AI assistance stands. Participation is governed by
 
 The on-disk course format is canonical at version 1 and specified in [docs/COURSE-FORMAT.md](docs/COURSE-FORMAT.md), with JSON Schemas in [schemas/asakiri-course/v1](schemas/asakiri-course/v1). A course is a directory of small JSON files, not a single `course.json`.
 
+## License
+
+The Asakiri Studio application is licensed under [MPL-2.0](LICENSE). The interoperability format schemas in [schemas/](schemas) are licensed separately under [Apache-2.0](schemas/LICENSE), so third-party editors, validators, and learner apps can depend on them without adopting the application's copyleft terms.
+
 A validated reference course lives at [examples/courses/japanese-starter](examples/courses/japanese-starter). `pnpm check` validates it against both the parser and the published schemas.
 
 ## Localization
