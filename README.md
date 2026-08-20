@@ -33,3 +33,9 @@ gate, and where AI assistance stands. Participation is governed by
 The on-disk course format is canonical at version 1 and specified in [docs/COURSE-FORMAT.md](docs/COURSE-FORMAT.md), with JSON Schemas in [schemas/asakiri-course/v1](schemas/asakiri-course/v1). A course is a directory of small JSON files, not a single `course.json`.
 
 A validated reference course lives at [examples/courses/japanese-starter](examples/courses/japanese-starter). `pnpm check` validates it against both the parser and the published schemas.
+
+## Localization
+
+The interface is translated with [Lokalise](https://lokalise.com/), which provides its localization platform free of charge to open-source projects.
+
+<a href="https://lokalise.com/"><img src="docs/lokalise-logo.svg" alt="Lokalise" height="28"></a>

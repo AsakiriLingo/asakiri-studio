@@ -1,0 +1,23 @@
+flag_management:
+  individual_flags:
+    - name: frontend
+      paths:
+        - src/
+    - name: rust
+      paths:
+        - src-tauri/src/
+
+coverage:
+  status:
+    project:
+      frontend:
+        flags: [frontend]
+        target: auto
+        threshold: 1%
+      rust:
+        flags: [rust]
+        target: auto
+        threshold: 1%
+    patch:
+      default:
+        target: 70%
