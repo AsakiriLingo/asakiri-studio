@@ -11,6 +11,10 @@ node_modules
 dist
 dist-ssr
 *.local
+
+# Coverage
+coverage
+src-tauri/lcov.info
 .env
 .env.*
 !.env.example
