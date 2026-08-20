@@ -268,6 +268,15 @@ mod tests {
     const CSV: &[u8] = "Japanese,English\n\u{732b},cat\n\u{72ac},dog\n".as_bytes();
 
     #[test]
+    fn allows_only_https_urls_on_known_hosts() {
+        assert!(host_allowed("https://images.unsplash.com/photo-1?w=640"));
+        assert!(host_allowed("https://tatoeba.org/audio/1.mp3"));
+        assert!(!host_allowed("http://images.unsplash.com/photo-1"));
+        assert!(!host_allowed("https://evil.example/images.unsplash.com"));
+        assert!(!host_allowed("https://unsplash.com.evil.example/x"));
+    }
+
+    #[test]
     fn reads_a_spreadsheet_into_a_grid() {
         let format = anydoc::Format::from_extension("csv").unwrap();
         let document = anydoc::to_document(CSV, Some(format)).unwrap();

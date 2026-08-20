@@ -1,42 +1,12 @@
-import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
-import type {
-  Asset,
-  Collection,
-  ContentRecord,
-  Course,
-  CourseProject,
-  CourseSources,
-  Exercise,
-  Lesson,
-  OutlineSection,
-  Part,
-  TiptapDocument,
-} from "@core/course";
-import { createDefaultExercise, labelForFile, mediaTypeForFile, partSourceKey } from "@core/course";
+import { useCallback, useEffect, useState, type ReactNode } from "react";
 import type { AvailableUpdate } from "@core/app-update";
-import type { TtsSaveResult } from "@core/tts";
-import type { PickedMediaFile } from "@core/project-media";
-import type { ProjectReadErrorCode } from "@core/project-reading";
-import type { ProjectWriteResult } from "@core/project-writing";
-import {
-  createProjectSession,
-  type ProjectDirectory,
-  type ProjectSession,
-  type RecentProject,
-} from "@core/projects";
-import {
-  I18nProvider,
-  LOCALES,
-  formatMessage,
-  getMessages,
-  useMessages,
-  type Locale,
-} from "@shared/i18n";
+import { createProjectSession, type ProjectDirectory, type RecentProject } from "@core/projects";
+import { I18nProvider, LOCALES, getMessages, useMessages, type Locale } from "@shared/i18n";
 import { ConfirmProvider } from "@shared/components/confirm-dialog";
 import { StartScreen } from "@features/start";
 import { NewCourseDialog } from "@features/new-course";
 import { WorkspaceShell, type WorkspaceSection } from "@features/workspace-shell";
-import { SpreadsheetImport, type SpreadsheetImportRequest } from "@features/import";
+import { SpreadsheetImport } from "@features/import";
 import type { DocumentTable } from "@core/documents";
 import { SPREADSHEET_EXTENSIONS } from "@core/documents";
 import { CourseStructure } from "@features/course-structure";
@@ -44,8 +14,14 @@ import { CourseContent } from "@features/content";
 import { CourseMedia } from "@features/media";
 import { CourseAttribution } from "@features/attribution";
 import { CourseDetails } from "@features/course-details";
-import { LessonEditor, exerciseTypeForKind, type PartKind } from "@features/lesson-editor";
+import { LessonEditor } from "@features/lesson-editor";
 import { createAppServices } from "@app/services";
+import { useCourseState } from "@app/useCourseState";
+import { useProjectActions } from "@app/useProjectActions";
+import { useOutlineActions } from "@app/useOutlineActions";
+import { useContentActions } from "@app/useContentActions";
+import { usePartActions } from "@app/usePartActions";
+import { useMediaActions } from "@app/useMediaActions";
 import styles from "@app/App.module.css";
 
 function initialDark(): boolean {
@@ -71,24 +47,6 @@ function initialSupportHidden(): boolean {
 
 type View = "start" | "new-course" | "workspace";
 
-type CourseState =
-  | { readonly status: "loading" }
-  | { readonly status: "ready"; readonly course: Course; readonly sources: CourseSources }
-  | { readonly status: "failed"; readonly code: ProjectReadErrorCode };
-
-type ReadyCourseState = Extract<CourseState, { readonly status: "ready" }>;
-
-interface CourseWriteContext {
-  readonly session: ProjectSession;
-  readonly course: Course;
-  readonly sources: CourseSources;
-  readonly apply: (updater: (current: ReadyCourseState) => ReadyCourseState) => void;
-}
-
-const WRITE_UNAVAILABLE: ProjectWriteResult = { status: "failed", code: "unavailable" };
-
-const IMPORT_BATCH = 50;
-
 export function App() {
   const [services] = useState(createAppServices);
   const [isDark, setIsDark] = useState(initialDark);
@@ -96,8 +54,6 @@ export function App() {
   const [view, setView] = useState<View>("start");
   const [section, setSection] = useState<WorkspaceSection>("lessons");
   const [openLessonId, setOpenLessonId] = useState<string | null>(null);
-  const [project, setProjectState] = useState<ProjectDirectory | null>(null);
-  const [courseState, setCourseStateDirect] = useState<CourseState | null>(null);
   const [spreadsheet, setSpreadsheet] = useState<{
     readonly fileName: string;
     readonly tables: readonly DocumentTable[];
@@ -110,54 +66,18 @@ export function App() {
     services.directory.listRecentProjects(),
   );
 
-  const projectRef = useRef<ProjectDirectory | null>(null);
-  const courseStateRef = useRef<CourseState | null>(null);
-  const writeQueueRef = useRef<Promise<unknown>>(Promise.resolve());
+  const store = useCourseState(services);
+  const { project, courseState } = store;
 
-  const setProject = (next: ProjectDirectory | null) => {
-    projectRef.current = next;
-    setProjectState(next);
+  const closeLessonAfterDelete = (lessonId: string) => {
+    setOpenLessonId((current) => (current === lessonId ? null : current));
   };
 
-  const setCourseState = useCallback(
-    (next: CourseState | null | ((current: CourseState | null) => CourseState | null)) => {
-      const value = typeof next === "function" ? next(courseStateRef.current) : next;
-      courseStateRef.current = value;
-      setCourseStateDirect(value);
-    },
-    [],
-  );
-
-  const enqueueWrite = <T,>(task: () => Promise<T>): Promise<T> => {
-    const run = writeQueueRef.current.then(task);
-    writeQueueRef.current = run.then(
-      () => undefined,
-      () => undefined,
-    );
-    return run;
-  };
-
-  const withCourse = <T,>(
-    fallback: T,
-    task: (context: CourseWriteContext) => Promise<T>,
-  ): Promise<T> => {
-    const activeProject = projectRef.current;
-    if (!activeProject) return Promise.resolve(fallback);
-    return enqueueWrite(async () => {
-      const state = courseStateRef.current;
-      if (projectRef.current !== activeProject || state?.status !== "ready") return fallback;
-      const apply: CourseWriteContext["apply"] = (updater) => {
-        if (projectRef.current !== activeProject) return;
-        setCourseState((current) => (current?.status === "ready" ? updater(current) : current));
-      };
-      return task({
-        session: createProjectSession(activeProject),
-        course: state.course,
-        sources: state.sources,
-        apply,
-      });
-    });
-  };
+  const { saveProject, saveAttribution } = useProjectActions(services, store);
+  const outlineActions = useOutlineActions(services, store, locale, closeLessonAfterDelete);
+  const contentActions = useContentActions(services, store);
+  const partActions = usePartActions(services, store, locale);
+  const mediaActions = useMediaActions(services, store);
 
   const messages = getMessages(locale);
 
@@ -191,23 +111,6 @@ export function App() {
     }
   };
 
-  useEffect(() => {
-    if (!project) return;
-    const session = createProjectSession(project);
-    let cancelled = false;
-    void services.reader.readCourse(session).then((result) => {
-      if (cancelled) return;
-      setCourseState(
-        result.status === "ready"
-          ? { status: "ready", course: result.data.course, sources: result.data.sources }
-          : { status: "failed", code: result.code },
-      );
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [project, services, setCourseState]);
-
   const openPatreon = () => {
     void services.links.open(PATREON_URL);
   };
@@ -230,8 +133,7 @@ export function App() {
   };
 
   const enterWorkspace = (directory: ProjectDirectory) => {
-    setProject(directory);
-    setCourseState({ status: "loading" });
+    store.openProject(directory);
     setSection("details");
     setOpenLessonId(null);
     setView("workspace");
@@ -255,8 +157,7 @@ export function App() {
   };
 
   const goToStart = () => {
-    setProject(null);
-    setCourseState(null);
+    store.closeProject();
     setOpenLessonId(null);
     setView("start");
   };
@@ -271,258 +172,6 @@ export function App() {
       void services.system.revealFolder(createProjectSession(project));
     }
   }, [project, services]);
-
-  const saveProject = (
-    update: (current: CourseProject) => CourseProject,
-  ): Promise<ProjectWriteResult> =>
-    withCourse(WRITE_UNAVAILABLE, async ({ session, course, apply }) => {
-      const nextProject = update(course.project);
-      const result = await services.writer.updateProject(session, nextProject);
-      if (result.status === "saved") {
-        apply((current) => ({
-          ...current,
-          course: { ...current.course, project: nextProject },
-        }));
-      }
-      return result;
-    });
-
-  const addUnit = (): Promise<ProjectWriteResult> =>
-    withCourse(WRITE_UNAVAILABLE, async ({ session, course, apply }) => {
-      const unit: OutlineSection = {
-        id: `unit_${crypto.randomUUID()}`,
-        title: formatMessage(locale, messages.structure.defaultUnitTitle, {
-          order: course.outline.length + 1,
-        }),
-        lessonIds: [],
-      };
-      const nextOutline = [...course.outline, unit];
-      const result = await services.writer.updateOutline(session, nextOutline);
-      if (result.status === "saved") {
-        apply((current) => ({
-          ...current,
-          course: { ...current.course, outline: nextOutline },
-        }));
-      }
-      return result;
-    });
-
-  const renameUnit = (unitId: string, title: string): Promise<ProjectWriteResult> =>
-    withCourse(WRITE_UNAVAILABLE, async ({ session, course, apply }) => {
-      const nextOutline = course.outline.map((section) =>
-        section.id === unitId ? { ...section, title } : section,
-      );
-      const result = await services.writer.updateOutline(session, nextOutline);
-      if (result.status === "saved") {
-        apply((current) => ({
-          ...current,
-          course: { ...current.course, outline: nextOutline },
-        }));
-      }
-      return result;
-    });
-
-  const deleteUnit = (unitId: string): Promise<ProjectWriteResult> =>
-    withCourse(WRITE_UNAVAILABLE, async ({ session, course, apply }) => {
-      const nextOutline = course.outline.filter((section) => section.id !== unitId);
-      const result = await services.writer.updateOutline(session, nextOutline);
-      if (result.status === "saved") {
-        apply((current) => ({
-          ...current,
-          course: { ...current.course, outline: nextOutline },
-        }));
-      }
-      return result;
-    });
-
-  const addLesson = (unitId: string): Promise<ProjectWriteResult> =>
-    withCourse(WRITE_UNAVAILABLE, async ({ session, course, apply }) => {
-      const unit = course.outline.find((section) => section.id === unitId);
-      if (!unit) {
-        return WRITE_UNAVAILABLE;
-      }
-      const lessonId = `lesson_${crypto.randomUUID()}`;
-      const lessonPath = `lessons/${lessonId}/lesson.json`;
-      const lesson: Lesson = {
-        id: lessonId,
-        title: formatMessage(locale, messages.structure.defaultLessonTitle, {
-          order: unit.lessonIds.length + 1,
-        }),
-        parts: [],
-      };
-      const nextOutline = course.outline.map((section) =>
-        section.id === unitId
-          ? { ...section, lessonIds: [...section.lessonIds, lessonId] }
-          : section,
-      );
-      const result = await services.writer.createLesson(session, lessonPath, lesson, nextOutline);
-      if (result.status === "saved") {
-        apply((current) => ({
-          ...current,
-          course: {
-            ...current.course,
-            lessons: [...current.course.lessons, lesson],
-            outline: nextOutline,
-          },
-          sources: {
-            ...current.sources,
-            lessons: { ...current.sources.lessons, [lessonId]: lessonPath },
-          },
-        }));
-      }
-      return result;
-    });
-
-  const renameLesson = (lessonId: string, title: string): Promise<ProjectWriteResult> =>
-    withCourse(WRITE_UNAVAILABLE, async ({ session, course, sources, apply }) => {
-      const lessonPath = sources.lessons[lessonId];
-      const lesson = course.lessons.find((entry) => entry.id === lessonId);
-      if (lessonPath === undefined || !lesson) {
-        return WRITE_UNAVAILABLE;
-      }
-      const nextLesson: Lesson = { ...lesson, title };
-      const result = await services.writer.updateLesson(session, lessonPath, nextLesson);
-      if (result.status === "saved") {
-        apply((current) => ({
-          ...current,
-          course: {
-            ...current.course,
-            lessons: current.course.lessons.map((entry) =>
-              entry.id === lessonId ? nextLesson : entry,
-            ),
-          },
-        }));
-      }
-      return result;
-    });
-
-  const deleteLesson = (lessonId: string): Promise<ProjectWriteResult> =>
-    withCourse(WRITE_UNAVAILABLE, async ({ session, course, sources, apply }) => {
-      const lessonPath = sources.lessons[lessonId];
-      const lesson = course.lessons.find((entry) => entry.id === lessonId);
-      if (lessonPath === undefined || !lesson) {
-        return WRITE_UNAVAILABLE;
-      }
-      const nextOutline = course.outline.map((section) => ({
-        ...section,
-        lessonIds: section.lessonIds.filter((id) => id !== lessonId),
-      }));
-      const result = await services.writer.deleteLesson(session, lessonPath, nextOutline);
-      if (result.status === "saved") {
-        setOpenLessonId((current) => (current === lessonId ? null : current));
-        apply((current) => ({
-          ...current,
-          course: {
-            ...current.course,
-            lessons: current.course.lessons.filter((entry) => entry.id !== lessonId),
-            outline: nextOutline,
-          },
-          sources: {
-            ...current.sources,
-            lessons: Object.fromEntries(
-              Object.entries(current.sources.lessons).filter(([id]) => id !== lessonId),
-            ),
-            parts: Object.fromEntries(
-              Object.entries(current.sources.parts).filter(
-                ([key]) => !key.startsWith(`${lessonId}::`),
-              ),
-            ),
-          },
-        }));
-      }
-      return result;
-    });
-
-  const reorderOutline = (
-    sections: readonly { readonly id: string; readonly lessonIds: readonly string[] }[],
-  ): Promise<ProjectWriteResult> =>
-    withCourse(WRITE_UNAVAILABLE, async ({ session, course, apply }) => {
-      const byId = new Map(course.outline.map((section) => [section.id, section]));
-      const nextOutline: OutlineSection[] = [];
-      for (const section of sections) {
-        const existing = byId.get(section.id);
-        if (existing) nextOutline.push({ ...existing, lessonIds: [...section.lessonIds] });
-      }
-      const result = await services.writer.updateOutline(session, nextOutline);
-      if (result.status === "saved") {
-        apply((current) => ({
-          ...current,
-          course: { ...current.course, outline: nextOutline },
-        }));
-      }
-      return result;
-    });
-
-  const saveRecord = (record: ContentRecord): Promise<ProjectWriteResult> =>
-    withCourse(WRITE_UNAVAILABLE, async ({ session, sources, apply }) => {
-      const path = sources.records[record.id];
-      if (path === undefined) {
-        return WRITE_UNAVAILABLE;
-      }
-      const result = await services.writer.updateRecord(session, path, record);
-      if (result.status === "saved") {
-        apply((current) => ({
-          ...current,
-          course: {
-            ...current.course,
-            records: current.course.records.map((entry) =>
-              entry.id === record.id ? record : entry,
-            ),
-          },
-        }));
-      }
-      return result;
-    });
-
-  const addRecord = (record: ContentRecord): Promise<ProjectWriteResult> =>
-    withCourse(WRITE_UNAVAILABLE, async ({ session, sources, apply }) => {
-      const collectionPath = sources.collections[record.collectionId];
-      if (collectionPath === undefined) {
-        return WRITE_UNAVAILABLE;
-      }
-      const recordPath = `content/records/${record.id}.json`;
-      const result = await services.writer.createRecord(
-        session,
-        collectionPath,
-        recordPath,
-        record,
-      );
-      if (result.status === "saved") {
-        apply((current) => ({
-          ...current,
-          course: { ...current.course, records: [...current.course.records, record] },
-          sources: {
-            ...current.sources,
-            records: { ...current.sources.records, [record.id]: recordPath },
-          },
-        }));
-      }
-      return result;
-    });
-
-  const deleteRecord = (recordId: string): Promise<ProjectWriteResult> =>
-    withCourse(WRITE_UNAVAILABLE, async ({ session, course, sources, apply }) => {
-      const recordPath = sources.records[recordId];
-      const record = course.records.find((entry) => entry.id === recordId);
-      if (recordPath === undefined || !record) {
-        return WRITE_UNAVAILABLE;
-      }
-      const collectionPath = sources.collections[record.collectionId];
-      if (collectionPath === undefined) {
-        return WRITE_UNAVAILABLE;
-      }
-      const result = await services.writer.deleteRecord(session, collectionPath, recordPath);
-      if (result.status === "saved") {
-        apply((current) => ({
-          ...current,
-          course: {
-            ...current.course,
-            records: current.course.records.filter((entry) => entry.id !== recordId),
-          },
-        }));
-      }
-      return result;
-    });
 
   const pickSpreadsheet = async (): Promise<void> => {
     setImportNotice(null);
@@ -539,681 +188,6 @@ export function App() {
     }
     setSpreadsheet({ fileName: picked.name, tables: read.document.tables });
   };
-
-  const commitSpreadsheet = (
-    request: SpreadsheetImportRequest,
-    onProgress: (written: number) => void,
-  ): Promise<ProjectWriteResult> =>
-    withCourse(WRITE_UNAVAILABLE, async ({ session, course, sources, apply }) => {
-      let collection =
-        course.collections.find((entry) => entry.id === request.collectionId) ?? null;
-      let collectionPath = collection ? sources.collections[collection.id] : undefined;
-
-      if (collection === null) {
-        collection = {
-          id: `collection_${crypto.randomUUID()}`,
-          name: request.collectionName,
-          fields: request.fields.map((field) => field.definition),
-        };
-        collectionPath = `content/collections/${collection.id}.json`;
-        const created = await services.writer.createCollection(session, collectionPath, collection);
-        if (created.status !== "saved") return created;
-      } else if (collectionPath !== undefined) {
-        const added = request.fields
-          .filter((field) => field.isNew)
-          .map((field) => field.definition);
-        if (added.length > 0) {
-          collection = { ...collection, fields: [...collection.fields, ...added] };
-          const updated = await services.writer.updateCollection(
-            session,
-            collectionPath,
-            collection,
-          );
-          if (updated.status !== "saved") return updated;
-        }
-      }
-
-      if (collectionPath === undefined) return WRITE_UNAVAILABLE;
-
-      const created = request.created.map((record) => ({
-        path: `content/records/${record.id}.json`,
-        record: { ...record, collectionId: collection.id },
-      }));
-
-      let written = 0;
-      for (let index = 0; index < created.length; index += IMPORT_BATCH) {
-        const batch = created.slice(index, index + IMPORT_BATCH);
-        const result = await services.writer.createRecords(session, collectionPath, batch);
-        if (result.status !== "saved") return result;
-        written += batch.length;
-        onProgress(written);
-      }
-
-      for (const record of request.updated) {
-        const path = sources.records[record.id];
-        if (path === undefined) continue;
-        const result = await services.writer.updateRecord(session, path, record);
-        if (result.status !== "saved") return result;
-        written += 1;
-        onProgress(written);
-      }
-
-      const finalCollection = collection;
-      const finalCollectionPath = collectionPath;
-      apply((current) => ({
-        ...current,
-        course: {
-          ...current.course,
-          collections: [
-            ...current.course.collections.filter((entry) => entry.id !== finalCollection.id),
-            finalCollection,
-          ],
-          records: [
-            ...current.course.records.map(
-              (entry) => request.updated.find((record) => record.id === entry.id) ?? entry,
-            ),
-            ...created.map((entry) => entry.record),
-          ],
-        },
-        sources: {
-          ...current.sources,
-          collections: {
-            ...current.sources.collections,
-            [finalCollection.id]: finalCollectionPath,
-          },
-          records: {
-            ...current.sources.records,
-            ...Object.fromEntries(created.map((entry) => [entry.record.id, entry.path])),
-          },
-        },
-      }));
-      return { status: "saved" };
-    });
-
-  const addCollection = (collection: Collection): Promise<ProjectWriteResult> =>
-    withCourse(WRITE_UNAVAILABLE, async ({ session, apply }) => {
-      const collectionPath = `content/collections/${collection.id}.json`;
-      const result = await services.writer.createCollection(session, collectionPath, collection);
-      if (result.status === "saved") {
-        apply((current) => ({
-          ...current,
-          course: {
-            ...current.course,
-            collections: [...current.course.collections, collection],
-          },
-          sources: {
-            ...current.sources,
-            collections: { ...current.sources.collections, [collection.id]: collectionPath },
-          },
-        }));
-      }
-      return result;
-    });
-
-  const updateCollection = (collection: Collection): Promise<ProjectWriteResult> =>
-    withCourse(WRITE_UNAVAILABLE, async ({ session, sources, apply }) => {
-      const collectionPath = sources.collections[collection.id];
-      if (collectionPath === undefined) {
-        return WRITE_UNAVAILABLE;
-      }
-      const result = await services.writer.updateCollection(session, collectionPath, collection);
-      if (result.status === "saved") {
-        apply((current) => ({
-          ...current,
-          course: {
-            ...current.course,
-            collections: current.course.collections.map((entry) =>
-              entry.id === collection.id ? collection : entry,
-            ),
-          },
-        }));
-      }
-      return result;
-    });
-
-  const deleteCollection = (collectionId: string): Promise<ProjectWriteResult> =>
-    withCourse(WRITE_UNAVAILABLE, async ({ session, course, sources, apply }) => {
-      const collectionPath = sources.collections[collectionId];
-      if (collectionPath === undefined) {
-        return WRITE_UNAVAILABLE;
-      }
-      const recordIds = course.records
-        .filter((entry) => entry.collectionId === collectionId)
-        .map((entry) => entry.id);
-      const recordPaths = recordIds
-        .map((id) => sources.records[id])
-        .filter((path): path is string => path !== undefined);
-      const result = await services.writer.deleteCollection(session, collectionPath, recordPaths);
-      if (result.status === "saved") {
-        const removed = new Set(recordIds);
-        apply((current) => ({
-          ...current,
-          course: {
-            ...current.course,
-            collections: current.course.collections.filter((entry) => entry.id !== collectionId),
-            records: current.course.records.filter((entry) => !removed.has(entry.id)),
-          },
-        }));
-      }
-      return result;
-    });
-
-  const savePartDocument = (
-    lessonId: string,
-    partId: string,
-    document: TiptapDocument,
-  ): Promise<ProjectWriteResult> =>
-    withCourse(WRITE_UNAVAILABLE, async ({ session, sources, apply }) => {
-      const path = sources.parts[partSourceKey(lessonId, partId)];
-      if (path === undefined) {
-        return WRITE_UNAVAILABLE;
-      }
-      const result = await services.writer.updatePartDocument(session, path, document);
-      if (result.status === "saved") {
-        apply((current) => ({
-          ...current,
-          course: {
-            ...current.course,
-            lessons: current.course.lessons.map((lesson) =>
-              lesson.id !== lessonId
-                ? lesson
-                : {
-                    ...lesson,
-                    parts: lesson.parts.map((part) =>
-                      part.id === partId && part.content.kind === "tiptap"
-                        ? { ...part, content: { kind: "tiptap", document } }
-                        : part,
-                    ),
-                  },
-            ),
-          },
-        }));
-      }
-      return result;
-    });
-
-  const savePartExercise = (
-    lessonId: string,
-    partId: string,
-    exercise: Exercise,
-  ): Promise<ProjectWriteResult> =>
-    withCourse(WRITE_UNAVAILABLE, async ({ session, sources, apply }) => {
-      const path = sources.parts[partSourceKey(lessonId, partId)];
-      if (path === undefined) {
-        return WRITE_UNAVAILABLE;
-      }
-      const result = await services.writer.updatePartExercise(session, path, exercise);
-      if (result.status === "saved") {
-        apply((current) => ({
-          ...current,
-          course: {
-            ...current.course,
-            lessons: current.course.lessons.map((lesson) =>
-              lesson.id !== lessonId
-                ? lesson
-                : {
-                    ...lesson,
-                    parts: lesson.parts.map((part) =>
-                      part.id === partId && part.content.kind === "exercise"
-                        ? { ...part, content: { kind: "exercise", exercise } }
-                        : part,
-                    ),
-                  },
-            ),
-          },
-        }));
-      }
-      return result;
-    });
-
-  const savePartContentTitle = (
-    lessonId: string,
-    partId: string,
-    title: string,
-  ): Promise<ProjectWriteResult> =>
-    withCourse(WRITE_UNAVAILABLE, async ({ session, sources, apply }) => {
-      const lessonPath = sources.lessons[lessonId];
-      if (lessonPath === undefined) {
-        return WRITE_UNAVAILABLE;
-      }
-      const result = await services.writer.updatePartContentTitle(
-        session,
-        lessonPath,
-        partId,
-        title,
-      );
-      if (result.status === "saved") {
-        apply((current) => ({
-          ...current,
-          course: {
-            ...current.course,
-            lessons: current.course.lessons.map((lesson) =>
-              lesson.id !== lessonId
-                ? lesson
-                : {
-                    ...lesson,
-                    parts: lesson.parts.map((part) =>
-                      part.id === partId && part.content.kind === "tiptap"
-                        ? {
-                            ...part,
-                            content: {
-                              kind: "tiptap",
-                              document: part.content.document,
-                              ...(title === "" ? {} : { title }),
-                            },
-                          }
-                        : part,
-                    ),
-                  },
-            ),
-          },
-        }));
-      }
-      return result;
-    });
-
-  const renamePart = (
-    lessonId: string,
-    partId: string,
-    title: string,
-  ): Promise<ProjectWriteResult> =>
-    withCourse(WRITE_UNAVAILABLE, async ({ session, sources, apply }) => {
-      const lessonPath = sources.lessons[lessonId];
-      if (lessonPath === undefined) {
-        return WRITE_UNAVAILABLE;
-      }
-      const result = await services.writer.updatePartTitle(session, lessonPath, partId, title);
-      if (result.status === "saved") {
-        apply((current) => ({
-          ...current,
-          course: {
-            ...current.course,
-            lessons: current.course.lessons.map((lesson) =>
-              lesson.id !== lessonId
-                ? lesson
-                : {
-                    ...lesson,
-                    parts: lesson.parts.map((part) =>
-                      part.id === partId ? { ...part, title } : part,
-                    ),
-                  },
-            ),
-          },
-        }));
-      }
-      return result;
-    });
-
-  const deletePart = (lessonId: string, partId: string): Promise<ProjectWriteResult> =>
-    withCourse(WRITE_UNAVAILABLE, async ({ session, sources, apply }) => {
-      const lessonPath = sources.lessons[lessonId];
-      const bodyPath = sources.parts[partSourceKey(lessonId, partId)];
-      if (lessonPath === undefined || bodyPath === undefined) {
-        return WRITE_UNAVAILABLE;
-      }
-      const result = await services.writer.deletePart(session, lessonPath, partId, bodyPath);
-      if (result.status === "saved") {
-        const partKey = partSourceKey(lessonId, partId);
-        apply((current) => ({
-          ...current,
-          course: {
-            ...current.course,
-            lessons: current.course.lessons.map((lesson) =>
-              lesson.id !== lessonId
-                ? lesson
-                : { ...lesson, parts: lesson.parts.filter((part) => part.id !== partId) },
-            ),
-          },
-          sources: {
-            ...current.sources,
-            parts: Object.fromEntries(
-              Object.entries(current.sources.parts).filter(([key]) => key !== partKey),
-            ),
-          },
-        }));
-      }
-      return result;
-    });
-
-  const addPart = (lessonId: string, kind: PartKind): Promise<string | null> =>
-    withCourse<string | null>(null, async ({ session, course, sources, apply }) => {
-      const lessonPath = sources.lessons[lessonId];
-      const lesson = course.lessons.find((entry) => entry.id === lessonId);
-      if (lessonPath === undefined || !lesson) {
-        return null;
-      }
-      const partId = `part_${crypto.randomUUID()}`;
-      const lessonDir = lessonPath.split("/").slice(0, -1).join("/");
-      const title = formatMessage(locale, messages.lesson.defaultPartTitle, {
-        order: lesson.parts.length + 1,
-      });
-
-      let bodyPath: string;
-      let part: Part;
-      let result: ProjectWriteResult;
-      if (kind === "rich-text") {
-        bodyPath = `${lessonDir}/parts/${partId}/document.json`;
-        const document: TiptapDocument = { type: "doc", content: [{ type: "paragraph" }] };
-        part = { id: partId, title, content: { kind: "tiptap", document } };
-        result = await services.writer.createPart(
-          session,
-          lessonPath,
-          bodyPath,
-          { id: partId, title },
-          document,
-        );
-      } else {
-        bodyPath = `${lessonDir}/parts/${partId}/exercise.json`;
-        const exercise = createDefaultExercise(exerciseTypeForKind(kind));
-        part = { id: partId, title, content: { kind: "exercise", exercise } };
-        result = await services.writer.createExercisePart(
-          session,
-          lessonPath,
-          bodyPath,
-          { id: partId, title },
-          exercise,
-        );
-      }
-
-      if (result.status === "saved") {
-        apply((current) => ({
-          ...current,
-          course: {
-            ...current.course,
-            lessons: current.course.lessons.map((entry) =>
-              entry.id !== lessonId ? entry : { ...entry, parts: [...entry.parts, part] },
-            ),
-          },
-          sources: {
-            ...current.sources,
-            parts: {
-              ...current.sources.parts,
-              [partSourceKey(lessonId, partId)]: bodyPath,
-            },
-          },
-        }));
-      }
-      return result.status === "saved" ? partId : null;
-    });
-
-  const reorderParts = (
-    lessonId: string,
-    orderedPartIds: readonly string[],
-  ): Promise<ProjectWriteResult> =>
-    withCourse(WRITE_UNAVAILABLE, async ({ session, sources, apply }) => {
-      const lessonPath = sources.lessons[lessonId];
-      if (lessonPath === undefined) {
-        return WRITE_UNAVAILABLE;
-      }
-      const result = await services.writer.reorderParts(session, lessonPath, orderedPartIds);
-      if (result.status === "saved") {
-        apply((current) => ({
-          ...current,
-          course: {
-            ...current.course,
-            lessons: current.course.lessons.map((entry) => {
-              if (entry.id !== lessonId) return entry;
-              const byId = new Map(entry.parts.map((part) => [part.id, part]));
-              const parts = orderedPartIds
-                .map((id) => byId.get(id))
-                .filter((part): part is Part => part !== undefined);
-              return { ...entry, parts };
-            }),
-          },
-        }));
-      }
-      return result;
-    });
-
-  const importPickedMedia = (
-    picked: readonly PickedMediaFile[],
-    metadata?: Readonly<Record<string, unknown>>,
-  ): Promise<{ readonly assets: readonly Asset[]; readonly allOk: boolean }> =>
-    withCourse<{ readonly assets: readonly Asset[]; readonly allOk: boolean }>(
-      { assets: [], allOk: false },
-      async ({ session, apply }) => {
-        const imported: { readonly asset: Asset; readonly assetPath: string }[] = [];
-        let allOk = true;
-        for (const file of picked) {
-          const type = mediaTypeForFile(file.name);
-          if (!type) {
-            allOk = false;
-            continue;
-          }
-          const id = `asset_${crypto.randomUUID()}`;
-          const assetDir = `media/assets/${id}`;
-          const assetPath = `${assetDir}/asset.json`;
-          const asset: Asset = {
-            id,
-            kind: type.kind,
-            label: labelForFile(file.name),
-            availability: "ready",
-            file: file.name,
-            mimeType: type.mimeType,
-            ...(metadata ? { metadata } : {}),
-          };
-          const result = await services.writer.importAsset(
-            session,
-            assetPath,
-            `${assetDir}/${file.name}`,
-            file.path,
-            asset,
-          );
-          if (result.status === "saved") imported.push({ asset, assetPath });
-          else allOk = false;
-        }
-
-        if (imported.length > 0) {
-          apply((current) => ({
-            ...current,
-            course: {
-              ...current.course,
-              assets: [...current.course.assets, ...imported.map((entry) => entry.asset)],
-            },
-            sources: {
-              ...current.sources,
-              assets: {
-                ...current.sources.assets,
-                ...Object.fromEntries(imported.map((entry) => [entry.asset.id, entry.assetPath])),
-              },
-            },
-          }));
-        }
-        return { assets: imported.map((entry) => entry.asset), allOk };
-      },
-    );
-
-  const importMedia = async (): Promise<ProjectWriteResult | null> => {
-    if (!project || courseState?.status !== "ready") {
-      return { status: "failed", code: "unavailable" };
-    }
-    const picked = await services.mediaPicker.pickMediaFiles();
-    if (picked.length === 0) return null;
-    const { allOk } = await importPickedMedia(picked);
-    return allOk ? { status: "saved" } : { status: "failed", code: "unknown" };
-  };
-
-  const importMediaFolder = async (): Promise<ProjectWriteResult | null> => {
-    if (!project || courseState?.status !== "ready") {
-      return { status: "failed", code: "unavailable" };
-    }
-    const picked = await services.mediaPicker.pickMediaFolder();
-    if (picked.length === 0) return null;
-    const { allOk } = await importPickedMedia(picked);
-    return allOk ? { status: "saved" } : { status: "failed", code: "unknown" };
-  };
-
-  const importAssetForField = async (): Promise<Asset | null> => {
-    if (!project || courseState?.status !== "ready") return null;
-    const picked = await services.mediaPicker.pickMediaFiles();
-    if (picked.length === 0) return null;
-    const { assets } = await importPickedMedia(picked.slice(0, 1));
-    return assets[0] ?? null;
-  };
-
-  const addRemoteMedia = async (
-    url: string,
-    fileName: string,
-    metadata?: Readonly<Record<string, unknown>>,
-  ): Promise<ProjectWriteResult | null> => {
-    if (!project || courseState?.status !== "ready") {
-      return { status: "failed", code: "unavailable" };
-    }
-    const picked = await services.mediaSearch.downloadToTemp(url, fileName);
-    if (!picked) return { status: "failed", code: "unknown" };
-    const { allOk } = await importPickedMedia([picked], metadata);
-    return allOk ? { status: "saved" } : { status: "failed", code: "unknown" };
-  };
-
-  const addTtsAudio = async (
-    text: string,
-    voice: string,
-    fileName: string,
-  ): Promise<TtsSaveResult> => {
-    if (!project || courseState?.status !== "ready") {
-      return { ok: false, error: "Project is not ready." };
-    }
-    let picked;
-    try {
-      picked = await services.tts.synthesizeToTemp(text, voice, fileName);
-    } catch (error) {
-      return { ok: false, error: String(error) };
-    }
-    const { allOk } = await importPickedMedia([picked]);
-    return allOk ? { ok: true } : { ok: false, error: "Could not import the generated audio." };
-  };
-
-  const previewTtsVoice = (text: string, voice: string): Promise<string> =>
-    services.tts.previewVoice(text, voice);
-
-  const addRecording = async (
-    bytes: Uint8Array,
-    mimeType: string,
-    ext: string,
-  ): Promise<ProjectWriteResult | null> => {
-    if (!project || courseState?.status !== "ready") {
-      return { status: "failed", code: "unavailable" };
-    }
-    const id = `asset_${crypto.randomUUID()}`;
-    const fileName = `recording-${id.slice(-6)}.${ext}`;
-    const picked = await services.recording.saveToTemp(fileName, bytes);
-    if (!picked) return { status: "failed", code: "unknown" };
-    return withCourse<ProjectWriteResult>(WRITE_UNAVAILABLE, async ({ session, apply }) => {
-      const assetDir = `media/assets/${id}`;
-      const assetPath = `${assetDir}/asset.json`;
-      const asset: Asset = {
-        id,
-        kind: "audio",
-        label: labelForFile(fileName),
-        availability: "ready",
-        file: fileName,
-        mimeType,
-      };
-      const result = await services.writer.importAsset(
-        session,
-        assetPath,
-        `${assetDir}/${fileName}`,
-        picked.path,
-        asset,
-      );
-      if (result.status === "saved") {
-        apply((current) => ({
-          ...current,
-          course: { ...current.course, assets: [...current.course.assets, asset] },
-          sources: {
-            ...current.sources,
-            assets: { ...current.sources.assets, [asset.id]: assetPath },
-          },
-        }));
-      }
-      return result;
-    });
-  };
-
-  const saveAttribution = (markdown: string): Promise<ProjectWriteResult> => {
-    const activeProject = projectRef.current;
-    if (!activeProject) {
-      return Promise.resolve(WRITE_UNAVAILABLE);
-    }
-    return enqueueWrite(() =>
-      services.writer.writeAttribution(createProjectSession(activeProject), markdown),
-    );
-  };
-
-  const renameAsset = (assetId: string, rawName: string): Promise<ProjectWriteResult> =>
-    withCourse(WRITE_UNAVAILABLE, async ({ session, course, sources, apply }) => {
-      const asset = course.assets.find((entry) => entry.id === assetId);
-      const assetPath = sources.assets[assetId];
-      if (!asset || assetPath === undefined) {
-        return WRITE_UNAVAILABLE;
-      }
-      const currentName = asset.file ?? asset.expectedFile ?? "";
-      const dot = currentName.lastIndexOf(".");
-      const ext = dot > 0 ? currentName.slice(dot) : "";
-      const base = rawName
-        .trim()
-        .replace(/\.[^.]*$/, "")
-        .replace(/[/\\:*?"<>|]/g, "")
-        .trim();
-      if (base === "") return { status: "saved" };
-      const nextName = `${base}${ext}`;
-      if (nextName === currentName) return { status: "saved" };
-      const nextAsset: Asset = {
-        ...asset,
-        label: labelForFile(nextName),
-        ...(asset.file !== null ? { file: nextName } : { expectedFile: nextName }),
-      };
-      const result = await services.writer.renameAsset(session, assetPath, asset.file, nextAsset);
-      if (result.status === "saved") {
-        apply((current) => ({
-          ...current,
-          course: {
-            ...current.course,
-            assets: current.course.assets.map((entry) =>
-              entry.id === assetId ? nextAsset : entry,
-            ),
-          },
-        }));
-      }
-      return result;
-    });
-
-  const deleteAsset = (assetId: string): Promise<ProjectWriteResult> =>
-    withCourse(WRITE_UNAVAILABLE, async ({ session, sources, apply }) => {
-      const assetPath = sources.assets[assetId];
-      if (assetPath === undefined) {
-        return WRITE_UNAVAILABLE;
-      }
-      const result = await services.writer.deleteAsset(session, assetPath);
-      if (result.status === "saved") {
-        apply((current) => ({
-          ...current,
-          course: {
-            ...current.course,
-            assets: current.course.assets.filter((entry) => entry.id !== assetId),
-          },
-        }));
-      }
-      return result;
-    });
-
-  const loadAssetPreview = useCallback(
-    async (assetId: string): Promise<string | null> => {
-      if (!project || courseState?.status !== "ready") return null;
-      const asset = courseState.course.assets.find((entry) => entry.id === assetId);
-      const assetJsonPath = courseState.sources.assets[assetId];
-      if (!asset?.file || assetJsonPath === undefined) return null;
-      // The binary lives beside the asset.json descriptor.
-      const dir = assetJsonPath.split("/").slice(0, -1).join("/");
-      const binaryPath = dir ? `${dir}/${asset.file}` : asset.file;
-      return services.assetReader.readAssetDataUrl(
-        createProjectSession(project),
-        binaryPath,
-        asset.mimeType,
-      );
-    },
-    [project, courseState, services],
-  );
 
   function renderView(): ReactNode {
     if (view === "start") {
@@ -1293,42 +267,42 @@ export function App() {
               location={projectLocation}
               onSaveProject={saveProject}
               onRevealFolder={revealFolder}
-              onImportImage={importAssetForField}
-              onLoadAssetPreview={loadAssetPreview}
+              onImportImage={mediaActions.importAssetForField}
+              onLoadAssetPreview={mediaActions.loadAssetPreview}
             />
           ) : section === "content" ? (
             <CourseContent
               course={course}
-              onSaveRecord={saveRecord}
-              onAddRecord={addRecord}
-              onDeleteRecord={deleteRecord}
-              onAddCollection={addCollection}
-              onUpdateCollection={updateCollection}
-              onDeleteCollection={deleteCollection}
-              onImportAsset={importAssetForField}
+              onSaveRecord={contentActions.saveRecord}
+              onAddRecord={contentActions.addRecord}
+              onDeleteRecord={contentActions.deleteRecord}
+              onAddCollection={contentActions.addCollection}
+              onUpdateCollection={contentActions.updateCollection}
+              onDeleteCollection={contentActions.deleteCollection}
+              onImportAsset={mediaActions.importAssetForField}
               onImportSpreadsheet={pickSpreadsheet}
-              onLoadPreview={loadAssetPreview}
+              onLoadPreview={mediaActions.loadAssetPreview}
             />
           ) : section === "media" ? (
             <CourseMedia
               course={course}
-              onImportMedia={importMedia}
-              onImportMediaFolder={importMediaFolder}
-              onDeleteAsset={deleteAsset}
-              onLoadPreview={loadAssetPreview}
+              onImportMedia={mediaActions.importMedia}
+              onImportMediaFolder={mediaActions.importMediaFolder}
+              onDeleteAsset={mediaActions.deleteAsset}
+              onLoadPreview={mediaActions.loadAssetPreview}
               onSearchImages={(query, page) => services.mediaSearch.searchImages(query, page)}
               onSearchAudio={(query, page) => services.mediaSearch.searchAudio(query, page)}
-              onAddRemoteMedia={addRemoteMedia}
-              onRenameAsset={renameAsset}
+              onAddRemoteMedia={mediaActions.addRemoteMedia}
+              onRenameAsset={mediaActions.renameAsset}
               onListTtsVoices={() => services.tts.listVoices()}
-              onPreviewTtsVoice={previewTtsVoice}
+              onPreviewTtsVoice={mediaActions.previewTtsVoice}
               onListAvailableVoices={() => services.tts.listAvailableVoices()}
               onDownloadVoice={(voiceId, onProgress) =>
                 services.tts.downloadVoice(voiceId, onProgress)
               }
               onRemoveVoice={(voiceId) => services.tts.removeVoice(voiceId)}
-              onAddTtsAudio={addTtsAudio}
-              onAddRecording={addRecording}
+              onAddTtsAudio={mediaActions.addTtsAudio}
+              onAddRecording={mediaActions.addRecording}
             />
           ) : section === "attribution" ? (
             <CourseAttribution course={course} onSaveAttribution={saveAttribution} />
@@ -1340,32 +314,32 @@ export function App() {
                 setOpenLessonId(null);
               }}
               onSaveDocument={(partId, document) =>
-                savePartDocument(openLesson.id, partId, document)
+                partActions.savePartDocument(openLesson.id, partId, document)
               }
               onSaveExercise={(partId, exercise) =>
-                savePartExercise(openLesson.id, partId, exercise)
+                partActions.savePartExercise(openLesson.id, partId, exercise)
               }
               onSaveContentTitle={(partId, title) =>
-                savePartContentTitle(openLesson.id, partId, title)
+                partActions.savePartContentTitle(openLesson.id, partId, title)
               }
-              onRenamePart={(partId, title) => renamePart(openLesson.id, partId, title)}
-              onDeletePart={(partId) => deletePart(openLesson.id, partId)}
-              onAddPart={(kind) => addPart(openLesson.id, kind)}
-              onReorderParts={(orderedIds) => reorderParts(openLesson.id, orderedIds)}
-              onSaveRecord={saveRecord}
-              onLoadAssetPreview={loadAssetPreview}
-              onImportMedia={importAssetForField}
+              onRenamePart={(partId, title) => partActions.renamePart(openLesson.id, partId, title)}
+              onDeletePart={(partId) => partActions.deletePart(openLesson.id, partId)}
+              onAddPart={(kind) => partActions.addPart(openLesson.id, kind)}
+              onReorderParts={(orderedIds) => partActions.reorderParts(openLesson.id, orderedIds)}
+              onSaveRecord={contentActions.saveRecord}
+              onLoadAssetPreview={mediaActions.loadAssetPreview}
+              onImportMedia={mediaActions.importAssetForField}
             />
           ) : (
             <CourseStructure
               course={course}
-              onNewUnit={addUnit}
-              onRenameUnit={renameUnit}
-              onDeleteUnit={deleteUnit}
-              onAddLesson={addLesson}
-              onRenameLesson={renameLesson}
-              onDeleteLesson={deleteLesson}
-              onReorderOutline={reorderOutline}
+              onNewUnit={outlineActions.addUnit}
+              onRenameUnit={outlineActions.renameUnit}
+              onDeleteUnit={outlineActions.deleteUnit}
+              onAddLesson={outlineActions.addLesson}
+              onRenameLesson={outlineActions.renameLesson}
+              onDeleteLesson={outlineActions.deleteLesson}
+              onReorderOutline={outlineActions.reorderOutline}
               onOpenLesson={(lessonId) => {
                 setOpenLessonId(lessonId);
               }}
@@ -1396,7 +370,7 @@ export function App() {
       onCancel={() => {
         setSpreadsheet(null);
       }}
-      onImport={commitSpreadsheet}
+      onImport={contentActions.commitSpreadsheet}
     />
   ) : null;
 

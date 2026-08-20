@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { COURSE_FORMAT, COURSE_FORMAT_VERSION } from "@core/course";
+import { COURSE_FORMAT, COURSE_FORMAT_VERSION, createDefaultExercise } from "@core/course";
 import type { Collection, ContentRecord, CourseProject, TiptapDocument } from "@core/course";
 import type { ProjectSession } from "@core/projects";
 import {
@@ -1087,5 +1087,208 @@ describe("layout project writer rollback", () => {
     expect(files.has("media/assets/asset_9/cat.png")).toBe(false);
     expect(files.has("media/assets/asset_9/asset.json")).toBe(false);
     expect(files.get("project.json")).toBe(MANIFEST);
+  });
+});
+
+describe("layout project writer rollback edge cases", () => {
+  it("discards the record when the collection file is not an object", async () => {
+    const collectionPath = "content/collections/vocabulary.json";
+    const files = new Map([
+      ["project.json", MANIFEST],
+      [collectionPath, "[]"],
+    ]);
+    const writer = createLayoutProjectWriter(() => fileAccess(files));
+
+    const result = await writer.createRecord(SESSION, collectionPath, "content/records/r9.json", {
+      id: "r9",
+      collectionId: "c1",
+      fields: {},
+    });
+
+    expect(result).toEqual({ status: "failed", code: "unknown" });
+    expect(files.has("content/records/r9.json")).toBe(false);
+  });
+
+  it("discards records already written when a later record write fails", async () => {
+    const collectionPath = "content/collections/vocabulary.json";
+    const files = new Map([
+      ["project.json", MANIFEST],
+      [
+        collectionPath,
+        JSON.stringify({ id: "c1", name: "Vocabulary", fields: [], recordFiles: [] }),
+      ],
+    ]);
+    const access = fileAccess(files);
+    const writer = createLayoutProjectWriter(() => ({
+      ...access,
+      writeTextFile(path, contents) {
+        if (path === "content/records/r2.json") {
+          return Promise.reject(new Error("disk full"));
+        }
+        return access.writeTextFile(path, contents);
+      },
+    }));
+
+    const result = await writer.createRecords(SESSION, collectionPath, [
+      { path: "content/records/r1.json", record: { id: "r1", collectionId: "c1", fields: {} } },
+      { path: "content/records/r2.json", record: { id: "r2", collectionId: "c1", fields: {} } },
+    ]);
+
+    expect(result).toEqual({ status: "failed", code: "unknown" });
+    expect(files.has("content/records/r1.json")).toBe(false);
+  });
+
+  it("still reports failure when rollback deletion itself fails", async () => {
+    const collectionPath = "content/collections/vocabulary.json";
+    const files = new Map([
+      ["project.json", MANIFEST],
+      [
+        collectionPath,
+        JSON.stringify({ id: "c1", name: "Vocabulary", fields: [], recordFiles: [] }),
+      ],
+    ]);
+    const access = fileAccess(files);
+    const writer = createLayoutProjectWriter(() => ({
+      ...access,
+      writeTextFile(path, contents) {
+        if (path === collectionPath) return Promise.reject(new Error("locked"));
+        return access.writeTextFile(path, contents);
+      },
+      deleteFile() {
+        return Promise.reject(new Error("locked"));
+      },
+    }));
+
+    const result = await writer.createRecord(SESSION, collectionPath, "content/records/r9.json", {
+      id: "r9",
+      collectionId: "c1",
+      fields: {},
+    });
+
+    expect(result).toEqual({ status: "failed", code: "unknown" });
+  });
+
+  it("discards the lesson folder when the manifest is not an object", async () => {
+    const files = new Map([["project.json", "[]"]]);
+    const writer = createLayoutProjectWriter(() => fileAccess(files));
+
+    const result = await writer.createLesson(
+      SESSION,
+      "lessons/l9/lesson.json",
+      { id: "l9", title: "New Lesson", parts: [] },
+      [],
+    );
+
+    expect(result).toEqual({ status: "failed", code: "unknown" });
+    expect(files.has("lessons/l9/lesson.json")).toBe(false);
+  });
+
+  it("discards the part folder when the lesson file is not an object", async () => {
+    const lessonPath = "lessons/intro/lesson.json";
+    const files = new Map([
+      ["project.json", MANIFEST],
+      [lessonPath, "[]"],
+    ]);
+    const writer = createLayoutProjectWriter(() => fileAccess(files));
+    const document: TiptapDocument = { type: "doc", content: [] };
+
+    const result = await writer.createPart(
+      SESSION,
+      lessonPath,
+      "lessons/intro/parts/p9/document.json",
+      { id: "p9", title: "Part 9" },
+      document,
+    );
+
+    expect(result).toEqual({ status: "failed", code: "unknown" });
+    expect(files.has("lessons/intro/parts/p9/document.json")).toBe(false);
+  });
+
+  it("discards the exercise part folder when linking fails", async () => {
+    const lessonPath = "lessons/intro/lesson.json";
+    const files = new Map([
+      ["project.json", MANIFEST],
+      [lessonPath, "[]"],
+    ]);
+    const writer = createLayoutProjectWriter(() => fileAccess(files));
+
+    const result = await writer.createExercisePart(
+      SESSION,
+      lessonPath,
+      "lessons/intro/parts/p9/exercise.json",
+      { id: "p9", title: "Part 9" },
+      createDefaultExercise("multiple-choice"),
+    );
+
+    expect(result).toEqual({ status: "failed", code: "unknown" });
+    expect(files.has("lessons/intro/parts/p9/exercise.json")).toBe(false);
+  });
+
+  it("discards the collection file when the manifest is not an object", async () => {
+    const files = new Map([["project.json", "[]"]]);
+    const writer = createLayoutProjectWriter(() => fileAccess(files));
+
+    const result = await writer.createCollection(SESSION, "content/collections/grammar.json", {
+      id: "c9",
+      name: "Grammar",
+      fields: [],
+    });
+
+    expect(result).toEqual({ status: "failed", code: "unknown" });
+    expect(files.has("content/collections/grammar.json")).toBe(false);
+  });
+
+  it("does not touch the project when copying the asset binary fails", async () => {
+    const files = new Map([["project.json", MANIFEST]]);
+    const access = fileAccess(files);
+    const writer = createLayoutProjectWriter(() => ({
+      ...access,
+      copyFile() {
+        return Promise.reject(new Error("source vanished"));
+      },
+    }));
+
+    const result = await writer.importAsset(
+      SESSION,
+      "media/assets/a9/asset.json",
+      "media/assets/a9/track.mp3",
+      "/tmp/track.mp3",
+      {
+        id: "a9",
+        kind: "audio",
+        label: "track",
+        availability: "ready",
+        file: "track.mp3",
+        mimeType: "audio/mpeg",
+      },
+    );
+
+    expect(result).toEqual({ status: "failed", code: "unknown" });
+    expect(files.get("project.json")).toBe(MANIFEST);
+    expect(files.has("media/assets/a9/track.mp3")).toBe(false);
+  });
+
+  it("discards a binary stored outside the descriptor folder when linking fails", async () => {
+    const files = new Map([["project.json", "[]"]]);
+    const writer = createLayoutProjectWriter(() => fileAccess(files));
+
+    const result = await writer.importAsset(
+      SESSION,
+      "media/assets/a9/asset.json",
+      "media/bin/a9.png",
+      "/tmp/a9.png",
+      {
+        id: "a9",
+        kind: "image",
+        label: "a9",
+        availability: "ready",
+        file: "a9.png",
+        mimeType: "image/png",
+      },
+    );
+
+    expect(result).toEqual({ status: "failed", code: "unknown" });
+    expect(files.has("media/assets/a9/asset.json")).toBe(false);
+    expect(files.has("media/bin/a9.png")).toBe(false);
   });
 });
