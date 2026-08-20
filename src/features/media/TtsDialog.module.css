@@ -2,18 +2,20 @@
   position: fixed;
   inset: 0;
   z-index: var(--z-modal);
-  display: grid;
-  place-items: center;
-  padding: var(--space-4);
   background: var(--color-overlay);
 }
 
 .dialog {
+  position: fixed;
+  inset-block-start: 50%;
+  inset-inline-start: 50%;
+  z-index: var(--z-modal);
   display: flex;
-  width: min(100%, 34rem);
+  width: min(100% - var(--space-6), 34rem);
   max-height: min(90vh, 40rem);
   flex-direction: column;
   overflow: hidden;
+  transform: translate(-50%, -50%);
   border: var(--border-hairline) solid var(--color-border);
   border-radius: var(--radius-lg);
   background: var(--color-surface);

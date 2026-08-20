@@ -53,6 +53,13 @@ fn locale_from_voice_id(voice_id: &str) -> String {
     voice_id.split('-').next().unwrap_or(voice_id).to_string()
 }
 
+fn is_safe_voice_id(voice_id: &str) -> bool {
+    !voice_id.is_empty()
+        && voice_id
+            .chars()
+            .all(|character| character.is_ascii_alphanumeric() || matches!(character, '_' | '-'))
+}
+
 #[cfg(unix)]
 fn ensure_executable(path: &Path) {
     use std::os::unix::fs::PermissionsExt;
@@ -125,6 +132,9 @@ fn synthesize_to_temp(
     }
     let voice = voice.trim();
     if voice.is_empty() {
+        return Err("voiceMissing".to_string());
+    }
+    if !is_safe_voice_id(voice) {
         return Err("voiceMissing".to_string());
     }
 
@@ -357,6 +367,9 @@ fn download_voice_blocking(
     voice_id: &str,
     on_progress: &Channel<DownloadProgress>,
 ) -> Result<(), String> {
+    if !is_safe_voice_id(voice_id) {
+        return Err("voiceUnknown".to_string());
+    }
     let catalog = read_catalog(app)?;
     let entry = catalog.get(voice_id).ok_or_else(|| "voiceUnknown".to_string())?;
     let (model, config) = remote_files(entry).ok_or_else(|| "voiceUnknown".to_string())?;
@@ -397,6 +410,9 @@ fn download_voice_blocking(
 
 #[tauri::command]
 pub fn remove_voice(app: tauri::AppHandle, voice_id: String) -> Result<(), String> {
+    if !is_safe_voice_id(&voice_id) {
+        return Err("voiceUnknown".to_string());
+    }
     let dir = voices_dir(&app)?;
     for suffix in ["onnx", "onnx.json"] {
         let path = dir.join(format!("{voice_id}.{suffix}"));
@@ -409,7 +425,7 @@ pub fn remove_voice(app: tauri::AppHandle, voice_id: String) -> Result<(), Strin
 
 #[cfg(test)]
 mod tests {
-    use super::locale_from_voice_id;
+    use super::{is_safe_voice_id, locale_from_voice_id};
 
     #[test]
     fn derives_locale_from_voice_id() {
@@ -420,5 +436,20 @@ mod tests {
     #[test]
     fn falls_back_to_whole_id_without_separator() {
         assert_eq!(locale_from_voice_id("plainvoice"), "plainvoice");
+    }
+
+    #[test]
+    fn accepts_real_voice_ids() {
+        assert!(is_safe_voice_id("en_US-amy-low"));
+        assert!(is_safe_voice_id("cy_GB-gwryw-medium"));
+    }
+
+    #[test]
+    fn rejects_voice_ids_that_could_traverse_paths() {
+        assert!(!is_safe_voice_id(""));
+        assert!(!is_safe_voice_id("../escape"));
+        assert!(!is_safe_voice_id("a/b"));
+        assert!(!is_safe_voice_id("a\\b"));
+        assert!(!is_safe_voice_id("voice.name"));
     }
 }

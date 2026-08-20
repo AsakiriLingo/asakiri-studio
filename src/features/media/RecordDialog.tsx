@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { Dialog } from "@base-ui/react/dialog";
 import type { ProjectWriteResult } from "@core/project-writing";
 import { useMessages } from "@shared/i18n";
 import { Button } from "@shared/components/button";
@@ -207,110 +208,112 @@ export function RecordDialog({ onClose, onAddRecording }: RecordDialogProps) {
   };
 
   return (
-    <div className={styles.overlay} role="presentation" onClick={onClose}>
-      <div
-        className={styles.dialog}
-        role="dialog"
-        aria-modal="true"
-        aria-label={t.recordTitle}
-        onClick={(event) => {
-          event.stopPropagation();
-        }}
-      >
-        <header className={styles.header}>
-          <div>
-            <h2 className={styles.title}>{t.recordTitle}</h2>
-            <p className={styles.description}>{t.recordDescription}</p>
-          </div>
-          <IconButton aria-label={t.closeDialog} onClick={onClose}>
-            <Icon name="close" size={18} />
-          </IconButton>
-        </header>
-
-        <div className={styles.body}>
-          {error === "unsupported" ? (
-            <Status tone="warning">{t.recordUnsupported}</Status>
-          ) : error === "denied" ? (
-            <Status tone="warning">{t.recordDenied}</Status>
-          ) : null}
-
-          <div className={styles.stage}>
-            <span
-              className={phase === "recording" ? styles.pulseActive : styles.pulse}
-              aria-hidden="true"
-            >
-              <Icon name="mic" size={32} />
-            </span>
-            <span className={styles.time}>{formatTime(elapsed)}</span>
-            <span className={styles.stageHint}>
-              {phase === "recording"
-                ? t.recordListening
-                : phase === "recorded"
-                  ? t.recordReady
-                  : t.recordHint}
-            </span>
-          </div>
-
-          {phase === "recorded" && previewUrl ? (
-            <div className={styles.preview}>
-              <button
-                type="button"
-                className={styles.playButton}
-                aria-label={playing ? t.recordStopPlayback : t.recordPlay}
-                onClick={togglePlay}
-              >
-                <Icon name={playing ? "stop" : "play"} size={22} />
-              </button>
-              <audio
-                ref={audioRef}
-                src={previewUrl}
-                preload="auto"
-                onEnded={() => {
-                  setPlaying(false);
-                }}
-              />
+    <Dialog.Root
+      open
+      onOpenChange={(next) => {
+        if (!next) onClose();
+      }}
+    >
+      <Dialog.Portal>
+        <Dialog.Backdrop className={styles.overlay} />
+        <Dialog.Popup className={styles.dialog}>
+          <header className={styles.header}>
+            <div>
+              <Dialog.Title className={styles.title}>{t.recordTitle}</Dialog.Title>
+              <Dialog.Description className={styles.description}>
+                {t.recordDescription}
+              </Dialog.Description>
             </div>
-          ) : null}
+            <IconButton aria-label={t.closeDialog} onClick={onClose}>
+              <Icon name="close" size={18} />
+            </IconButton>
+          </header>
 
-          {error === "failed" ? <Status tone="warning">{t.recordFailed}</Status> : null}
-        </div>
+          <div className={styles.body}>
+            {error === "unsupported" ? (
+              <Status tone="warning">{t.recordUnsupported}</Status>
+            ) : error === "denied" ? (
+              <Status tone="warning">{t.recordDenied}</Status>
+            ) : null}
 
-        <footer className={styles.footer}>
-          {phase === "recorded" ? (
-            <Button type="button" variant="ghost" onClick={discard}>
-              <Icon name="mic" size={18} />
-              {t.recordAgain}
-            </Button>
-          ) : (
-            <span />
-          )}
-          <div className={styles.footerActions}>
-            <Button type="button" variant="secondary" onClick={onClose}>
-              {t.recordCancel}
-            </Button>
-            {phase === "recording" ? (
-              <Button type="button" onClick={stopRecording}>
-                <Icon name="stop" size={18} />
-                {t.recordStop}
-              </Button>
-            ) : phase === "recorded" ? (
-              <Button type="button" disabled={saving} onClick={save}>
-                {saving ? t.recordSaving : t.recordSave}
+            <div className={styles.stage}>
+              <span
+                className={phase === "recording" ? styles.pulseActive : styles.pulse}
+                aria-hidden="true"
+              >
+                <Icon name="mic" size={32} />
+              </span>
+              <span className={styles.time}>{formatTime(elapsed)}</span>
+              <span className={styles.stageHint}>
+                {phase === "recording"
+                  ? t.recordListening
+                  : phase === "recorded"
+                    ? t.recordReady
+                    : t.recordHint}
+              </span>
+            </div>
+
+            {phase === "recorded" && previewUrl ? (
+              <div className={styles.preview}>
+                <button
+                  type="button"
+                  className={styles.playButton}
+                  aria-label={playing ? t.recordStopPlayback : t.recordPlay}
+                  onClick={togglePlay}
+                >
+                  <Icon name={playing ? "stop" : "play"} size={22} />
+                </button>
+                <audio
+                  ref={audioRef}
+                  src={previewUrl}
+                  preload="auto"
+                  onEnded={() => {
+                    setPlaying(false);
+                  }}
+                />
+              </div>
+            ) : null}
+
+            {error === "failed" ? <Status tone="warning">{t.recordFailed}</Status> : null}
+          </div>
+
+          <footer className={styles.footer}>
+            {phase === "recorded" ? (
+              <Button type="button" variant="ghost" onClick={discard}>
+                <Icon name="mic" size={18} />
+                {t.recordAgain}
               </Button>
             ) : (
-              <Button
-                type="button"
-                onClick={() => {
-                  void startRecording();
-                }}
-              >
-                <Icon name="mic" size={18} />
-                {t.recordStart}
-              </Button>
+              <span />
             )}
-          </div>
-        </footer>
-      </div>
-    </div>
+            <div className={styles.footerActions}>
+              <Button type="button" variant="secondary" onClick={onClose}>
+                {t.recordCancel}
+              </Button>
+              {phase === "recording" ? (
+                <Button type="button" onClick={stopRecording}>
+                  <Icon name="stop" size={18} />
+                  {t.recordStop}
+                </Button>
+              ) : phase === "recorded" ? (
+                <Button type="button" disabled={saving} onClick={save}>
+                  {saving ? t.recordSaving : t.recordSave}
+                </Button>
+              ) : (
+                <Button
+                  type="button"
+                  onClick={() => {
+                    void startRecording();
+                  }}
+                >
+                  <Icon name="mic" size={18} />
+                  {t.recordStart}
+                </Button>
+              )}
+            </div>
+          </footer>
+        </Dialog.Popup>
+      </Dialog.Portal>
+    </Dialog.Root>
   );
 }
