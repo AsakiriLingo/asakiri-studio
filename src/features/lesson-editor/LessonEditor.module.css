@@ -413,7 +413,7 @@
   overflow: clip;
   border: var(--border-hairline) solid var(--color-border);
   border-radius: var(--radius-lg);
-  background: var(--color-preview-surface);
+  background: var(--color-canvas);
 }
 
 .previewHeader {

@@ -77,7 +77,6 @@
 
   --color-canvas: oklch(0.985 0.006 105);
   --color-surface: oklch(0.997 0.002 105);
-  --color-preview-surface: oklch(0.992 0 0);
   --color-surface-subtle: oklch(0.96 0.01 105);
   --color-control: oklch(0.972 0.008 105);
   --color-control-hover: oklch(0.955 0.012 105);
@@ -118,7 +117,6 @@
   color-scheme: dark;
   --color-canvas: oklch(0.155 0.005 105);
   --color-surface: oklch(0.195 0.006 105);
-  --color-preview-surface: oklch(0.195 0 0);
   --color-surface-subtle: oklch(0.245 0.008 105);
   --color-control: oklch(0.235 0.007 105);
   --color-control-hover: oklch(0.265 0.009 105);

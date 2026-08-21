@@ -312,7 +312,7 @@ export function CourseMedia({
                       setShowTts(true);
                     }}
                   >
-                    <Icon name="mic" size={18} />
+                    <Icon name="audio" size={18} />
                     {t.addTts}
                   </Menu.Item>
                   <Menu.Item
@@ -321,7 +321,7 @@ export function CourseMedia({
                       setShowRecord(true);
                     }}
                   >
-                    <Icon name="audio" size={18} />
+                    <Icon name="mic" size={18} />
                     {t.recordAudio}
                   </Menu.Item>
                 </Menu.Popup>
