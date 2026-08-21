@@ -69,7 +69,7 @@
   pointer-events: none;
 }
 
-.searchInput {
+.search .searchInput {
   width: 100%;
   padding-inline-start: calc(var(--space-3) * 2 + 16px);
 }
