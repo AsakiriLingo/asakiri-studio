@@ -51,6 +51,18 @@ pub fn run() {
         });
 
     builder
+        .setup(|app| {
+            #[cfg(target_os = "windows")]
+            {
+                use tauri::Manager;
+                if let Some(window) = app.get_webview_window("main") {
+                    let _ = window.maximize();
+                }
+            }
+            #[cfg(not(target_os = "windows"))]
+            let _ = app;
+            Ok(())
+        })
         .invoke_handler(tauri::generate_handler![
             course::create_course,
             course::read_course_title,
