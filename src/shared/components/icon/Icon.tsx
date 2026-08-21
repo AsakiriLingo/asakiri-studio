@@ -8,17 +8,7 @@ export interface IconProps extends Omit<SVGProps<SVGSVGElement>, "children"> {
 
 export function Icon({ name, size = 24, ...props }: IconProps) {
   return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={2}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      {...props}
-    >
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" {...props}>
       {icons[name]}
     </svg>
   );
