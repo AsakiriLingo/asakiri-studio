@@ -149,7 +149,7 @@ function UnitBlock({
         >
           <Icon name="grip" size={18} />
         </button>
-        <span className={styles.orderIndex}>{orderLabel(index)}</span>
+        <span className={[styles.orderIndex, styles.unitIndex].join(" ")}>{orderLabel(index)}</span>
         <button
           type="button"
           className={styles.unitToggle}

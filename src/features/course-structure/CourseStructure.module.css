@@ -168,10 +168,16 @@
   min-height: 1.5rem;
   place-items: center;
   border-radius: var(--radius-sm);
-  background: var(--color-accent-subtle);
-  color: var(--color-accent-text);
+  background: var(--color-accent);
+  color: var(--color-accent-ink);
   font-size: var(--font-size-100);
+  font-weight: var(--font-weight-bold);
   font-variant-numeric: tabular-nums;
+}
+
+.unitIndex {
+  background: var(--color-brand);
+  color: var(--color-on-brand);
 }
 
 .reorderHandle {
