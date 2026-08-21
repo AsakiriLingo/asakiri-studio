@@ -4,6 +4,10 @@ A local-first course editor for the desktop, built with React, TypeScript, Vite,
 
 ## Screenshots
 
+Start from one place. Create a new course or reopen a recent project, each kept in its own local folder.
+
+![The Asakiri Studio start screen with options to create a new course, open a course, and a list of recent courses.](docs/screenshots/studio-start.webp)
+
 Structure the whole course. Group lessons into units and arrange each lesson's parts by dragging.
 
 ![Asakiri Studio showing a Beginner Italian course outline with units and lessons.](docs/screenshots/studio-course-structure.webp)
