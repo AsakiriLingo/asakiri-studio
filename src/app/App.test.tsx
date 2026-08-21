@@ -20,10 +20,10 @@ import type { ProjectWriteResult } from "@core/project-writing";
 import type { ProjectDirectory, ProjectSession, RecentProject } from "@core/projects";
 import type { DocumentTable } from "@core/documents";
 import { getMessages } from "@shared/i18n";
+import { installMatchMediaMock } from "../test/install-match-media-mock";
 import { App } from "@app/App";
 
 interface StartProps {
-  readonly isDark: boolean;
   readonly update: AvailableUpdate | null;
   readonly updateInstalling: boolean;
   readonly recentProjects: readonly RecentProject[];
@@ -35,8 +35,23 @@ interface StartProps {
   readonly onNewCourse: () => void;
   readonly onOpenCourse: () => void;
   readonly onOpenRecent: (id: string) => void;
-  readonly onToggleTheme: () => void;
-  readonly onSelectLocale: (locale: string) => void;
+  readonly onOpenSettings: () => void;
+}
+
+interface SettingsProps {
+  readonly open: boolean;
+  readonly onClose: () => void;
+  readonly themePreference: string;
+  readonly onThemePreferenceChange: (preference: string) => void;
+  readonly locale: string;
+  readonly onLocaleChange: (locale: string) => void;
+  readonly version: string;
+  readonly update: AvailableUpdate | null;
+  readonly updateInstalling: boolean;
+  readonly checkForUpdates: () => Promise<AvailableUpdate | null>;
+  readonly onInstallUpdate: () => void;
+  readonly onSupport: () => void;
+  readonly onOpenExternal: (url: string) => void;
 }
 
 interface ShellProps {
@@ -155,6 +170,7 @@ interface ImporterProps {
 
 interface Captured {
   start?: StartProps;
+  settings?: SettingsProps;
   shell?: ShellProps;
   details?: DetailsProps;
   structure?: StructureProps;
@@ -172,6 +188,13 @@ vi.mock("@features/start", () => ({
   StartScreen: (props: StartProps) => {
     captured.start = props;
     return <div data-testid="start" />;
+  },
+}));
+
+vi.mock("@features/settings", () => ({
+  SettingsDialog: (props: SettingsProps) => {
+    captured.settings = props;
+    return <div data-testid="settings" />;
   },
 }));
 
@@ -365,6 +388,7 @@ function makeServices() {
         .mockImplementation((id: string) =>
           Promise.resolve(id === "p1" ? DIR_A : id === "p2" ? DIR_B : null),
         ),
+      clearRecentProjects: vi.fn(),
     },
     reader: {
       readCourse: vi.fn().mockImplementation((session: ProjectSession) =>
@@ -393,7 +417,9 @@ function makeServices() {
       check: vi.fn().mockResolvedValue(null),
       downloadAndInstall: vi.fn().mockResolvedValue(undefined),
       relaunch: vi.fn().mockResolvedValue(undefined),
+      getCurrentVersion: vi.fn().mockResolvedValue("0.2.5"),
     },
+    menu: { onOpenPreferences: vi.fn().mockReturnValue(() => undefined) },
     links: { open: vi.fn().mockResolvedValue(undefined) },
     tts: {
       listVoices: vi.fn().mockResolvedValue([]),
@@ -471,6 +497,7 @@ async function navigate(section: string) {
 }
 
 beforeEach(() => {
+  installMatchMediaMock();
   Object.defineProperty(window, "localStorage", {
     value: createMemoryStorage(),
     configurable: true,
@@ -923,15 +950,16 @@ describe("App", () => {
       expect(must(captured.start, "StartScreen").update).not.toBeNull();
     });
     const start = must(captured.start, "StartScreen");
+    const settings = must(captured.settings, "SettingsDialog");
 
     await act(async () => {
-      start.onToggleTheme();
+      settings.onThemePreferenceChange("dark");
       await Promise.resolve();
     });
     expect(document.documentElement.dataset.theme).toBe("dark");
 
     await act(async () => {
-      start.onSelectLocale("es");
+      settings.onLocaleChange("es");
       await Promise.resolve();
     });
     expect(document.documentElement.lang).toBe("es");

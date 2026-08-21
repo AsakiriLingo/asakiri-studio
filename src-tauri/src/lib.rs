@@ -12,7 +12,43 @@ pub fn run() {
     #[cfg(desktop)]
     let builder = builder
         .plugin(tauri_plugin_updater::Builder::new().build())
-        .plugin(tauri_plugin_process::init());
+        .plugin(tauri_plugin_process::init())
+        .menu(|handle| {
+            use tauri::menu::{MenuBuilder, MenuItemBuilder, SubmenuBuilder};
+            let preferences = MenuItemBuilder::with_id("preferences", "Preferences…")
+                .accelerator("CmdOrCtrl+,")
+                .build(handle)?;
+            let app_menu = SubmenuBuilder::new(handle, "Asakiri Studio")
+                .about(None)
+                .separator()
+                .quit()
+                .build()?;
+            let file_menu = SubmenuBuilder::new(handle, "File")
+                .item(&preferences)
+                .separator()
+                .close_window()
+                .build()?;
+            let edit_menu = SubmenuBuilder::new(handle, "Edit")
+                .undo()
+                .redo()
+                .separator()
+                .cut()
+                .copy()
+                .paste()
+                .select_all()
+                .build()?;
+            MenuBuilder::new(handle)
+                .item(&app_menu)
+                .item(&file_menu)
+                .item(&edit_menu)
+                .build()
+        })
+        .on_menu_event(|app, event| {
+            if event.id().as_ref() == "preferences" {
+                use tauri::Emitter;
+                let _ = app.emit("open-preferences", ());
+            }
+        });
 
     builder
         .invoke_handler(tauri::generate_handler![

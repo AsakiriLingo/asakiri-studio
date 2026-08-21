@@ -46,6 +46,10 @@ export class TauriProjectDirectoryGateway implements ProjectDirectoryGateway {
     }));
   }
 
+  clearRecentProjects(): void {
+    this.recents.clear();
+  }
+
   async openRecentProject(id: string): Promise<ProjectDirectory | null> {
     const entry = this.recents.get(id);
     if (!entry) {

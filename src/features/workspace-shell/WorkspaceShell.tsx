@@ -21,6 +21,7 @@ export interface WorkspaceShellProps {
   readonly active: WorkspaceSection;
   readonly onNavigate: (section: WorkspaceSection) => void;
   readonly onBack: () => void;
+  readonly onOpenSettings: () => void;
   readonly children: ReactNode;
 }
 
@@ -31,6 +32,7 @@ export function WorkspaceShell({
   active,
   onNavigate,
   onBack,
+  onOpenSettings,
   children,
 }: WorkspaceShellProps) {
   const messages = useMessages();
@@ -66,6 +68,9 @@ export function WorkspaceShell({
         <div className={styles.utilities}>
           <IconButton aria-label={messages.common.backToStart} onClick={onBack}>
             <Icon name="back" size={18} />
+          </IconButton>
+          <IconButton aria-label={messages.common.settings} onClick={onOpenSettings}>
+            <Icon name="settings" size={18} />
           </IconButton>
         </div>
         <nav className={styles.nav} aria-label={messages.workspace.areasAria}>

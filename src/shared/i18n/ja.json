@@ -602,5 +602,32 @@
     "openingBody": "プロジェクトファイルを読み込んでいます。",
     "openingTitle": "コースを開いています",
     "projectAria": "プロジェクトワークスペース"
+  },
+  "settings": {
+    "title": "設定",
+    "appearance": "外観",
+    "theme": "テーマ",
+    "themeSystem": "システム",
+    "themeLight": "ライト",
+    "themeDark": "ダーク",
+    "language": "表示言語",
+    "updates": "アップデート",
+    "version": "Asakiri Studio {version}",
+    "checkUpdates": "アップデートを確認",
+    "checking": "確認中…",
+    "upToDate": "最新バージョンです。",
+    "updateReady": "アップデートがあります：{version}",
+    "about": "情報",
+    "close": "閉じる",
+    "support": "Patreon で応援する",
+    "privacy": "プライバシーポリシー",
+    "terms": "利用規約",
+    "voices": "音声",
+    "voicesHint": "テキスト読み上げに使う音声を管理します。",
+    "autoUpdate": "自動的にアップデートを確認",
+    "general": "一般",
+    "supportPrompt": "サポートのお知らせを表示",
+    "clearRecent": "最近のコースを消去",
+    "recentEmpty": "最近のコースはありません"
   }
 }

@@ -50,6 +50,7 @@
   --control-height-md: 2.75rem;
   --control-height-lg: 3rem;
   --size-spinner: 0.875rem;
+  --titlebar-height: 0px;
 
   --sidebar-width: 13.5rem;
   --content-max: 88rem;
@@ -96,7 +97,7 @@
   --color-accent-ink: oklch(0.24 0.045 88);
   --color-accent-text: oklch(0.37 0.09 82);
   --color-focus-ring: oklch(0.34 0.12 155);
-  --color-overlay: oklch(0.22 0.018 155 / 0.28);
+  --color-overlay: oklch(0.22 0.018 155 / 0.45);
   --color-danger: oklch(0.48 0.18 25);
   --color-danger-hover: oklch(0.42 0.18 25);
   --color-danger-surface: oklch(0.95 0.03 25);
@@ -107,6 +108,10 @@
   --color-warning-subtle: oklch(0.94 0.04 80);
   --color-success: oklch(0.4 0.1 155);
   --color-success-surface: oklch(0.93 0.035 155);
+}
+
+:root[data-os="macos"] {
+  --titlebar-height: 1.75rem;
 }
 
 :root[data-theme="dark"] {
@@ -133,7 +138,7 @@
   --color-accent-ink: oklch(0.21 0.035 88);
   --color-accent-text: oklch(0.84 0.12 94);
   --color-focus-ring: oklch(0.82 0.12 155);
-  --color-overlay: oklch(0.08 0.006 155 / 0.55);
+  --color-overlay: oklch(0.08 0.006 155 / 0.62);
   --color-danger: oklch(0.74 0.13 25);
   --color-danger-hover: oklch(0.68 0.13 25);
   --color-danger-surface: oklch(0.225 0.035 25);

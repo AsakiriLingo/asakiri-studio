@@ -14,6 +14,9 @@
           const theme = preference === "light" || preference === "dark" ? preference : systemTheme;
           document.documentElement.dataset.theme = theme;
           document.documentElement.dataset.themePreference = preference;
+          if (/Mac/i.test(navigator.userAgent)) {
+            document.documentElement.dataset.os = "macos";
+          }
         } catch {
           document.documentElement.dataset.theme = "light";
         }

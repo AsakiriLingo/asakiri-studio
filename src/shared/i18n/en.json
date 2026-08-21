@@ -602,5 +602,32 @@
     "openingBody": "Reading the project files.",
     "openingTitle": "Opening course",
     "projectAria": "Project workspace"
+  },
+  "settings": {
+    "title": "Settings",
+    "appearance": "Appearance",
+    "theme": "Theme",
+    "themeSystem": "System",
+    "themeLight": "Light",
+    "themeDark": "Dark",
+    "language": "Interface language",
+    "updates": "Updates",
+    "version": "Asakiri Studio {version}",
+    "checkUpdates": "Check for updates",
+    "checking": "Checking…",
+    "upToDate": "You're on the latest version.",
+    "updateReady": "Update available: {version}",
+    "about": "About",
+    "close": "Close",
+    "support": "Support on Patreon",
+    "privacy": "Privacy Policy",
+    "terms": "Terms of Service",
+    "voices": "Voices",
+    "voicesHint": "Manage the voices used for text-to-speech.",
+    "autoUpdate": "Check for updates automatically",
+    "general": "General",
+    "supportPrompt": "Show support reminder",
+    "clearRecent": "Clear recent courses",
+    "recentEmpty": "No recent courses"
   }
 }

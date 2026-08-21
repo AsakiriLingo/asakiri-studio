@@ -602,5 +602,32 @@
     "openingBody": "Leyendo los archivos del proyecto.",
     "openingTitle": "Abriendo curso",
     "projectAria": "Espacio de trabajo del proyecto"
+  },
+  "settings": {
+    "title": "Ajustes",
+    "appearance": "Apariencia",
+    "theme": "Tema",
+    "themeSystem": "Sistema",
+    "themeLight": "Claro",
+    "themeDark": "Oscuro",
+    "language": "Idioma de la interfaz",
+    "updates": "Actualizaciones",
+    "version": "Asakiri Studio {version}",
+    "checkUpdates": "Buscar actualizaciones",
+    "checking": "Comprobando…",
+    "upToDate": "Tienes la última versión.",
+    "updateReady": "Actualización disponible: {version}",
+    "about": "Acerca de",
+    "close": "Cerrar",
+    "support": "Apóyanos en Patreon",
+    "privacy": "Política de privacidad",
+    "terms": "Términos del servicio",
+    "voices": "Voces",
+    "voicesHint": "Gestiona las voces usadas para texto a voz.",
+    "autoUpdate": "Buscar actualizaciones automáticamente",
+    "general": "General",
+    "supportPrompt": "Mostrar recordatorio de apoyo",
+    "clearRecent": "Borrar cursos recientes",
+    "recentEmpty": "No hay cursos recientes"
   }
 }
