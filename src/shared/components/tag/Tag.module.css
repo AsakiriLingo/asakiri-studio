@@ -12,8 +12,9 @@
 
 .accent {
   border-color: transparent;
-  background: var(--color-surface-subtle);
-  color: var(--color-brand);
+  background: var(--color-accent-subtle);
+  color: var(--color-accent-text);
+  font-weight: var(--font-weight-bold);
 }
 
 .warning {
@@ -23,6 +24,6 @@
 }
 
 :root[data-theme="dark"] .accent {
-  border-color: var(--color-brand);
-  color: var(--color-text);
+  border-color: color-mix(in oklch, var(--color-accent) 38%, transparent);
+  color: var(--color-accent-text);
 }

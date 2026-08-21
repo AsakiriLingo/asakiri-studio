@@ -270,7 +270,7 @@ export function CourseMedia({
           <Menu.Root>
             <Menu.Trigger
               render={
-                <Button disabled={importing}>
+                <Button size="compact" disabled={importing}>
                   <Icon name="plus" size={18} />
                   {t.addMedia}
                   <Icon name="chevron-down" size={16} />

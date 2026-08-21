@@ -28,7 +28,7 @@
 }
 
 .orderedRow.selected {
-  background: var(--color-surface-subtle);
+  background: var(--color-accent-subtle);
 }
 
 .orderedRow.dragging {
@@ -48,7 +48,13 @@
 }
 
 .orderIndex {
-  color: var(--color-text-muted);
+  display: inline-grid;
+  min-width: 2rem;
+  min-height: 1.5rem;
+  place-items: center;
+  border-radius: var(--radius-sm);
+  background: var(--color-accent-subtle);
+  color: var(--color-accent-text);
   font-family: var(--font-family-mono);
   font-size: var(--font-size-100);
   font-variant-numeric: tabular-nums;
@@ -68,7 +74,7 @@
   overflow: hidden;
   margin-top: var(--space-1);
   color: var(--color-text-muted);
-  font-size: var(--font-size-100);
+  font-size: var(--font-size-200);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -132,7 +138,7 @@
 }
 
 .tab[aria-selected="true"] {
-  border-bottom-color: var(--color-brand);
+  border-bottom-color: var(--color-accent);
   color: var(--color-text);
 }
 

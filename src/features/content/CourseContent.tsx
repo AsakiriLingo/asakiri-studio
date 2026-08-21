@@ -509,11 +509,16 @@ export function CourseContent({
         description={t.description}
         actions={
           <>
-            <Button variant="ghost" disabled={importing} onClick={runSpreadsheetImport}>
+            <Button
+              variant="ghost"
+              size="compact"
+              disabled={importing}
+              onClick={runSpreadsheetImport}
+            >
               <Icon name="upload" size={18} />
               {messages.importer.importSpreadsheet}
             </Button>
-            <Button onClick={openNewCollection}>
+            <Button size="compact" onClick={openNewCollection}>
               <Icon name="plus" size={18} />
               {t.newCollection}
             </Button>

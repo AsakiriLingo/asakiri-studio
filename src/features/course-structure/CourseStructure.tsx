@@ -562,7 +562,7 @@ export function CourseStructure({
           <>
             {failed ? <Status tone="warning">{messages.common.saveFailed}</Status> : null}
             {course.outline.length > 0 ? (
-              <Button variant="ghost" onClick={toggleAllUnits}>
+              <Button variant="ghost" size="compact" onClick={toggleAllUnits}>
                 <Icon
                   aria-hidden="true"
                   className={chevronClass(allCollapsed)}
@@ -573,6 +573,7 @@ export function CourseStructure({
               </Button>
             ) : null}
             <Button
+              size="compact"
               disabled={creating}
               onClick={() => {
                 void createUnit();

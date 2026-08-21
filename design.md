@@ -14,29 +14,39 @@ Modern-minimal with an editorial brand register. The interface stays technical a
 
 ## Theme
 
+Surfaces are near-white warm neutrals (hue 105) in light mode and dark warm neutrals in dark mode. The brand stays forest green; a warm yellow carries selected and supporting accents.
+
 Light mode:
 
-- `--color-canvas` `oklch(0.975 0.01 145)`
-- `--color-surface` `oklch(0.992 0.005 145)`
-- `--color-surface-subtle` `oklch(0.945 0.014 145)`
+- `--color-canvas` `oklch(0.985 0.006 105)`
+- `--color-surface` `oklch(0.997 0.002 105)`
+- `--color-surface-subtle` `oklch(0.96 0.01 105)`
 - `--color-text` `oklch(0.22 0.018 155)`
 - `--color-text-muted` `oklch(0.44 0.018 155)`
-- `--color-border` `oklch(0.875 0.014 150)`
+- `--color-border` `oklch(0.915 0.006 105)`
 - `--color-brand` `oklch(0.44 0.115 155)`
+- `--color-brand-edge` `oklch(0.32 0.095 155)`
+- `--color-accent` `oklch(0.82 0.15 94)`
+- `--color-accent-subtle` `oklch(0.94 0.075 96)`
+- `--color-accent-text` `oklch(0.37 0.09 82)`
 - `--color-focus-ring` `oklch(0.34 0.12 155)`
 
 Dark mode:
 
-- `--color-canvas` `oklch(0.155 0.006 155)`
-- `--color-surface` `oklch(0.195 0.007 155)`
-- `--color-surface-subtle` `oklch(0.245 0.009 155)`
+- `--color-canvas` `oklch(0.155 0.005 105)`
+- `--color-surface` `oklch(0.195 0.006 105)`
+- `--color-surface-subtle` `oklch(0.245 0.008 105)`
 - `--color-text` `oklch(0.94 0.008 155)`
 - `--color-text-muted` `oklch(0.72 0.012 155)`
-- `--color-border` `oklch(0.275 0.009 155)`
+- `--color-border` `oklch(0.275 0.007 105)`
 - `--color-brand` `oklch(0.44 0.115 155)`
+- `--color-brand-edge` `oklch(0.3 0.085 155)`
+- `--color-accent` `oklch(0.82 0.13 94)`
+- `--color-accent-subtle` `oklch(0.27 0.045 92)`
+- `--color-accent-text` `oklch(0.84 0.12 94)`
 - `--color-focus-ring` `oklch(0.82 0.12 155)`
 
-The brand green never changes between modes. Accent coverage stays small: primary controls, focus, active navigation, and compact status signals only.
+The brand green never changes between modes. Yellow accent and warning state are separate roles; yellow is never a substitute for warning. Accent coverage stays small: the two start-screen action tiles, order indices, current-page dots, tags, and selected lesson parts only. Primary buttons and the two colored start tiles carry a tactile 2px top/side and 4px bottom brand/accent edge; everything else stays borderless and tonal.
 
 ## Typography
 
@@ -107,8 +117,8 @@ The production source is `src/app/styles/tokens.css`. The root `tokens.css` is a
 
 ```css
 :root {
-  --color-paper: oklch(0.975 0.01 145);
-  --color-paper-2: oklch(0.945 0.014 145);
+  --color-paper: oklch(0.985 0.006 105);
+  --color-paper-2: oklch(0.96 0.01 105);
   --color-ink: oklch(0.22 0.018 155);
   --color-ink-2: oklch(0.44 0.018 155);
   --color-rule: oklch(0.875 0.014 150);

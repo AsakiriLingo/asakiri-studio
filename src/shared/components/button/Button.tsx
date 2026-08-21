@@ -7,7 +7,7 @@ import {
 import styles from "@shared/components/button/Button.module.css";
 
 export type ButtonVariant = "primary" | "secondary" | "ghost" | "danger";
-export type ButtonSize = "sm" | "md" | "lg";
+export type ButtonSize = "sm" | "compact" | "md" | "lg";
 
 export interface ButtonProps extends Omit<BaseButtonProps, "className"> {
   readonly variant?: ButtonVariant;
@@ -30,6 +30,7 @@ const variantClasses: Record<ButtonVariant, string> = {
 
 const sizeClasses: Record<ButtonSize, string> = {
   sm: requiredStyle("sm"),
+  compact: requiredStyle("compact"),
   md: requiredStyle("md"),
   lg: requiredStyle("lg"),
 };
