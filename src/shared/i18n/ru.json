@@ -602,5 +602,32 @@
     "openingBody": "Чтение файлов проекта.",
     "openingTitle": "Открытие курса",
     "projectAria": "Рабочая область проекта"
+  },
+  "settings": {
+    "title": "Настройки",
+    "appearance": "Оформление",
+    "theme": "Тема",
+    "themeSystem": "Системная",
+    "themeLight": "Светлая",
+    "themeDark": "Тёмная",
+    "language": "Язык интерфейса",
+    "updates": "Обновления",
+    "version": "Asakiri Studio {version}",
+    "checkUpdates": "Проверить обновления",
+    "checking": "Проверка…",
+    "upToDate": "У вас последняя версия.",
+    "updateReady": "Доступно обновление: {version}",
+    "about": "О программе",
+    "close": "Закрыть",
+    "support": "Поддержать на Patreon",
+    "privacy": "Политика конфиденциальности",
+    "terms": "Условия использования",
+    "voices": "Голоса",
+    "voicesHint": "Управляйте голосами для синтеза речи.",
+    "autoUpdate": "Проверять обновления автоматически",
+    "general": "Общие",
+    "supportPrompt": "Показывать напоминание о поддержке",
+    "clearRecent": "Очистить недавние курсы",
+    "recentEmpty": "Нет недавних курсов"
   }
 }

@@ -1,3 +1,4 @@
+import type { AppMenuGateway } from "@core/app-menu";
 import type { AppUpdateGateway } from "@core/app-update";
 import type { LinkOpener } from "@core/links";
 import type { MediaSearchGateway } from "@core/media-search";
@@ -9,6 +10,7 @@ import type { ProjectWriter } from "@core/project-writing";
 import type { RecordingGateway } from "@core/recording";
 import type { TtsGateway } from "@core/tts";
 import type { DocumentGateway } from "@core/documents";
+import { createAppMenuGateway } from "@platform/app-menu";
 import { createAppUpdateGateway } from "@platform/app-update";
 import { createLinkOpener } from "@platform/links";
 import { createProjectCreationGateway } from "@platform/project-creation";
@@ -33,6 +35,7 @@ export interface AppServices {
   readonly assetReader: AssetReader;
   readonly mediaSearch: MediaSearchGateway;
   readonly appUpdate: AppUpdateGateway;
+  readonly menu: AppMenuGateway;
   readonly links: LinkOpener;
   readonly tts: TtsGateway;
   readonly recording: RecordingGateway;
@@ -57,6 +60,7 @@ export function createAppServices(): AppServices {
     assetReader: createAssetReader(locations),
     mediaSearch: createTauriMediaSearchGateway(),
     appUpdate: createAppUpdateGateway(),
+    menu: createAppMenuGateway(),
     links: createLinkOpener(),
     tts: createTauriTtsGateway(),
     recording: createTauriRecordingGateway(),

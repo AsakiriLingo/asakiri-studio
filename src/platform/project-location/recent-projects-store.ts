@@ -47,4 +47,12 @@ export class RecentProjectsStore {
       // Storage may be unavailable; recents are best-effort.
     }
   }
+
+  clear(): void {
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+    } catch {
+      return;
+    }
+  }
 }

@@ -1,16 +1,13 @@
 import type { AvailableUpdate } from "@core/app-update";
 import type { RecentProject } from "@core/projects";
-import { localeOptions, useLocale, useFormat, useMessages } from "@shared/i18n";
-import type { Locale } from "@shared/i18n";
+import { useFormat, useMessages } from "@shared/i18n";
 import { useConfirm } from "@shared/components/confirm-dialog";
 import { Icon } from "@shared/components/icon";
 import { Button } from "@shared/components/button";
 import { IconButton } from "@shared/components/icon-button";
-import { Select } from "@shared/components/select";
 import styles from "@features/start/StartScreen.module.css";
 
 interface StartScreenProps {
-  readonly isDark: boolean;
   readonly update: AvailableUpdate | null;
   readonly updateInstalling: boolean;
   readonly recentProjects: readonly RecentProject[];
@@ -22,12 +19,10 @@ interface StartScreenProps {
   readonly onNewCourse: () => void;
   readonly onOpenCourse: () => void;
   readonly onOpenRecent: (id: string) => void;
-  readonly onToggleTheme: () => void;
-  readonly onSelectLocale: (locale: Locale) => void;
+  readonly onOpenSettings: () => void;
 }
 
 export function StartScreen({
-  isDark,
   update,
   updateInstalling,
   recentProjects,
@@ -39,15 +34,12 @@ export function StartScreen({
   onNewCourse,
   onOpenCourse,
   onOpenRecent,
-  onToggleTheme,
-  onSelectLocale,
+  onOpenSettings,
 }: StartScreenProps) {
   const messages = useMessages();
   const format = useFormat();
   const confirm = useConfirm();
-  const locale = useLocale();
   const t = messages.update;
-  const languages = localeOptions();
 
   const reviewUpdate = async () => {
     if (!update || updateInstalling) return;
@@ -62,12 +54,6 @@ export function StartScreen({
   return (
     <main className={styles.hub}>
       <div className={styles.bar}>
-        <div className={styles.brand}>
-          <img className={styles.brandMark} src="/asakiri-mark.svg" alt="" width={32} height={32} />
-          <span>
-            Asakiri <strong>Studio</strong>
-          </span>
-        </div>
         <div className={styles.tools}>
           {update ? (
             <button
@@ -82,25 +68,18 @@ export function StartScreen({
               {updateInstalling ? t.installing : t.available}
             </button>
           ) : null}
-          <Select
-            className={styles.language}
-            items={languages}
-            value={locale}
-            aria-label={messages.switchLanguage}
-            onValueChange={(next) => {
-              const picked = languages.find((entry) => entry.value === next);
-              if (picked) onSelectLocale(picked.value);
-            }}
-          />
-          <IconButton
-            aria-label={isDark ? messages.common.useLightTheme : messages.common.useDarkTheme}
-            onClick={onToggleTheme}
-          >
-            <Icon name={isDark ? "sun" : "moon"} size={18} />
+          <IconButton aria-label={messages.common.settings} onClick={onOpenSettings}>
+            <Icon name="settings" size={18} />
           </IconButton>
         </div>
       </div>
       <div className={styles.main}>
+        <div className={styles.brand}>
+          <img className={styles.brandMark} src="/asakiri-mark.svg" alt="" width={32} height={32} />
+          <span>
+            Asakiri <strong>Studio</strong>
+          </span>
+        </div>
         <h1 className={styles.title}>{messages.start.title}</h1>
         <div className={styles.list} aria-label={messages.start.projectActions}>
           <button className={styles.row} type="button" onClick={onNewCourse}>

@@ -4,6 +4,7 @@ import { createProjectSession, type ProjectDirectory, type RecentProject } from 
 import { I18nProvider, LOCALES, getMessages, useMessages, type Locale } from "@shared/i18n";
 import { ConfirmProvider } from "@shared/components/confirm-dialog";
 import { StartScreen } from "@features/start";
+import { SettingsDialog, type ThemePreference } from "@features/settings";
 import { NewCourseDialog } from "@features/new-course";
 import { WorkspaceShell, type WorkspaceSection } from "@features/workspace-shell";
 import { SpreadsheetImport } from "@features/import";
@@ -24,10 +25,13 @@ import { usePartActions } from "@app/usePartActions";
 import { useMediaActions } from "@app/useMediaActions";
 import styles from "@app/App.module.css";
 
-function initialDark(): boolean {
+function initialThemePreference(): ThemePreference {
   const saved = localStorage.getItem("asakiri-theme");
-  if (saved === "dark") return true;
-  if (saved === "light") return false;
+  if (saved === "light" || saved === "dark" || saved === "system") return saved;
+  return "system";
+}
+
+function systemPrefersDark(): boolean {
   return window.matchMedia("(prefers-color-scheme: dark)").matches;
 }
 
@@ -41,15 +45,22 @@ function initialLocale(): Locale {
 
 const PATREON_URL = "https://www.patreon.com/asakiri";
 
-function initialSupportHidden(): boolean {
-  return localStorage.getItem("asakiri-support-dismissed") === "true";
+function initialSupportEnabled(): boolean {
+  return localStorage.getItem("asakiri-support-dismissed") !== "true";
+}
+
+function initialAutoUpdate(): boolean {
+  return localStorage.getItem("asakiri-auto-update") !== "false";
 }
 
 type View = "start" | "new-course" | "workspace";
 
 export function App() {
   const [services] = useState(createAppServices);
-  const [isDark, setIsDark] = useState(initialDark);
+  const [themePreference, setThemePreference] = useState<ThemePreference>(initialThemePreference);
+  const [systemDark, setSystemDark] = useState(systemPrefersDark);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [appVersion, setAppVersion] = useState("");
   const [locale, setLocale] = useState<Locale>(initialLocale);
   const [view, setView] = useState<View>("start");
   const [section, setSection] = useState<WorkspaceSection>("lessons");
@@ -61,7 +72,9 @@ export function App() {
   const [importNotice, setImportNotice] = useState<"readFailed" | "noTables" | null>(null);
   const [update, setUpdate] = useState<AvailableUpdate | null>(null);
   const [updateInstalling, setUpdateInstalling] = useState(false);
-  const [supportHidden, setSupportHidden] = useState(initialSupportHidden);
+  const [autoUpdate, setAutoUpdate] = useState(initialAutoUpdate);
+  const [supportPromptEnabled, setSupportPromptEnabled] = useState(initialSupportEnabled);
+  const [supportHiddenSession, setSupportHiddenSession] = useState(false);
   const [recentProjects, setRecentProjects] = useState<readonly RecentProject[]>(() =>
     services.directory.listRecentProjects(),
   );
@@ -80,11 +93,25 @@ export function App() {
   const mediaActions = useMediaActions(services, store);
 
   const messages = getMessages(locale);
+  const isDark = themePreference === "dark" || (themePreference === "system" && systemDark);
 
   useEffect(() => {
-    document.documentElement.dataset.theme = isDark ? "dark" : "light";
-    localStorage.setItem("asakiri-theme", isDark ? "dark" : "light");
-  }, [isDark]);
+    const root = document.documentElement;
+    root.dataset.theme = isDark ? "dark" : "light";
+    root.dataset.themePreference = themePreference;
+    localStorage.setItem("asakiri-theme", themePreference);
+  }, [isDark, themePreference]);
+
+  useEffect(() => {
+    const query = window.matchMedia("(prefers-color-scheme: dark)");
+    const onChange = () => {
+      setSystemDark(query.matches);
+    };
+    query.addEventListener("change", onChange);
+    return () => {
+      query.removeEventListener("change", onChange);
+    };
+  }, []);
 
   useEffect(() => {
     document.documentElement.lang = locale;
@@ -92,6 +119,15 @@ export function App() {
   }, [locale]);
 
   useEffect(() => {
+    localStorage.setItem("asakiri-auto-update", autoUpdate ? "true" : "false");
+  }, [autoUpdate]);
+
+  useEffect(() => {
+    localStorage.setItem("asakiri-support-dismissed", supportPromptEnabled ? "false" : "true");
+  }, [supportPromptEnabled]);
+
+  useEffect(() => {
+    if (!autoUpdate) return;
     let cancelled = false;
     void services.appUpdate.check().then((available) => {
       if (!cancelled) setUpdate(available);
@@ -99,7 +135,25 @@ export function App() {
     return () => {
       cancelled = true;
     };
+  }, [services, autoUpdate]);
+
+  useEffect(() => {
+    let cancelled = false;
+    void services.appUpdate.getCurrentVersion().then((value) => {
+      if (!cancelled) setAppVersion(value);
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [services]);
+
+  useEffect(
+    () =>
+      services.menu.onOpenPreferences(() => {
+        setSettingsOpen(true);
+      }),
+    [services],
+  );
 
   const installUpdate = async () => {
     setUpdateInstalling(true);
@@ -116,17 +170,28 @@ export function App() {
   };
 
   const dismissSupportLater = () => {
-    setSupportHidden(true);
+    setSupportHiddenSession(true);
   };
 
   const dismissSupportForever = () => {
-    localStorage.setItem("asakiri-support-dismissed", "true");
-    setSupportHidden(true);
+    setSupportPromptEnabled(false);
   };
 
-  const toggleTheme = () => {
-    setIsDark((value) => !value);
+  const changeSupportPrompt = (enabled: boolean) => {
+    setSupportPromptEnabled(enabled);
+    if (enabled) setSupportHiddenSession(false);
   };
+
+  const clearRecents = () => {
+    services.directory.clearRecentProjects();
+    setRecentProjects([]);
+  };
+
+  const checkForUpdates = useCallback(async () => {
+    const available = await services.appUpdate.check();
+    setUpdate(available);
+    return available;
+  }, [services]);
 
   const selectLocale = (next: Locale) => {
     setLocale(next);
@@ -193,11 +258,10 @@ export function App() {
     if (view === "start") {
       return (
         <StartScreen
-          isDark={isDark}
           update={update}
           updateInstalling={updateInstalling}
           recentProjects={recentProjects}
-          showSupport={!supportHidden}
+          showSupport={supportPromptEnabled && !supportHiddenSession}
           onInstallUpdate={() => {
             void installUpdate();
           }}
@@ -213,8 +277,9 @@ export function App() {
           onOpenRecent={(id) => {
             void openRecent(id);
           }}
-          onToggleTheme={toggleTheme}
-          onSelectLocale={selectLocale}
+          onOpenSettings={() => {
+            setSettingsOpen(true);
+          }}
         />
       );
     }
@@ -250,6 +315,9 @@ export function App() {
         active={section}
         onNavigate={navigate}
         onBack={goToStart}
+        onOpenSettings={() => {
+          setSettingsOpen(true);
+        }}
       >
         {courseState?.status === "loading" ? (
           <WorkspaceMessage
@@ -378,6 +446,7 @@ export function App() {
   return (
     <I18nProvider locale={locale}>
       <ConfirmProvider>
+        <div className={styles.titlebar} data-tauri-drag-region />
         {renderView()}
         {importDialog}
         {importNotice !== null ? (
@@ -388,6 +457,36 @@ export function App() {
             }}
           />
         ) : null}
+        <SettingsDialog
+          open={settingsOpen}
+          onClose={() => {
+            setSettingsOpen(false);
+          }}
+          themePreference={themePreference}
+          onThemePreferenceChange={setThemePreference}
+          locale={locale}
+          onLocaleChange={selectLocale}
+          version={appVersion}
+          update={update}
+          updateInstalling={updateInstalling}
+          checkForUpdates={checkForUpdates}
+          onInstallUpdate={() => {
+            void installUpdate();
+          }}
+          autoUpdate={autoUpdate}
+          onAutoUpdateChange={setAutoUpdate}
+          supportPromptEnabled={supportPromptEnabled}
+          onSupportPromptChange={changeSupportPrompt}
+          recentCount={recentProjects.length}
+          onClearRecents={clearRecents}
+          onSupport={openPatreon}
+          onOpenExternal={(url) => {
+            void services.links.open(url);
+          }}
+          listAvailableVoices={() => services.tts.listAvailableVoices()}
+          downloadVoice={(voiceId, onProgress) => services.tts.downloadVoice(voiceId, onProgress)}
+          removeVoice={(voiceId) => services.tts.removeVoice(voiceId)}
+        />
       </ConfirmProvider>
     </I18nProvider>
   );

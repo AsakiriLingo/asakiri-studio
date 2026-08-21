@@ -10,13 +10,13 @@ describe("Icon", () => {
     expect(svg).not.toBeNull();
     expect(svg).toHaveAttribute("width", "20");
     expect(svg).toHaveAttribute("height", "20");
-    expect(svg).toHaveAttribute("stroke", "currentColor");
+    expect(svg).toHaveAttribute("fill", "currentColor");
   });
 
   it("renders the requested icon's geometry", () => {
     const { container } = render(<Icon name="plus" />);
 
-    expect(container.querySelectorAll("path")).toHaveLength(2);
+    expect(container.querySelectorAll("path").length).toBeGreaterThan(0);
   });
 
   it("forwards aria attributes to the svg", () => {

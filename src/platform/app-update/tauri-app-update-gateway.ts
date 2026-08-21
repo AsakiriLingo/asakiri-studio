@@ -31,4 +31,13 @@ export class TauriAppUpdateGateway implements AppUpdateGateway {
     const { relaunch } = await import("@tauri-apps/plugin-process");
     await relaunch();
   };
+
+  getCurrentVersion = async (): Promise<string> => {
+    try {
+      const { getVersion } = await import("@tauri-apps/api/app");
+      return await getVersion();
+    } catch {
+      return "";
+    }
+  };
 }
