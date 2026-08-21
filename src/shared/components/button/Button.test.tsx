@@ -27,6 +27,12 @@ describe("Button", () => {
     expect(onClick).not.toHaveBeenCalled();
   });
 
+  it("applies the compact size class", () => {
+    render(<Button size="compact">Compact</Button>);
+
+    expect(screen.getByRole("button", { name: "Compact" }).className).toMatch(/compact/);
+  });
+
   it("supports Base UI render composition", () => {
     render(
       <Button nativeButton={false} render={<div />}>

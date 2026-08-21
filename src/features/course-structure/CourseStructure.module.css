@@ -129,7 +129,7 @@
   padding: var(--space-3) var(--space-3) var(--space-3)
     calc(var(--control-height-sm) + var(--space-2));
   color: var(--color-text-muted);
-  font-size: var(--font-size-100);
+  font-size: var(--font-size-200);
 }
 
 .orderedMain {
@@ -157,13 +157,19 @@
   overflow: hidden;
   margin-top: var(--space-1);
   color: var(--color-text-muted);
-  font-size: var(--font-size-100);
+  font-size: var(--font-size-200);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .orderIndex {
-  color: var(--color-text-muted);
+  display: inline-grid;
+  min-width: 2rem;
+  min-height: 1.5rem;
+  place-items: center;
+  border-radius: var(--radius-sm);
+  background: var(--color-accent-subtle);
+  color: var(--color-accent-text);
   font-size: var(--font-size-100);
   font-variant-numeric: tabular-nums;
 }

@@ -10,7 +10,7 @@ Asakiri Studio builds its components on [Base UI](https://base-ui.com/react/over
 - Do not use Button to make a link look like a button. Style an anchor as an action link while preserving link semantics.
 - Reusable components live in `src/shared/components/<component>` with their CSS Module, tests, and public `index.ts` together.
 
-The shared Button supports `primary`, `secondary`, and `ghost` variants plus `sm`, `md`, and `lg` sizes. Its default is a native `type="button"` control. Loading workflows should set `disabled` and `focusableWhenDisabled` so focus does not disappear.
+The shared Button supports `primary`, `secondary`, `ghost`, and `danger` variants plus `sm`, `compact`, `md`, and `lg` sizes. The primary variant carries the tactile brand edge (2px top/sides, 4px bottom); other variants stay flat. The `compact` size (40px desktop, 44px touch) is reserved for primary work-header actions. Its default is a native `type="button"` control. Loading workflows should set `disabled` and `focusableWhenDisabled` so focus does not disappear.
 
 Icons come from the [yosooi set](https://yosooi.jp/tools/icons/), inlined as local SVG data in the shared `Icon` component (`src/shared/components/icon`). Render with `<Icon name="…" size={…} />`; strokes use `currentColor`, so icons inherit text color. There are no runtime network calls to the yosooi source — new icons are fetched once (from <https://yosooi.jp/tools/icons/>) and added to `icons.tsx`.
 

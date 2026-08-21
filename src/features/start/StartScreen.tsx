@@ -61,42 +61,50 @@ export function StartScreen({
 
   return (
     <main className={styles.hub}>
-      <div className={styles.tools}>
-        {update ? (
-          <button
-            type="button"
-            className={styles.updateChip}
-            disabled={updateInstalling}
-            onClick={() => {
-              void reviewUpdate();
+      <div className={styles.bar}>
+        <div className={styles.brand}>
+          <img className={styles.brandMark} src="/asakiri-mark.svg" alt="" width={32} height={32} />
+          <span>
+            Asakiri <strong>Studio</strong>
+          </span>
+        </div>
+        <div className={styles.tools}>
+          {update ? (
+            <button
+              type="button"
+              className={styles.updateChip}
+              disabled={updateInstalling}
+              onClick={() => {
+                void reviewUpdate();
+              }}
+            >
+              <span className={styles.updateDot} aria-hidden="true" />
+              {updateInstalling ? t.installing : t.available}
+            </button>
+          ) : null}
+          <Select
+            className={styles.language}
+            items={languages}
+            value={locale}
+            aria-label={messages.switchLanguage}
+            onValueChange={(next) => {
+              const picked = languages.find((entry) => entry.value === next);
+              if (picked) onSelectLocale(picked.value);
             }}
+          />
+          <IconButton
+            aria-label={isDark ? messages.common.useLightTheme : messages.common.useDarkTheme}
+            onClick={onToggleTheme}
           >
-            <span className={styles.updateDot} aria-hidden="true" />
-            {updateInstalling ? t.installing : t.available}
-          </button>
-        ) : null}
-        <Select
-          className={styles.language}
-          items={languages}
-          value={locale}
-          aria-label={messages.switchLanguage}
-          onValueChange={(next) => {
-            const picked = languages.find((entry) => entry.value === next);
-            if (picked) onSelectLocale(picked.value);
-          }}
-        />
-        <IconButton
-          aria-label={isDark ? messages.common.useLightTheme : messages.common.useDarkTheme}
-          onClick={onToggleTheme}
-        >
-          <Icon name={isDark ? "sun" : "moon"} size={18} />
-        </IconButton>
+            <Icon name={isDark ? "sun" : "moon"} size={18} />
+          </IconButton>
+        </div>
       </div>
       <div className={styles.main}>
         <h1 className={styles.title}>{messages.start.title}</h1>
         <div className={styles.list} aria-label={messages.start.projectActions}>
           <button className={styles.row} type="button" onClick={onNewCourse}>
-            <span className={styles.icon}>
+            <span className={[styles.tile, styles.tileBrand].join(" ")}>
               <Icon name="plus" size={18} />
             </span>
             <span>
@@ -106,7 +114,7 @@ export function StartScreen({
             <Icon name="arrow" size={18} />
           </button>
           <button className={styles.row} type="button" onClick={onOpenCourse}>
-            <span className={styles.icon}>
+            <span className={[styles.tile, styles.tileAccent].join(" ")}>
               <Icon name="folder" size={18} />
             </span>
             <span>

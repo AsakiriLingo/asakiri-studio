@@ -49,7 +49,11 @@ export function CourseAttribution({ course, onSaveAttribution }: CourseAttributi
         title={t.title}
         description={t.description}
         actions={
-          <Button disabled={entries.length === 0 || saveState === "saving"} onClick={save}>
+          <Button
+            size="compact"
+            disabled={entries.length === 0 || saveState === "saving"}
+            onClick={save}
+          >
             <Icon name="check" size={18} />
             {t.save}
           </Button>

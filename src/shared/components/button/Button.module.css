@@ -69,8 +69,21 @@
 }
 
 .primary {
+  border-color: var(--color-brand-edge);
+  border-width: 2px;
+  border-bottom-width: 4px;
   color: var(--color-on-brand);
   background: var(--color-brand);
+}
+
+.primary:active:not([data-disabled]) {
+  border-bottom-width: 2px;
+  transform: translateY(2px);
+}
+
+.primary[data-disabled] {
+  border-bottom-width: 2px;
+  transform: none;
 }
 
 .secondary {
@@ -92,6 +105,12 @@
 
 .sm {
   min-height: var(--control-height-sm);
+  padding-inline: var(--space-3);
+  font-size: var(--font-size-300);
+}
+
+.compact {
+  min-height: 2.5rem;
   padding-inline: var(--space-3);
   font-size: var(--font-size-300);
 }
@@ -134,7 +153,8 @@
 }
 
 @media (pointer: coarse) {
-  .sm {
+  .sm,
+  .compact {
     min-height: var(--control-height-md);
   }
 }

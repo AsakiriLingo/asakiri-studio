@@ -20,7 +20,7 @@
 }
 
 .header {
-  border-bottom: var(--border-hairline) solid var(--color-border);
+  padding-bottom: var(--space-2);
 }
 
 .title {
@@ -43,7 +43,7 @@
   display: flex;
   justify-content: flex-end;
   gap: var(--space-2);
-  border-top: var(--border-hairline) solid var(--color-border);
+  padding-top: var(--space-2);
 }
 
 .error {

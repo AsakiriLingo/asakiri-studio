@@ -133,18 +133,12 @@
 }
 
 .input:focus-visible {
-  border-color: var(--color-text-muted);
-  outline-color: var(--color-focus-ring);
-  background: var(--color-surface);
+  background: var(--color-surface-subtle);
 }
 
 @media (hover: hover) and (pointer: fine) {
   .table tbody tr:hover {
     background: var(--color-row-hover);
-  }
-
-  .input:hover:not(:focus-visible) {
-    border-color: var(--color-border);
   }
 }
 

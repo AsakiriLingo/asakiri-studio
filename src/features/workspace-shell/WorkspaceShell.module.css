@@ -17,8 +17,21 @@
 
 .projectIdentity {
   grid-area: project;
+  display: grid;
+  grid-template-columns: 1.75rem minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-3);
   min-width: 0;
   padding-inline: var(--space-2);
+}
+
+.projectMark {
+  width: 1.75rem;
+  height: 1.75rem;
+}
+
+.projectCopy {
+  min-width: 0;
 }
 
 .projectName {
@@ -61,6 +74,7 @@
 }
 
 .navItem {
+  position: relative;
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
@@ -76,17 +90,27 @@
   transition: background-color var(--duration-normal) var(--ease-out);
 }
 
+.navIcon {
+  display: grid;
+  place-items: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  flex: none;
+  border: var(--border-hairline) solid transparent;
+  border-radius: var(--radius-sm);
+}
+
 .navItem[aria-current="page"] {
   background: var(--color-surface-subtle);
   color: var(--color-text);
 }
 
-.navItem[aria-current="page"] svg {
-  color: var(--color-brand);
-}
-
-:root[data-theme="dark"] .navItem[aria-current="page"] svg {
-  color: var(--color-text-muted);
+.navItem[aria-current="page"] .navIcon {
+  border-color: var(--color-accent-edge);
+  border-width: 2px;
+  border-bottom-width: 4px;
+  background: var(--color-accent);
+  color: var(--color-accent-ink);
 }
 
 .workSurface {

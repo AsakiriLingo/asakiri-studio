@@ -6,6 +6,33 @@
   background: var(--color-canvas);
 }
 
+.bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: var(--control-height-md);
+  color: var(--color-text);
+  font-size: var(--font-size-300);
+  font-weight: var(--font-weight-bold);
+}
+
+.brandMark {
+  width: 2rem;
+  height: 2rem;
+}
+
+.brand strong {
+  color: var(--color-text-muted);
+  font-weight: var(--font-weight-medium);
+}
+
 .tools {
   display: flex;
   gap: var(--space-1);
@@ -60,10 +87,13 @@
 }
 
 .title {
-  margin: 0 0 var(--space-6);
-  font-size: var(--font-size-600);
-  font-weight: var(--font-weight-bold);
-  letter-spacing: -0.025em;
+  margin: 0 0 var(--space-8);
+  font-family: var(--font-family-display);
+  font-size: clamp(2.25rem, 7vw, 4rem);
+  font-weight: var(--font-weight-medium);
+  letter-spacing: -0.04em;
+  line-height: 1;
+  text-wrap: balance;
 }
 
 .list {
@@ -112,10 +142,48 @@
   outline-offset: calc(var(--space-1) / -2);
 }
 
+.row > svg:last-child {
+  transition: transform var(--duration-fast) var(--ease-out);
+}
+
+.row:focus-visible > svg:last-child {
+  transform: translateX(0.125rem);
+}
+
 .icon {
   display: grid;
   place-items: center;
+  width: var(--control-height-md);
+  height: var(--control-height-md);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-subtle);
   color: var(--color-brand);
+}
+
+.tile {
+  display: grid;
+  place-items: center;
+  width: var(--control-height-md);
+  height: var(--control-height-md);
+  border: 2px solid var(--color-accent-edge);
+  border-bottom-width: 4px;
+  border-radius: var(--radius-md);
+  transition: background-color var(--duration-normal) var(--ease-out);
+}
+
+.tileBrand {
+  border-color: var(--color-brand-edge);
+  color: var(--color-on-brand);
+  background: var(--color-brand);
+}
+
+.tileAccent {
+  color: var(--color-accent-ink);
+  background: var(--color-accent);
+}
+
+.row:active .tile {
+  border-bottom-width: 2px;
 }
 
 .name {
@@ -136,6 +204,18 @@
 @media (hover: hover) and (pointer: fine) {
   .row:hover {
     background: var(--color-surface-subtle);
+  }
+
+  .row:hover > svg:last-child {
+    transform: translateX(0.125rem);
+  }
+
+  .row:hover .tileAccent {
+    background: var(--color-accent-hover);
+  }
+
+  .row:hover .tileBrand {
+    background: var(--color-brand-hover);
   }
 }
 

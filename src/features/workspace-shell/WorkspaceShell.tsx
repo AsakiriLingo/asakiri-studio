@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { useMessages } from "@shared/i18n";
+import { Flag, hasFlag } from "@shared/components/flag";
 import { Icon, type IconName } from "@shared/components/icon";
 import { IconButton } from "@shared/components/icon-button";
 import { ScrollArea } from "@shared/components/scroll-area";
@@ -16,6 +17,7 @@ interface NavLink {
 export interface WorkspaceShellProps {
   readonly projectName: string;
   readonly projectLocation: string;
+  readonly flagCode?: string | undefined;
   readonly active: WorkspaceSection;
   readonly onNavigate: (section: WorkspaceSection) => void;
   readonly onBack: () => void;
@@ -25,6 +27,7 @@ export interface WorkspaceShellProps {
 export function WorkspaceShell({
   projectName,
   projectLocation,
+  flagCode,
   active,
   onNavigate,
   onBack,
@@ -44,8 +47,21 @@ export function WorkspaceShell({
     <div className={styles.workspace}>
       <aside className={styles.sidebar} aria-label={messages.workspace.projectAria}>
         <div className={styles.projectIdentity}>
-          <span className={styles.projectName}>{projectName}</span>
-          <span className={styles.projectLocation}>{projectLocation}</span>
+          {flagCode && hasFlag(flagCode) ? (
+            <Flag code={flagCode} size={28} className={styles.projectMark} />
+          ) : (
+            <img
+              className={styles.projectMark}
+              src="/asakiri-mark.svg"
+              alt=""
+              width={28}
+              height={28}
+            />
+          )}
+          <div className={styles.projectCopy}>
+            <span className={styles.projectName}>{projectName}</span>
+            <span className={styles.projectLocation}>{projectLocation}</span>
+          </div>
         </div>
         <div className={styles.utilities}>
           <IconButton aria-label={messages.common.backToStart} onClick={onBack}>
@@ -63,7 +79,9 @@ export function WorkspaceShell({
                 onNavigate(link.key);
               }}
             >
-              <Icon name={link.icon} size={18} />
+              <span className={styles.navIcon}>
+                <Icon name={link.icon} size={18} />
+              </span>
               {link.label}
             </button>
           ))}

@@ -43,16 +43,6 @@
   background: var(--color-surface-subtle);
 }
 
-.listRow.selected::before {
-  position: absolute;
-  inset-block: var(--space-2);
-  inset-inline-start: 0;
-  width: 3px;
-  border-radius: var(--radius-sm);
-  background: var(--color-brand);
-  content: "";
-}
-
 .rowTitle {
   display: block;
   overflow-wrap: anywhere;
@@ -65,7 +55,7 @@
   overflow-wrap: anywhere;
   margin-top: var(--space-1);
   color: var(--color-text-muted);
-  font-size: var(--font-size-100);
+  font-size: var(--font-size-200);
 }
 
 .count {
