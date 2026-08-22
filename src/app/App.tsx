@@ -393,6 +393,10 @@ export function App() {
                   onOpenLesson={(lessonId) => {
                     setOpenLessonId(lessonId);
                   }}
+                  onReorderParts={partActions.reorderParts}
+                  onAddPart={(lessonId, kind) => {
+                    void partActions.addPart(lessonId, kind);
+                  }}
                 />
               }
               editorSlot={

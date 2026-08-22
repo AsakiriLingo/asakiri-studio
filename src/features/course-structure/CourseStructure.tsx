@@ -19,7 +19,8 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import type { Course, Lesson, OutlineSection } from "@core/course";
+import type { Course, Lesson, OutlineSection, PartKind } from "@core/course";
+import { PART_KINDS } from "@core/course";
 import type { ProjectWriteResult } from "@core/project-writing";
 import { useFormat, useMessages } from "@shared/i18n";
 import { Button } from "@shared/components/button";
@@ -45,12 +46,18 @@ function LessonRow({
   variant,
   onOpen,
   onOpenSettings,
+  onReorderParts,
+  onRequestAddPart,
 }: {
   readonly lesson: Lesson;
   readonly index: number;
   readonly variant: "page" | "sidebar";
   readonly onOpen: () => void;
   readonly onOpenSettings: () => void;
+  readonly onReorderParts?:
+    | ((lessonId: string, orderedPartIds: readonly string[]) => Promise<ProjectWriteResult>)
+    | undefined;
+  readonly onRequestAddPart?: (() => void) | undefined;
 }) {
   const messages = useMessages();
   const t = messages.structure;
@@ -101,6 +108,15 @@ function LessonRow({
           <button type="button" className={styles.treeMain} onClick={onOpen}>
             <span className={styles.rowTitle}>{lesson.title}</span>
           </button>
+          {onRequestAddPart ? (
+            <IconButton
+              className={styles.rowAction}
+              aria-label={messages.lesson.addPartTitle}
+              onClick={onRequestAddPart}
+            >
+              <Icon name="plus" size={16} />
+            </IconButton>
+          ) : null}
           <button
             type="button"
             className={styles.dragHandle}
@@ -112,15 +128,7 @@ function LessonRow({
           </button>
         </div>
         {hasParts && !partsCollapsed ? (
-          <div className={styles.partList}>
-            {lesson.parts.map((part) => (
-              <button key={part.id} type="button" className={styles.treeRow} onClick={onOpen}>
-                <span className={styles.disclosureSpacer} aria-hidden="true" />
-                <Icon className={styles.typeIcon} name="file-text" size={16} aria-hidden="true" />
-                <span className={styles.rowTitle}>{part.title}</span>
-              </button>
-            ))}
-          </div>
+          <PartList lesson={lesson} onOpen={onOpen} onReorderParts={onReorderParts} />
         ) : null}
       </div>
     );
@@ -163,6 +171,96 @@ function useReorderSensors() {
   );
 }
 
+function SortablePartRow({
+  part,
+  onOpen,
+}: {
+  readonly part: { readonly id: string; readonly title: string };
+  readonly onOpen: () => void;
+}) {
+  const messages = useMessages();
+  const format = useFormat();
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: part.id,
+  });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={[styles.treeRow, isDragging ? styles.dragging : ""].filter(Boolean).join(" ")}
+    >
+      <span className={styles.disclosureSpacer} aria-hidden="true" />
+      <Icon className={styles.typeIcon} name="file-text" size={16} aria-hidden="true" />
+      <button type="button" className={styles.treeMain} onClick={onOpen}>
+        <span className={styles.rowTitle}>{part.title}</span>
+      </button>
+      <button
+        type="button"
+        className={styles.dragHandle}
+        aria-label={format(messages.common.reorder, { label: part.title })}
+        {...attributes}
+        {...listeners}
+      >
+        <Icon name="grip" size={16} />
+      </button>
+    </div>
+  );
+}
+
+function PartList({
+  lesson,
+  onOpen,
+  onReorderParts,
+}: {
+  readonly lesson: Lesson;
+  readonly onOpen: () => void;
+  readonly onReorderParts?:
+    | ((lessonId: string, orderedPartIds: readonly string[]) => Promise<ProjectWriteResult>)
+    | undefined;
+}) {
+  const sensors = useReorderSensors();
+  const ids = lesson.parts.map((part) => part.id);
+
+  if (!onReorderParts) {
+    return (
+      <div className={styles.partList}>
+        {lesson.parts.map((part) => (
+          <button key={part.id} type="button" className={styles.treeRow} onClick={onOpen}>
+            <span className={styles.disclosureSpacer} aria-hidden="true" />
+            <Icon className={styles.typeIcon} name="file-text" size={16} aria-hidden="true" />
+            <span className={styles.rowTitle}>{part.title}</span>
+          </button>
+        ))}
+      </div>
+    );
+  }
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const from = ids.indexOf(String(active.id));
+    const to = ids.indexOf(String(over.id));
+    if (from < 0 || to < 0) return;
+    void onReorderParts(lesson.id, arrayMove([...ids], from, to));
+  };
+
+  return (
+    <DndContext sensors={sensors} collisionDetection={closestCorners} onDragEnd={handleDragEnd}>
+      <SortableContext items={ids} strategy={verticalListSortingStrategy}>
+        <div className={styles.partList}>
+          {lesson.parts.map((part) => (
+            <SortablePartRow key={part.id} part={part} onOpen={onOpen} />
+          ))}
+        </div>
+      </SortableContext>
+    </DndContext>
+  );
+}
+
 function UnitBlock({
   unit,
   index,
@@ -175,6 +273,8 @@ function UnitBlock({
   onOpenSettings,
   onOpenLesson,
   onOpenLessonSettings,
+  onReorderParts,
+  onRequestAddPart,
 }: {
   readonly unit: OutlineSection;
   readonly index: number;
@@ -187,6 +287,10 @@ function UnitBlock({
   readonly onOpenSettings: () => void;
   readonly onOpenLesson: (lessonId: string) => void;
   readonly onOpenLessonSettings: (lessonId: string) => void;
+  readonly onReorderParts?:
+    | ((lessonId: string, orderedPartIds: readonly string[]) => Promise<ProjectWriteResult>)
+    | undefined;
+  readonly onRequestAddPart?: ((lessonId: string) => void) | undefined;
 }) {
   const sidebar = variant === "sidebar";
   const messages = useMessages();
@@ -291,6 +395,14 @@ function UnitBlock({
                 onOpenSettings={() => {
                   onOpenLessonSettings(lesson.id);
                 }}
+                onReorderParts={onReorderParts}
+                onRequestAddPart={
+                  onRequestAddPart
+                    ? () => {
+                        onRequestAddPart(lesson.id);
+                      }
+                    : undefined
+                }
               />
             ))}
           </div>
@@ -341,6 +453,10 @@ export interface CourseStructureProps {
     sections: readonly { readonly id: string; readonly lessonIds: readonly string[] }[],
   ) => Promise<ProjectWriteResult>;
   readonly onOpenLesson: (lessonId: string) => void;
+  readonly onReorderParts?:
+    | ((lessonId: string, orderedPartIds: readonly string[]) => Promise<ProjectWriteResult>)
+    | undefined;
+  readonly onAddPart?: ((lessonId: string, kind: PartKind) => void) | undefined;
   readonly variant?: "page" | "sidebar";
 }
 
@@ -374,6 +490,8 @@ export function CourseStructure({
   onDeleteLesson,
   onReorderOutline,
   onOpenLesson,
+  onReorderParts,
+  onAddPart,
   variant = "page",
 }: CourseStructureProps) {
   const messages = useMessages();
@@ -385,6 +503,7 @@ export function CourseStructure({
   const [failed, setFailed] = useState(false);
   const [settingsUnitId, setSettingsUnitId] = useState<string | null>(null);
   const [settingsLessonId, setSettingsLessonId] = useState<string | null>(null);
+  const [addingPartLessonId, setAddingPartLessonId] = useState<string | null>(null);
   const [collapsedUnitIds, setCollapsedUnitIds] = useState<ReadonlySet<string>>(
     () => new Set<string>(),
   );
@@ -741,6 +860,14 @@ export function CourseStructure({
                       setFailed(false);
                       setSettingsLessonId(lessonId);
                     }}
+                    onReorderParts={onReorderParts}
+                    onRequestAddPart={
+                      onAddPart
+                        ? (lessonId) => {
+                            setAddingPartLessonId(lessonId);
+                          }
+                        : undefined
+                    }
                   />
                 );
               })}
@@ -847,6 +974,36 @@ export function CourseStructure({
             >
               {messages.common.done}
             </Button>
+          </div>
+        </Modal>
+      ) : null}
+
+      {onAddPart && addingPartLessonId !== null ? (
+        <Modal
+          label={messages.lesson.addPartTitle}
+          onClose={() => {
+            setAddingPartLessonId(null);
+          }}
+        >
+          <div className={styles.dialogHeader}>
+            <h2 className={styles.dialogTitle}>{messages.lesson.addPartTitle}</h2>
+          </div>
+          <div className={styles.dialogBody}>
+            <div className={styles.typeList}>
+              {PART_KINDS.map((kind) => (
+                <button
+                  key={kind}
+                  type="button"
+                  className={styles.typeOption}
+                  onClick={() => {
+                    onAddPart(addingPartLessonId, kind);
+                    setAddingPartLessonId(null);
+                  }}
+                >
+                  {messages.lesson.kind[kind]}
+                </button>
+              ))}
+            </div>
           </div>
         </Modal>
       ) : null}

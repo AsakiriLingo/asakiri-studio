@@ -22,7 +22,7 @@ import {
   type SaveRecordPresentation,
 } from "@shared/components/rich-editor";
 import { Status } from "@shared/components/status";
-import { partKind, type PartDisplayKind } from "@features/lesson-editor/parts";
+import { partKind, type PartDisplayKind } from "@core/course";
 import { FillBlankEditor } from "@features/lesson-editor/exercise/FillBlankEditor";
 import { ListeningEditor } from "@features/lesson-editor/exercise/ListeningEditor";
 import { MatchPairsEditor } from "@features/lesson-editor/exercise/MatchPairsEditor";

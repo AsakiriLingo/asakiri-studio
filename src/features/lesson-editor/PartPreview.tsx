@@ -7,14 +7,14 @@ import type {
   Course,
   MatchPairsExercise,
   Part,
+  PartDisplayKind,
   ResolvedValue,
 } from "@core/course";
-import { createBindingResolver } from "@core/course";
+import { createBindingResolver, partKind } from "@core/course";
 import { useMessages } from "@shared/i18n";
 import { Icon } from "@shared/components/icon";
 import { RichContent, type LoadAssetPreview } from "@shared/components/rich-editor";
 import { Status } from "@shared/components/status";
-import { partKind, type PartDisplayKind } from "@features/lesson-editor/parts";
 import { courseToRichLibrary } from "@features/lesson-editor/rich-library";
 import styles from "@features/lesson-editor/LessonEditor.module.css";
 

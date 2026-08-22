@@ -34,7 +34,7 @@ import { Icon } from "@shared/components/icon";
 import { IconButton } from "@shared/components/icon-button";
 import { PanelHeader } from "@shared/components/panel";
 import { WorkHeader, WorkInner } from "@shared/components/work-surface";
-import { PART_KINDS, partKind, type PartKind } from "@features/lesson-editor/parts";
+import { PART_KINDS, partKind, type PartKind } from "@core/course";
 import { PartEditor } from "@features/lesson-editor/PartEditor";
 import { PartPreview } from "@features/lesson-editor/PartPreview";
 import styles from "@features/lesson-editor/LessonEditor.module.css";

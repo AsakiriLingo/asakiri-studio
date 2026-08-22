@@ -459,15 +459,33 @@
 }
 
 .sidebar .unitActions button {
+  width: 1.5rem;
+  min-width: 1.5rem;
+  height: 1.5rem;
   min-height: 1.5rem;
+  padding: 0;
+}
+
+.sidebar .rowAction {
+  order: 8;
+  flex: none;
+  width: 1.5rem;
+  min-width: 1.5rem;
+  height: 1.5rem;
+  min-height: 1.5rem;
+  padding: 0;
+  opacity: 0;
+  transition: opacity var(--duration-fast) var(--ease-out);
 }
 
 .sidebar .unitHeader:hover .reorderHandle,
 .sidebar .unitHeader:hover .unitActions,
 .sidebar .unitHeader:focus-within .reorderHandle,
 .sidebar .unitHeader:focus-within .unitActions,
-.sidebar .lessonNode:hover .dragHandle,
-.sidebar .treeRow:focus-within .dragHandle {
+.sidebar .treeRow:hover .dragHandle,
+.sidebar .treeRow:focus-within .dragHandle,
+.sidebar .treeRow:hover .rowAction,
+.sidebar .treeRow:focus-within .rowAction {
   opacity: 1;
 }
 
@@ -480,7 +498,41 @@
 @media (prefers-reduced-motion: reduce) {
   .sidebar .dragHandle,
   .sidebar .reorderHandle,
+  .sidebar .rowAction,
   .sidebar .unitActions {
+    transition: none;
+  }
+}
+
+.typeList {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.typeOption {
+  display: flex;
+  align-items: center;
+  min-height: var(--control-height-md);
+  padding: var(--space-2) var(--space-3);
+  border: var(--border-hairline) solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: var(--font-size-300);
+  font-weight: var(--font-weight-semibold);
+  text-align: start;
+  cursor: pointer;
+  transition: background-color var(--duration-fast) var(--ease-out);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .typeOption:hover {
+    background: var(--color-surface-subtle);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .typeOption {
     transition: none;
   }
 }

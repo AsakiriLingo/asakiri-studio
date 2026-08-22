@@ -1,8 +1,7 @@
-import type { Exercise, Part, TiptapDocument } from "@core/course";
-import { createDefaultExercise, partSourceKey } from "@core/course";
+import type { Exercise, Part, PartKind, TiptapDocument } from "@core/course";
+import { createDefaultExercise, exerciseTypeForKind, partSourceKey } from "@core/course";
 import type { ProjectWriteResult } from "@core/project-writing";
 import { formatMessage, getMessages, type Locale } from "@shared/i18n";
-import { exerciseTypeForKind, type PartKind } from "@features/lesson-editor";
 import type { AppServices } from "@app/services";
 import { WRITE_UNAVAILABLE } from "@app/course-state";
 import type { CourseStateStore } from "@app/useCourseState";

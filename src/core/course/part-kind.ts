@@ -1,4 +1,5 @@
-import type { ExerciseType, PartContent } from "@core/course";
+import type { ExerciseType } from "@core/course/exercise";
+import type { PartContent } from "@core/course/lesson";
 
 export type PartKind =
   | "rich-text"
