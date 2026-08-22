@@ -1,9 +1,9 @@
-import { useState, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import { useMessages } from "@shared/i18n";
-import { Flag, hasFlag } from "@shared/components/flag";
 import { Icon, type IconName } from "@shared/components/icon";
 import { IconButton } from "@shared/components/icon-button";
 import { ScrollArea } from "@shared/components/scroll-area";
+import { Tooltip, TooltipProvider } from "@shared/components/tooltip";
 import styles from "@features/workspace-shell/WorkspaceShell.module.css";
 
 export type WorkspaceSection = "details" | "content" | "media" | "attribution" | "lessons";
@@ -17,7 +17,6 @@ interface NavLink {
 export interface WorkspaceShellProps {
   readonly projectName: string;
   readonly projectLocation: string;
-  readonly flagCode?: string | undefined;
   readonly active: WorkspaceSection;
   readonly onNavigate: (section: WorkspaceSection) => void;
   readonly onBack: () => void;
@@ -29,7 +28,6 @@ export interface WorkspaceShellProps {
 export function WorkspaceShell({
   projectName,
   projectLocation,
-  flagCode,
   active,
   onNavigate,
   onBack,
@@ -38,7 +36,6 @@ export function WorkspaceShell({
   children,
 }: WorkspaceShellProps) {
   const messages = useMessages();
-  const [collapsed, setCollapsed] = useState(false);
 
   const navLinks: readonly NavLink[] = [
     { key: "details", label: messages.workspace.navDetails, icon: "details" },
@@ -49,64 +46,45 @@ export function WorkspaceShell({
   ];
 
   return (
-    <div className={styles.workspace} data-collapsed={collapsed ? "" : undefined}>
-      <aside className={styles.sidebar} aria-label={messages.workspace.projectAria}>
-        <div className={styles.projectIdentity}>
-          {flagCode && hasFlag(flagCode) ? (
-            <Flag code={flagCode} size={28} className={styles.projectMark} />
-          ) : (
-            <img
-              className={styles.projectMark}
-              src="/asakiri-mark.svg"
-              alt=""
-              width={28}
-              height={28}
-            />
-          )}
-          <div className={styles.projectCopy}>
-            <span className={styles.projectName}>{projectName}</span>
-            <span className={styles.projectLocation}>{projectLocation}</span>
-          </div>
+    <div className={styles.workspace}>
+      <header
+        className={styles.header}
+        aria-label={messages.workspace.projectAria}
+        data-tauri-drag-region
+      >
+        <div className={styles.identity} title={projectLocation}>
+          <span className={styles.projectName}>{projectName}</span>
         </div>
+        <TooltipProvider>
+          <nav className={styles.nav} aria-label={messages.workspace.areasAria}>
+            {navLinks.map((link) => (
+              <Tooltip key={link.key} content={link.label}>
+                <button
+                  type="button"
+                  className={styles.navItem}
+                  aria-current={active === link.key ? "page" : undefined}
+                  aria-label={link.label}
+                  onClick={() => {
+                    onNavigate(link.key);
+                  }}
+                >
+                  <span className={styles.navIcon}>
+                    <Icon name={link.icon} size={18} />
+                  </span>
+                </button>
+              </Tooltip>
+            ))}
+          </nav>
+        </TooltipProvider>
         <div className={styles.utilities}>
-          <IconButton aria-label={messages.common.backToStart} onClick={onBack}>
+          <IconButton size="sm" aria-label={messages.common.backToStart} onClick={onBack}>
             <Icon name="back" size={18} />
           </IconButton>
-          <IconButton aria-label={messages.common.settings} onClick={onOpenSettings}>
+          <IconButton size="sm" aria-label={messages.common.settings} onClick={onOpenSettings}>
             <Icon name="settings" size={18} />
           </IconButton>
-          <IconButton
-            className={styles.collapseToggle}
-            aria-label={
-              collapsed ? messages.workspace.expandSidebar : messages.workspace.collapseSidebar
-            }
-            aria-expanded={!collapsed}
-            onClick={() => {
-              setCollapsed((value) => !value);
-            }}
-          >
-            <Icon name="chevrons-left" size={18} className={styles.collapseIcon} />
-          </IconButton>
         </div>
-        <nav className={styles.nav} aria-label={messages.workspace.areasAria}>
-          {navLinks.map((link) => (
-            <button
-              key={link.key}
-              type="button"
-              className={styles.navItem}
-              aria-current={active === link.key ? "page" : undefined}
-              onClick={() => {
-                onNavigate(link.key);
-              }}
-            >
-              <span className={styles.navIcon}>
-                <Icon name={link.icon} size={18} />
-              </span>
-              <span className={styles.navLabel}>{link.label}</span>
-            </button>
-          ))}
-        </nav>
-      </aside>
+      </header>
       <main className={styles.workSurface}>
         {flush ? (
           children

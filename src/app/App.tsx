@@ -312,7 +312,6 @@ export function App() {
       <WorkspaceShell
         projectName={projectName}
         projectLocation={projectLocation}
-        flagCode={course?.project.taughtFlag}
         active={section}
         onNavigate={navigate}
         onBack={goToStart}

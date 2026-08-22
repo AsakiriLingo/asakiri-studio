@@ -1,94 +1,60 @@
 .workspace {
+  display: flex;
+  flex-direction: column;
+  height: 100svh;
   min-height: 100svh;
+  overflow: hidden;
   background: var(--color-canvas);
 }
 
-.sidebar {
+.header {
+  position: relative;
+  z-index: var(--z-sticky);
   display: grid;
-  grid-template-areas:
-    "project utilities"
-    "navigation navigation";
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: var(--space-2) var(--space-1);
-  padding: calc(max(var(--space-2), env(safe-area-inset-top)) + var(--titlebar-height))
-    var(--space-3) var(--space-2);
-  border-bottom: 0;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-4);
+  min-height: var(--titlebar-height);
+  padding: var(--space-1) var(--space-4);
+  border-bottom: var(--border-hairline) solid var(--color-border);
   background: var(--color-canvas);
 }
 
-.projectIdentity {
-  grid-area: project;
-  display: grid;
-  grid-template-columns: 1.75rem minmax(0, 1fr);
+.identity {
+  display: flex;
   align-items: center;
   gap: var(--space-3);
   min-width: 0;
-  padding-inline: var(--space-2);
+  justify-self: start;
 }
 
-.projectMark {
-  width: 1.75rem;
-  height: 1.75rem;
-}
-
-.projectCopy {
-  min-width: 0;
+:root[data-os="macos"] .identity {
+  padding-left: 3.75rem;
 }
 
 .projectName {
-  display: block;
   overflow: hidden;
   font-size: var(--font-size-300);
   font-weight: var(--font-weight-bold);
-  line-height: 1.25;
+  line-height: 1.2;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.projectLocation {
-  display: none;
-  overflow: hidden;
-  color: var(--color-text-muted);
-  font-family: var(--font-family-mono);
-  font-size: var(--font-size-100);
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.utilities {
-  grid-area: utilities;
-  display: flex;
-  gap: var(--space-1);
 }
 
 .nav {
-  grid-area: navigation;
   display: flex;
+  align-items: center;
   gap: var(--space-1);
-  min-width: 0;
-  overflow-x: auto;
-  scrollbar-width: none;
-}
-
-.nav::-webkit-scrollbar {
-  display: none;
+  justify-self: center;
 }
 
 .navItem {
-  position: relative;
   display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-  min-height: var(--control-height-md);
-  padding-inline: var(--space-3);
+  padding: 0;
   border: 0;
   border-radius: var(--radius-sm);
   background: transparent;
-  color: var(--color-text-muted);
-  font-size: var(--font-size-300);
-  font-weight: var(--font-weight-semibold);
-  white-space: nowrap;
-  transition: background-color var(--duration-normal) var(--ease-out);
+  cursor: pointer;
 }
 
 .navIcon {
@@ -96,14 +62,10 @@
   place-items: center;
   width: 1.75rem;
   height: 1.75rem;
-  flex: none;
   border: var(--border-hairline) solid transparent;
   border-radius: var(--radius-sm);
-}
-
-.navItem[aria-current="page"] {
-  background: var(--color-surface-subtle);
-  color: var(--color-text);
+  color: var(--color-text-muted);
+  transition: background-color var(--duration-fast) var(--ease-out);
 }
 
 .navItem[aria-current="page"] .navIcon {
@@ -114,9 +76,17 @@
   color: var(--color-accent-ink);
 }
 
+.utilities {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  justify-self: end;
+}
+
 .workSurface {
-  min-width: 0;
-  min-height: calc(100svh - 7rem);
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
   background: var(--color-surface);
 }
 
@@ -125,135 +95,18 @@
 }
 
 .workContent {
-  padding: var(--space-6);
+  padding: var(--space-8) clamp(var(--space-8), 4vw, var(--space-16));
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .navItem:hover {
+  .navItem:not([aria-current="page"]):hover .navIcon {
     background: var(--color-surface-subtle);
     color: var(--color-text);
   }
 }
 
-@media (min-width: 48rem) {
-  .projectLocation {
-    display: block;
-  }
-}
-
-@media (min-width: 64rem) {
-  .workspace {
-    display: grid;
-    grid-template-columns: var(--sidebar-width) minmax(0, 1fr);
-    height: 100svh;
-    overflow: hidden;
-  }
-
-  .sidebar {
-    position: sticky;
-    top: 0;
-    display: flex;
-    flex-direction: column;
-    height: 100svh;
-    align-items: stretch;
-    gap: var(--space-4);
-    padding: calc(var(--space-5) + var(--titlebar-height)) var(--space-3) var(--space-5);
-    border-right: 0;
-    border-bottom: 0;
-  }
-
-  .projectIdentity {
-    padding: var(--space-2) var(--space-3) var(--space-3);
-  }
-
-  .projectName {
-    font-size: var(--font-size-400);
-  }
-
-  .utilities {
-    order: 3;
-    justify-content: space-between;
-    margin-top: auto;
-    padding-top: var(--space-3);
-    border-top: 0;
-  }
-
-  .nav {
-    display: flex;
-    flex-direction: column;
-    overflow: visible;
-  }
-
-  .workSurface {
-    height: 100svh;
-    min-height: 0;
-    overflow: hidden;
-  }
-
-  .workContent {
-    padding: calc(var(--space-8) + var(--titlebar-height))
-      clamp(var(--space-8), 4vw, var(--space-16)) var(--space-8);
-  }
-}
-
-.navLabel {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.collapseToggle {
-  display: none;
-}
-
-.collapseIcon {
-  transition: transform var(--duration-normal) var(--ease-out);
-}
-
-@media (min-width: 64rem) {
-  .collapseToggle {
-    display: inline-flex;
-  }
-
-  .workspace[data-collapsed] {
-    grid-template-columns: 4rem minmax(0, 1fr);
-  }
-
-  .workspace[data-collapsed] .sidebar {
-    align-items: center;
-    padding-inline: var(--space-2);
-  }
-
-  .workspace[data-collapsed] .projectCopy,
-  .workspace[data-collapsed] .projectLocation,
-  .workspace[data-collapsed] .navLabel {
-    display: none;
-  }
-
-  .workspace[data-collapsed] .projectIdentity {
-    grid-template-columns: auto;
-    justify-content: center;
-    padding-inline: 0;
-  }
-
-  .workspace[data-collapsed] .utilities {
-    flex-direction: column;
-    align-items: center;
-  }
-
-  .workspace[data-collapsed] .navItem {
-    justify-content: center;
-    padding-inline: var(--space-2);
-  }
-
-  .workspace[data-collapsed] .collapseIcon {
-    transform: rotate(180deg);
-  }
-}
-
 @media (prefers-reduced-motion: reduce) {
-  .collapseIcon {
+  .navIcon {
     transition: none;
   }
 }
