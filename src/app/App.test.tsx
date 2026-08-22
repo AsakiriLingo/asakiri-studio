@@ -392,6 +392,9 @@ function makeWriter() {
     deleteAsset: vi.fn().mockResolvedValue(SAVED),
     writeAttribution: vi.fn().mockResolvedValue(SAVED),
     renameAsset: vi.fn().mockResolvedValue(SAVED),
+    importDraft: vi.fn().mockResolvedValue(SAVED),
+    updateDraft: vi.fn().mockResolvedValue(SAVED),
+    deleteDraft: vi.fn().mockResolvedValue(SAVED),
   };
 }
 
@@ -421,6 +424,10 @@ function makeServices() {
           },
         }),
       ),
+      readDrafts: vi.fn().mockResolvedValue({
+        status: "ready",
+        data: { drafts: [], sources: { manifest: ".asakiri/drafts/drafts.json", bodies: {} } },
+      }),
     },
     writer,
     system: { revealFolder: vi.fn().mockResolvedValue(undefined) },

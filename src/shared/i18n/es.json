@@ -594,18 +594,28 @@
   "lessonWorkspace": {
     "outline": "Esquema",
     "editor": "Editor",
-    "source": "Fuente",
+    "drafts": "Borradores",
     "preview": "Vista previa",
     "showOutline": "Mostrar esquema",
     "hideOutline": "Ocultar esquema",
     "showReference": "Mostrar referencia",
     "hideReference": "Ocultar referencia",
     "selectPart": "Selecciona una parte de la lección para empezar a editar",
-    "sourceEmpty": "Importa un documento para consultarlo aquí",
+    "draftsEmpty": "Sube un documento para empezar un borrador",
     "previewEmpty": "La vista previa aparece aquí mientras creas una parte",
     "outlineEmpty": "Aún no hay unidades",
     "lessons": "Lecciones",
     "unitDetailsAria": "Detalles de {unit}"
+  },
+  "drafts": {
+    "upload": "Subir documento",
+    "uploading": "Convirtiendo…",
+    "empty": "Aún no hay borradores",
+    "emptyBody": "Sube un documento para guardarlo como borrador del que puedas copiar.",
+    "back": "Volver a borradores",
+    "editorAria": "Contenido del borrador",
+    "openAria": "Abrir {title}",
+    "uploadFailed": "No se pudo convertir ese archivo"
   },
   "workspace": {
     "areasAria": "Áreas del curso",

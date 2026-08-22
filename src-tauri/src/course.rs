@@ -290,6 +290,18 @@ pub fn read_course_file_base64(root_path: String, relative_path: String) -> Resu
     }
 }
 
+#[tauri::command]
+pub fn read_course_file(root_path: String, relative_path: String) -> Result<String, String> {
+    let target =
+        resolve_course_path(&root_path, &relative_path).ok_or_else(|| "invalidPath".to_string())?;
+
+    match fs::read_to_string(&target) {
+        Ok(contents) => Ok(contents),
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => Err("notFound".to_string()),
+        Err(_) => Err("unknown".to_string()),
+    }
+}
+
 /// Recursively removes a project-relative directory. Missing is treated as success.
 #[tauri::command]
 pub fn remove_course_dir(root_path: String, relative_path: String) -> Result<(), String> {

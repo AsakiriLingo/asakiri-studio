@@ -23,7 +23,7 @@ export interface LessonWorkspaceProps {
   readonly outline?: readonly LessonWorkspaceUnit[];
   readonly outlineSlot?: ReactNode;
   readonly editorSlot?: ReactNode;
-  readonly sourceSlot?: ReactNode;
+  readonly draftsSlot?: ReactNode;
   readonly previewSlot?: ReactNode;
   readonly outlineCollapsed?: boolean;
   readonly onOutlineCollapsedChange?: (collapsed: boolean) => void;
@@ -31,13 +31,13 @@ export interface LessonWorkspaceProps {
   readonly onReferenceCollapsedChange?: (collapsed: boolean) => void;
 }
 
-type ContextTab = "source" | "preview";
+type ContextTab = "drafts" | "preview";
 
 export function LessonWorkspace({
   outline = [],
   outlineSlot,
   editorSlot,
-  sourceSlot,
+  draftsSlot,
   previewSlot,
   outlineCollapsed = false,
   onOutlineCollapsedChange,
@@ -180,19 +180,23 @@ export function LessonWorkspace({
             <button
               type="button"
               role="tab"
-              aria-selected={tab === "source"}
+              aria-selected={tab === "drafts"}
               className={styles.tab}
               onClick={() => {
-                setTab("source");
+                setTab("drafts");
               }}
             >
               <Icon name="file-text" size={16} />
-              {t.source}
+              {t.drafts}
             </button>
           </div>
-          <ScrollArea className={styles.scrollHost} contentClassName={styles.refScroll}>
-            {tab === "source"
-              ? (sourceSlot ?? <p className={styles.empty}>{t.sourceEmpty}</p>)
+          <ScrollArea
+            className={styles.scrollHost}
+            contentClassName={styles.refScroll}
+            contentStyle={{ minWidth: 0 }}
+          >
+            {tab === "drafts"
+              ? (draftsSlot ?? <p className={styles.empty}>{t.draftsEmpty}</p>)
               : (previewSlot ?? <p className={styles.empty}>{t.previewEmpty}</p>)}
           </ScrollArea>
           <div className={[styles.panelFooter, styles.footerStart].join(" ")}>

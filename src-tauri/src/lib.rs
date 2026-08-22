@@ -82,6 +82,7 @@ pub fn run() {
             course::copy_course_image_stripped,
             course::rename_course_file,
             course::read_course_file_base64,
+            course::read_course_file,
             course::remove_course_dir,
             course::reveal_path,
             course::git_status,

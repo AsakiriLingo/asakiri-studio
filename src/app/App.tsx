@@ -19,6 +19,7 @@ import { CourseAttribution } from "@features/attribution";
 import { CourseDetails } from "@features/course-details";
 import { PartEditor, courseToRichLibrary, type SaveState } from "@features/lesson-editor";
 import { PartPreview } from "@features/part-preview";
+import { DraftsPanel } from "@features/drafts";
 import { createAppServices } from "@app/services";
 import { useCourseState } from "@app/useCourseState";
 import { useProjectActions } from "@app/useProjectActions";
@@ -26,6 +27,7 @@ import { useOutlineActions } from "@app/useOutlineActions";
 import { useContentActions } from "@app/useContentActions";
 import { usePartActions } from "@app/usePartActions";
 import { useMediaActions } from "@app/useMediaActions";
+import { useDrafts } from "@app/useDrafts";
 import styles from "@app/App.module.css";
 
 function initialThemePreference(): ThemePreference {
@@ -109,6 +111,7 @@ export function App() {
   const contentActions = useContentActions(services, store);
   const partActions = usePartActions(services, store, locale);
   const mediaActions = useMediaActions(services, store);
+  const draftActions = useDrafts(services, store);
 
   const openPartView = (_lessonId: string, partId: string) => {
     setOpenPartId(partId);
@@ -481,6 +484,16 @@ export function App() {
                     onLoadAssetPreview={mediaActions.loadAssetPreview}
                   />
                 ) : undefined
+              }
+              draftsSlot={
+                <DraftsPanel
+                  drafts={draftActions.drafts}
+                  onUpload={draftActions.uploadDraft}
+                  onUpdate={draftActions.updateDraft}
+                  onDelete={draftActions.deleteDraft}
+                  library={courseToRichLibrary(course)}
+                  onLoadAssetPreview={mediaActions.loadAssetPreview}
+                />
               }
             />
           )

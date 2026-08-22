@@ -160,4 +160,16 @@ export interface ProjectWriter {
     oldFile: string | null,
     asset: Asset,
   ): Promise<ProjectWriteResult>;
+  importDraft(
+    session: ProjectSession,
+    draft: { readonly id: string; readonly title: string; readonly updatedAt: string },
+    document: TiptapDocument,
+  ): Promise<ProjectWriteResult>;
+  updateDraft(
+    session: ProjectSession,
+    draftId: string,
+    document: TiptapDocument,
+    updatedAt: string,
+  ): Promise<ProjectWriteResult>;
+  deleteDraft(session: ProjectSession, draftId: string): Promise<ProjectWriteResult>;
 }

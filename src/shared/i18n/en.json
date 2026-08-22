@@ -594,18 +594,28 @@
   "lessonWorkspace": {
     "outline": "Outline",
     "editor": "Editor",
-    "source": "Source",
+    "drafts": "Drafts",
     "preview": "Preview",
     "showOutline": "Show outline",
     "hideOutline": "Hide outline",
     "showReference": "Show reference",
     "hideReference": "Hide reference",
     "selectPart": "Select a lesson part to start editing",
-    "sourceEmpty": "Import a document to reference it here",
+    "draftsEmpty": "Upload a document to start a draft",
     "previewEmpty": "Preview appears here as you build a part",
     "outlineEmpty": "No units yet",
     "lessons": "Lessons",
     "unitDetailsAria": "Details for {unit}"
+  },
+  "drafts": {
+    "upload": "Upload doc",
+    "uploading": "Converting…",
+    "empty": "No drafts yet",
+    "emptyBody": "Upload a document to keep as a draft you can copy from.",
+    "back": "Back to drafts",
+    "editorAria": "Draft content",
+    "openAria": "Open {title}",
+    "uploadFailed": "Could not convert that file"
   },
   "workspace": {
     "areasAria": "Course areas",

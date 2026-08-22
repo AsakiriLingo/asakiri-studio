@@ -594,18 +594,28 @@
   "lessonWorkspace": {
     "outline": "Estrutura",
     "editor": "Editor",
-    "source": "Fonte",
+    "drafts": "Rascunhos",
     "preview": "Pré-visualização",
     "showOutline": "Mostrar estrutura",
     "hideOutline": "Ocultar estrutura",
     "showReference": "Mostrar referência",
     "hideReference": "Ocultar referência",
     "selectPart": "Selecione uma parte da lição para começar a editar",
-    "sourceEmpty": "Importe um documento para consultá-lo aqui",
+    "draftsEmpty": "Envie um documento para começar um rascunho",
     "previewEmpty": "A pré-visualização aparece aqui enquanto você cria uma parte",
     "outlineEmpty": "Ainda não há unidades",
     "lessons": "Lições",
     "unitDetailsAria": "Detalhes de {unit}"
+  },
+  "drafts": {
+    "upload": "Enviar documento",
+    "uploading": "Convertendo…",
+    "empty": "Ainda não há rascunhos",
+    "emptyBody": "Envie um documento para guardar como rascunho de onde copiar.",
+    "back": "Voltar aos rascunhos",
+    "editorAria": "Conteúdo do rascunho",
+    "openAria": "Abrir {title}",
+    "uploadFailed": "Não foi possível converter esse arquivo"
   },
   "workspace": {
     "areasAria": "Áreas do curso",

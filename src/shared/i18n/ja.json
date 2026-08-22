@@ -594,18 +594,28 @@
   "lessonWorkspace": {
     "outline": "アウトライン",
     "editor": "エディター",
-    "source": "ソース",
+    "drafts": "下書き",
     "preview": "プレビュー",
     "showOutline": "アウトラインを表示",
     "hideOutline": "アウトラインを非表示",
     "showReference": "参照を表示",
     "hideReference": "参照を非表示",
     "selectPart": "編集するレッスンパートを選択してください",
-    "sourceEmpty": "ここで参照するにはドキュメントをインポートしてください",
+    "draftsEmpty": "ドキュメントをアップロードして下書きを作成します",
     "previewEmpty": "パートを作成するとここにプレビューが表示されます",
     "outlineEmpty": "ユニットがまだありません",
     "lessons": "レッスン",
     "unitDetailsAria": "{unit} の詳細"
+  },
+  "drafts": {
+    "upload": "ドキュメントを読み込む",
+    "uploading": "変換中…",
+    "empty": "下書きはまだありません",
+    "emptyBody": "コピー元として使える下書きとして保存するドキュメントをアップロードします。",
+    "back": "下書きに戻る",
+    "editorAria": "下書きの内容",
+    "openAria": "{title}を開く",
+    "uploadFailed": "そのファイルを変換できませんでした"
   },
   "workspace": {
     "areasAria": "コースの領域",

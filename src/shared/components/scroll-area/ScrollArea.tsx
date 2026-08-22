@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import { ScrollArea as BaseScrollArea } from "@base-ui/react/scroll-area";
 import styles from "@shared/components/scroll-area/ScrollArea.module.css";
 
@@ -11,6 +11,7 @@ export interface ScrollAreaProps {
   readonly className?: string | undefined;
   readonly viewportClassName?: string | undefined;
   readonly contentClassName?: string | undefined;
+  readonly contentStyle?: CSSProperties | undefined;
   readonly "aria-label"?: string | undefined;
 }
 
@@ -19,6 +20,7 @@ export function ScrollArea({
   className,
   viewportClassName,
   contentClassName,
+  contentStyle,
   "aria-label": ariaLabel,
 }: ScrollAreaProps) {
   return (
@@ -27,7 +29,9 @@ export function ScrollArea({
         className={joinClassNames(styles.viewport, viewportClassName)}
         aria-label={ariaLabel}
       >
-        <BaseScrollArea.Content className={contentClassName}>{children}</BaseScrollArea.Content>
+        <BaseScrollArea.Content className={contentClassName} style={contentStyle}>
+          {children}
+        </BaseScrollArea.Content>
       </BaseScrollArea.Viewport>
       <BaseScrollArea.Scrollbar className={styles.scrollbar} orientation="vertical">
         <BaseScrollArea.Thumb className={styles.thumb} />

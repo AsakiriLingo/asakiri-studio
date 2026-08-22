@@ -6,6 +6,7 @@ import type {
   OutlineSection,
 } from "@core/course";
 import { isLocaleMap, withFormatFirst, withLocale } from "@core/course";
+import { DRAFTS_MANIFEST_PATH, draftBodyPath, draftDir } from "@core/drafts";
 import type { ProjectWriter, ProjectWriteResult } from "@core/project-writing";
 import type { ProjectSession } from "@core/projects";
 import { serializeExercise } from "@platform/project-writing/serialize-exercise";
@@ -121,6 +122,16 @@ async function discardFiles(files: ProjectFileAccess, paths: readonly string[]):
 async function discardDir(files: ProjectFileAccess, dir: string): Promise<void> {
   if (dir === "") return;
   await files.removeDir(dir).catch(() => undefined);
+}
+
+async function readDraftEntries(files: ProjectFileAccess): Promise<unknown[]> {
+  try {
+    const parsed: unknown = JSON.parse(await files.readTextFile(DRAFTS_MANIFEST_PATH));
+    if (isRecord(parsed) && Array.isArray(parsed.drafts)) return parsed.drafts as unknown[];
+  } catch {
+    return [];
+  }
+  return [];
 }
 
 function stampContents(contents: string): string {
@@ -850,6 +861,77 @@ export function createLayoutProjectWriter(resolveRaw: ResolveProjectFileAccess):
         const base = isRecord(parsed) ? parsed : {};
         const next = { ...base, ...serializeAsset(asset) };
         await files.writeTextFile(assetPath, `${JSON.stringify(next, null, 2)}\n`);
+        return { status: "saved" };
+      } catch {
+        return { status: "failed", code: "unknown" };
+      }
+    },
+
+    async importDraft(session, draft, document): Promise<ProjectWriteResult> {
+      const files = resolveRaw(session);
+      if (!files) {
+        return { status: "failed", code: "unavailable" };
+      }
+
+      try {
+        await files.writeTextFile(
+          draftBodyPath(draft.id),
+          `${JSON.stringify(document, null, 2)}\n`,
+        );
+      } catch {
+        return { status: "failed", code: "unknown" };
+      }
+      try {
+        const entries = (await readDraftEntries(files)).filter(
+          (entry) => !(isRecord(entry) && entry.id === draft.id),
+        );
+        const drafts = [
+          ...entries,
+          {
+            id: draft.id,
+            title: draft.title,
+            updatedAt: draft.updatedAt,
+            body: `${draft.id}/document.json`,
+          },
+        ];
+        await files.writeTextFile(DRAFTS_MANIFEST_PATH, `${JSON.stringify({ drafts }, null, 2)}\n`);
+        return { status: "saved" };
+      } catch {
+        await discardDir(files, draftDir(draft.id));
+        return { status: "failed", code: "unknown" };
+      }
+    },
+
+    async updateDraft(session, draftId, document, updatedAt): Promise<ProjectWriteResult> {
+      const files = resolveRaw(session);
+      if (!files) {
+        return { status: "failed", code: "unavailable" };
+      }
+
+      try {
+        await files.writeTextFile(draftBodyPath(draftId), `${JSON.stringify(document, null, 2)}\n`);
+        const drafts = (await readDraftEntries(files)).map((entry) =>
+          isRecord(entry) && entry.id === draftId ? { ...entry, updatedAt } : entry,
+        );
+        await files.writeTextFile(DRAFTS_MANIFEST_PATH, `${JSON.stringify({ drafts }, null, 2)}\n`);
+        return { status: "saved" };
+      } catch {
+        return { status: "failed", code: "unknown" };
+      }
+    },
+
+    async deleteDraft(session, draftId): Promise<ProjectWriteResult> {
+      const files = resolveRaw(session);
+      if (!files) {
+        return { status: "failed", code: "unavailable" };
+      }
+
+      try {
+        const drafts = (await readDraftEntries(files)).filter(
+          (entry) => !(isRecord(entry) && entry.id === draftId),
+        );
+        await files.writeTextFile(DRAFTS_MANIFEST_PATH, `${JSON.stringify({ drafts }, null, 2)}\n`);
+        await discardDir(files, draftDir(draftId));
         return { status: "saved" };
       } catch {
         return { status: "failed", code: "unknown" };
