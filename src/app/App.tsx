@@ -381,12 +381,7 @@ export function App() {
           (section === "lessons" || section === "details" || section === "content")
         }
       >
-        {courseState?.status === "loading" ? (
-          <WorkspaceMessage
-            title={messages.workspace.openingTitle}
-            body={messages.workspace.openingBody}
-          />
-        ) : courseState?.status === "failed" ? (
+        {courseState?.status === "loading" ? null : courseState?.status === "failed" ? (
           <WorkspaceMessage
             title={messages.workspace.failedTitle}
             body={messages.workspace.failedBody}
@@ -588,6 +583,14 @@ export function App() {
       <ConfirmProvider>
         <div className={styles.titlebar} data-tauri-drag-region />
         {renderView()}
+        {view === "workspace" && courseState?.status === "loading" ? (
+          <div className={styles.openingOverlay} role="presentation">
+            <div className={styles.openingDialog} role="alertdialog" aria-busy="true">
+              <p className={styles.openingTitle}>{messages.workspace.openingTitle}</p>
+              <p className={styles.openingBody}>{messages.workspace.openingBody}</p>
+            </div>
+          </div>
+        ) : null}
         {importDialog}
         {importNotice !== null ? (
           <ImportNotice

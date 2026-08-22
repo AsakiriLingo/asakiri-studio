@@ -132,12 +132,13 @@
   flex: 1;
   min-width: 0;
   height: 100%;
-  overflow-y: auto;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
 }
 
 .tableSection {
+  flex: 1;
   display: flex;
   flex-direction: column;
   min-height: 0;
