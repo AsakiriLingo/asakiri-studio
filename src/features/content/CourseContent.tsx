@@ -227,6 +227,8 @@ export interface CourseContentProps {
   readonly onImportAsset: ImportAsset;
   readonly onImportSpreadsheet: () => Promise<void>;
   readonly onLoadPreview: LoadPreview;
+  readonly sidebarCollapsed?: boolean;
+  readonly onSidebarCollapsedChange?: (collapsed: boolean) => void;
 }
 
 export function CourseContent({
@@ -240,6 +242,8 @@ export function CourseContent({
   onImportAsset,
   onImportSpreadsheet,
   onLoadPreview,
+  sidebarCollapsed = false,
+  onSidebarCollapsedChange,
 }: CourseContentProps) {
   const messages = useMessages();
   const format = useFormat();
@@ -252,7 +256,6 @@ export function CourseContent({
   const [editingRecordId, setEditingRecordId] = useState<string | null>(null);
   const [showingSettings, setShowingSettings] = useState(false);
   const [importing, setImporting] = useState(false);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   const runSpreadsheetImport = () => {
     setImporting(true);
@@ -525,28 +528,16 @@ export function CourseContent({
         className={joinClassNames(styles.sidebar, sidebarCollapsed ? styles.collapsed : undefined)}
         aria-label={t.collections}
       >
-        <div className={styles.sidebarHeader}>
-          {sidebarCollapsed ? null : <span className={styles.sidebarTitle}>{t.collections}</span>}
-          <div className={styles.sidebarHeaderActions}>
-            {sidebarCollapsed ? null : (
+        {sidebarCollapsed ? null : (
+          <div className={styles.sidebarHeader}>
+            <span className={styles.sidebarTitle}>{t.collections}</span>
+            <div className={styles.sidebarHeaderActions}>
               <IconButton aria-label={t.newCollection} onClick={openNewCollection}>
                 <Icon name="plus" size={18} />
               </IconButton>
-            )}
-            <IconButton
-              aria-label={
-                sidebarCollapsed
-                  ? messages.workspace.expandSidebar
-                  : messages.workspace.collapseSidebar
-              }
-              onClick={() => {
-                setSidebarCollapsed((value) => !value);
-              }}
-            >
-              <Icon name="sidebar" size={18} />
-            </IconButton>
+            </div>
           </div>
-        </div>
+        )}
         {sidebarCollapsed ? null : course.collections.length === 0 ? (
           <p className={styles.sidebarEmpty}>{t.noCollectionsBody}</p>
         ) : (
@@ -600,6 +591,25 @@ export function CourseContent({
             })}
           </div>
         )}
+        <div
+          className={joinClassNames(
+            styles.sidebarFooter,
+            sidebarCollapsed ? styles.sidebarFooterCollapsed : undefined,
+          )}
+        >
+          <IconButton
+            aria-label={
+              sidebarCollapsed
+                ? messages.workspace.expandSidebar
+                : messages.workspace.collapseSidebar
+            }
+            onClick={() => {
+              onSidebarCollapsedChange?.(!sidebarCollapsed);
+            }}
+          >
+            <Icon name="sidebar" size={18} />
+          </IconButton>
+        </div>
       </nav>
 
       <div className={styles.content}>

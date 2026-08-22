@@ -68,6 +68,9 @@ export function App() {
   const [view, setView] = useState<View>("start");
   const [section, setSection] = useState<WorkspaceSection>("lessons");
   const [openPartId, setOpenPartId] = useState<string | null>(null);
+  const [outlineCollapsed, setOutlineCollapsed] = useState(false);
+  const [referenceCollapsed, setReferenceCollapsed] = useState(false);
+  const [collectionsCollapsed, setCollectionsCollapsed] = useState(false);
   const [partSaveState, setPartSaveState] = useState<SaveState>("idle");
   const [savedPartId, setSavedPartId] = useState<string | null>(null);
 
@@ -224,7 +227,7 @@ export function App() {
 
   const enterWorkspace = (directory: ProjectDirectory) => {
     store.openProject(directory);
-    setSection("details");
+    setSection("lessons");
     setOpenPartId(null);
     setView("workspace");
     setRecentProjects(services.directory.listRecentProjects());
@@ -254,7 +257,6 @@ export function App() {
 
   const navigate = (target: WorkspaceSection) => {
     setSection(target);
-    setOpenPartId(null);
   };
 
   const revealFolder = useCallback(() => {
@@ -399,6 +401,8 @@ export function App() {
               onImportAsset={mediaActions.importAssetForField}
               onImportSpreadsheet={pickSpreadsheet}
               onLoadPreview={mediaActions.loadAssetPreview}
+              sidebarCollapsed={collectionsCollapsed}
+              onSidebarCollapsedChange={setCollectionsCollapsed}
             />
           ) : section === "media" ? (
             <CourseMedia
@@ -446,6 +450,10 @@ export function App() {
                   onDeletePart={deletePart}
                 />
               }
+              outlineCollapsed={outlineCollapsed}
+              onOutlineCollapsedChange={setOutlineCollapsed}
+              referenceCollapsed={referenceCollapsed}
+              onReferenceCollapsedChange={setReferenceCollapsed}
               editorSlot={
                 openPart && openPartLesson ? (
                   <PartEditor

@@ -506,7 +506,7 @@ async function openWorkspace() {
     await Promise.resolve();
   });
   await waitFor(() => {
-    expect(captured.details).toBeDefined();
+    expect(captured.shell).toBeDefined();
   });
 }
 
@@ -544,6 +544,7 @@ beforeEach(() => {
 describe("App", () => {
   it("opens a recent project and shows its details", async () => {
     await openWorkspace();
+    await navigate("details");
 
     const details = must(captured.details, "CourseDetails");
     expect(details.course.project.title).toBe("Course A");
@@ -565,6 +566,7 @@ describe("App", () => {
 
   it("serializes overlapping project saves so both edits survive", async () => {
     await openWorkspace();
+    await navigate("details");
     const details = must(captured.details, "CourseDetails");
 
     const first = deferred<ProjectWriteResult>();
@@ -603,6 +605,7 @@ describe("App", () => {
 
   it("drops a save that completes after switching projects", async () => {
     await openWorkspace();
+    await navigate("details");
     const details = must(captured.details, "CourseDetails");
 
     const pending = deferred<ProjectWriteResult>();
@@ -622,6 +625,7 @@ describe("App", () => {
       must(captured.start, "StartScreen").onOpenRecent("p2");
       await Promise.resolve();
     });
+    await navigate("details");
     await waitFor(() => {
       expect(must(captured.details, "CourseDetails").course.project.title).toBe("Course B");
     });
@@ -1010,7 +1014,7 @@ describe("App", () => {
       await Promise.resolve();
     });
     await waitFor(() => {
-      expect(captured.details).toBeDefined();
+      expect(captured.shell).toBeDefined();
     });
   });
 
@@ -1027,13 +1031,14 @@ describe("App", () => {
       await Promise.resolve();
     });
     await waitFor(() => {
-      expect(captured.details).toBeDefined();
+      expect(captured.shell).toBeDefined();
     });
     expect(services.directory.openProjectDirectory).toHaveBeenCalledTimes(1);
   });
 
   it("reveals the project folder and rejects writes without a project", async () => {
     await openWorkspace();
+    await navigate("details");
     const details = must(captured.details, "CourseDetails");
 
     details.onRevealFolder();
@@ -1050,6 +1055,7 @@ describe("App", () => {
 
   it("imports a single image for a field", async () => {
     await openWorkspace();
+    await navigate("details");
     const details = must(captured.details, "CourseDetails");
 
     services.mediaPicker.pickMediaFiles.mockResolvedValue([

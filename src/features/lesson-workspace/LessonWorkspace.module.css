@@ -1,8 +1,24 @@
+.workspace {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
 .group {
   width: 100%;
   height: 100%;
   min-height: 24rem;
   background: var(--color-surface);
+}
+
+.group.animating :global([data-panel]) {
+  transition: flex var(--duration-normal) var(--ease-out);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .group.animating :global([data-panel]) {
+    transition: none;
+  }
 }
 
 .panel {
@@ -117,6 +133,63 @@
 .tab[aria-selected="true"] {
   background: var(--color-surface-subtle);
   color: var(--color-text);
+}
+
+.panelFooter {
+  display: flex;
+  flex: none;
+  align-items: center;
+  min-height: var(--control-height-md);
+  padding: var(--space-1) var(--space-2);
+  border-top: var(--border-hairline) solid var(--color-border);
+  color: var(--color-text-muted);
+}
+
+.footerStart {
+  justify-content: flex-start;
+}
+
+.footerEnd {
+  justify-content: flex-end;
+}
+
+.pill {
+  position: absolute;
+  bottom: var(--space-3);
+  z-index: var(--z-dropdown);
+  display: flex;
+  align-items: center;
+  padding: var(--space-1);
+  border: var(--border-hairline) solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  animation: pill-in var(--duration-normal) var(--ease-out);
+}
+
+.pillLeft {
+  inset-inline-start: var(--space-3);
+}
+
+.pillRight {
+  inset-inline-end: var(--space-3);
+}
+
+@keyframes pill-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pill {
+    animation: none;
+  }
 }
 
 .handle {
