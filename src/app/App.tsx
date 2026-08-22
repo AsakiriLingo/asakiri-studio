@@ -11,6 +11,7 @@ import { SpreadsheetImport } from "@features/import";
 import type { DocumentTable } from "@core/documents";
 import { SPREADSHEET_EXTENSIONS } from "@core/documents";
 import { CourseStructure } from "@features/course-structure";
+import { LessonWorkspace } from "@features/lesson-workspace";
 import { CourseContent } from "@features/content";
 import { CourseMedia } from "@features/media";
 import { CourseAttribution } from "@features/attribution";
@@ -318,6 +319,7 @@ export function App() {
         onOpenSettings={() => {
           setSettingsOpen(true);
         }}
+        flush={course !== null && section === "lessons"}
       >
         {courseState?.status === "loading" ? (
           <WorkspaceMessage
@@ -375,43 +377,55 @@ export function App() {
             />
           ) : section === "attribution" ? (
             <CourseAttribution course={course} onSaveAttribution={saveAttribution} />
-          ) : openLesson ? (
-            <LessonEditor
-              course={course}
-              lesson={openLesson}
-              onBackToStructure={() => {
-                setOpenLessonId(null);
-              }}
-              onSaveDocument={(partId, document) =>
-                partActions.savePartDocument(openLesson.id, partId, document)
-              }
-              onSaveExercise={(partId, exercise) =>
-                partActions.savePartExercise(openLesson.id, partId, exercise)
-              }
-              onSaveContentTitle={(partId, title) =>
-                partActions.savePartContentTitle(openLesson.id, partId, title)
-              }
-              onRenamePart={(partId, title) => partActions.renamePart(openLesson.id, partId, title)}
-              onDeletePart={(partId) => partActions.deletePart(openLesson.id, partId)}
-              onAddPart={(kind) => partActions.addPart(openLesson.id, kind)}
-              onReorderParts={(orderedIds) => partActions.reorderParts(openLesson.id, orderedIds)}
-              onSaveRecord={contentActions.saveRecord}
-              onLoadAssetPreview={mediaActions.loadAssetPreview}
-              onImportMedia={mediaActions.importAssetForField}
-            />
           ) : (
-            <CourseStructure
-              course={course}
-              onNewUnit={outlineActions.addUnit}
-              onRenameUnit={outlineActions.renameUnit}
-              onDeleteUnit={outlineActions.deleteUnit}
-              onAddLesson={outlineActions.addLesson}
-              onRenameLesson={outlineActions.renameLesson}
-              onDeleteLesson={outlineActions.deleteLesson}
-              onReorderOutline={outlineActions.reorderOutline}
-              onOpenLesson={(lessonId) => {
-                setOpenLessonId(lessonId);
-              }}
+            <LessonWorkspace
+              outlineSlot={
+                <CourseStructure
+                  variant="sidebar"
+                  course={course}
+                  onNewUnit={outlineActions.addUnit}
+                  onRenameUnit={outlineActions.renameUnit}
+                  onDeleteUnit={outlineActions.deleteUnit}
+                  onAddLesson={outlineActions.addLesson}
+                  onRenameLesson={outlineActions.renameLesson}
+                  onDeleteLesson={outlineActions.deleteLesson}
+                  onReorderOutline={outlineActions.reorderOutline}
+                  onOpenLesson={(lessonId) => {
+                    setOpenLessonId(lessonId);
+                  }}
+                />
+              }
+              editorSlot={
+                openLesson ? (
+                  <LessonEditor
+                    course={course}
+                    lesson={openLesson}
+                    onBackToStructure={() => {
+                      setOpenLessonId(null);
+                    }}
+                    onSaveDocument={(partId, document) =>
+                      partActions.savePartDocument(openLesson.id, partId, document)
+                    }
+                    onSaveExercise={(partId, exercise) =>
+                      partActions.savePartExercise(openLesson.id, partId, exercise)
+                    }
+                    onSaveContentTitle={(partId, title) =>
+                      partActions.savePartContentTitle(openLesson.id, partId, title)
+                    }
+                    onRenamePart={(partId, title) =>
+                      partActions.renamePart(openLesson.id, partId, title)
+                    }
+                    onDeletePart={(partId) => partActions.deletePart(openLesson.id, partId)}
+                    onAddPart={(kind) => partActions.addPart(openLesson.id, kind)}
+                    onReorderParts={(orderedIds) =>
+                      partActions.reorderParts(openLesson.id, orderedIds)
+                    }
+                    onSaveRecord={contentActions.saveRecord}
+                    onLoadAssetPreview={mediaActions.loadAssetPreview}
+                    onImportMedia={mediaActions.importAssetForField}
+                  />
+                ) : undefined
+              }
             />
           )
         ) : null}

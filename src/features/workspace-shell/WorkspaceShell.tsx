@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { useMessages } from "@shared/i18n";
 import { Flag, hasFlag } from "@shared/components/flag";
 import { Icon, type IconName } from "@shared/components/icon";
@@ -22,6 +22,7 @@ export interface WorkspaceShellProps {
   readonly onNavigate: (section: WorkspaceSection) => void;
   readonly onBack: () => void;
   readonly onOpenSettings: () => void;
+  readonly flush?: boolean;
   readonly children: ReactNode;
 }
 
@@ -33,9 +34,11 @@ export function WorkspaceShell({
   onNavigate,
   onBack,
   onOpenSettings,
+  flush = false,
   children,
 }: WorkspaceShellProps) {
   const messages = useMessages();
+  const [collapsed, setCollapsed] = useState(false);
 
   const navLinks: readonly NavLink[] = [
     { key: "details", label: messages.workspace.navDetails, icon: "details" },
@@ -46,7 +49,7 @@ export function WorkspaceShell({
   ];
 
   return (
-    <div className={styles.workspace}>
+    <div className={styles.workspace} data-collapsed={collapsed ? "" : undefined}>
       <aside className={styles.sidebar} aria-label={messages.workspace.projectAria}>
         <div className={styles.projectIdentity}>
           {flagCode && hasFlag(flagCode) ? (
@@ -72,6 +75,18 @@ export function WorkspaceShell({
           <IconButton aria-label={messages.common.settings} onClick={onOpenSettings}>
             <Icon name="settings" size={18} />
           </IconButton>
+          <IconButton
+            className={styles.collapseToggle}
+            aria-label={
+              collapsed ? messages.workspace.expandSidebar : messages.workspace.collapseSidebar
+            }
+            aria-expanded={!collapsed}
+            onClick={() => {
+              setCollapsed((value) => !value);
+            }}
+          >
+            <Icon name="chevrons-left" size={18} className={styles.collapseIcon} />
+          </IconButton>
         </div>
         <nav className={styles.nav} aria-label={messages.workspace.areasAria}>
           {navLinks.map((link) => (
@@ -87,15 +102,19 @@ export function WorkspaceShell({
               <span className={styles.navIcon}>
                 <Icon name={link.icon} size={18} />
               </span>
-              {link.label}
+              <span className={styles.navLabel}>{link.label}</span>
             </button>
           ))}
         </nav>
       </aside>
       <main className={styles.workSurface}>
-        <ScrollArea className={styles.workScroll} contentClassName={styles.workContent}>
-          {children}
-        </ScrollArea>
+        {flush ? (
+          children
+        ) : (
+          <ScrollArea className={styles.workScroll} contentClassName={styles.workContent}>
+            {children}
+          </ScrollArea>
+        )}
       </main>
     </div>
   );

@@ -2,6 +2,20 @@
   max-width: 72rem;
 }
 
+.actionsRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-8);
+}
+
+.actionsEnd {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
 .unitStack {
   display: grid;
   gap: var(--space-6);
@@ -268,4 +282,205 @@
 
 .barSpacer {
   flex: 1 1 auto;
+}
+
+.sidebar {
+  max-width: none;
+}
+
+.sidebar .sidebarHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  min-height: 1.75rem;
+  margin-bottom: var(--space-2);
+}
+
+.sidebar .sidebarTitle {
+  color: var(--color-text);
+  font-size: var(--font-size-300);
+  font-weight: var(--font-weight-semibold);
+}
+
+.sidebar .sidebarHeaderActions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.sidebar .actionsRow {
+  margin-bottom: var(--space-3);
+}
+
+.sidebar .unitStack {
+  gap: var(--space-1);
+}
+
+.sidebar .unitBlock {
+  border-radius: 0;
+  background: transparent;
+}
+
+.sidebar .orderIndex {
+  display: none;
+}
+
+.sidebar .unitHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-height: 1.75rem;
+  padding: 0 var(--space-1);
+}
+
+.sidebar .unitToggle {
+  order: 1;
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: var(--space-1);
+  min-width: 0;
+  padding: 0;
+}
+
+.sidebar .unitToggle .unitChevron,
+.sidebar .unitToggle .typeIcon {
+  flex: none;
+}
+
+.sidebar .unitHeading {
+  flex: 1;
+  min-width: 0;
+}
+
+.sidebar .unitName {
+  font-size: var(--font-size-200);
+  font-weight: var(--font-weight-semibold);
+}
+
+.sidebar .disclosure {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: 1rem;
+  height: 1.25rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+}
+
+.sidebar .disclosureSpacer {
+  flex: none;
+  width: 1rem;
+}
+
+.sidebar .unitHeading .rowDetail {
+  display: none;
+}
+
+.sidebar .treeRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  width: 100%;
+  min-height: 1.75rem;
+  padding: 0 var(--space-1);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-text);
+  text-align: start;
+  cursor: pointer;
+}
+
+.sidebar .treeMain {
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.sidebar .treeRow .rowTitle {
+  font-size: var(--font-size-200);
+  font-weight: var(--font-weight-regular);
+}
+
+.sidebar .typeIcon {
+  flex: none;
+  color: var(--color-text-muted);
+}
+
+.sidebar .lessonOrder {
+  gap: 0;
+  padding: 0 0 0 var(--space-4);
+}
+
+.sidebar .partList {
+  display: grid;
+  gap: 0;
+  padding-left: var(--space-5);
+}
+
+.sidebar .unitEmpty {
+  padding: 0 0 0 var(--space-5);
+  font-size: var(--font-size-100);
+}
+
+.sidebar .dragHandle,
+.sidebar .reorderHandle {
+  order: 9;
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: grab;
+  opacity: 0;
+  touch-action: none;
+  transition: opacity var(--duration-fast) var(--ease-out);
+}
+
+.sidebar .unitActions {
+  order: 8;
+  opacity: 0;
+  transition: opacity var(--duration-fast) var(--ease-out);
+}
+
+.sidebar .unitActions button {
+  min-height: 1.5rem;
+}
+
+.sidebar .unitHeader:hover .reorderHandle,
+.sidebar .unitHeader:hover .unitActions,
+.sidebar .unitHeader:focus-within .reorderHandle,
+.sidebar .unitHeader:focus-within .unitActions,
+.sidebar .lessonNode:hover .dragHandle,
+.sidebar .treeRow:focus-within .dragHandle {
+  opacity: 1;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .sidebar .treeRow:hover {
+    background: var(--color-surface-subtle);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sidebar .dragHandle,
+  .sidebar .reorderHandle,
+  .sidebar .unitActions {
+    transition: none;
+  }
 }

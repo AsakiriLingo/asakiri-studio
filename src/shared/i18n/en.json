@@ -589,6 +589,20 @@
     "installing": "Installing…",
     "noNotes": "A new version is available."
   },
+  "lessonWorkspace": {
+    "outline": "Outline",
+    "editor": "Editor",
+    "source": "Source",
+    "preview": "Preview",
+    "showOutline": "Show outline",
+    "hideOutline": "Hide outline",
+    "showReference": "Show reference",
+    "hideReference": "Hide reference",
+    "selectPart": "Select a lesson part to start editing",
+    "sourceEmpty": "Import a document to reference it here",
+    "previewEmpty": "Preview appears here as you build a part",
+    "outlineEmpty": "No units yet"
+  },
   "workspace": {
     "areasAria": "Course areas",
     "failedBody": "The project files could not be read. Check that the folder is an Asakiri course and try again.",
@@ -601,7 +615,9 @@
     "navMedia": "Media",
     "openingBody": "Reading the project files.",
     "openingTitle": "Opening course",
-    "projectAria": "Project workspace"
+    "projectAria": "Project workspace",
+    "collapseSidebar": "Collapse sidebar",
+    "expandSidebar": "Expand sidebar"
   },
   "settings": {
     "title": "Settings",

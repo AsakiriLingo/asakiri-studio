@@ -28,7 +28,7 @@ import { Field, TextInput } from "@shared/components/form";
 import { Icon } from "@shared/components/icon";
 import { IconButton } from "@shared/components/icon-button";
 import { Status } from "@shared/components/status";
-import { WorkHeader, WorkInner } from "@shared/components/work-surface";
+import { WorkInner } from "@shared/components/work-surface";
 import styles from "@features/course-structure/CourseStructure.module.css";
 
 function orderLabel(index: number): string {
@@ -42,11 +42,13 @@ function chevronClass(collapsed: boolean): string {
 function LessonRow({
   lesson,
   index,
+  variant,
   onOpen,
   onOpenSettings,
 }: {
   readonly lesson: Lesson;
   readonly index: number;
+  readonly variant: "page" | "sidebar";
   readonly onOpen: () => void;
   readonly onOpenSettings: () => void;
 }) {
@@ -60,6 +62,69 @@ function LessonRow({
     transform: CSS.Transform.toString(transform),
     transition,
   };
+  const [partsCollapsed, setPartsCollapsed] = useState(false);
+
+  if (variant === "sidebar") {
+    const hasParts = lesson.parts.length > 0;
+    return (
+      <div
+        ref={setNodeRef}
+        style={style}
+        className={[styles.lessonNode, isDragging ? styles.dragging : ""].filter(Boolean).join(" ")}
+      >
+        <div className={[styles.treeRow, styles.lessonRow].join(" ")}>
+          {hasParts ? (
+            <button
+              type="button"
+              className={styles.disclosure}
+              aria-expanded={!partsCollapsed}
+              aria-label={
+                partsCollapsed
+                  ? format(t.expandUnit, { unit: lesson.title })
+                  : format(t.collapseUnit, { unit: lesson.title })
+              }
+              onClick={() => {
+                setPartsCollapsed((value) => !value);
+              }}
+            >
+              <Icon
+                aria-hidden="true"
+                className={chevronClass(partsCollapsed)}
+                name="chevron-down"
+                size={16}
+              />
+            </button>
+          ) : (
+            <span className={styles.disclosureSpacer} aria-hidden="true" />
+          )}
+          <Icon className={styles.typeIcon} name="lessons" size={16} aria-hidden="true" />
+          <button type="button" className={styles.treeMain} onClick={onOpen}>
+            <span className={styles.rowTitle}>{lesson.title}</span>
+          </button>
+          <button
+            type="button"
+            className={styles.dragHandle}
+            aria-label={format(messages.common.reorder, { label: lesson.title })}
+            {...attributes}
+            {...listeners}
+          >
+            <Icon name="grip" size={16} />
+          </button>
+        </div>
+        {hasParts && !partsCollapsed ? (
+          <div className={styles.partList}>
+            {lesson.parts.map((part) => (
+              <button key={part.id} type="button" className={styles.treeRow} onClick={onOpen}>
+                <span className={styles.disclosureSpacer} aria-hidden="true" />
+                <Icon className={styles.typeIcon} name="file-text" size={16} aria-hidden="true" />
+                <span className={styles.rowTitle}>{part.title}</span>
+              </button>
+            ))}
+          </div>
+        ) : null}
+      </div>
+    );
+  }
 
   return (
     <div
@@ -104,6 +169,7 @@ function UnitBlock({
   lessons,
   collapsed,
   addingLesson,
+  variant,
   onToggleCollapsed,
   onAddLesson,
   onOpenSettings,
@@ -115,12 +181,14 @@ function UnitBlock({
   readonly lessons: readonly Lesson[];
   readonly collapsed: boolean;
   readonly addingLesson: boolean;
+  readonly variant: "page" | "sidebar";
   readonly onToggleCollapsed: () => void;
   readonly onAddLesson: () => void;
   readonly onOpenSettings: () => void;
   readonly onOpenLesson: (lessonId: string) => void;
   readonly onOpenLessonSettings: (lessonId: string) => void;
 }) {
+  const sidebar = variant === "sidebar";
   const messages = useMessages();
   const t = messages.structure;
   const format = useFormat();
@@ -168,6 +236,9 @@ function UnitBlock({
             name="chevron-down"
             size={18}
           />
+          {sidebar ? (
+            <Icon className={styles.typeIcon} name="folder" size={16} aria-hidden="true" />
+          ) : null}
           <span className={styles.unitHeading}>
             <span className={styles.unitName}>{unit.title}</span>
             <span className={styles.rowDetail}>
@@ -176,16 +247,24 @@ function UnitBlock({
           </span>
         </button>
         <div className={styles.unitActions}>
-          <Button variant="ghost" disabled={addingLesson} onClick={onAddLesson}>
-            <Icon name="plus" size={18} />
-            {t.addLesson}
-          </Button>
-          <IconButton
-            aria-label={format(t.unitSettings, { unit: unit.title })}
-            onClick={onOpenSettings}
-          >
-            <Icon name="edit" size={18} />
-          </IconButton>
+          {sidebar ? (
+            <IconButton aria-label={t.addLesson} disabled={addingLesson} onClick={onAddLesson}>
+              <Icon name="plus" size={18} />
+            </IconButton>
+          ) : (
+            <Button variant="ghost" disabled={addingLesson} onClick={onAddLesson}>
+              <Icon name="plus" size={18} />
+              {t.addLesson}
+            </Button>
+          )}
+          {sidebar ? null : (
+            <IconButton
+              aria-label={format(t.unitSettings, { unit: unit.title })}
+              onClick={onOpenSettings}
+            >
+              <Icon name="edit" size={18} />
+            </IconButton>
+          )}
         </div>
       </header>
 
@@ -205,6 +284,7 @@ function UnitBlock({
                 key={lesson.id}
                 lesson={lesson}
                 index={lessonIndex}
+                variant={variant}
                 onOpen={() => {
                   onOpenLesson(lesson.id);
                 }}
@@ -261,6 +341,7 @@ export interface CourseStructureProps {
     sections: readonly { readonly id: string; readonly lessonIds: readonly string[] }[],
   ) => Promise<ProjectWriteResult>;
   readonly onOpenLesson: (lessonId: string) => void;
+  readonly variant?: "page" | "sidebar";
 }
 
 interface UnitLayout {
@@ -293,6 +374,7 @@ export function CourseStructure({
   onDeleteLesson,
   onReorderOutline,
   onOpenLesson,
+  variant = "page",
 }: CourseStructureProps) {
   const messages = useMessages();
   const t = messages.structure;
@@ -554,12 +636,45 @@ export function CourseStructure({
   );
 
   return (
-    <WorkInner className={styles.inner}>
-      <WorkHeader
-        title={t.title}
-        description={t.description}
-        actions={
-          <>
+    <WorkInner
+      className={variant === "sidebar" ? [styles.inner, styles.sidebar].join(" ") : styles.inner}
+    >
+      {variant === "sidebar" ? (
+        <div className={styles.sidebarHeader}>
+          <span className={styles.sidebarTitle}>{messages.lessonWorkspace.outline}</span>
+          <div className={styles.sidebarHeaderActions}>
+            {course.outline.length > 0 ? (
+              <IconButton
+                aria-label={allCollapsed ? t.expandAll : t.collapseAll}
+                onClick={toggleAllUnits}
+              >
+                <Icon name={allCollapsed ? "arrows-expand" : "minimize"} size={18} />
+              </IconButton>
+            ) : null}
+            <IconButton
+              aria-label={t.newUnit}
+              disabled={creating}
+              onClick={() => {
+                void createUnit();
+              }}
+            >
+              <Icon name="plus" size={18} />
+            </IconButton>
+          </div>
+        </div>
+      ) : (
+        <div className={styles.actionsRow}>
+          <Button
+            size="compact"
+            disabled={creating}
+            onClick={() => {
+              void createUnit();
+            }}
+          >
+            <Icon name="plus" size={18} />
+            {t.newUnit}
+          </Button>
+          <div className={styles.actionsEnd}>
             {failed ? <Status tone="warning">{messages.common.saveFailed}</Status> : null}
             {course.outline.length > 0 ? (
               <Button variant="ghost" size="compact" onClick={toggleAllUnits}>
@@ -572,19 +687,9 @@ export function CourseStructure({
                 {allCollapsed ? t.expandAll : t.collapseAll}
               </Button>
             ) : null}
-            <Button
-              size="compact"
-              disabled={creating}
-              onClick={() => {
-                void createUnit();
-              }}
-            >
-              <Icon name="plus" size={18} />
-              {t.newUnit}
-            </Button>
-          </>
-        }
-      />
+          </div>
+        </div>
+      )}
 
       {course.outline.length === 0 ? (
         <p className={styles.empty}>{t.empty}</p>
@@ -619,6 +724,7 @@ export function CourseStructure({
                     lessons={lessons}
                     collapsed={collapsedUnitIds.has(unit.id)}
                     addingLesson={addingUnitId === unit.id}
+                    variant={variant}
                     onToggleCollapsed={() => {
                       toggleUnitCollapsed(unit.id);
                     }}

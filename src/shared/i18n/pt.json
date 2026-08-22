@@ -589,6 +589,20 @@
     "installing": "A instalar…",
     "noNotes": "Está disponível uma nova versão."
   },
+  "lessonWorkspace": {
+    "outline": "Estrutura",
+    "editor": "Editor",
+    "source": "Fonte",
+    "preview": "Pré-visualização",
+    "showOutline": "Mostrar estrutura",
+    "hideOutline": "Ocultar estrutura",
+    "showReference": "Mostrar referência",
+    "hideReference": "Ocultar referência",
+    "selectPart": "Selecione uma parte da lição para começar a editar",
+    "sourceEmpty": "Importe um documento para consultá-lo aqui",
+    "previewEmpty": "A pré-visualização aparece aqui enquanto você cria uma parte",
+    "outlineEmpty": "Ainda não há unidades"
+  },
   "workspace": {
     "areasAria": "Áreas do curso",
     "failedBody": "Não foi possível ler os ficheiros do projeto. Verifique se a pasta é um curso Asakiri e tente novamente.",
@@ -601,7 +615,9 @@
     "navMedia": "Multimédia",
     "openingBody": "A ler os ficheiros do projeto.",
     "openingTitle": "A abrir o curso",
-    "projectAria": "Área de trabalho do projeto"
+    "projectAria": "Área de trabalho do projeto",
+    "collapseSidebar": "Recolher barra lateral",
+    "expandSidebar": "Expandir barra lateral"
   },
   "settings": {
     "title": "Configurações",

@@ -195,3 +195,65 @@
       clamp(var(--space-8), 4vw, var(--space-16)) var(--space-8);
   }
 }
+
+.navLabel {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.collapseToggle {
+  display: none;
+}
+
+.collapseIcon {
+  transition: transform var(--duration-normal) var(--ease-out);
+}
+
+@media (min-width: 64rem) {
+  .collapseToggle {
+    display: inline-flex;
+  }
+
+  .workspace[data-collapsed] {
+    grid-template-columns: 4rem minmax(0, 1fr);
+  }
+
+  .workspace[data-collapsed] .sidebar {
+    align-items: center;
+    padding-inline: var(--space-2);
+  }
+
+  .workspace[data-collapsed] .projectCopy,
+  .workspace[data-collapsed] .projectLocation,
+  .workspace[data-collapsed] .navLabel {
+    display: none;
+  }
+
+  .workspace[data-collapsed] .projectIdentity {
+    grid-template-columns: auto;
+    justify-content: center;
+    padding-inline: 0;
+  }
+
+  .workspace[data-collapsed] .utilities {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .workspace[data-collapsed] .navItem {
+    justify-content: center;
+    padding-inline: var(--space-2);
+  }
+
+  .workspace[data-collapsed] .collapseIcon {
+    transform: rotate(180deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .collapseIcon {
+    transition: none;
+  }
+}

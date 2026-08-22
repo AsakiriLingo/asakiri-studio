@@ -589,6 +589,20 @@
     "installing": "インストール中…",
     "noNotes": "新しいバージョンが利用できます。"
   },
+  "lessonWorkspace": {
+    "outline": "アウトライン",
+    "editor": "エディター",
+    "source": "ソース",
+    "preview": "プレビュー",
+    "showOutline": "アウトラインを表示",
+    "hideOutline": "アウトラインを非表示",
+    "showReference": "参照を表示",
+    "hideReference": "参照を非表示",
+    "selectPart": "編集するレッスンパートを選択してください",
+    "sourceEmpty": "ここで参照するにはドキュメントをインポートしてください",
+    "previewEmpty": "パートを作成するとここにプレビューが表示されます",
+    "outlineEmpty": "ユニットがまだありません"
+  },
   "workspace": {
     "areasAria": "コースの領域",
     "failedBody": "プロジェクトファイルを読み込めませんでした。フォルダがアサキリのコースであることを確認して、もう一度お試しください。",
@@ -601,7 +615,9 @@
     "navMedia": "メディア",
     "openingBody": "プロジェクトファイルを読み込んでいます。",
     "openingTitle": "コースを開いています",
-    "projectAria": "プロジェクトワークスペース"
+    "projectAria": "プロジェクトワークスペース",
+    "collapseSidebar": "サイドバーを折りたたむ",
+    "expandSidebar": "サイドバーを展開"
   },
   "settings": {
     "title": "設定",
