@@ -6,7 +6,7 @@ import { ScrollArea } from "@shared/components/scroll-area";
 import { Tooltip, TooltipProvider } from "@shared/components/tooltip";
 import styles from "@features/workspace-shell/WorkspaceShell.module.css";
 
-export type WorkspaceSection = "details" | "content" | "media" | "attribution" | "lessons";
+export type WorkspaceSection = "details" | "content" | "media" | "lessons";
 
 interface NavLink {
   readonly key: WorkspaceSection;
@@ -41,7 +41,6 @@ export function WorkspaceShell({
     { key: "lessons", label: messages.workspace.navLessons, icon: "lessons" },
     { key: "content", label: messages.workspace.navContent, icon: "content" },
     { key: "media", label: messages.workspace.navMedia, icon: "media" },
-    { key: "attribution", label: messages.workspace.navAttribution, icon: "book" },
     { key: "details", label: messages.workspace.navDetails, icon: "details" },
   ];
 

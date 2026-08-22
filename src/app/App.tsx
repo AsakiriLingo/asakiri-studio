@@ -339,6 +339,9 @@ export function App() {
               onRevealFolder={revealFolder}
               onImportImage={mediaActions.importAssetForField}
               onLoadAssetPreview={mediaActions.loadAssetPreview}
+              attributionSlot={
+                <CourseAttribution course={course} onSaveAttribution={saveAttribution} />
+              }
             />
           ) : section === "content" ? (
             <CourseContent
@@ -374,8 +377,6 @@ export function App() {
               onAddTtsAudio={mediaActions.addTtsAudio}
               onAddRecording={mediaActions.addRecording}
             />
-          ) : section === "attribution" ? (
-            <CourseAttribution course={course} onSaveAttribution={saveAttribution} />
           ) : (
             <LessonWorkspace
               outlineSlot={

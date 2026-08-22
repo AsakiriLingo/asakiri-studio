@@ -72,6 +72,7 @@ interface DetailsProps {
   readonly onRevealFolder: () => void;
   readonly onImportImage: () => Promise<Asset | null>;
   readonly onLoadAssetPreview: (assetId: string) => Promise<string | null>;
+  readonly attributionSlot?: ReactNode;
 }
 
 interface StructureProps {
@@ -208,7 +209,7 @@ vi.mock("@features/workspace-shell", () => ({
 vi.mock("@features/course-details", () => ({
   CourseDetails: (props: DetailsProps) => {
     captured.details = props;
-    return <div data-testid="details" />;
+    return <div data-testid="details">{props.attributionSlot}</div>;
   },
 }));
 
@@ -853,7 +854,7 @@ describe("App", () => {
 
   it("saves the attribution file", async () => {
     await openWorkspace();
-    await navigate("attribution");
+    await navigate("details");
 
     await act(async () => {
       await must(captured.attribution, "CourseAttribution").onSaveAttribution("# Credits");

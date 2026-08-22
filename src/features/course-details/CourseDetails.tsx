@@ -10,7 +10,7 @@ import { DatePicker } from "@shared/components/date-picker";
 import { Field, TextArea, TextInput } from "@shared/components/form";
 import { FlagPicker } from "@shared/components/flag";
 import { Select, type SelectOption } from "@shared/components/select";
-import { Icon } from "@shared/components/icon";
+import { Icon, type IconName } from "@shared/components/icon";
 import { IconButton } from "@shared/components/icon-button";
 import { WorkInner } from "@shared/components/work-surface";
 import styles from "@features/course-details/CourseDetails.module.css";
@@ -333,10 +333,18 @@ export interface CourseDetailsProps {
   readonly onRevealFolder: () => void;
   readonly onImportImage: () => Promise<Asset | null>;
   readonly onLoadAssetPreview: (assetId: string) => Promise<string | null>;
+  readonly attributionSlot?: ReactNode;
 }
 
 type DetailsSection =
-  "overview" | "language" | "contributors" | "funding" | "sponsors" | "license" | "project";
+  | "overview"
+  | "language"
+  | "contributors"
+  | "funding"
+  | "sponsors"
+  | "license"
+  | "attribution"
+  | "project";
 
 export function CourseDetails({
   course,
@@ -345,19 +353,25 @@ export function CourseDetails({
   onRevealFolder,
   onImportImage,
   onLoadAssetPreview,
+  attributionSlot,
 }: CourseDetailsProps) {
   const messages = useMessages();
   const t = messages.details;
   const { project } = course;
   const [section, setSection] = useState<DetailsSection>("overview");
-  const sections: readonly { readonly id: DetailsSection; readonly label: string }[] = [
-    { id: "overview", label: t.overviewTitle },
-    { id: "language", label: t.languageTitle },
-    { id: "contributors", label: t.contributorsTitle },
-    { id: "funding", label: t.fundingTitle },
-    { id: "sponsors", label: t.sponsorsTitle },
-    { id: "license", label: t.licenseTitle },
-    { id: "project", label: t.projectTitle },
+  const sections: readonly {
+    readonly id: DetailsSection;
+    readonly label: string;
+    readonly icon: IconName;
+  }[] = [
+    { id: "overview", label: t.overviewTitle, icon: "details" },
+    { id: "language", label: t.languageTitle, icon: "language" },
+    { id: "contributors", label: t.contributorsTitle, icon: "users" },
+    { id: "funding", label: t.fundingTitle, icon: "heart" },
+    { id: "sponsors", label: t.sponsorsTitle, icon: "award" },
+    { id: "license", label: t.licenseTitle, icon: "scale" },
+    { id: "attribution", label: messages.attribution.title, icon: "copyright" },
+    { id: "project", label: t.projectTitle, icon: "folder" },
   ];
 
   const patch = (
@@ -422,6 +436,7 @@ export function CourseDetails({
               setSection(item.id);
             }}
           >
+            <Icon name={item.icon} size={16} aria-hidden="true" />
             {item.label}
           </button>
         ))}
@@ -810,6 +825,7 @@ export function CourseDetails({
               </div>
             </div>
           </SectionGroup>
+          {section === "attribution" ? attributionSlot : null}
         </WorkInner>
       </div>
     </div>
