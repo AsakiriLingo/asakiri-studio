@@ -27,8 +27,7 @@
   flex: none;
   align-items: center;
   min-height: var(--control-height-md);
-  padding-inline: var(--space-3);
-  border-bottom: var(--border-hairline) solid var(--color-border);
+  padding: var(--space-2) var(--space-3) 0;
 }
 
 .panelBody,
@@ -125,7 +124,7 @@
   position: relative;
   z-index: 1;
   flex: none;
-  width: 1px;
+  width: var(--border-hairline);
   align-self: stretch;
   background: var(--color-border);
   transition: background-color var(--duration-fast) var(--ease-out);

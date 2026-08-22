@@ -162,6 +162,7 @@ interface PartProps {
 interface PartPreviewProps {
   readonly course: Course;
   readonly part: Part;
+  readonly library: unknown;
 }
 
 interface NewCourseProps {
@@ -258,6 +259,10 @@ vi.mock("@features/lesson-editor", () => ({
     captured.part = props;
     return <div data-testid="part-editor" />;
   },
+  courseToRichLibrary: () => ({}),
+}));
+
+vi.mock("@features/part-preview", () => ({
   PartPreview: (props: PartPreviewProps) => {
     captured.partPreview = props;
     return <div data-testid="part-preview" />;

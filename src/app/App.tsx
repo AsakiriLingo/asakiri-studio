@@ -17,7 +17,8 @@ import { CourseContent } from "@features/content";
 import { CourseMedia } from "@features/media";
 import { CourseAttribution } from "@features/attribution";
 import { CourseDetails } from "@features/course-details";
-import { PartEditor, PartPreview, type SaveState } from "@features/lesson-editor";
+import { PartEditor, courseToRichLibrary, type SaveState } from "@features/lesson-editor";
+import { PartPreview } from "@features/part-preview";
 import { createAppServices } from "@app/services";
 import { useCourseState } from "@app/useCourseState";
 import { useProjectActions } from "@app/useProjectActions";
@@ -465,6 +466,7 @@ export function App() {
                   <PartPreview
                     part={openPart}
                     course={course}
+                    library={courseToRichLibrary(course)}
                     onLoadAssetPreview={mediaActions.loadAssetPreview}
                   />
                 ) : undefined

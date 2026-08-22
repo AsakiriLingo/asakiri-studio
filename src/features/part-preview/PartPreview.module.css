@@ -1,0 +1,360 @@
+/* Preview (right pane) */
+.previewPane {
+  align-self: start;
+  min-width: 0;
+}
+
+.previewBody {
+  max-width: 36rem;
+  margin-inline: auto;
+  padding: var(--space-4) var(--space-2);
+}
+
+.previewBody h2 {
+  margin: 0 0 var(--space-4);
+  font-family: var(--font-family-display);
+  font-style: normal;
+  font-weight: var(--font-weight-medium);
+  line-height: 1.2;
+}
+
+.previewBody p {
+  color: var(--color-text-muted);
+}
+
+.muted {
+  color: var(--color-text-muted);
+}
+
+.previewOption {
+  width: 100%;
+  margin-top: var(--space-2);
+  padding: var(--space-3);
+  border: var(--border-hairline) solid transparent;
+  border-radius: var(--radius-md);
+  background: var(--color-control);
+  color: var(--color-text);
+  text-align: left;
+}
+
+.previewOption.selected {
+  border-color: var(--color-brand);
+  background: var(--color-surface-subtle);
+}
+
+.speakButton {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--control-height-sm);
+  margin-bottom: var(--space-4);
+  padding-inline: var(--space-3);
+  border: var(--border-hairline) solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: var(--font-size-300);
+  font-weight: var(--font-weight-bold);
+}
+
+.speakButton svg {
+  color: var(--color-brand);
+}
+
+.exerciseHint {
+  margin: var(--space-4) 0 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-100);
+}
+
+/* Teach: select the image */
+.imageChoiceGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}
+
+.imageChoice {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: var(--border-hairline) solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-text);
+  text-align: center;
+}
+
+.imageChoice.selected {
+  border-color: var(--color-brand);
+  background: var(--color-surface-subtle);
+}
+
+.imageThumb {
+  display: grid;
+  place-items: center;
+  gap: var(--space-1);
+  aspect-ratio: 4 / 3;
+  border-radius: var(--radius-sm);
+  background: var(--color-canvas);
+  color: var(--color-text-muted);
+}
+
+.imageThumb svg {
+  width: 1.75rem;
+  height: 1.75rem;
+  color: var(--color-brand);
+}
+
+.optionThumbImage {
+  width: 100%;
+  height: 100%;
+  border-radius: var(--radius-sm);
+  object-fit: cover;
+}
+
+.imageThumb .file {
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-100);
+}
+
+.imageChoiceLabel {
+  font-size: var(--font-size-400);
+  font-weight: var(--font-weight-bold);
+}
+
+.imageChoiceSub {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-100);
+}
+
+/* Fill blank + build sentence tiles */
+.clozeSentence {
+  margin: 0;
+  font-size: var(--font-size-500);
+  line-height: 2.4;
+}
+
+.blank {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 5.5rem;
+  padding: var(--space-1) var(--space-3);
+  border-bottom: 2px solid var(--color-border-strong);
+  color: var(--color-text-muted);
+  font-weight: var(--font-weight-bold);
+  vertical-align: baseline;
+}
+
+.blank.filled {
+  border: var(--border-hairline) solid var(--color-brand);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-subtle);
+  color: var(--color-text);
+}
+
+.wordBank {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-5);
+}
+
+.wordBankLabel {
+  width: 100%;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-100);
+  font-weight: var(--font-weight-bold);
+}
+
+.wordChip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--control-height-sm);
+  padding-inline: var(--space-3);
+  border: var(--border-hairline) solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: var(--font-size-300);
+  font-weight: var(--font-weight-bold);
+  box-shadow: 0 1.5px 0 var(--color-border);
+}
+
+.wordChip.used {
+  border-style: dashed;
+  border-color: var(--color-border);
+  background: transparent;
+  color: var(--color-text-muted);
+  box-shadow: none;
+}
+
+.wordChip.selected {
+  border-color: var(--color-brand);
+  background: var(--color-surface-subtle);
+}
+
+.sentenceBuild {
+  display: grid;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+}
+
+.answerTrack {
+  display: flex;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  gap: var(--space-2);
+  min-height: calc(var(--control-height-md) + var(--space-2));
+  padding: var(--space-2) 0 var(--space-4);
+  border-bottom: var(--border-hairline) solid var(--color-border);
+}
+
+/* Match the words */
+.matchGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}
+
+.matchCol {
+  display: grid;
+  gap: var(--space-3);
+  align-content: start;
+}
+
+.matchChip {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  min-height: var(--control-height-md);
+  padding: var(--space-2) var(--space-3);
+  border: var(--border-hairline) solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: var(--font-size-300);
+  font-weight: var(--font-weight-bold);
+  text-align: left;
+}
+
+.matchChip.selected {
+  border-color: var(--color-brand);
+  background: var(--color-surface-subtle);
+}
+
+.matchChip.matched {
+  border-style: dashed;
+  color: var(--color-text-muted);
+}
+
+.matchNum {
+  display: grid;
+  place-items: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 50%;
+  background: var(--color-surface-subtle);
+  color: var(--color-brand);
+  font-size: var(--font-size-100);
+  font-weight: var(--font-weight-bold);
+}
+
+/* Listening + speaking */
+.audioPlay,
+.micButton {
+  display: grid;
+  place-items: center;
+  width: 5rem;
+  height: 5rem;
+  margin: var(--space-6) auto var(--space-3);
+  padding: 0;
+  border: var(--border-hairline) solid var(--color-brand);
+  border-radius: 50%;
+  background: var(--color-surface-subtle);
+  color: var(--color-brand);
+}
+
+.audioPlay svg,
+.micButton svg {
+  width: 2rem;
+  height: 2rem;
+}
+
+.micLabel {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-300);
+  text-align: center;
+}
+
+.listenTools {
+  display: flex;
+  justify-content: center;
+  margin-bottom: var(--space-4);
+}
+
+.skipLink {
+  display: block;
+  width: 100%;
+  margin-top: var(--space-5);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-300);
+  font-weight: var(--font-weight-bold);
+  text-align: center;
+  text-decoration: underline;
+}
+
+.speakTarget {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+  padding: var(--space-5);
+  border: var(--border-hairline) solid var(--color-border);
+  border-radius: var(--radius-md);
+  text-align: center;
+}
+
+.speakTarget .phrase {
+  font-family: var(--font-family-display);
+  font-size: var(--font-size-500);
+}
+
+.speakTarget .reading {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-300);
+}
+
+.token {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--control-height-sm);
+  padding-inline: var(--space-3);
+  border: var(--border-hairline) solid transparent;
+  border-radius: var(--radius-md);
+  background: var(--color-control);
+  color: var(--color-text);
+  font-size: var(--font-size-300);
+  font-weight: var(--font-weight-bold);
+  box-shadow: none;
+}
+
+.token .orderIndex {
+  color: var(--color-brand);
+}
+
+.previewEmpty {
+  margin: 0;
+  padding: var(--space-5);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-200);
+}

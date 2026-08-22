@@ -94,19 +94,7 @@ export function LessonWorkspace({
         defaultSize="22rem"
         className={styles.panel}
       >
-        <div className={styles.tabs} role="tablist" aria-label={t.source}>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={tab === "source"}
-            className={styles.tab}
-            onClick={() => {
-              setTab("source");
-            }}
-          >
-            <Icon name="file-text" size={16} />
-            {t.source}
-          </button>
+        <div className={styles.tabs} role="tablist" aria-label={t.preview}>
           <button
             type="button"
             role="tab"
@@ -118,6 +106,18 @@ export function LessonWorkspace({
           >
             <Icon name="eye" size={16} />
             {t.preview}
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={tab === "source"}
+            className={styles.tab}
+            onClick={() => {
+              setTab("source");
+            }}
+          >
+            <Icon name="file-text" size={16} />
+            {t.source}
           </button>
         </div>
         <div className={styles.panelBody}>
