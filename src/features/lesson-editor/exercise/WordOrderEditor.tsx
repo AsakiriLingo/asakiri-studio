@@ -257,7 +257,6 @@ export function WordOrderEditor({ exercise, library, onChange }: WordOrderEditor
 
   const feedbackSection = (
     <div className={styles.formGrid}>
-      <PanelHeader title={te.feedbackTitle} description={te.feedbackDesc} />
       <FragmentField
         label={te.feedbackCorrect}
         role="primary"

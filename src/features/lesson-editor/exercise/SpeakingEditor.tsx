@@ -3,7 +3,6 @@ import type { RenderFragment, SpeakingExercise } from "@core/course";
 import type { RichEditorLibrary } from "@shared/components/rich-editor";
 import { useMessages } from "@shared/i18n";
 import { Icon } from "@shared/components/icon";
-import { PanelHeader } from "@shared/components/panel";
 import { ExerciseShell } from "@features/lesson-editor/exercise/ExerciseShell";
 import { FragmentField } from "@features/lesson-editor/exercise/FragmentField";
 import styles from "@features/lesson-editor/LessonEditor.module.css";
@@ -69,7 +68,6 @@ export function SpeakingEditor({ exercise, library, onChange }: SpeakingEditorPr
 
   const feedbackSection = (
     <div className={styles.formGrid}>
-      <PanelHeader title={te.feedbackTitle} description={te.feedbackDesc} />
       <FragmentField
         label={te.feedbackCorrect}
         role="primary"

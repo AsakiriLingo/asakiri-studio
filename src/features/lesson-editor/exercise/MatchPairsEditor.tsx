@@ -142,7 +142,6 @@ export function MatchPairsEditor({ exercise, library, onChange }: MatchPairsEdit
 
   const feedbackSection = (
     <div className={styles.formGrid}>
-      <PanelHeader title={te.feedbackTitle} description={te.feedbackDesc} />
       <FragmentField
         label={te.feedbackCorrect}
         role="primary"

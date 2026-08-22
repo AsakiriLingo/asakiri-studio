@@ -69,9 +69,7 @@
 }
 
 .navItem[aria-current="page"] .navIcon {
-  border-color: var(--color-accent-edge);
-  border-width: 2px;
-  border-bottom-width: 4px;
+  border-color: transparent;
   background: var(--color-accent);
   color: var(--color-accent-ink);
 }

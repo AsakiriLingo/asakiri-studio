@@ -39,11 +39,6 @@ export function ListeningEditor({ exercise, library, onChange }: ListeningEditor
     onChange(next);
   };
 
-  const toggleItems = [
-    { value: "on", label: messages.common.on },
-    { value: "off", label: te.matchOff },
-  ];
-
   const setPrompt = (fragment: RenderFragment) => {
     update({ ...ex, prompt: [fragment, ...ex.prompt.slice(1)] });
   };
@@ -117,19 +112,10 @@ export function ListeningEditor({ exercise, library, onChange }: ListeningEditor
   const acceptedFragment: RenderFragment | undefined = acceptedBinding
     ? { id: "accepted_answer", role: "primary", binding: acceptedBinding }
     : undefined;
-  const normalize = typedEval?.normalize ?? {};
 
   const setAccepted = (fragment: RenderFragment) => {
     if (!typedEval) return;
     update({ ...ex, evaluation: { ...typedEval, accepted: [{ binding: fragment.binding }] } });
-  };
-
-  const toggleNormalize = (
-    key: "ignoreCase" | "ignoreWhitespace" | "ignorePunctuation",
-    on: boolean,
-  ) => {
-    if (!typedEval) return;
-    update({ ...ex, evaluation: { ...typedEval, normalize: { ...normalize, [key]: on } } });
   };
 
   const setFeedback = (key: "correct" | "incorrect", fragment: RenderFragment) => {
@@ -220,48 +206,20 @@ export function ListeningEditor({ exercise, library, onChange }: ListeningEditor
           </div>
         </div>
       ) : (
-        <>
-          <FragmentField
-            label={te.typedAnswerLabel}
-            help={te.typedAnswerHelp}
-            role="primary"
-            fragment={acceptedFragment}
-            library={library}
-            onChange={setAccepted}
-          />
-          <div>
-            <PanelHeader title={te.matchTitle} description={te.matchDesc} />
-            <div className={styles.settingGroup}>
-              {(
-                [
-                  ["ignoreCase", te.ignoreCase],
-                  ["ignoreWhitespace", te.ignoreWhitespace],
-                  ["ignorePunctuation", te.ignorePunctuation],
-                ] as const
-              ).map(([key, label]) => (
-                <div key={key} className={styles.settingRow}>
-                  <span className={styles.settingName}>{label}</span>
-                  <Select
-                    aria-label={label}
-                    className={styles.matchToggle}
-                    value={normalize[key] ? "on" : "off"}
-                    onValueChange={(value) => {
-                      toggleNormalize(key, value === "on");
-                    }}
-                    items={toggleItems}
-                  />
-                </div>
-              ))}
-            </div>
-          </div>
-        </>
+        <FragmentField
+          label={te.typedAnswerLabel}
+          help={te.typedAnswerHelp}
+          role="primary"
+          fragment={acceptedFragment}
+          library={library}
+          onChange={setAccepted}
+        />
       )}
     </div>
   );
 
   const feedbackSection = (
     <div className={styles.formGrid}>
-      <PanelHeader title={te.feedbackTitle} description={te.feedbackDesc} />
       <FragmentField
         label={te.feedbackCorrect}
         role="primary"

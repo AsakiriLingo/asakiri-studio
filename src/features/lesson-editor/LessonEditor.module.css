@@ -152,6 +152,58 @@
   gap: var(--space-5);
 }
 
+.feedbackSection {
+  margin-top: var(--space-8);
+  padding-top: var(--space-5);
+  border-top: var(--border-hairline) solid var(--color-border);
+}
+
+.feedbackToggle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-text);
+  text-align: start;
+  cursor: pointer;
+}
+
+.feedbackToggleTitle {
+  font-size: var(--font-size-300);
+  font-weight: var(--font-weight-bold);
+}
+
+.feedbackChevron {
+  flex: none;
+  color: var(--color-text-muted);
+  transition: transform var(--duration-fast) ease;
+}
+
+.feedbackChevronCollapsed {
+  transform: rotate(-90deg);
+}
+
+.feedbackBody {
+  display: grid;
+  gap: var(--space-5);
+  margin-top: var(--space-4);
+}
+
+.feedbackDesc {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-200);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .feedbackChevron {
+    transition: none;
+  }
+}
+
 .fragmentGroup {
   display: grid;
   gap: var(--space-2);
@@ -185,24 +237,17 @@
 }
 
 .exerciseOptionList {
-  gap: 0;
-  overflow: clip;
-  border: var(--border-hairline) solid var(--color-border);
-  border-radius: var(--radius-md);
+  gap: var(--space-2);
 }
 
 .exerciseOption {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto auto;
-  align-items: start;
+  align-items: center;
   gap: var(--space-3);
-  padding: var(--space-3);
+  padding: var(--space-1) 0;
   border: 0;
-  background: var(--color-surface);
-}
-
-.exerciseOption + .exerciseOption {
-  border-top: var(--border-hairline) solid var(--color-border);
+  background: transparent;
 }
 
 .tokenRow {
@@ -239,9 +284,13 @@
 .matchPair {
   display: grid;
   gap: var(--space-3);
-  padding: var(--space-4);
-  border: var(--border-hairline) solid var(--color-border);
-  border-radius: var(--radius-md);
+  padding: 0;
+  border: 0;
+}
+
+.matchPair + .matchPair {
+  padding-top: var(--space-4);
+  border-top: var(--border-hairline) solid var(--color-border);
 }
 
 .matchPairHead {
