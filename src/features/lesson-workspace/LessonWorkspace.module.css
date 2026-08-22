@@ -18,10 +18,6 @@
   background: var(--color-canvas);
 }
 
-.outlinePanel .panelBody {
-  padding-top: var(--space-2);
-}
-
 .tabs {
   display: flex;
   flex: none;
@@ -30,23 +26,26 @@
   padding: var(--space-2) var(--space-3) 0;
 }
 
-.panelBody,
-.centerBody {
+.scrollHost {
   flex: 1;
   min-height: 0;
-  overflow: auto;
+}
+
+.outlineScroll {
+  padding: var(--space-2) var(--space-4) var(--space-4);
+}
+
+.refScroll {
   padding: var(--space-4);
 }
 
 .centerBody {
-  display: grid;
-  place-items: center;
-}
-
-.editorHost {
   flex: 1;
   min-height: 0;
+  display: grid;
+  place-items: center;
   overflow: auto;
+  padding: var(--space-4);
 }
 
 .empty {

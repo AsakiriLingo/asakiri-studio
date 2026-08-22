@@ -26,6 +26,7 @@
     "on": "On",
     "pageOf": "Page {current} of {total}",
     "play": "Play",
+    "stop": "Stop",
     "previous": "Previous",
     "remove": "Remove {label}",
     "rename": "Rename",

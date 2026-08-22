@@ -26,6 +26,7 @@
     "on": "オン",
     "pageOf": "{total} ページ中 {current} ページ",
     "play": "再生",
+    "stop": "停止",
     "previous": "前へ",
     "remove": "{label}を削除",
     "rename": "名前を変更",

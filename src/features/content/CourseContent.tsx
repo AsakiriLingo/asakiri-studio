@@ -10,6 +10,7 @@ import type {
   RecordFieldValue,
 } from "@core/course";
 import type { ProjectWriteResult } from "@core/project-writing";
+import { ContextMenu } from "@base-ui/react/context-menu";
 import { useFormat, useMessages } from "@shared/i18n";
 import { Button } from "@shared/components/button";
 import { useConfirm } from "@shared/components/confirm-dialog";
@@ -22,7 +23,6 @@ import { PanelHeader } from "@shared/components/panel";
 import { Select } from "@shared/components/select";
 import { Status } from "@shared/components/status";
 import { Tag } from "@shared/components/tag";
-import { WorkHeader, WorkInner } from "@shared/components/work-surface";
 import {
   AssetFieldControl,
   AssetListFieldControl,
@@ -252,6 +252,7 @@ export function CourseContent({
   const [editingRecordId, setEditingRecordId] = useState<string | null>(null);
   const [showingSettings, setShowingSettings] = useState(false);
   const [importing, setImporting] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   const runSpreadsheetImport = () => {
     setImporting(true);
@@ -279,6 +280,22 @@ export function CourseContent({
     void run.then((result) => {
       setSaveState(result.status === "saved" ? "saved" : "failed");
     });
+  };
+
+  const editCollection = (entry: Collection) => {
+    setSelectedId(entry.id);
+    setShowingSettings(true);
+  };
+
+  const removeCollection = async (entry: Collection) => {
+    const ok = await confirm({
+      title: t.confirmDeleteCollectionTitle,
+      description: format(t.confirmDeleteCollectionBody, { name: entry.name }),
+      confirmLabel: t.deleteCollection,
+    });
+    if (!ok) return;
+    if (entry.id === selectedId) setShowingSettings(false);
+    persist(onDeleteCollection(entry.id));
   };
 
   const saveField: SaveField = (record, fieldId, value) => {
@@ -503,92 +520,123 @@ export function CourseContent({
     ) : null;
 
   return (
-    <WorkInner>
-      <WorkHeader
-        title={t.title}
-        description={t.description}
-        actions={
-          <>
-            <Button
-              variant="ghost"
-              size="compact"
-              disabled={importing}
-              onClick={runSpreadsheetImport}
-            >
-              <Icon name="upload" size={18} />
-              {messages.importer.importSpreadsheet}
-            </Button>
-            <Button size="compact" onClick={openNewCollection}>
-              <Icon name="plus" size={18} />
-              {t.newCollection}
-            </Button>
-          </>
-        }
-      />
-
-      {course.collections.length === 0 || !collection ? (
-        <PanelHeader title={t.noCollectionsTitle} description={t.noCollectionsBody} />
-      ) : (
-        <div className={styles.layout}>
-          <aside className={styles.collectionList}>
-            <PanelHeader title={t.collections} />
-            <div className={styles.list}>
-              {course.collections.map((entry) => {
-                const count = course.records.filter((r) => r.collectionId === entry.id).length;
-                return (
-                  <button
-                    key={entry.id}
-                    type="button"
-                    className={joinClassNames(
-                      styles.listRow,
-                      entry.id === collection.id ? styles.selected : undefined,
-                    )}
-                    aria-pressed={entry.id === collection.id}
-                    onClick={() => {
-                      setSelectedId(entry.id);
-                    }}
-                  >
-                    <span>
-                      <span className={styles.rowTitle}>{entry.name}</span>
-                      {entry.description ? (
-                        <span className={styles.rowDetail}>{entry.description}</span>
-                      ) : null}
-                    </span>
-                    <span className={styles.count}>{count}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </aside>
-
-          <section aria-label={collection.name}>
-            <div className={styles.tableToolbar}>
-              <Button variant="secondary" onClick={addRecord}>
+    <div className={styles.library}>
+      <nav
+        className={joinClassNames(styles.sidebar, sidebarCollapsed ? styles.collapsed : undefined)}
+        aria-label={t.collections}
+      >
+        <div className={styles.sidebarHeader}>
+          {sidebarCollapsed ? null : <span className={styles.sidebarTitle}>{t.collections}</span>}
+          <div className={styles.sidebarHeaderActions}>
+            {sidebarCollapsed ? null : (
+              <IconButton aria-label={t.newCollection} onClick={openNewCollection}>
                 <Icon name="plus" size={18} />
-                {t.addRecord}
-              </Button>
-              <span className={styles.barSpacer} />
-              {saveStatus}
-              <IconButton
-                aria-label={t.collectionSettings}
-                size="sm"
-                onClick={() => {
-                  setShowingSettings(true);
-                }}
-              >
-                <Icon name="edit" size={18} />
               </IconButton>
-            </div>
+            )}
+            <IconButton
+              aria-label={
+                sidebarCollapsed
+                  ? messages.workspace.expandSidebar
+                  : messages.workspace.collapseSidebar
+              }
+              onClick={() => {
+                setSidebarCollapsed((value) => !value);
+              }}
+            >
+              <Icon name="sidebar" size={18} />
+            </IconButton>
+          </div>
+        </div>
+        {sidebarCollapsed ? null : course.collections.length === 0 ? (
+          <p className={styles.sidebarEmpty}>{t.noCollectionsBody}</p>
+        ) : (
+          <div className={styles.list}>
+            {course.collections.map((entry) => {
+              const count = course.records.filter((r) => r.collectionId === entry.id).length;
+              return (
+                <ContextMenu.Root key={entry.id}>
+                  <ContextMenu.Trigger
+                    render={
+                      <button
+                        type="button"
+                        className={joinClassNames(
+                          styles.listRow,
+                          entry.id === collection?.id ? styles.selected : undefined,
+                        )}
+                        aria-current={entry.id === collection?.id ? "page" : undefined}
+                        onClick={() => {
+                          setSelectedId(entry.id);
+                        }}
+                      >
+                        <span className={styles.rowTitle}>{entry.name}</span>
+                        <span className={styles.count}>{count}</span>
+                      </button>
+                    }
+                  />
+                  <ContextMenu.Portal>
+                    <ContextMenu.Positioner className={styles.menuPositioner}>
+                      <ContextMenu.Popup className={styles.menuPopup}>
+                        <ContextMenu.Item
+                          className={styles.menuItem}
+                          onClick={() => {
+                            editCollection(entry);
+                          }}
+                        >
+                          {messages.common.edit}
+                        </ContextMenu.Item>
+                        <ContextMenu.Item
+                          className={joinClassNames(styles.menuItem, styles.menuItemDanger)}
+                          onClick={() => {
+                            void removeCollection(entry);
+                          }}
+                        >
+                          {messages.common.delete}
+                        </ContextMenu.Item>
+                      </ContextMenu.Popup>
+                    </ContextMenu.Positioner>
+                  </ContextMenu.Portal>
+                </ContextMenu.Root>
+              );
+            })}
+          </div>
+        )}
+      </nav>
+
+      <div className={styles.content}>
+        {course.collections.length === 0 || !collection ? (
+          <div className={styles.empty}>
+            <PanelHeader title={t.noCollectionsTitle} description={t.noCollectionsBody} />
+          </div>
+        ) : (
+          <section className={styles.tableSection} aria-label={collection.name}>
             <DataTable
               columns={columns}
               data={displayRecords}
               ariaLabel={format(t.recordsAria, { collection: collection.name })}
               searchable
               onEditCell={handleEditCell}
+              actions={
+                <>
+                  {saveStatus}
+                  <Button
+                    variant="ghost"
+                    size="compact"
+                    disabled={importing}
+                    onClick={runSpreadsheetImport}
+                  >
+                    <Icon name="upload" size={18} />
+                    {messages.importer.importSpreadsheet}
+                  </Button>
+                  <Button variant="secondary" onClick={addRecord}>
+                    <Icon name="plus" size={18} />
+                    {t.addRecord}
+                  </Button>
+                </>
+              }
             />
           </section>
-        </div>
-      )}
+        )}
+      </div>
 
       {creatingCollection ? (
         <Modal
@@ -773,23 +821,6 @@ export function CourseContent({
             </div>
           </ScrollArea>
           <div className={styles.dialogActions}>
-            <Button
-              variant="danger"
-              onClick={() => {
-                void (async () => {
-                  const ok = await confirm({
-                    title: t.confirmDeleteCollectionTitle,
-                    description: format(t.confirmDeleteCollectionBody, { name: collection.name }),
-                    confirmLabel: t.deleteCollection,
-                  });
-                  if (!ok) return;
-                  setShowingSettings(false);
-                  persist(onDeleteCollection(collection.id));
-                })();
-              }}
-            >
-              {t.deleteCollection}
-            </Button>
             <span className={styles.barSpacer} />
             <Button
               onClick={() => {
@@ -801,6 +832,6 @@ export function CourseContent({
           </div>
         </Modal>
       ) : null}
-    </WorkInner>
+    </div>
   );
 }

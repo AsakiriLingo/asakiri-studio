@@ -26,6 +26,7 @@
     "on": "Вкл.",
     "pageOf": "Страница {current} из {total}",
     "play": "Воспроизвести",
+    "stop": "Стоп",
     "previous": "Назад",
     "remove": "Удалить {label}",
     "rename": "Переименовать",

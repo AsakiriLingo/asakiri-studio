@@ -359,7 +359,10 @@ export function App() {
           setSettingsOpen(true);
         }}
         saveStatus={saveStatus}
-        flush={course !== null && (section === "lessons" || section === "details")}
+        flush={
+          course !== null &&
+          (section === "lessons" || section === "details" || section === "content")
+        }
       >
         {courseState?.status === "loading" ? (
           <WorkspaceMessage

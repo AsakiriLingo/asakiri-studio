@@ -1,16 +1,14 @@
 import { useEffect, useRef, useState } from "react";
+import { Popover } from "@base-ui/react/popover";
 import type { Asset, FieldDefinition, RecordFieldItem, RecordFieldValue } from "@core/course";
 import { useFormat, useMessages } from "@shared/i18n";
 import { Icon } from "@shared/components/icon";
-import { Select, type SelectOption } from "@shared/components/select";
+import type { SelectOption } from "@shared/components/select";
 import styles from "@features/content/CourseContent.module.css";
 
 export type ImportAsset = () => Promise<Asset | null>;
 
 export type LoadPreview = (assetId: string) => Promise<string | null>;
-
-const IMPORT = "__import__";
-const CLEAR = "__clear__";
 
 const previewCache = new Map<string, Promise<string | null>>();
 
@@ -49,6 +47,66 @@ function useAssetPreview(asset: Asset | undefined, loadPreview: LoadPreview): st
   return loaded?.id === previewable ? loaded.url : null;
 }
 
+function AudioPreviewButton({
+  assetId,
+  loadPreview,
+}: {
+  readonly assetId: string;
+  readonly loadPreview: LoadPreview;
+}) {
+  const messages = useMessages();
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [playing, setPlaying] = useState(false);
+
+  useEffect(
+    () => () => {
+      audioRef.current?.pause();
+      audioRef.current = null;
+    },
+    [],
+  );
+
+  const toggle = async () => {
+    const existing = audioRef.current;
+    if (existing) {
+      if (existing.paused) {
+        void existing.play();
+      } else {
+        existing.pause();
+        existing.currentTime = 0;
+      }
+      return;
+    }
+    const url = await loadPreview(assetId);
+    if (!url) return;
+    const audio = new Audio(url);
+    audioRef.current = audio;
+    audio.addEventListener("play", () => {
+      setPlaying(true);
+    });
+    audio.addEventListener("pause", () => {
+      setPlaying(false);
+    });
+    audio.addEventListener("ended", () => {
+      setPlaying(false);
+    });
+    void audio.play();
+  };
+
+  return (
+    <button
+      type="button"
+      className={styles.audioPlay}
+      aria-label={playing ? messages.common.stop : messages.common.play}
+      onClick={() => {
+        void toggle();
+      }}
+    >
+      <Icon name={playing ? "stop" : "play"} size={16} />
+    </button>
+  );
+}
+
 export function AssetPreview({
   asset,
   loadPreview,
@@ -59,10 +117,110 @@ export function AssetPreview({
   readonly size?: number;
 }) {
   const url = useAssetPreview(asset, loadPreview);
+  if (asset?.kind === "audio") {
+    return <AudioPreviewButton assetId={asset.id} loadPreview={loadPreview} />;
+  }
   if (url) {
-    return <img className={styles.thumb} src={url} alt="" loading="lazy" decoding="async" />;
+    return (
+      <img
+        className={styles.thumb}
+        style={{ width: size, height: size }}
+        src={url}
+        alt=""
+        loading="lazy"
+        decoding="async"
+      />
+    );
   }
   return <Icon name={asset ? asset.kind : "image"} size={size} />;
+}
+
+function AssetPicker({
+  options,
+  ariaLabel,
+  onPick,
+  onImport,
+}: {
+  readonly options: readonly SelectOption[];
+  readonly ariaLabel: string;
+  readonly onPick: (assetId: string) => void;
+  readonly onImport: () => void;
+}) {
+  const messages = useMessages();
+  const t = messages.content;
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const q = query.trim().toLowerCase();
+  const filtered = q ? options.filter((option) => option.label.toLowerCase().includes(q)) : options;
+
+  const close = () => {
+    setOpen(false);
+    setQuery("");
+  };
+
+  return (
+    <Popover.Root open={open} onOpenChange={setOpen}>
+      <Popover.Trigger className={styles.addAsset} aria-label={ariaLabel}>
+        <Icon name="plus" size={16} />
+      </Popover.Trigger>
+      <Popover.Portal>
+        <Popover.Positioner className={styles.pickerPositioner} sideOffset={4} align="start">
+          <Popover.Popup className={styles.pickerPopup}>
+            <div className={styles.pickerSearch}>
+              <Icon
+                name="search"
+                size={16}
+                className={styles.pickerSearchIcon}
+                aria-hidden="true"
+              />
+              <input
+                type="search"
+                className={styles.pickerInput}
+                value={query}
+                placeholder={messages.common.searchPlaceholder}
+                aria-label={messages.common.search}
+                autoComplete="off"
+                autoFocus
+                onChange={(event) => {
+                  setQuery(event.currentTarget.value);
+                }}
+              />
+            </div>
+            <div className={styles.pickerList}>
+              {filtered.length === 0 ? (
+                <p className={styles.pickerEmpty}>{messages.common.noResults}</p>
+              ) : (
+                filtered.map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    className={styles.pickerItem}
+                    onClick={() => {
+                      close();
+                      onPick(option.value);
+                    }}
+                  >
+                    <span className={styles.pickerItemLabel}>{option.label}</span>
+                  </button>
+                ))
+              )}
+            </div>
+            <button
+              type="button"
+              className={styles.pickerImport}
+              onClick={() => {
+                close();
+                onImport();
+              }}
+            >
+              <Icon name="upload" size={16} />
+              {t.importNewFile}
+            </button>
+          </Popover.Popup>
+        </Popover.Positioner>
+      </Popover.Portal>
+    </Popover.Root>
+  );
 }
 
 interface AssetControlProps {
@@ -82,50 +240,48 @@ export function AssetFieldControl({
   loadPreview,
   onChange,
 }: AssetControlProps) {
-  const t = useMessages().content;
-  const [importing, setImporting] = useState(false);
+  const messages = useMessages();
+  const format = useFormat();
+  const t = messages.content;
   const assetId = value?.kind === "asset" ? value.assetId : "";
   const asset = assetId ? assets.find((entry) => entry.id === assetId) : undefined;
 
-  const items: SelectOption[] = [
-    ...assetOptions(assets, field.assetKind),
-    ...(assetId && !asset ? [{ value: assetId, label: t.missing }] : []),
-    { value: IMPORT, label: t.importNewFile },
-    ...(assetId ? [{ value: CLEAR, label: t.clearAsset }] : []),
-  ];
-
-  const choose = (next: string) => {
-    if (next === "") return;
-    if (next === CLEAR) {
-      onChange({ kind: "asset", assetId: "" });
-      return;
-    }
-    if (next === IMPORT) {
-      setImporting(true);
-      void importAsset()
-        .then((created) => {
-          if (created) onChange({ kind: "asset", assetId: created.id });
-        })
-        .finally(() => {
-          setImporting(false);
-        });
-      return;
-    }
-    onChange({ kind: "asset", assetId: next });
+  const setAsset = (nextId: string) => {
+    onChange({ kind: "asset", assetId: nextId });
+  };
+  const importNew = () => {
+    void importAsset().then((created) => {
+      if (created) setAsset(created.id);
+    });
   };
 
+  if (assetId) {
+    const label = asset ? (asset.file ?? asset.label) : t.missing;
+    return (
+      <span className={styles.assetChip}>
+        <AssetPreview asset={asset} loadPreview={loadPreview} size={40} />
+        <span className={styles.chipLabel}>{label}</span>
+        <button
+          type="button"
+          className={styles.chipRemove}
+          aria-label={format(messages.common.remove, { label })}
+          onClick={() => {
+            setAsset("");
+          }}
+        >
+          <Icon name="trash" size={12} />
+        </button>
+      </span>
+    );
+  }
+
   return (
-    <span className={styles.assetControl}>
-      {assetId ? <AssetPreview asset={asset} loadPreview={loadPreview} /> : null}
-      <Select
-        searchable
-        aria-label={field.name || t.linkAsset}
-        placeholder={importing ? t.importing : t.chooseAsset}
-        items={items}
-        value={assetId}
-        onValueChange={choose}
-      />
-    </span>
+    <AssetPicker
+      options={assetOptions(assets, field.assetKind)}
+      ariaLabel={field.name || t.linkAsset}
+      onPick={setAsset}
+      onImport={importNew}
+    />
   );
 }
 
@@ -140,7 +296,6 @@ export function AssetListFieldControl({
   const messages = useMessages();
   const format = useFormat();
   const t = messages.content;
-  const [importing, setImporting] = useState(false);
   const items = value?.kind === "list" ? value.items : [];
   const byId = new Map(assets.map((asset) => [asset.id, asset]));
   const assetItems = items.filter(
@@ -153,21 +308,10 @@ export function AssetListFieldControl({
       items: [...items, { id: `item_${crypto.randomUUID()}`, kind: "asset", assetId }],
     });
   };
-
-  const add = (next: string) => {
-    if (next === "") return;
-    if (next === IMPORT) {
-      setImporting(true);
-      void importAsset()
-        .then((created) => {
-          if (created) append(created.id);
-        })
-        .finally(() => {
-          setImporting(false);
-        });
-      return;
-    }
-    append(next);
+  const importNew = () => {
+    void importAsset().then((created) => {
+      if (created) append(created.id);
+    });
   };
 
   return (
@@ -177,7 +321,7 @@ export function AssetListFieldControl({
         const label = asset ? (asset.file ?? asset.label) : t.missing;
         return (
           <span key={item.id} className={styles.assetChip}>
-            <AssetPreview asset={asset} loadPreview={loadPreview} size={16} />
+            <AssetPreview asset={asset} loadPreview={loadPreview} size={40} />
             <span className={styles.chipLabel}>{label}</span>
             <button
               type="button"
@@ -192,16 +336,11 @@ export function AssetListFieldControl({
           </span>
         );
       })}
-      <Select
-        searchable
-        aria-label={field.name || t.linkAsset}
-        placeholder={importing ? t.importing : t.addItem}
-        items={[
-          ...assetOptions(assets, field.assetKind),
-          { value: IMPORT, label: t.importNewFile },
-        ]}
-        value=""
-        onValueChange={add}
+      <AssetPicker
+        options={assetOptions(assets, field.assetKind)}
+        ariaLabel={field.name || t.linkAsset}
+        onPick={append}
+        onImport={importNew}
       />
     </span>
   );

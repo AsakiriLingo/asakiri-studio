@@ -2,6 +2,7 @@ import { useState, type ReactNode } from "react";
 import { Group, Panel, Separator } from "react-resizable-panels";
 import { useMessages } from "@shared/i18n";
 import { Icon } from "@shared/components/icon";
+import { ScrollArea } from "@shared/components/scroll-area";
 import styles from "@features/lesson-workspace/LessonWorkspace.module.css";
 
 export interface LessonWorkspaceLesson {
@@ -46,7 +47,7 @@ export function LessonWorkspace({
         defaultSize="18rem"
         className={[styles.panel, styles.outlinePanel].join(" ")}
       >
-        <div className={styles.panelBody}>
+        <ScrollArea className={styles.scrollHost} contentClassName={styles.outlineScroll}>
           {outlineSlot ??
             (outline.length === 0 ? (
               <p className={styles.empty}>{t.outlineEmpty}</p>
@@ -68,14 +69,14 @@ export function LessonWorkspace({
                 ))}
               </ul>
             ))}
-        </div>
+        </ScrollArea>
       </Panel>
 
       <Separator className={styles.handle} />
 
       <Panel id="editor" minSize="24rem" className={styles.panel}>
         {editorSlot ? (
-          <div className={styles.editorHost}>{editorSlot}</div>
+          <ScrollArea className={styles.scrollHost}>{editorSlot}</ScrollArea>
         ) : (
           <div className={styles.centerBody}>
             <p className={styles.empty}>{t.selectPart}</p>
@@ -120,11 +121,11 @@ export function LessonWorkspace({
             {t.source}
           </button>
         </div>
-        <div className={styles.panelBody}>
+        <ScrollArea className={styles.scrollHost} contentClassName={styles.refScroll}>
           {tab === "source"
             ? (sourceSlot ?? <p className={styles.empty}>{t.sourceEmpty}</p>)
             : (previewSlot ?? <p className={styles.empty}>{t.previewEmpty}</p>)}
-        </div>
+        </ScrollArea>
       </Panel>
     </Group>
   );

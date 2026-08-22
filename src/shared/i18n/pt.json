@@ -26,6 +26,7 @@
     "on": "Ativado",
     "pageOf": "Página {current} de {total}",
     "play": "Reproduzir",
+    "stop": "Parar",
     "previous": "Anterior",
     "remove": "Remover {label}",
     "rename": "Renomear",

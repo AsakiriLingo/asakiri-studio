@@ -26,6 +26,7 @@
     "on": "Attivo",
     "pageOf": "Pagina {current} di {total}",
     "play": "Riproduci",
+    "stop": "Ferma",
     "previous": "Indietro",
     "remove": "Rimuovi {label}",
     "rename": "Rinomina",
