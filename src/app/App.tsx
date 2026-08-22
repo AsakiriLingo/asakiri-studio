@@ -318,7 +318,7 @@ export function App() {
         onOpenSettings={() => {
           setSettingsOpen(true);
         }}
-        flush={course !== null && section === "lessons"}
+        flush={course !== null && (section === "lessons" || section === "details")}
       >
         {courseState?.status === "loading" ? (
           <WorkspaceMessage
