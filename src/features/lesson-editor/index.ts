@@ -1,2 +1,3 @@
-export { LessonEditor } from "@features/lesson-editor/LessonEditor";
-export type { LessonEditorProps } from "@features/lesson-editor/LessonEditor";
+export { PartEditor } from "@features/lesson-editor/PartEditor";
+export type { PartEditorProps } from "@features/lesson-editor/PartEditor";
+export { PartPreview } from "@features/lesson-editor/PartPreview";

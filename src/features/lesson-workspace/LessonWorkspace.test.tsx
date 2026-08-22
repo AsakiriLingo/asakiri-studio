@@ -35,10 +35,10 @@ describe("LessonWorkspace", () => {
     expect(screen.getByText("No units yet")).toBeInTheDocument();
   });
 
-  it("switches the reference pane between source and preview", () => {
+  it("switches the reference pane between preview and source", () => {
     renderWorkspace();
-    expect(screen.getByText("Import a document to reference it here")).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("tab", { name: "Preview" }));
     expect(screen.getByText("Preview appears here as you build a part")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("tab", { name: "Source" }));
+    expect(screen.getByText("Import a document to reference it here")).toBeInTheDocument();
   });
 });

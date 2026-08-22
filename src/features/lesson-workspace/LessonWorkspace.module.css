@@ -48,6 +48,7 @@
   flex: 1;
   min-height: 0;
   overflow: auto;
+  padding: var(--space-6) clamp(var(--space-4), 4vw, var(--space-8));
 }
 
 .empty {

@@ -33,7 +33,7 @@ export function LessonWorkspace({
   previewSlot,
 }: LessonWorkspaceProps) {
   const t = useMessages().lessonWorkspace;
-  const [tab, setTab] = useState<ContextTab>("source");
+  const [tab, setTab] = useState<ContextTab>("preview");
 
   return (
     <Group orientation="horizontal" id="asakiri.lesson-workspace" className={styles.group}>

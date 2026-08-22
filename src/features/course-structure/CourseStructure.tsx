@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState, type ReactNode } from "react";
+import { useMemo, useRef, useState, type ReactElement, type ReactNode } from "react";
 import {
   DndContext,
   DragOverlay,
@@ -55,22 +55,105 @@ function partIconName(part: Part): IconName {
   }
 }
 
+function RenameInput({
+  defaultValue,
+  ariaLabel,
+  onCommit,
+  onCancel,
+}: {
+  readonly defaultValue: string;
+  readonly ariaLabel: string;
+  readonly onCommit: (value: string) => void;
+  readonly onCancel: () => void;
+}) {
+  return (
+    <input
+      className={styles.renameInput}
+      defaultValue={defaultValue}
+      aria-label={ariaLabel}
+      autoComplete="off"
+      autoFocus
+      onFocus={(event) => {
+        event.currentTarget.select();
+      }}
+      onClick={(event) => {
+        event.stopPropagation();
+      }}
+      onDoubleClick={(event) => {
+        event.stopPropagation();
+      }}
+      onKeyDown={(event) => {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          onCommit(event.currentTarget.value);
+        } else if (event.key === "Escape") {
+          event.preventDefault();
+          onCancel();
+        }
+      }}
+      onBlur={(event) => {
+        onCommit(event.currentTarget.value);
+      }}
+    />
+  );
+}
+
+function RowMenu({
+  trigger,
+  onRename,
+  onDelete,
+}: {
+  readonly trigger: ReactElement;
+  readonly onRename: () => void;
+  readonly onDelete: () => void;
+}) {
+  const messages = useMessages();
+  return (
+    <ContextMenu.Root>
+      <ContextMenu.Trigger render={trigger} />
+      <ContextMenu.Portal>
+        <ContextMenu.Positioner className={styles.menuPositioner}>
+          <ContextMenu.Popup className={styles.menuPopup}>
+            <ContextMenu.Item className={styles.menuItem} onClick={onRename}>
+              {messages.common.rename}
+            </ContextMenu.Item>
+            <ContextMenu.Item
+              className={[styles.menuItem, styles.menuItemDanger].join(" ")}
+              onClick={onDelete}
+            >
+              {messages.common.delete}
+            </ContextMenu.Item>
+          </ContextMenu.Popup>
+        </ContextMenu.Positioner>
+      </ContextMenu.Portal>
+    </ContextMenu.Root>
+  );
+}
+
 function LessonRow({
   lesson,
   index,
   variant,
-  selected,
-  onOpen,
+  selectedPartId,
   onOpenSettings,
+  onOpenPart,
+  onRename,
+  onRequestDelete,
+  onRenamePart,
+  onRequestDeletePart,
   onReorderParts,
   onRequestAddPart,
 }: {
   readonly lesson: Lesson;
   readonly index: number;
   readonly variant: "page" | "sidebar";
-  readonly selected?: boolean | undefined;
-  readonly onOpen: () => void;
+  readonly selectedPartId?: string | undefined;
   readonly onOpenSettings: () => void;
+  readonly onOpenPart: (partId: string) => void;
+  readonly onRename: (title: string) => void;
+  readonly onRequestDelete: () => void;
+  readonly onRenamePart: (part: Part, title: string) => void;
+  readonly onRequestDeletePart: (part: Part) => void;
   readonly onReorderParts?:
     | ((lessonId: string, orderedPartIds: readonly string[]) => Promise<ProjectWriteResult>)
     | undefined;
@@ -87,6 +170,7 @@ function LessonRow({
     transition,
   };
   const [partsCollapsed, setPartsCollapsed] = useState(false);
+  const [editing, setEditing] = useState(false);
 
   if (variant === "sidebar") {
     const hasParts = lesson.parts.length > 0;
@@ -96,65 +180,94 @@ function LessonRow({
         style={style}
         className={[styles.lessonNode, isDragging ? styles.dragging : ""].filter(Boolean).join(" ")}
       >
-        <div
-          className={[styles.treeRow, styles.lessonRow, selected ? styles.active : ""]
-            .filter(Boolean)
-            .join(" ")}
-        >
-          {hasParts ? (
-            <button
-              type="button"
-              className={styles.disclosure}
-              aria-expanded={!partsCollapsed}
-              aria-label={
-                partsCollapsed
-                  ? format(t.expandUnit, { unit: lesson.title })
-                  : format(t.collapseUnit, { unit: lesson.title })
-              }
-              onClick={() => {
-                setPartsCollapsed((value) => !value);
-              }}
-            >
-              <Icon
-                aria-hidden="true"
-                className={chevronClass(partsCollapsed)}
-                name="chevron-down"
-                size={16}
-              />
-            </button>
-          ) : (
-            <span className={styles.disclosureSpacer} aria-hidden="true" />
-          )}
-          <Icon className={styles.typeIcon} name="lessons" size={16} aria-hidden="true" />
-          <button
-            type="button"
-            className={styles.treeMain}
-            aria-current={selected ? "page" : undefined}
-            onClick={onOpen}
-          >
-            <span className={styles.rowTitle}>{lesson.title}</span>
-          </button>
-          {onRequestAddPart ? (
-            <IconButton
-              className={styles.rowAction}
-              aria-label={messages.lesson.addPartTitle}
-              onClick={onRequestAddPart}
-            >
-              <Icon name="plus" size={16} />
-            </IconButton>
-          ) : null}
-          <button
-            type="button"
-            className={styles.dragHandle}
-            aria-label={format(messages.common.reorder, { label: lesson.title })}
-            {...attributes}
-            {...listeners}
-          >
-            <Icon name="grip" size={16} />
-          </button>
-        </div>
+        <RowMenu
+          onRename={() => {
+            setEditing(true);
+          }}
+          onDelete={onRequestDelete}
+          trigger={
+            <div className={[styles.treeRow, styles.lessonRow].join(" ")}>
+              {hasParts ? (
+                <button
+                  type="button"
+                  className={styles.disclosure}
+                  aria-expanded={!partsCollapsed}
+                  aria-label={
+                    partsCollapsed
+                      ? format(t.expandUnit, { unit: lesson.title })
+                      : format(t.collapseUnit, { unit: lesson.title })
+                  }
+                  onClick={() => {
+                    setPartsCollapsed((value) => !value);
+                  }}
+                >
+                  <Icon
+                    aria-hidden="true"
+                    className={chevronClass(partsCollapsed)}
+                    name="chevron-down"
+                    size={16}
+                  />
+                </button>
+              ) : (
+                <span className={styles.disclosureSpacer} aria-hidden="true" />
+              )}
+              <Icon className={styles.typeIcon} name="lessons" size={16} aria-hidden="true" />
+              {editing ? (
+                <RenameInput
+                  defaultValue={lesson.title}
+                  ariaLabel={t.lessonTitleLabel}
+                  onCommit={(value) => {
+                    setEditing(false);
+                    onRename(value);
+                  }}
+                  onCancel={() => {
+                    setEditing(false);
+                  }}
+                />
+              ) : (
+                <button
+                  type="button"
+                  className={styles.treeMain}
+                  onClick={() => {
+                    setPartsCollapsed((value) => !value);
+                  }}
+                  onDoubleClick={() => {
+                    setEditing(true);
+                  }}
+                >
+                  <span className={styles.rowTitle}>{lesson.title}</span>
+                </button>
+              )}
+              {onRequestAddPart ? (
+                <IconButton
+                  className={styles.rowAction}
+                  aria-label={messages.lesson.addPartTitle}
+                  onClick={onRequestAddPart}
+                >
+                  <Icon name="plus" size={16} />
+                </IconButton>
+              ) : null}
+              <button
+                type="button"
+                className={styles.dragHandle}
+                aria-label={format(messages.common.reorder, { label: lesson.title })}
+                {...attributes}
+                {...listeners}
+              >
+                <Icon name="grip" size={16} />
+              </button>
+            </div>
+          }
+        />
         {hasParts && !partsCollapsed ? (
-          <PartList lesson={lesson} onOpen={onOpen} onReorderParts={onReorderParts} />
+          <PartList
+            lesson={lesson}
+            selectedPartId={selectedPartId}
+            onOpenPart={onOpenPart}
+            onReorderParts={onReorderParts}
+            onRenamePart={onRenamePart}
+            onRequestDeletePart={onRequestDeletePart}
+          />
         ) : null}
       </div>
     );
@@ -176,7 +289,7 @@ function LessonRow({
         <Icon name="grip" size={18} />
       </button>
       <span className={styles.orderIndex}>{orderLabel(index)}</span>
-      <button type="button" className={styles.orderedMain} onClick={onOpen}>
+      <button type="button" className={styles.orderedMain}>
         <span className={styles.rowTitle}>{lesson.title}</span>
         <span className={styles.rowDetail}>{format(t.parts, { count: lesson.parts.length })}</span>
       </button>
@@ -197,7 +310,21 @@ function useReorderSensors() {
   );
 }
 
-function SortablePartRow({ part, onOpen }: { readonly part: Part; readonly onOpen: () => void }) {
+function SortablePartRow({
+  part,
+  selected,
+  reorderable,
+  onOpen,
+  onRename,
+  onRequestDelete,
+}: {
+  readonly part: Part;
+  readonly selected: boolean;
+  readonly reorderable: boolean;
+  readonly onOpen: () => void;
+  readonly onRename: (title: string) => void;
+  readonly onRequestDelete: () => void;
+}) {
   const messages = useMessages();
   const format = useFormat();
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
@@ -207,49 +334,25 @@ function SortablePartRow({ part, onOpen }: { readonly part: Part; readonly onOpe
     transform: CSS.Transform.toString(transform),
     transition,
   };
+  const [editing, setEditing] = useState(false);
+
   return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      className={[styles.treeRow, isDragging ? styles.dragging : ""].filter(Boolean).join(" ")}
-    >
-      <span className={styles.disclosureSpacer} aria-hidden="true" />
-      <Icon className={styles.typeIcon} name={partIconName(part)} size={16} aria-hidden="true" />
-      <button type="button" className={styles.treeMain} onClick={onOpen}>
-        <span className={styles.rowTitle}>{part.title}</span>
-      </button>
-      <button
-        type="button"
-        className={styles.dragHandle}
-        aria-label={format(messages.common.reorder, { label: part.title })}
-        {...attributes}
-        {...listeners}
-      >
-        <Icon name="grip" size={16} />
-      </button>
-    </div>
-  );
-}
-
-function PartList({
-  lesson,
-  onOpen,
-  onReorderParts,
-}: {
-  readonly lesson: Lesson;
-  readonly onOpen: () => void;
-  readonly onReorderParts?:
-    | ((lessonId: string, orderedPartIds: readonly string[]) => Promise<ProjectWriteResult>)
-    | undefined;
-}) {
-  const sensors = useReorderSensors();
-  const ids = lesson.parts.map((part) => part.id);
-
-  if (!onReorderParts) {
-    return (
-      <div className={styles.partList}>
-        {lesson.parts.map((part) => (
-          <button key={part.id} type="button" className={styles.treeRow} onClick={onOpen}>
+    <div ref={setNodeRef} style={style}>
+      <RowMenu
+        onRename={() => {
+          setEditing(true);
+        }}
+        onDelete={onRequestDelete}
+        trigger={
+          <div
+            className={[
+              styles.treeRow,
+              selected ? styles.active : "",
+              isDragging ? styles.dragging : "",
+            ]
+              .filter(Boolean)
+              .join(" ")}
+          >
             <span className={styles.disclosureSpacer} aria-hidden="true" />
             <Icon
               className={styles.typeIcon}
@@ -257,14 +360,72 @@ function PartList({
               size={16}
               aria-hidden="true"
             />
-            <span className={styles.rowTitle}>{part.title}</span>
-          </button>
-        ))}
-      </div>
-    );
-  }
+            {editing ? (
+              <RenameInput
+                defaultValue={part.title}
+                ariaLabel={messages.lesson.partTitleLabel}
+                onCommit={(value) => {
+                  setEditing(false);
+                  onRename(value);
+                }}
+                onCancel={() => {
+                  setEditing(false);
+                }}
+              />
+            ) : (
+              <button
+                type="button"
+                className={styles.treeMain}
+                aria-current={selected ? "page" : undefined}
+                onClick={onOpen}
+                onDoubleClick={() => {
+                  setEditing(true);
+                }}
+              >
+                <span className={styles.rowTitle}>{part.title}</span>
+              </button>
+            )}
+            {reorderable ? (
+              <button
+                type="button"
+                className={styles.dragHandle}
+                aria-label={format(messages.common.reorder, { label: part.title })}
+                {...attributes}
+                {...listeners}
+              >
+                <Icon name="grip" size={16} />
+              </button>
+            ) : null}
+          </div>
+        }
+      />
+    </div>
+  );
+}
+
+function PartList({
+  lesson,
+  selectedPartId,
+  onOpenPart,
+  onReorderParts,
+  onRenamePart,
+  onRequestDeletePart,
+}: {
+  readonly lesson: Lesson;
+  readonly selectedPartId?: string | undefined;
+  readonly onOpenPart: (partId: string) => void;
+  readonly onReorderParts?:
+    | ((lessonId: string, orderedPartIds: readonly string[]) => Promise<ProjectWriteResult>)
+    | undefined;
+  readonly onRenamePart: (part: Part, title: string) => void;
+  readonly onRequestDeletePart: (part: Part) => void;
+}) {
+  const sensors = useReorderSensors();
+  const ids = lesson.parts.map((part) => part.id);
+  const reorderable = onReorderParts !== undefined;
 
   const handleDragEnd = (event: DragEndEvent) => {
+    if (!onReorderParts) return;
     const { active, over } = event;
     if (!over || active.id === over.id) return;
     const from = ids.indexOf(String(active.id));
@@ -278,7 +439,21 @@ function PartList({
       <SortableContext items={ids} strategy={verticalListSortingStrategy}>
         <div className={styles.partList}>
           {lesson.parts.map((part) => (
-            <SortablePartRow key={part.id} part={part} onOpen={onOpen} />
+            <SortablePartRow
+              key={part.id}
+              part={part}
+              selected={part.id === selectedPartId}
+              reorderable={reorderable}
+              onOpen={() => {
+                onOpenPart(part.id);
+              }}
+              onRename={(title) => {
+                onRenamePart(part, title);
+              }}
+              onRequestDelete={() => {
+                onRequestDeletePart(part);
+              }}
+            />
           ))}
         </div>
       </SortableContext>
@@ -293,14 +468,18 @@ function UnitBlock({
   collapsed,
   addingLesson,
   variant,
-  selectedLessonId,
+  selectedPartId,
   onToggleCollapsed,
   onAddLesson,
   onOpenSettings,
   onRename,
   onRequestDelete,
-  onOpenLesson,
+  onOpenPart,
   onOpenLessonSettings,
+  onRenameLesson,
+  onRequestDeleteLesson,
+  onRenamePart,
+  onRequestDeletePart,
   onReorderParts,
   onRequestAddPart,
 }: {
@@ -310,14 +489,18 @@ function UnitBlock({
   readonly collapsed: boolean;
   readonly addingLesson: boolean;
   readonly variant: "page" | "sidebar";
-  readonly selectedLessonId?: string | undefined;
+  readonly selectedPartId?: string | undefined;
   readonly onToggleCollapsed: () => void;
   readonly onAddLesson: () => void;
   readonly onOpenSettings: () => void;
   readonly onRename: (title: string) => void;
   readonly onRequestDelete: () => void;
-  readonly onOpenLesson: (lessonId: string) => void;
+  readonly onOpenPart: (lessonId: string, partId: string) => void;
   readonly onOpenLessonSettings: (lessonId: string) => void;
+  readonly onRenameLesson: (lesson: Lesson, title: string) => void;
+  readonly onRequestDeleteLesson: (lesson: Lesson) => void;
+  readonly onRenamePart: (lesson: Lesson, part: Part, title: string) => void;
+  readonly onRequestDeletePart: (lesson: Lesson, part: Part) => void;
   readonly onReorderParts?:
     | ((lessonId: string, orderedPartIds: readonly string[]) => Promise<ProjectWriteResult>)
     | undefined;
@@ -524,12 +707,24 @@ function UnitBlock({
                 lesson={lesson}
                 index={lessonIndex}
                 variant={variant}
-                selected={lesson.id === selectedLessonId}
-                onOpen={() => {
-                  onOpenLesson(lesson.id);
-                }}
+                selectedPartId={selectedPartId}
                 onOpenSettings={() => {
                   onOpenLessonSettings(lesson.id);
+                }}
+                onOpenPart={(partId) => {
+                  onOpenPart(lesson.id, partId);
+                }}
+                onRename={(title) => {
+                  onRenameLesson(lesson, title);
+                }}
+                onRequestDelete={() => {
+                  onRequestDeleteLesson(lesson);
+                }}
+                onRenamePart={(part, title) => {
+                  onRenamePart(lesson, part, title);
+                }}
+                onRequestDeletePart={(part) => {
+                  onRequestDeletePart(lesson, part);
                 }}
                 onReorderParts={onReorderParts}
                 onRequestAddPart={
@@ -588,12 +783,16 @@ export interface CourseStructureProps {
   readonly onReorderOutline: (
     sections: readonly { readonly id: string; readonly lessonIds: readonly string[] }[],
   ) => Promise<ProjectWriteResult>;
-  readonly onOpenLesson: (lessonId: string) => void;
+  readonly onOpenPart?: ((lessonId: string, partId: string) => void) | undefined;
   readonly selectedId?: string | undefined;
   readonly onReorderParts?:
     | ((lessonId: string, orderedPartIds: readonly string[]) => Promise<ProjectWriteResult>)
     | undefined;
   readonly onAddPart?: ((lessonId: string, kind: PartKind) => void) | undefined;
+  readonly onRenamePart?:
+    ((lessonId: string, partId: string, title: string) => Promise<ProjectWriteResult>) | undefined;
+  readonly onDeletePart?:
+    ((lessonId: string, partId: string) => Promise<ProjectWriteResult>) | undefined;
   readonly variant?: "page" | "sidebar";
 }
 
@@ -626,10 +825,12 @@ export function CourseStructure({
   onRenameLesson,
   onDeleteLesson,
   onReorderOutline,
-  onOpenLesson,
+  onOpenPart,
   selectedId,
   onReorderParts,
   onAddPart,
+  onRenamePart,
+  onDeletePart,
   variant = "page",
 }: CourseStructureProps) {
   const messages = useMessages();
@@ -744,6 +945,26 @@ export function CourseStructure({
     setSettingsLessonId(null);
     setFailed(false);
     report(await onDeleteLesson(lesson.id));
+  };
+
+  const renamePart = (lesson: Lesson, part: Part, title: string) => {
+    const next = title.trim();
+    if (next === "" || next === part.title || !onRenamePart) return;
+    setFailed(false);
+    void onRenamePart(lesson.id, part.id, next).then(report);
+  };
+
+  const removePart = async (lesson: Lesson, part: Part) => {
+    if (!onDeletePart) return;
+    const ok = await confirm({
+      title: messages.lesson.confirmDeletePartTitle,
+      description: format(messages.lesson.confirmDeletePartBody, { title: part.title }),
+      confirmLabel: messages.lesson.deletePart,
+      tone: "danger",
+    });
+    if (!ok) return;
+    setFailed(false);
+    report(await onDeletePart(lesson.id, part.id));
   };
 
   const sensors = useReorderSensors();
@@ -982,7 +1203,7 @@ export function CourseStructure({
                     collapsed={collapsedUnitIds.has(unit.id)}
                     addingLesson={addingUnitId === unit.id}
                     variant={variant}
-                    selectedLessonId={selectedId}
+                    selectedPartId={selectedId}
                     onToggleCollapsed={() => {
                       toggleUnitCollapsed(unit.id);
                     }}
@@ -1000,10 +1221,20 @@ export function CourseStructure({
                     onRequestDelete={() => {
                       void removeUnit(unit);
                     }}
-                    onOpenLesson={onOpenLesson}
+                    onOpenPart={(lessonId, partId) => {
+                      onOpenPart?.(lessonId, partId);
+                    }}
                     onOpenLessonSettings={(lessonId) => {
                       setFailed(false);
                       setSettingsLessonId(lessonId);
+                    }}
+                    onRenameLesson={renameLesson}
+                    onRequestDeleteLesson={(lesson) => {
+                      void removeLesson(lesson);
+                    }}
+                    onRenamePart={renamePart}
+                    onRequestDeletePart={(lesson, part) => {
+                      void removePart(lesson, part);
                     }}
                     onReorderParts={onReorderParts}
                     onRequestAddPart={

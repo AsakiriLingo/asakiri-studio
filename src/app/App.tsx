@@ -16,7 +16,7 @@ import { CourseContent } from "@features/content";
 import { CourseMedia } from "@features/media";
 import { CourseAttribution } from "@features/attribution";
 import { CourseDetails } from "@features/course-details";
-import { LessonEditor } from "@features/lesson-editor";
+import { PartEditor, PartPreview } from "@features/lesson-editor";
 import { createAppServices } from "@app/services";
 import { useCourseState } from "@app/useCourseState";
 import { useProjectActions } from "@app/useProjectActions";
@@ -65,7 +65,7 @@ export function App() {
   const [locale, setLocale] = useState<Locale>(initialLocale);
   const [view, setView] = useState<View>("start");
   const [section, setSection] = useState<WorkspaceSection>("lessons");
-  const [openLessonId, setOpenLessonId] = useState<string | null>(null);
+  const [openPartId, setOpenPartId] = useState<string | null>(null);
   const [spreadsheet, setSpreadsheet] = useState<{
     readonly fileName: string;
     readonly tables: readonly DocumentTable[];
@@ -84,7 +84,12 @@ export function App() {
   const { project, courseState } = store;
 
   const closeLessonAfterDelete = (lessonId: string) => {
-    setOpenLessonId((current) => (current === lessonId ? null : current));
+    const ready = store.courseState?.status === "ready" ? store.courseState.course : null;
+    const lesson = ready?.lessons.find((entry) => entry.id === lessonId);
+    if (!lesson) return;
+    setOpenPartId((current) =>
+      current && lesson.parts.some((part) => part.id === current) ? null : current,
+    );
   };
 
   const { saveProject, saveAttribution } = useProjectActions(services, store);
@@ -92,6 +97,16 @@ export function App() {
   const contentActions = useContentActions(services, store);
   const partActions = usePartActions(services, store, locale);
   const mediaActions = useMediaActions(services, store);
+
+  const openPartView = (_lessonId: string, partId: string) => {
+    setOpenPartId(partId);
+  };
+
+  const deletePart = async (lessonId: string, partId: string) => {
+    const result = await partActions.deletePart(lessonId, partId);
+    setOpenPartId((current) => (current === partId ? null : current));
+    return result;
+  };
 
   const messages = getMessages(locale);
   const isDark = themePreference === "dark" || (themePreference === "system" && systemDark);
@@ -201,7 +216,7 @@ export function App() {
   const enterWorkspace = (directory: ProjectDirectory) => {
     store.openProject(directory);
     setSection("details");
-    setOpenLessonId(null);
+    setOpenPartId(null);
     setView("workspace");
     setRecentProjects(services.directory.listRecentProjects());
   };
@@ -224,13 +239,13 @@ export function App() {
 
   const goToStart = () => {
     store.closeProject();
-    setOpenLessonId(null);
+    setOpenPartId(null);
     setView("start");
   };
 
   const navigate = (target: WorkspaceSection) => {
     setSection(target);
-    setOpenLessonId(null);
+    setOpenPartId(null);
   };
 
   const revealFolder = useCallback(() => {
@@ -303,10 +318,14 @@ export function App() {
     const course = courseState?.status === "ready" ? courseState.course : null;
     const projectName = course?.project.title ?? project?.name ?? messages.workspace.fallbackName;
     const projectLocation = project?.locationLabel ?? "";
-    const openLesson =
-      course && openLessonId
-        ? (course.lessons.find((lesson) => lesson.id === openLessonId) ?? null)
+    const openPartLesson =
+      course && openPartId
+        ? (course.lessons.find((lesson) => lesson.parts.some((part) => part.id === openPartId)) ??
+          null)
         : null;
+    const openPart = openPartLesson
+      ? (openPartLesson.parts.find((part) => part.id === openPartId) ?? null)
+      : null;
 
     return (
       <WorkspaceShell
@@ -383,7 +402,7 @@ export function App() {
                 <CourseStructure
                   variant="sidebar"
                   course={course}
-                  selectedId={openLessonId ?? undefined}
+                  selectedId={openPartId ?? undefined}
                   onNewUnit={outlineActions.addUnit}
                   onRenameUnit={outlineActions.renameUnit}
                   onDeleteUnit={outlineActions.deleteUnit}
@@ -391,43 +410,43 @@ export function App() {
                   onRenameLesson={outlineActions.renameLesson}
                   onDeleteLesson={outlineActions.deleteLesson}
                   onReorderOutline={outlineActions.reorderOutline}
-                  onOpenLesson={(lessonId) => {
-                    setOpenLessonId(lessonId);
-                  }}
+                  onOpenPart={openPartView}
                   onReorderParts={partActions.reorderParts}
                   onAddPart={(lessonId, kind) => {
-                    void partActions.addPart(lessonId, kind);
+                    void partActions.addPart(lessonId, kind).then((partId) => {
+                      if (partId) setOpenPartId(partId);
+                    });
                   }}
+                  onRenamePart={partActions.renamePart}
+                  onDeletePart={deletePart}
                 />
               }
               editorSlot={
-                openLesson ? (
-                  <LessonEditor
+                openPart && openPartLesson ? (
+                  <PartEditor
+                    part={openPart}
                     course={course}
-                    lesson={openLesson}
-                    onBackToStructure={() => {
-                      setOpenLessonId(null);
-                    }}
                     onSaveDocument={(partId, document) =>
-                      partActions.savePartDocument(openLesson.id, partId, document)
+                      partActions.savePartDocument(openPartLesson.id, partId, document)
                     }
                     onSaveExercise={(partId, exercise) =>
-                      partActions.savePartExercise(openLesson.id, partId, exercise)
+                      partActions.savePartExercise(openPartLesson.id, partId, exercise)
                     }
                     onSaveContentTitle={(partId, title) =>
-                      partActions.savePartContentTitle(openLesson.id, partId, title)
-                    }
-                    onRenamePart={(partId, title) =>
-                      partActions.renamePart(openLesson.id, partId, title)
-                    }
-                    onDeletePart={(partId) => partActions.deletePart(openLesson.id, partId)}
-                    onAddPart={(kind) => partActions.addPart(openLesson.id, kind)}
-                    onReorderParts={(orderedIds) =>
-                      partActions.reorderParts(openLesson.id, orderedIds)
+                      partActions.savePartContentTitle(openPartLesson.id, partId, title)
                     }
                     onSaveRecord={contentActions.saveRecord}
                     onLoadAssetPreview={mediaActions.loadAssetPreview}
                     onImportMedia={mediaActions.importAssetForField}
+                  />
+                ) : undefined
+              }
+              previewSlot={
+                openPart ? (
+                  <PartPreview
+                    part={openPart}
+                    course={course}
+                    onLoadAssetPreview={mediaActions.loadAssetPreview}
                   />
                 ) : undefined
               }

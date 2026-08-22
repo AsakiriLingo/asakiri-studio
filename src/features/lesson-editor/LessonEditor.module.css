@@ -104,9 +104,9 @@
 .partHeading {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: var(--space-4);
-  min-height: 3rem;
+  min-height: 2rem;
   margin-bottom: var(--space-2);
 }
 

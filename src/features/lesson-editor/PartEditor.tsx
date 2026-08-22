@@ -291,7 +291,6 @@ export function PartEditor({
   onImportMedia,
 }: PartEditorProps) {
   const messages = useMessages();
-  const format = useFormat();
   const t = messages.lesson;
   const kind = partKind(part.content);
   const tabLabels =
@@ -369,10 +368,6 @@ export function PartEditor({
   return (
     <section className={styles.editorArea} aria-label={t.editorAria}>
       <div className={styles.partHeading}>
-        <span>
-          <span className={styles.partName}>{part.title}</span>
-          <span className={styles.rowDetail}>{format(t.partHeading, { kind: t.kind[kind] })}</span>
-        </span>
         <Status tone={saveState === "failed" ? "warning" : "default"}>{statusLabel}</Status>
       </div>
       {REAL_EXERCISE_EDITORS.has(kind) ? null : <Tabs labels={tabLabels} />}
