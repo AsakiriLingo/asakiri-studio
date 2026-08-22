@@ -1,19 +1,19 @@
 .frame {
-  overflow: clip;
-  border: var(--border-hairline) solid var(--color-border);
-  border-radius: var(--radius-lg);
-  background: var(--color-surface);
+  background: transparent;
 }
 
 .toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 2;
   display: flex;
   align-items: center;
   gap: var(--space-1);
   min-height: 3rem;
-  padding: var(--space-2);
+  padding: var(--space-2) clamp(var(--space-4), 4vw, var(--space-8));
   overflow-x: auto;
-  border-bottom: 0;
-  background: var(--color-control);
+  border-bottom: var(--border-hairline) solid var(--color-border);
+  background: var(--color-surface);
 }
 
 .urlOverlay {
@@ -174,9 +174,8 @@
 
 .prose {
   min-height: 34rem;
-  max-width: 46rem;
-  margin-inline: auto;
-  padding: clamp(var(--space-4), 3vw, var(--space-8));
+  margin-inline: 0;
+  padding: var(--space-6) clamp(var(--space-4), 4vw, var(--space-8));
   outline: 0;
 }
 

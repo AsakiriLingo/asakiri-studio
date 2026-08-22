@@ -3,6 +3,7 @@ import type { AvailableUpdate } from "@core/app-update";
 import { createProjectSession, type ProjectDirectory, type RecentProject } from "@core/projects";
 import { I18nProvider, LOCALES, getMessages, useMessages, type Locale } from "@shared/i18n";
 import { ConfirmProvider } from "@shared/components/confirm-dialog";
+import type { StatusTone } from "@shared/components/status";
 import { StartScreen } from "@features/start";
 import { SettingsDialog, type ThemePreference } from "@features/settings";
 import { NewCourseDialog } from "@features/new-course";
@@ -16,7 +17,7 @@ import { CourseContent } from "@features/content";
 import { CourseMedia } from "@features/media";
 import { CourseAttribution } from "@features/attribution";
 import { CourseDetails } from "@features/course-details";
-import { PartEditor, PartPreview } from "@features/lesson-editor";
+import { PartEditor, PartPreview, type SaveState } from "@features/lesson-editor";
 import { createAppServices } from "@app/services";
 import { useCourseState } from "@app/useCourseState";
 import { useProjectActions } from "@app/useProjectActions";
@@ -66,6 +67,13 @@ export function App() {
   const [view, setView] = useState<View>("start");
   const [section, setSection] = useState<WorkspaceSection>("lessons");
   const [openPartId, setOpenPartId] = useState<string | null>(null);
+  const [partSaveState, setPartSaveState] = useState<SaveState>("idle");
+  const [savedPartId, setSavedPartId] = useState<string | null>(null);
+
+  if (openPartId !== savedPartId) {
+    setSavedPartId(openPartId);
+    setPartSaveState("idle");
+  }
   const [spreadsheet, setSpreadsheet] = useState<{
     readonly fileName: string;
     readonly tables: readonly DocumentTable[];
@@ -326,6 +334,18 @@ export function App() {
     const openPart = openPartLesson
       ? (openPartLesson.parts.find((part) => part.id === openPartId) ?? null)
       : null;
+    const saveStatus =
+      section === "lessons" && openPart && partSaveState !== "idle"
+        ? {
+            label:
+              partSaveState === "saving"
+                ? messages.common.saving
+                : partSaveState === "failed"
+                  ? messages.common.saveFailed
+                  : messages.common.saved,
+            tone: (partSaveState === "failed" ? "warning" : "default") as StatusTone,
+          }
+        : undefined;
 
     return (
       <WorkspaceShell
@@ -337,6 +357,7 @@ export function App() {
         onOpenSettings={() => {
           setSettingsOpen(true);
         }}
+        saveStatus={saveStatus}
         flush={course !== null && (section === "lessons" || section === "details")}
       >
         {courseState?.status === "loading" ? (
@@ -432,12 +453,10 @@ export function App() {
                     onSaveExercise={(partId, exercise) =>
                       partActions.savePartExercise(openPartLesson.id, partId, exercise)
                     }
-                    onSaveContentTitle={(partId, title) =>
-                      partActions.savePartContentTitle(openPartLesson.id, partId, title)
-                    }
                     onSaveRecord={contentActions.saveRecord}
                     onLoadAssetPreview={mediaActions.loadAssetPreview}
                     onImportMedia={mediaActions.importAssetForField}
+                    onSaveStateChange={setPartSaveState}
                   />
                 ) : undefined
               }

@@ -48,7 +48,6 @@
   flex: 1;
   min-height: 0;
   overflow: auto;
-  padding: var(--space-6) clamp(var(--space-4), 4vw, var(--space-8));
 }
 
 .empty {
@@ -124,27 +123,23 @@
 
 .handle {
   position: relative;
+  z-index: 1;
   flex: none;
-  width: var(--space-3);
+  width: 1px;
   align-self: stretch;
-  background: transparent;
+  background: var(--color-border);
+  transition: background-color var(--duration-fast) var(--ease-out);
 }
 
-.handle::after {
+.handle::before {
   content: "";
   position: absolute;
   inset-block: 0;
-  left: 0;
-  width: 1px;
-  background: var(--color-border);
-  transition:
-    background-color var(--duration-fast) var(--ease-out),
-    width var(--duration-fast) var(--ease-out);
+  inset-inline: -5px;
 }
 
-.handle:hover::after,
-.handle:active::after {
-  width: 2px;
+.handle:hover,
+.handle:active {
   background: var(--color-accent);
 }
 
@@ -168,7 +163,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .tab,
-  .handle::after {
+  .handle {
     transition: none;
   }
 }

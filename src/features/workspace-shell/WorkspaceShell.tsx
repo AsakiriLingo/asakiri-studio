@@ -3,6 +3,7 @@ import { useMessages } from "@shared/i18n";
 import { Icon, type IconName } from "@shared/components/icon";
 import { IconButton } from "@shared/components/icon-button";
 import { ScrollArea } from "@shared/components/scroll-area";
+import { Status, type StatusTone } from "@shared/components/status";
 import { Tooltip, TooltipProvider } from "@shared/components/tooltip";
 import styles from "@features/workspace-shell/WorkspaceShell.module.css";
 
@@ -21,6 +22,7 @@ export interface WorkspaceShellProps {
   readonly onNavigate: (section: WorkspaceSection) => void;
   readonly onBack: () => void;
   readonly onOpenSettings: () => void;
+  readonly saveStatus?: { readonly label: string; readonly tone: StatusTone } | undefined;
   readonly flush?: boolean;
   readonly children: ReactNode;
 }
@@ -32,6 +34,7 @@ export function WorkspaceShell({
   onNavigate,
   onBack,
   onOpenSettings,
+  saveStatus,
   flush = false,
   children,
 }: WorkspaceShellProps) {
@@ -76,6 +79,7 @@ export function WorkspaceShell({
           </nav>
         </TooltipProvider>
         <div className={styles.utilities}>
+          {saveStatus ? <Status tone={saveStatus.tone}>{saveStatus.label}</Status> : null}
           <IconButton size="sm" aria-label={messages.common.backToStart} onClick={onBack}>
             <Icon name="back" size={18} />
           </IconButton>

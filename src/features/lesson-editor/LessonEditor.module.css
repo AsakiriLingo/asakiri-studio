@@ -101,6 +101,10 @@
   min-width: 0;
 }
 
+.exercisePane {
+  padding: var(--space-6) clamp(var(--space-4), 4vw, var(--space-8));
+}
+
 .partHeading {
   display: flex;
   align-items: center;

@@ -157,7 +157,6 @@ interface PartProps {
     document: TiptapDocument,
   ) => Promise<ProjectWriteResult>;
   readonly onSaveExercise: (partId: string, exercise: Exercise) => Promise<ProjectWriteResult>;
-  readonly onSaveContentTitle: (partId: string, title: string) => Promise<ProjectWriteResult>;
 }
 
 interface PartPreviewProps {
@@ -712,11 +711,9 @@ describe("App", () => {
     await act(async () => {
       await part.onSaveDocument("part1", DOCUMENT);
       await part.onSaveExercise("part2", createDefaultExercise("multiple-choice"));
-      await part.onSaveContentTitle("part1", "Intro");
     });
     expect(writer.updatePartDocument).toHaveBeenCalledTimes(1);
     expect(writer.updatePartExercise).toHaveBeenCalledTimes(1);
-    expect(writer.updatePartContentTitle).toHaveBeenCalledTimes(1);
 
     await act(async () => {
       await must(captured.structure, "CourseStructure").onRenamePart("l1", "part1", "Renamed Part");
