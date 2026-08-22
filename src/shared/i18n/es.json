@@ -608,6 +608,9 @@
     "unitDetailsAria": "Detalles de {unit}"
   },
   "drafts": {
+    "create": "Crear borrador",
+    "newTitle": "Borrador sin título",
+    "add": "Añadir borrador",
     "upload": "Subir documento",
     "uploading": "Convirtiendo…",
     "empty": "Aún no hay borradores",

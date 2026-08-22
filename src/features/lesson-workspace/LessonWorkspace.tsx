@@ -24,6 +24,7 @@ export interface LessonWorkspaceProps {
   readonly outlineSlot?: ReactNode;
   readonly editorSlot?: ReactNode;
   readonly draftsSlot?: ReactNode;
+  readonly draftsActions?: ReactNode;
   readonly previewSlot?: ReactNode;
   readonly outlineCollapsed?: boolean;
   readonly onOutlineCollapsedChange?: (collapsed: boolean) => void;
@@ -38,6 +39,7 @@ export function LessonWorkspace({
   outlineSlot,
   editorSlot,
   draftsSlot,
+  draftsActions,
   previewSlot,
   outlineCollapsed = false,
   onOutlineCollapsedChange,
@@ -156,7 +158,7 @@ export function LessonWorkspace({
           collapsible
           collapsedSize={0}
           minSize="16rem"
-          maxSize="32rem"
+          maxSize="50%"
           defaultSize="22rem"
           panelRef={contextRef}
           onResize={(size) => {
@@ -189,6 +191,9 @@ export function LessonWorkspace({
               <Icon name="file-text" size={16} />
               {t.drafts}
             </button>
+            {tab === "drafts" && draftsActions ? (
+              <span className={styles.tabActions}>{draftsActions}</span>
+            ) : null}
           </div>
           <ScrollArea
             className={styles.scrollHost}

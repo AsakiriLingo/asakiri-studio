@@ -608,6 +608,9 @@
     "unitDetailsAria": "Dettagli di {unit}"
   },
   "drafts": {
+    "create": "Crea bozza",
+    "newTitle": "Bozza senza titolo",
+    "add": "Aggiungi bozza",
     "upload": "Carica documento",
     "uploading": "Conversione…",
     "empty": "Ancora nessuna bozza",

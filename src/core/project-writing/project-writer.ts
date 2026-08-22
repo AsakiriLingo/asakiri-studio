@@ -171,5 +171,6 @@ export interface ProjectWriter {
     document: TiptapDocument,
     updatedAt: string,
   ): Promise<ProjectWriteResult>;
+  renameDraft(session: ProjectSession, draftId: string, title: string): Promise<ProjectWriteResult>;
   deleteDraft(session: ProjectSession, draftId: string): Promise<ProjectWriteResult>;
 }

@@ -394,6 +394,7 @@ function makeWriter() {
     renameAsset: vi.fn().mockResolvedValue(SAVED),
     importDraft: vi.fn().mockResolvedValue(SAVED),
     updateDraft: vi.fn().mockResolvedValue(SAVED),
+    renameDraft: vi.fn().mockResolvedValue(SAVED),
     deleteDraft: vi.fn().mockResolvedValue(SAVED),
   };
 }

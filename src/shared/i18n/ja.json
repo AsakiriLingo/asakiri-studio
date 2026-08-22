@@ -608,6 +608,9 @@
     "unitDetailsAria": "{unit} の詳細"
   },
   "drafts": {
+    "create": "下書きを作成",
+    "newTitle": "無題の下書き",
+    "add": "下書きを追加",
     "upload": "ドキュメントを読み込む",
     "uploading": "変換中…",
     "empty": "下書きはまだありません",

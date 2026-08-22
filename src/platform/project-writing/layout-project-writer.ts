@@ -920,6 +920,23 @@ export function createLayoutProjectWriter(resolveRaw: ResolveProjectFileAccess):
       }
     },
 
+    async renameDraft(session, draftId, title): Promise<ProjectWriteResult> {
+      const files = resolveRaw(session);
+      if (!files) {
+        return { status: "failed", code: "unavailable" };
+      }
+
+      try {
+        const drafts = (await readDraftEntries(files)).map((entry) =>
+          isRecord(entry) && entry.id === draftId ? { ...entry, title } : entry,
+        );
+        await files.writeTextFile(DRAFTS_MANIFEST_PATH, `${JSON.stringify({ drafts }, null, 2)}\n`);
+        return { status: "saved" };
+      } catch {
+        return { status: "failed", code: "unknown" };
+      }
+    },
+
     async deleteDraft(session, draftId): Promise<ProjectWriteResult> {
       const files = resolveRaw(session);
       if (!files) {

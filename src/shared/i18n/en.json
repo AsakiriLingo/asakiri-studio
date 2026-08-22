@@ -608,6 +608,9 @@
     "unitDetailsAria": "Details for {unit}"
   },
   "drafts": {
+    "create": "Create draft",
+    "newTitle": "Untitled draft",
+    "add": "Add draft",
     "upload": "Upload doc",
     "uploading": "Converting…",
     "empty": "No drafts yet",

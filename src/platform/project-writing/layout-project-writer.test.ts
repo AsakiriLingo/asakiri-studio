@@ -1353,6 +1353,21 @@ describe("layout project writer drafts", () => {
     expect(manifest.drafts[0]?.updatedAt).toBe("t2");
   });
 
+  it("rewrites only the manifest title on rename, leaving the body untouched", async () => {
+    const files = new Map([["project.json", MANIFEST]]);
+    const writer = createLayoutProjectWriter(() => fileAccess(files));
+    await writer.importDraft(SESSION, { id: "d1", title: "One", updatedAt: "t1" }, DRAFT_DOC);
+
+    const result = await writer.renameDraft(SESSION, "d1", "Renamed");
+
+    expect(result).toEqual({ status: "saved" });
+    const manifest = JSON.parse(files.get(".asakiri/drafts/drafts.json") ?? "") as {
+      drafts: { title: string }[];
+    };
+    expect(manifest.drafts[0]?.title).toBe("Renamed");
+    expect(JSON.parse(files.get(".asakiri/drafts/d1/document.json") ?? "")).toEqual(DRAFT_DOC);
+  });
+
   it("removes the manifest entry and the draft directory on delete", async () => {
     const files = new Map([["project.json", MANIFEST]]);
     const writer = createLayoutProjectWriter(() => fileAccess(files));

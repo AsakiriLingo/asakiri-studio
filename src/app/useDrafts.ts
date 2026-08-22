@@ -17,10 +17,12 @@ export interface DraftUploadProgress {
 
 export interface DraftActions {
   readonly drafts: readonly Draft[];
+  readonly createDraft: (title: string) => Promise<string | null>;
   readonly uploadDraft: (
     onProgress?: (progress: DraftUploadProgress) => void,
   ) => Promise<string | null>;
   readonly updateDraft: (id: string, document: TiptapDocument) => Promise<boolean>;
+  readonly renameDraft: (id: string, title: string) => Promise<boolean>;
   readonly deleteDraft: (id: string) => Promise<boolean>;
 }
 
@@ -46,6 +48,19 @@ export function useDrafts(services: AppServices, store: CourseStateStore): Draft
       cancelled = true;
     };
   }, [project, services]);
+
+  const createDraft = (title: string): Promise<string | null> =>
+    store.withProject<string | null>(null, async (session) => {
+      const id = `draft_${crypto.randomUUID()}`;
+      const document: TiptapDocument = { type: "doc", content: [] };
+      const updatedAt = new Date().toISOString();
+      const result = await services.writer.importDraft(session, { id, title, updatedAt }, document);
+      if (result.status !== "saved") {
+        throw new Error(`Could not create the draft (${result.code}).`);
+      }
+      setDrafts((current) => [...current, { id, title, updatedAt, document }]);
+      return id;
+    });
 
   const uploadDraft = (
     onProgress?: (progress: DraftUploadProgress) => void,
@@ -84,6 +99,16 @@ export function useDrafts(services: AppServices, store: CourseStateStore): Draft
       return true;
     });
 
+  const renameDraft = (id: string, title: string): Promise<boolean> =>
+    store.withProject(false, async (session) => {
+      const result = await services.writer.renameDraft(session, id, title);
+      if (result.status !== "saved") return false;
+      setDrafts((current) =>
+        current.map((draft) => (draft.id === id ? { ...draft, title } : draft)),
+      );
+      return true;
+    });
+
   const deleteDraft = (id: string): Promise<boolean> =>
     store.withProject(false, async (session) => {
       const result = await services.writer.deleteDraft(session, id);
@@ -92,5 +117,5 @@ export function useDrafts(services: AppServices, store: CourseStateStore): Draft
       return true;
     });
 
-  return { drafts, uploadDraft, updateDraft, deleteDraft };
+  return { drafts, createDraft, uploadDraft, updateDraft, renameDraft, deleteDraft };
 }

@@ -4,9 +4,7 @@ import { ContextMenu } from "@base-ui/react/context-menu";
 import type { TiptapDocument, TiptapNode } from "@core/course";
 import type { Draft } from "@core/drafts";
 import { useFormat, useMessages } from "@shared/i18n";
-import { Button } from "@shared/components/button";
 import { Icon } from "@shared/components/icon";
-import { IconButton } from "@shared/components/icon-button";
 import {
   RichScratch,
   type LoadAssetPreview,
@@ -15,6 +13,46 @@ import {
 import styles from "@features/drafts/DraftsPanel.module.css";
 
 const SAVE_DEBOUNCE_MS = 700;
+
+function RenameInput({
+  defaultValue,
+  ariaLabel,
+  onCommit,
+  onCancel,
+}: {
+  readonly defaultValue: string;
+  readonly ariaLabel: string;
+  readonly onCommit: (value: string) => void;
+  readonly onCancel: () => void;
+}) {
+  return (
+    <input
+      className={styles.renameInput}
+      defaultValue={defaultValue}
+      aria-label={ariaLabel}
+      autoComplete="off"
+      autoFocus
+      onFocus={(event) => {
+        event.currentTarget.select();
+      }}
+      onClick={(event) => {
+        event.stopPropagation();
+      }}
+      onKeyDown={(event) => {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          onCommit(event.currentTarget.value);
+        } else if (event.key === "Escape") {
+          event.preventDefault();
+          onCancel();
+        }
+      }}
+      onBlur={(event) => {
+        onCommit(event.currentTarget.value);
+      }}
+    />
+  );
+}
 
 function draftExcerpt(document: TiptapDocument, max = 200): string {
   const parts: string[] = [];
@@ -38,17 +76,12 @@ function draftExcerpt(document: TiptapDocument, max = 200): string {
   return text.length > max ? `${text.slice(0, max)}…` : text;
 }
 
-export interface DraftUploadProgress {
-  readonly phase: "reading" | "converting";
-  readonly fraction: number;
-}
-
 export interface DraftsPanelProps {
   readonly drafts: readonly Draft[];
-  readonly onUpload: (
-    onProgress: (progress: DraftUploadProgress) => void,
-  ) => Promise<string | null>;
+  readonly selectedId: string | null;
+  readonly onSelect: (id: string | null) => void;
   readonly onUpdate: (id: string, document: TiptapDocument) => Promise<boolean>;
+  readonly onRename: (id: string, title: string) => Promise<boolean>;
   readonly onDelete: (id: string) => Promise<boolean>;
   readonly library?: RichEditorLibrary;
   readonly onLoadAssetPreview?: LoadAssetPreview;
@@ -56,8 +89,10 @@ export interface DraftsPanelProps {
 
 export function DraftsPanel({
   drafts,
-  onUpload,
+  selectedId,
+  onSelect,
   onUpdate,
+  onRename,
   onDelete,
   library,
   onLoadAssetPreview,
@@ -65,10 +100,7 @@ export function DraftsPanel({
   const messages = useMessages();
   const t = messages.drafts;
   const format = useFormat();
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [uploading, setUploading] = useState(false);
-  const [progress, setProgress] = useState<DraftUploadProgress | null>(null);
-  const [failed, setFailed] = useState(false);
+  const [renamingId, setRenamingId] = useState<string | null>(null);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pending = useRef<{ id: string; document: JSONContent } | null>(null);
 
@@ -92,38 +124,9 @@ export function DraftsPanel({
     saveTimer.current = setTimeout(flush, SAVE_DEBOUNCE_MS);
   };
 
-  const upload = () => {
-    setUploading(true);
-    setFailed(false);
-    onUpload((next) => {
-      setProgress(next);
-    })
-      .catch((error: unknown) => {
-        console.error("Draft upload failed", error);
-        setFailed(true);
-      })
-      .finally(() => {
-        setUploading(false);
-        setProgress(null);
-      });
-  };
-
   if (selected) {
     return (
       <div className={styles.panel}>
-        <div className={styles.editorHeader}>
-          <IconButton
-            size="sm"
-            aria-label={t.back}
-            onClick={() => {
-              flush();
-              setSelectedId(null);
-            }}
-          >
-            <Icon name="back" size={18} />
-          </IconButton>
-          <span className={styles.editorTitle}>{selected.title}</span>
-        </div>
         <div className={styles.editorBody}>
           <RichScratch
             key={selected.id}
@@ -140,26 +143,43 @@ export function DraftsPanel({
     );
   }
 
-  return (
-    <div className={styles.panel}>
-      <div className={styles.listHeader}>
-        <Button size="compact" disabled={uploading} onClick={upload}>
-          <Icon name="file-text" size={16} />
-          {uploading ? t.uploading : t.upload}
-        </Button>
-      </div>
-      {failed ? <p className={styles.error}>{t.uploadFailed}</p> : null}
-      {drafts.length === 0 ? (
+  if (drafts.length === 0) {
+    return (
+      <div className={styles.panel}>
         <div className={styles.empty}>
           <p className={styles.emptyTitle}>{t.empty}</p>
           <p className={styles.emptyBody}>{t.emptyBody}</p>
         </div>
-      ) : (
-        <ul className={styles.list}>
-          {drafts.map((draft) => {
-            const excerpt = draftExcerpt(draft.document);
-            return (
-              <li key={draft.id}>
+      </div>
+    );
+  }
+
+  return (
+    <div className={styles.panel}>
+      <ul className={styles.list}>
+        {drafts.map((draft) => {
+          const excerpt = draftExcerpt(draft.document);
+          return (
+            <li key={draft.id}>
+              {renamingId === draft.id ? (
+                <div className={styles.card}>
+                  <span className={styles.cardHeader}>
+                    <Icon name="file-text" size={16} className={styles.cardIcon} />
+                    <RenameInput
+                      defaultValue={draft.title}
+                      ariaLabel={messages.common.rename}
+                      onCommit={(value) => {
+                        setRenamingId(null);
+                        const next = value.trim();
+                        if (next && next !== draft.title) void onRename(draft.id, next);
+                      }}
+                      onCancel={() => {
+                        setRenamingId(null);
+                      }}
+                    />
+                  </span>
+                </div>
+              ) : (
                 <ContextMenu.Root>
                   <ContextMenu.Trigger
                     render={
@@ -168,7 +188,7 @@ export function DraftsPanel({
                         className={styles.card}
                         aria-label={format(t.openAria, { title: draft.title })}
                         onClick={() => {
-                          setSelectedId(draft.id);
+                          onSelect(draft.id);
                         }}
                       >
                         <span className={styles.cardHeader}>
@@ -183,6 +203,14 @@ export function DraftsPanel({
                     <ContextMenu.Positioner className={styles.menuPositioner}>
                       <ContextMenu.Popup className={styles.menuPopup}>
                         <ContextMenu.Item
+                          className={styles.menuItem}
+                          onClick={() => {
+                            setRenamingId(draft.id);
+                          }}
+                        >
+                          {messages.common.rename}
+                        </ContextMenu.Item>
+                        <ContextMenu.Item
                           className={[styles.menuItem, styles.menuItemDanger].join(" ")}
                           onClick={() => {
                             void onDelete(draft.id);
@@ -194,44 +222,11 @@ export function DraftsPanel({
                     </ContextMenu.Positioner>
                   </ContextMenu.Portal>
                 </ContextMenu.Root>
-              </li>
-            );
-          })}
-        </ul>
-      )}
-      {progress ? (
-        <div className={styles.overlay} role="presentation">
-          <div className={styles.dialog} role="dialog" aria-modal="true" aria-label={t.uploading}>
-            <p className={styles.dialogTitle}>{t.uploading}</p>
-            <div
-              className={styles.progressTrack}
-              role="progressbar"
-              aria-label={t.uploading}
-              aria-valuemin={0}
-              aria-valuemax={100}
-              {...(progress.phase === "converting"
-                ? { "aria-valuenow": Math.round(progress.fraction * 100) }
-                : {})}
-            >
-              <div
-                className={
-                  progress.phase === "converting"
-                    ? styles.progressFill
-                    : [styles.progressFill, styles.progressIndeterminate].join(" ")
-                }
-                style={
-                  progress.phase === "converting"
-                    ? { width: `${String(Math.round(progress.fraction * 100))}%` }
-                    : undefined
-                }
-              />
-            </div>
-            {progress.phase === "converting" ? (
-              <p className={styles.progressText}>{String(Math.round(progress.fraction * 100))}%</p>
-            ) : null}
-          </div>
-        </div>
-      ) : null}
+              )}
+            </li>
+          );
+        })}
+      </ul>
     </div>
   );
 }

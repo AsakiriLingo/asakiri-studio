@@ -608,6 +608,9 @@
     "unitDetailsAria": "Detalhes de {unit}"
   },
   "drafts": {
+    "create": "Criar rascunho",
+    "newTitle": "Rascunho sem título",
+    "add": "Adicionar rascunho",
     "upload": "Enviar documento",
     "uploading": "Convertendo…",
     "empty": "Ainda não há rascunhos",

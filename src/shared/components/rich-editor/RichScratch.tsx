@@ -39,7 +39,7 @@ export function RichScratch({
     immediatelyRender: false,
     editorProps: {
       attributes: {
-        class: styles.prose ?? "",
+        class: `${styles.prose ?? ""} ${styles.scratchProse ?? ""}`.trim(),
         "aria-label": ariaLabel ?? "Draft",
       },
     },

@@ -19,7 +19,7 @@ import { CourseAttribution } from "@features/attribution";
 import { CourseDetails } from "@features/course-details";
 import { PartEditor, courseToRichLibrary, type SaveState } from "@features/lesson-editor";
 import { PartPreview } from "@features/part-preview";
-import { DraftsPanel } from "@features/drafts";
+import { DraftsPanel, DraftsToolbar } from "@features/drafts";
 import { createAppServices } from "@app/services";
 import { useCourseState } from "@app/useCourseState";
 import { useProjectActions } from "@app/useProjectActions";
@@ -70,6 +70,7 @@ export function App() {
   const [view, setView] = useState<View>("start");
   const [section, setSection] = useState<WorkspaceSection>("lessons");
   const [openPartId, setOpenPartId] = useState<string | null>(null);
+  const [draftSelectedId, setDraftSelectedId] = useState<string | null>(null);
   const [outlineCollapsed, setOutlineCollapsed] = useState(false);
   const [referenceCollapsed, setReferenceCollapsed] = useState(false);
   const [collectionsCollapsed, setCollectionsCollapsed] = useState(false);
@@ -488,11 +489,24 @@ export function App() {
               draftsSlot={
                 <DraftsPanel
                   drafts={draftActions.drafts}
-                  onUpload={draftActions.uploadDraft}
+                  selectedId={draftSelectedId}
+                  onSelect={setDraftSelectedId}
                   onUpdate={draftActions.updateDraft}
+                  onRename={draftActions.renameDraft}
                   onDelete={draftActions.deleteDraft}
                   library={courseToRichLibrary(course)}
                   onLoadAssetPreview={mediaActions.loadAssetPreview}
+                />
+              }
+              draftsActions={
+                <DraftsToolbar
+                  editing={draftSelectedId !== null}
+                  onBack={() => {
+                    setDraftSelectedId(null);
+                  }}
+                  onCreate={draftActions.createDraft}
+                  onUpload={draftActions.uploadDraft}
+                  onOpen={setDraftSelectedId}
                 />
               }
             />

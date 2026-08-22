@@ -114,6 +114,12 @@
   gap: var(--space-1);
 }
 
+.tabActions {
+  display: inline-flex;
+  align-items: center;
+  margin-inline-start: auto;
+}
+
 .tab {
   display: inline-flex;
   align-items: center;

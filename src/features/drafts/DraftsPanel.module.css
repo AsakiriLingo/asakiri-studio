@@ -6,17 +6,17 @@
   min-width: 0;
 }
 
-.listHeader {
-  display: flex;
-  flex: none;
-  padding: 0 0 var(--space-3);
-}
-
-.error {
-  margin: 0 0 var(--space-2);
-  padding: var(--space-1) var(--space-2);
-  color: var(--color-danger);
-  font-size: var(--font-size-100);
+.renameInput {
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-text);
+  font: inherit;
+  font-size: var(--font-size-200);
+  font-weight: var(--font-weight-semibold);
+  outline: none;
 }
 
 .list {
@@ -115,27 +115,6 @@
   color: var(--color-text-muted);
   font-size: var(--font-size-200);
   text-wrap: balance;
-}
-
-.editorHeader {
-  display: flex;
-  flex: none;
-  align-items: center;
-  gap: var(--space-1);
-  min-width: 0;
-  min-height: var(--control-height-md);
-  margin-bottom: var(--space-2);
-}
-
-.editorTitle {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  color: var(--color-text);
-  font-size: var(--font-size-200);
-  font-weight: var(--font-weight-semibold);
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .editorBody {
@@ -252,4 +231,9 @@
   color: var(--color-text-muted);
   font-size: var(--font-size-100);
   font-variant-numeric: tabular-nums;
+}
+
+.dialogActions {
+  display: flex;
+  justify-content: flex-end;
 }
