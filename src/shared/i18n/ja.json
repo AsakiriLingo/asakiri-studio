@@ -608,6 +608,10 @@
     "unitDetailsAria": "{unit} の詳細"
   },
   "drafts": {
+    "hits": "{current}/{total}",
+    "noHits": "一致なし",
+    "previousHit": "前の一致",
+    "nextHit": "次の一致",
     "create": "下書きを作成",
     "newTitle": "無題の下書き",
     "add": "下書きを追加",

@@ -79,7 +79,7 @@ export function DraftsToolbar({ editing, onBack, onCreate, onUpload, onOpen }: D
                 {t.create}
               </Menu.Item>
               <Menu.Item className={styles.menuItem} onClick={upload}>
-                <Icon name="file-text" size={18} />
+                <Icon name="file-upload" size={18} />
                 {t.upload}
               </Menu.Item>
             </Menu.Popup>

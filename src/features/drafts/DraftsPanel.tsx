@@ -78,6 +78,9 @@ function draftExcerpt(document: TiptapDocument, max = 200): string {
 
 export interface DraftsPanelProps {
   readonly drafts: readonly Draft[];
+  readonly query?: string;
+  readonly searchActive?: number;
+  readonly onSearchTotal?: (total: number) => void;
   readonly selectedId: string | null;
   readonly onSelect: (id: string | null) => void;
   readonly onUpdate: (id: string, document: TiptapDocument) => Promise<boolean>;
@@ -89,6 +92,9 @@ export interface DraftsPanelProps {
 
 export function DraftsPanel({
   drafts,
+  query = "",
+  searchActive = 0,
+  onSearchTotal,
   selectedId,
   onSelect,
   onUpdate,
@@ -132,9 +138,12 @@ export function DraftsPanel({
             key={selected.id}
             value={selected.document as unknown as JSONContent}
             ariaLabel={t.editorAria}
+            searchQuery={query}
+            searchActive={searchActive}
             onChange={(document) => {
               queueSave(selected.id, document);
             }}
+            {...(onSearchTotal ? { onSearchTotal } : {})}
             {...(library ? { library } : {})}
             {...(onLoadAssetPreview ? { onLoadAssetPreview } : {})}
           />

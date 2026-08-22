@@ -608,6 +608,10 @@
     "unitDetailsAria": "Dettagli di {unit}"
   },
   "drafts": {
+    "hits": "{current}/{total}",
+    "noHits": "Nessun risultato",
+    "previousHit": "Risultato precedente",
+    "nextHit": "Risultato successivo",
     "create": "Crea bozza",
     "newTitle": "Bozza senza titolo",
     "add": "Aggiungi bozza",

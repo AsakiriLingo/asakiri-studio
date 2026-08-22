@@ -25,6 +25,7 @@ export interface LessonWorkspaceProps {
   readonly editorSlot?: ReactNode;
   readonly draftsSlot?: ReactNode;
   readonly draftsActions?: ReactNode;
+  readonly draftsFooter?: ReactNode;
   readonly previewSlot?: ReactNode;
   readonly outlineCollapsed?: boolean;
   readonly onOutlineCollapsedChange?: (collapsed: boolean) => void;
@@ -40,6 +41,7 @@ export function LessonWorkspace({
   editorSlot,
   draftsSlot,
   draftsActions,
+  draftsFooter,
   previewSlot,
   outlineCollapsed = false,
   onOutlineCollapsedChange,
@@ -143,7 +145,9 @@ export function LessonWorkspace({
 
         <Panel id="editor" minSize="24rem" className={styles.panel}>
           {editorSlot ? (
-            <ScrollArea className={styles.scrollHost}>{editorSlot}</ScrollArea>
+            <ScrollArea className={styles.scrollHost} contentStyle={{ minWidth: 0 }}>
+              {editorSlot}
+            </ScrollArea>
           ) : (
             <div className={styles.centerBody}>
               <p className={styles.empty}>{t.selectPart}</p>
@@ -204,7 +208,7 @@ export function LessonWorkspace({
               ? (draftsSlot ?? <p className={styles.empty}>{t.draftsEmpty}</p>)
               : (previewSlot ?? <p className={styles.empty}>{t.previewEmpty}</p>)}
           </ScrollArea>
-          <div className={[styles.panelFooter, styles.footerStart].join(" ")}>
+          <div className={styles.panelFooter}>
             <IconButton
               size="sm"
               aria-label={t.hideReference}
@@ -214,6 +218,9 @@ export function LessonWorkspace({
             >
               <Icon name="sidebar-right" size={18} />
             </IconButton>
+            {tab === "drafts" && draftsFooter ? (
+              <div className={styles.footerSlot}>{draftsFooter}</div>
+            ) : null}
           </div>
         </Panel>
       </Group>

@@ -19,7 +19,7 @@ import { CourseAttribution } from "@features/attribution";
 import { CourseDetails } from "@features/course-details";
 import { PartEditor, courseToRichLibrary, type SaveState } from "@features/lesson-editor";
 import { PartPreview } from "@features/part-preview";
-import { DraftsPanel, DraftsToolbar } from "@features/drafts";
+import { DraftsPanel, DraftsToolbar, DraftsSearch } from "@features/drafts";
 import { createAppServices } from "@app/services";
 import { useCourseState } from "@app/useCourseState";
 import { useProjectActions } from "@app/useProjectActions";
@@ -71,6 +71,9 @@ export function App() {
   const [section, setSection] = useState<WorkspaceSection>("lessons");
   const [openPartId, setOpenPartId] = useState<string | null>(null);
   const [draftSelectedId, setDraftSelectedId] = useState<string | null>(null);
+  const [draftQuery, setDraftQuery] = useState("");
+  const [draftHitActive, setDraftHitActive] = useState(0);
+  const [draftHitTotal, setDraftHitTotal] = useState(0);
   const [outlineCollapsed, setOutlineCollapsed] = useState(false);
   const [referenceCollapsed, setReferenceCollapsed] = useState(false);
   const [collectionsCollapsed, setCollectionsCollapsed] = useState(false);
@@ -261,6 +264,13 @@ export function App() {
 
   const navigate = (target: WorkspaceSection) => {
     setSection(target);
+  };
+
+  const openDraft = (id: string | null) => {
+    setDraftSelectedId(id);
+    setDraftQuery("");
+    setDraftHitActive(0);
+    setDraftHitTotal(0);
   };
 
   const revealFolder = useCallback(() => {
@@ -489,8 +499,11 @@ export function App() {
               draftsSlot={
                 <DraftsPanel
                   drafts={draftActions.drafts}
+                  query={draftQuery}
+                  searchActive={draftHitActive}
+                  onSearchTotal={setDraftHitTotal}
                   selectedId={draftSelectedId}
-                  onSelect={setDraftSelectedId}
+                  onSelect={openDraft}
                   onUpdate={draftActions.updateDraft}
                   onRename={draftActions.renameDraft}
                   onDelete={draftActions.deleteDraft}
@@ -502,12 +515,35 @@ export function App() {
                 <DraftsToolbar
                   editing={draftSelectedId !== null}
                   onBack={() => {
-                    setDraftSelectedId(null);
+                    openDraft(null);
                   }}
                   onCreate={draftActions.createDraft}
                   onUpload={draftActions.uploadDraft}
-                  onOpen={setDraftSelectedId}
+                  onOpen={openDraft}
                 />
+              }
+              draftsFooter={
+                draftSelectedId !== null ? (
+                  <DraftsSearch
+                    value={draftQuery}
+                    total={draftHitTotal}
+                    active={draftHitActive}
+                    onChange={(next) => {
+                      setDraftQuery(next);
+                      setDraftHitActive(0);
+                    }}
+                    onPrev={() => {
+                      setDraftHitActive((current) =>
+                        draftHitTotal === 0 ? 0 : (current - 1 + draftHitTotal) % draftHitTotal,
+                      );
+                    }}
+                    onNext={() => {
+                      setDraftHitActive((current) =>
+                        draftHitTotal === 0 ? 0 : (current + 1) % draftHitTotal,
+                      );
+                    }}
+                  />
+                ) : undefined
               }
             />
           )

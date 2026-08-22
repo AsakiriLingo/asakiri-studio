@@ -145,6 +145,7 @@
   display: flex;
   flex: none;
   align-items: center;
+  gap: var(--space-2);
   min-height: var(--control-height-md);
   padding: var(--space-1) var(--space-2);
   border-top: var(--border-hairline) solid var(--color-border);
@@ -153,6 +154,11 @@
 
 .footerStart {
   justify-content: flex-start;
+}
+
+.footerSlot {
+  flex: 1;
+  min-width: 0;
 }
 
 .footerEnd {

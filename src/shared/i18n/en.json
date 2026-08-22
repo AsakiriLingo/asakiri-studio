@@ -608,6 +608,10 @@
     "unitDetailsAria": "Details for {unit}"
   },
   "drafts": {
+    "hits": "{current}/{total}",
+    "noHits": "No hits",
+    "previousHit": "Previous match",
+    "nextHit": "Next match",
     "create": "Create draft",
     "newTitle": "Untitled draft",
     "add": "Add draft",

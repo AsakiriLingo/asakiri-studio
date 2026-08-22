@@ -16,6 +16,10 @@
   background: var(--color-surface);
 }
 
+.toolbar > * {
+  flex: none;
+}
+
 .urlOverlay {
   position: fixed;
   inset: 0;
@@ -188,6 +192,15 @@
 .scratchProse {
   min-height: 12rem;
   padding: 0;
+}
+
+.prose :global(.rich-search-match) {
+  border-radius: 2px;
+  background: rgb(255 213 79 / 45%);
+}
+
+.prose :global(.rich-search-active) {
+  background: rgb(255 213 79 / 90%);
 }
 
 .prose :global(.ProseMirror-selectednode) {

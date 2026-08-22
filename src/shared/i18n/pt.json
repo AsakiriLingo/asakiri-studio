@@ -608,6 +608,10 @@
     "unitDetailsAria": "Detalhes de {unit}"
   },
   "drafts": {
+    "hits": "{current}/{total}",
+    "noHits": "Sem correspondências",
+    "previousHit": "Correspondência anterior",
+    "nextHit": "Próxima correspondência",
     "create": "Criar rascunho",
     "newTitle": "Rascunho sem título",
     "add": "Adicionar rascunho",

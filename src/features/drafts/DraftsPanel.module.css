@@ -19,6 +19,42 @@
   outline: none;
 }
 
+.search {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  min-width: 0;
+}
+
+.searchIcon {
+  flex: none;
+  color: var(--color-text-muted);
+}
+
+.searchInput {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-text);
+  font: inherit;
+  font-size: var(--font-size-200);
+  outline: none;
+}
+
+.searchInput::placeholder {
+  color: var(--color-text-muted);
+}
+
+.searchCount {
+  flex: none;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-100);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
 .list {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));

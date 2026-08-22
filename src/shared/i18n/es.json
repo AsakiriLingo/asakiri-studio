@@ -608,6 +608,10 @@
     "unitDetailsAria": "Detalles de {unit}"
   },
   "drafts": {
+    "hits": "{current}/{total}",
+    "noHits": "Sin coincidencias",
+    "previousHit": "Coincidencia anterior",
+    "nextHit": "Coincidencia siguiente",
     "create": "Crear borrador",
     "newTitle": "Borrador sin título",
     "add": "Añadir borrador",
