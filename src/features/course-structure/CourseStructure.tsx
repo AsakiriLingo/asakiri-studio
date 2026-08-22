@@ -55,6 +55,90 @@ function partIconName(part: Part): IconName {
   }
 }
 
+interface OutlineResultLesson {
+  readonly lesson: Lesson;
+  readonly parts: readonly Part[];
+}
+
+interface OutlineResultUnit {
+  readonly section: OutlineSection;
+  readonly lessons: readonly OutlineResultLesson[];
+}
+
+function OutlineResults({
+  course,
+  lessonById,
+  query,
+  selectedId,
+  onOpenPart,
+}: {
+  readonly course: Course;
+  readonly lessonById: ReadonlyMap<string, Lesson>;
+  readonly query: string;
+  readonly selectedId?: string | undefined;
+  readonly onOpenPart?: ((lessonId: string, partId: string) => void) | undefined;
+}) {
+  const messages = useMessages();
+  const needle = query.trim().toLowerCase();
+  const hit = (title: string) => title.toLowerCase().includes(needle);
+
+  const groups = course.outline
+    .map((section): OutlineResultUnit | null => {
+      const unitHit = hit(section.title);
+      const lessons = section.lessonIds
+        .map((id) => lessonById.get(id))
+        .filter((lesson): lesson is Lesson => lesson !== undefined)
+        .map((lesson): OutlineResultLesson | null => {
+          const lessonHit = hit(lesson.title);
+          const parts = lessonHit ? lesson.parts : lesson.parts.filter((part) => hit(part.title));
+          return lessonHit || parts.length > 0 ? { lesson, parts } : null;
+        })
+        .filter((entry): entry is OutlineResultLesson => entry !== null);
+      return unitHit || lessons.length > 0 ? { section, lessons } : null;
+    })
+    .filter((group): group is OutlineResultUnit => group !== null);
+
+  if (groups.length === 0) {
+    return <p className={styles.empty}>{messages.common.noResults}</p>;
+  }
+
+  return (
+    <div className={styles.results}>
+      {groups.map((group) => (
+        <div key={group.section.id} className={styles.resultUnit}>
+          <span className={styles.resultUnitTitle}>{group.section.title}</span>
+          {group.lessons.map((entry) => (
+            <div key={entry.lesson.id} className={styles.resultLesson}>
+              <span className={styles.resultLessonTitle}>{entry.lesson.title}</span>
+              {entry.parts.map((part) => (
+                <button
+                  key={part.id}
+                  type="button"
+                  className={[
+                    styles.resultPart,
+                    part.id === selectedId ? styles.resultPartActive : "",
+                  ]
+                    .filter(Boolean)
+                    .join(" ")}
+                  onClick={() => onOpenPart?.(entry.lesson.id, part.id)}
+                >
+                  <Icon
+                    className={styles.typeIcon}
+                    name={partIconName(part)}
+                    size={16}
+                    aria-hidden="true"
+                  />
+                  <span className={styles.rowTitle}>{part.title}</span>
+                </button>
+              ))}
+            </div>
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function RenameInput({
   defaultValue,
   ariaLabel,
@@ -793,6 +877,7 @@ export interface CourseStructureProps {
     ((lessonId: string, partId: string, title: string) => Promise<ProjectWriteResult>) | undefined;
   readonly onDeletePart?:
     ((lessonId: string, partId: string) => Promise<ProjectWriteResult>) | undefined;
+  readonly query?: string;
   readonly variant?: "page" | "sidebar";
 }
 
@@ -831,6 +916,7 @@ export function CourseStructure({
   onAddPart,
   onRenamePart,
   onDeletePart,
+  query = "",
   variant = "page",
 }: CourseStructureProps) {
   const messages = useMessages();
@@ -1123,6 +1209,7 @@ export function CourseStructure({
           <div className={styles.sidebarHeaderActions}>
             {course.outline.length > 0 ? (
               <IconButton
+                size="sm"
                 aria-label={allCollapsed ? t.expandAll : t.collapseAll}
                 onClick={toggleAllUnits}
               >
@@ -1130,6 +1217,7 @@ export function CourseStructure({
               </IconButton>
             ) : null}
             <IconButton
+              size="sm"
               aria-label={t.newUnit}
               disabled={creating}
               onClick={() => {
@@ -1169,7 +1257,15 @@ export function CourseStructure({
         </div>
       )}
 
-      {course.outline.length === 0 ? (
+      {query.trim() !== "" ? (
+        <OutlineResults
+          course={course}
+          lessonById={lessonById}
+          query={query}
+          selectedId={selectedId}
+          onOpenPart={onOpenPart}
+        />
+      ) : course.outline.length === 0 ? (
         <p className={styles.empty}>{t.empty}</p>
       ) : (
         <DndContext

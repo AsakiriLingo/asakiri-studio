@@ -231,6 +231,7 @@ vi.mock("@features/course-structure", () => ({
     captured.structure = props;
     return <div data-testid="structure" />;
   },
+  OutlineSearch: () => <div data-testid="outline-search" />,
 }));
 
 vi.mock("@features/content", () => ({

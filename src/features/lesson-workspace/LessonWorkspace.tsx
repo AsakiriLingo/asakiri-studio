@@ -22,6 +22,7 @@ export interface LessonWorkspaceUnit {
 export interface LessonWorkspaceProps {
   readonly outline?: readonly LessonWorkspaceUnit[];
   readonly outlineSlot?: ReactNode;
+  readonly outlineFooter?: ReactNode;
   readonly editorSlot?: ReactNode;
   readonly draftsSlot?: ReactNode;
   readonly draftsActions?: ReactNode;
@@ -38,6 +39,7 @@ type ContextTab = "drafts" | "preview";
 export function LessonWorkspace({
   outline = [],
   outlineSlot,
+  outlineFooter,
   editorSlot,
   draftsSlot,
   draftsActions,
@@ -129,6 +131,7 @@ export function LessonWorkspace({
               ))}
           </ScrollArea>
           <div className={[styles.panelFooter, styles.footerEnd].join(" ")}>
+            {outlineFooter ? <div className={styles.footerSlot}>{outlineFooter}</div> : null}
             <IconButton
               size="sm"
               aria-label={t.hideOutline}

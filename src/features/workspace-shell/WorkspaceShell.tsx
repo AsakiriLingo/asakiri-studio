@@ -41,8 +41,8 @@ export function WorkspaceShell({
   const messages = useMessages();
 
   const navLinks: readonly NavLink[] = [
-    { key: "lessons", label: messages.workspace.navLessons, icon: "lessons" },
-    { key: "content", label: messages.workspace.navContent, icon: "content" },
+    { key: "lessons", label: messages.workspace.navLessons, icon: "book" },
+    { key: "content", label: messages.workspace.navContent, icon: "inbox-filled" },
     { key: "media", label: messages.workspace.navMedia, icon: "media" },
     { key: "details", label: messages.workspace.navDetails, icon: "details" },
   ];

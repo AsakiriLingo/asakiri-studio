@@ -11,7 +11,7 @@ import { WorkspaceShell, type WorkspaceSection } from "@features/workspace-shell
 import { SpreadsheetImport } from "@features/import";
 import type { DocumentTable } from "@core/documents";
 import { SPREADSHEET_EXTENSIONS } from "@core/documents";
-import { CourseStructure } from "@features/course-structure";
+import { CourseStructure, OutlineSearch } from "@features/course-structure";
 import { LessonWorkspace } from "@features/lesson-workspace";
 import { CourseContent } from "@features/content";
 import { CourseMedia } from "@features/media";
@@ -74,6 +74,7 @@ export function App() {
   const [draftQuery, setDraftQuery] = useState("");
   const [draftHitActive, setDraftHitActive] = useState(0);
   const [draftHitTotal, setDraftHitTotal] = useState(0);
+  const [outlineQuery, setOutlineQuery] = useState("");
   const [outlineCollapsed, setOutlineCollapsed] = useState(false);
   const [referenceCollapsed, setReferenceCollapsed] = useState(false);
   const [collectionsCollapsed, setCollectionsCollapsed] = useState(false);
@@ -462,7 +463,13 @@ export function App() {
                   }}
                   onRenamePart={partActions.renamePart}
                   onDeletePart={deletePart}
+                  query={outlineQuery}
                 />
+              }
+              outlineFooter={
+                course.outline.length > 0 ? (
+                  <OutlineSearch value={outlineQuery} onChange={setOutlineQuery} />
+                ) : undefined
               }
               outlineCollapsed={outlineCollapsed}
               onOutlineCollapsedChange={setOutlineCollapsed}

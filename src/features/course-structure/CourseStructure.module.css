@@ -605,3 +605,86 @@
   background: var(--color-danger-surface);
   color: var(--color-danger);
 }
+
+.results {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.resultUnit {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.resultUnitTitle {
+  padding-inline: var(--space-1);
+  color: var(--color-text);
+  font-size: var(--font-size-200);
+  font-weight: var(--font-weight-semibold);
+}
+
+.resultLesson {
+  display: grid;
+  gap: 2px;
+  padding-inline-start: var(--space-2);
+}
+
+.resultLessonTitle {
+  padding: var(--space-1) var(--space-1) 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-100);
+  font-weight: var(--font-weight-medium);
+}
+
+.resultPart {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  min-height: 1.75rem;
+  padding: 0 var(--space-2);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-text);
+  text-align: start;
+  cursor: pointer;
+}
+
+.resultPartActive {
+  background: var(--color-surface-subtle);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .resultPart:not(.resultPartActive):hover {
+    background: var(--color-surface-subtle);
+  }
+}
+
+.search {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  min-width: 0;
+}
+
+.searchIcon {
+  flex: none;
+  color: var(--color-text-muted);
+}
+
+.searchInput {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-text);
+  font: inherit;
+  font-size: var(--font-size-200);
+  outline: none;
+}
+
+.searchInput::placeholder {
+  color: var(--color-text-muted);
+}
