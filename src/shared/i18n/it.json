@@ -28,6 +28,7 @@
     "play": "Riproduci",
     "previous": "Indietro",
     "remove": "Rimuovi {label}",
+    "rename": "Rinomina",
     "reorder": "Riordina {label}. Usa i tasti freccia su e giù.",
     "reveal": "Mostra",
     "save": "Salva",
@@ -601,7 +602,9 @@
     "selectPart": "Seleziona una parte della lezione per iniziare a modificare",
     "sourceEmpty": "Importa un documento per consultarlo qui",
     "previewEmpty": "L'anteprima appare qui mentre crei una parte",
-    "outlineEmpty": "Ancora nessuna unità"
+    "outlineEmpty": "Ancora nessuna unità",
+    "lessons": "Lezioni",
+    "unitDetailsAria": "Dettagli di {unit}"
   },
   "workspace": {
     "areasAria": "Aree del corso",

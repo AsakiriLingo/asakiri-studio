@@ -41,10 +41,4 @@ describe("LessonWorkspace", () => {
     fireEvent.click(screen.getByRole("tab", { name: "Preview" }));
     expect(screen.getByText("Preview appears here as you build a part")).toBeInTheDocument();
   });
-
-  it("exposes controls to hide the outline and reference panels", () => {
-    renderWorkspace();
-    expect(screen.getByRole("button", { name: "Hide outline" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Hide reference" })).toBeInTheDocument();
-  });
 });

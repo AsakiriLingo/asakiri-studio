@@ -57,6 +57,10 @@
   font-weight: var(--font-weight-semibold);
 }
 
+.sectionNavItem[aria-current="page"] > svg {
+  color: var(--color-brand);
+}
+
 .settingGroup {
   border: 0;
 }

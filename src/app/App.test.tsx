@@ -87,6 +87,7 @@ interface StructureProps {
     sections: readonly { readonly id: string; readonly lessonIds: readonly string[] }[],
   ) => Promise<ProjectWriteResult>;
   readonly onOpenLesson: (lessonId: string) => void;
+  readonly selectedId?: string;
 }
 
 interface ContentProps {

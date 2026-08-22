@@ -28,6 +28,7 @@
     "play": "Reproduzir",
     "previous": "Anterior",
     "remove": "Remover {label}",
+    "rename": "Renomear",
     "reorder": "Reordenar {label}. Use as teclas de seta para cima e para baixo.",
     "reveal": "Revelar",
     "save": "Guardar",
@@ -601,7 +602,9 @@
     "selectPart": "Selecione uma parte da lição para começar a editar",
     "sourceEmpty": "Importe um documento para consultá-lo aqui",
     "previewEmpty": "A pré-visualização aparece aqui enquanto você cria uma parte",
-    "outlineEmpty": "Ainda não há unidades"
+    "outlineEmpty": "Ainda não há unidades",
+    "lessons": "Lições",
+    "unitDetailsAria": "Detalhes de {unit}"
   },
   "workspace": {
     "areasAria": "Áreas do curso",

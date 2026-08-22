@@ -28,6 +28,7 @@
     "play": "Reproducir",
     "previous": "Anterior",
     "remove": "Quitar {label}",
+    "rename": "Renombrar",
     "reorder": "Reordenar {label}. Usa las teclas de flecha arriba y abajo.",
     "reveal": "Revelar",
     "save": "Guardar",
@@ -601,7 +602,9 @@
     "selectPart": "Selecciona una parte de la lección para empezar a editar",
     "sourceEmpty": "Importa un documento para consultarlo aquí",
     "previewEmpty": "La vista previa aparece aquí mientras creas una parte",
-    "outlineEmpty": "Aún no hay unidades"
+    "outlineEmpty": "Aún no hay unidades",
+    "lessons": "Lecciones",
+    "unitDetailsAria": "Detalles de {unit}"
   },
   "workspace": {
     "areasAria": "Áreas del curso",

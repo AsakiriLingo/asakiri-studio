@@ -28,6 +28,7 @@
     "play": "Play",
     "previous": "Previous",
     "remove": "Remove {label}",
+    "rename": "Rename",
     "reorder": "Reorder {label}. Use the up and down arrow keys.",
     "reveal": "Reveal",
     "save": "Save",
@@ -601,7 +602,9 @@
     "selectPart": "Select a lesson part to start editing",
     "sourceEmpty": "Import a document to reference it here",
     "previewEmpty": "Preview appears here as you build a part",
-    "outlineEmpty": "No units yet"
+    "outlineEmpty": "No units yet",
+    "lessons": "Lessons",
+    "unitDetailsAria": "Details for {unit}"
   },
   "workspace": {
     "areasAria": "Course areas",

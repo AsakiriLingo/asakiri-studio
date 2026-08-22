@@ -383,6 +383,7 @@ export function App() {
                 <CourseStructure
                   variant="sidebar"
                   course={course}
+                  selectedId={openLessonId ?? undefined}
                   onNewUnit={outlineActions.addUnit}
                   onRenameUnit={outlineActions.renameUnit}
                   onDeleteUnit={outlineActions.deleteUnit}

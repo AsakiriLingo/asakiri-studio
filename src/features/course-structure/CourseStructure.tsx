@@ -19,14 +19,15 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import type { Course, Lesson, OutlineSection, PartKind } from "@core/course";
-import { PART_KINDS } from "@core/course";
+import { ContextMenu } from "@base-ui/react/context-menu";
+import type { Course, Lesson, OutlineSection, Part, PartKind } from "@core/course";
+import { PART_KINDS, partKind } from "@core/course";
 import type { ProjectWriteResult } from "@core/project-writing";
 import { useFormat, useMessages } from "@shared/i18n";
 import { Button } from "@shared/components/button";
 import { useConfirm } from "@shared/components/confirm-dialog";
 import { Field, TextInput } from "@shared/components/form";
-import { Icon } from "@shared/components/icon";
+import { Icon, type IconName } from "@shared/components/icon";
 import { IconButton } from "@shared/components/icon-button";
 import { Status } from "@shared/components/status";
 import { WorkInner } from "@shared/components/work-surface";
@@ -40,10 +41,25 @@ function chevronClass(collapsed: boolean): string {
   return [styles.unitChevron, collapsed ? styles.chevronCollapsed : ""].filter(Boolean).join(" ");
 }
 
+function partIconName(part: Part): IconName {
+  switch (partKind(part.content)) {
+    case "rich-text":
+    case "unknown":
+      return "file-text";
+    case "speak":
+      return "mic";
+    case "listen":
+      return "headphones";
+    default:
+      return "dumbbell";
+  }
+}
+
 function LessonRow({
   lesson,
   index,
   variant,
+  selected,
   onOpen,
   onOpenSettings,
   onReorderParts,
@@ -52,6 +68,7 @@ function LessonRow({
   readonly lesson: Lesson;
   readonly index: number;
   readonly variant: "page" | "sidebar";
+  readonly selected?: boolean | undefined;
   readonly onOpen: () => void;
   readonly onOpenSettings: () => void;
   readonly onReorderParts?:
@@ -79,7 +96,11 @@ function LessonRow({
         style={style}
         className={[styles.lessonNode, isDragging ? styles.dragging : ""].filter(Boolean).join(" ")}
       >
-        <div className={[styles.treeRow, styles.lessonRow].join(" ")}>
+        <div
+          className={[styles.treeRow, styles.lessonRow, selected ? styles.active : ""]
+            .filter(Boolean)
+            .join(" ")}
+        >
           {hasParts ? (
             <button
               type="button"
@@ -105,7 +126,12 @@ function LessonRow({
             <span className={styles.disclosureSpacer} aria-hidden="true" />
           )}
           <Icon className={styles.typeIcon} name="lessons" size={16} aria-hidden="true" />
-          <button type="button" className={styles.treeMain} onClick={onOpen}>
+          <button
+            type="button"
+            className={styles.treeMain}
+            aria-current={selected ? "page" : undefined}
+            onClick={onOpen}
+          >
             <span className={styles.rowTitle}>{lesson.title}</span>
           </button>
           {onRequestAddPart ? (
@@ -171,13 +197,7 @@ function useReorderSensors() {
   );
 }
 
-function SortablePartRow({
-  part,
-  onOpen,
-}: {
-  readonly part: { readonly id: string; readonly title: string };
-  readonly onOpen: () => void;
-}) {
+function SortablePartRow({ part, onOpen }: { readonly part: Part; readonly onOpen: () => void }) {
   const messages = useMessages();
   const format = useFormat();
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
@@ -194,7 +214,7 @@ function SortablePartRow({
       className={[styles.treeRow, isDragging ? styles.dragging : ""].filter(Boolean).join(" ")}
     >
       <span className={styles.disclosureSpacer} aria-hidden="true" />
-      <Icon className={styles.typeIcon} name="file-text" size={16} aria-hidden="true" />
+      <Icon className={styles.typeIcon} name={partIconName(part)} size={16} aria-hidden="true" />
       <button type="button" className={styles.treeMain} onClick={onOpen}>
         <span className={styles.rowTitle}>{part.title}</span>
       </button>
@@ -231,7 +251,12 @@ function PartList({
         {lesson.parts.map((part) => (
           <button key={part.id} type="button" className={styles.treeRow} onClick={onOpen}>
             <span className={styles.disclosureSpacer} aria-hidden="true" />
-            <Icon className={styles.typeIcon} name="file-text" size={16} aria-hidden="true" />
+            <Icon
+              className={styles.typeIcon}
+              name={partIconName(part)}
+              size={16}
+              aria-hidden="true"
+            />
             <span className={styles.rowTitle}>{part.title}</span>
           </button>
         ))}
@@ -268,9 +293,12 @@ function UnitBlock({
   collapsed,
   addingLesson,
   variant,
+  selectedLessonId,
   onToggleCollapsed,
   onAddLesson,
   onOpenSettings,
+  onRename,
+  onRequestDelete,
   onOpenLesson,
   onOpenLessonSettings,
   onReorderParts,
@@ -282,9 +310,12 @@ function UnitBlock({
   readonly collapsed: boolean;
   readonly addingLesson: boolean;
   readonly variant: "page" | "sidebar";
+  readonly selectedLessonId?: string | undefined;
   readonly onToggleCollapsed: () => void;
   readonly onAddLesson: () => void;
   readonly onOpenSettings: () => void;
+  readonly onRename: (title: string) => void;
+  readonly onRequestDelete: () => void;
   readonly onOpenLesson: (lessonId: string) => void;
   readonly onOpenLessonSettings: (lessonId: string) => void;
   readonly onReorderParts?:
@@ -304,6 +335,12 @@ function UnitBlock({
     transition,
   };
   const lessonsId = `unit-lessons-${unit.id}`;
+  const [editing, setEditing] = useState(false);
+
+  const commitRename = (value: string) => {
+    setEditing(false);
+    onRename(value);
+  };
 
   return (
     <article
@@ -311,66 +348,164 @@ function UnitBlock({
       style={style}
       className={[styles.unitBlock, isDragging ? styles.dragging : ""].filter(Boolean).join(" ")}
     >
-      <header className={styles.unitHeader}>
-        <button
-          type="button"
-          className={styles.reorderHandle}
-          aria-label={format(messages.common.reorder, { label: unit.title })}
-          {...attributes}
-          {...listeners}
-        >
-          <Icon name="grip" size={18} />
-        </button>
-        <span className={[styles.orderIndex, styles.unitIndex].join(" ")}>{orderLabel(index)}</span>
-        <button
-          type="button"
-          className={styles.unitToggle}
-          aria-expanded={!collapsed}
-          aria-controls={lessonsId}
-          aria-label={
-            collapsed
-              ? format(t.expandUnit, { unit: unit.title })
-              : format(t.collapseUnit, { unit: unit.title })
-          }
-          onClick={onToggleCollapsed}
-        >
-          <Icon
-            aria-hidden="true"
-            className={chevronClass(collapsed)}
-            name="chevron-down"
-            size={18}
+      {sidebar ? (
+        <ContextMenu.Root>
+          <ContextMenu.Trigger
+            render={
+              <header className={styles.unitHeader}>
+                <button
+                  type="button"
+                  className={styles.disclosure}
+                  aria-expanded={!collapsed}
+                  aria-controls={lessonsId}
+                  aria-label={
+                    collapsed
+                      ? format(t.expandUnit, { unit: unit.title })
+                      : format(t.collapseUnit, { unit: unit.title })
+                  }
+                  onClick={onToggleCollapsed}
+                >
+                  <Icon
+                    aria-hidden="true"
+                    className={chevronClass(collapsed)}
+                    name="chevron-down"
+                    size={16}
+                  />
+                </button>
+                <Icon className={styles.typeIcon} name="folder" size={16} aria-hidden="true" />
+                {editing ? (
+                  <input
+                    className={styles.renameInput}
+                    defaultValue={unit.title}
+                    aria-label={t.unitTitleLabel}
+                    autoComplete="off"
+                    autoFocus
+                    onFocus={(event) => {
+                      event.currentTarget.select();
+                    }}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                    }}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter") {
+                        event.preventDefault();
+                        commitRename(event.currentTarget.value);
+                      } else if (event.key === "Escape") {
+                        event.preventDefault();
+                        setEditing(false);
+                      }
+                    }}
+                    onBlur={(event) => {
+                      commitRename(event.currentTarget.value);
+                    }}
+                  />
+                ) : (
+                  <button
+                    type="button"
+                    className={styles.treeMain}
+                    onClick={onToggleCollapsed}
+                    onDoubleClick={() => {
+                      setEditing(true);
+                    }}
+                  >
+                    <span className={styles.unitName}>{unit.title}</span>
+                  </button>
+                )}
+                <div className={styles.unitActions}>
+                  <IconButton
+                    aria-label={t.addLesson}
+                    disabled={addingLesson}
+                    onClick={onAddLesson}
+                  >
+                    <Icon name="plus" size={18} />
+                  </IconButton>
+                </div>
+                <button
+                  type="button"
+                  className={styles.reorderHandle}
+                  aria-label={format(messages.common.reorder, { label: unit.title })}
+                  {...attributes}
+                  {...listeners}
+                >
+                  <Icon name="grip" size={16} />
+                </button>
+              </header>
+            }
           />
-          {sidebar ? (
-            <Icon className={styles.typeIcon} name="folder" size={16} aria-hidden="true" />
-          ) : null}
-          <span className={styles.unitHeading}>
-            <span className={styles.unitName}>{unit.title}</span>
-            <span className={styles.rowDetail}>
-              {format(t.unitLessons, { count: lessons.length })}
-            </span>
+          <ContextMenu.Portal>
+            <ContextMenu.Positioner className={styles.menuPositioner}>
+              <ContextMenu.Popup className={styles.menuPopup}>
+                <ContextMenu.Item
+                  className={styles.menuItem}
+                  onClick={() => {
+                    setEditing(true);
+                  }}
+                >
+                  {messages.common.rename}
+                </ContextMenu.Item>
+                <ContextMenu.Item
+                  className={[styles.menuItem, styles.menuItemDanger].join(" ")}
+                  onClick={onRequestDelete}
+                >
+                  {messages.common.delete}
+                </ContextMenu.Item>
+              </ContextMenu.Popup>
+            </ContextMenu.Positioner>
+          </ContextMenu.Portal>
+        </ContextMenu.Root>
+      ) : (
+        <header className={styles.unitHeader}>
+          <button
+            type="button"
+            className={styles.reorderHandle}
+            aria-label={format(messages.common.reorder, { label: unit.title })}
+            {...attributes}
+            {...listeners}
+          >
+            <Icon name="grip" size={18} />
+          </button>
+          <span className={[styles.orderIndex, styles.unitIndex].join(" ")}>
+            {orderLabel(index)}
           </span>
-        </button>
-        <div className={styles.unitActions}>
-          {sidebar ? (
-            <IconButton aria-label={t.addLesson} disabled={addingLesson} onClick={onAddLesson}>
-              <Icon name="plus" size={18} />
-            </IconButton>
-          ) : (
+          <button
+            type="button"
+            className={styles.unitToggle}
+            aria-expanded={!collapsed}
+            aria-controls={lessonsId}
+            aria-label={
+              collapsed
+                ? format(t.expandUnit, { unit: unit.title })
+                : format(t.collapseUnit, { unit: unit.title })
+            }
+            onClick={onToggleCollapsed}
+          >
+            <Icon
+              aria-hidden="true"
+              className={chevronClass(collapsed)}
+              name="chevron-down"
+              size={18}
+            />
+            <span className={styles.unitHeading}>
+              <span className={styles.unitName}>{unit.title}</span>
+              <span className={styles.rowDetail}>
+                {format(t.unitLessons, { count: lessons.length })}
+              </span>
+            </span>
+          </button>
+          <div className={styles.unitActions}>
             <Button variant="ghost" disabled={addingLesson} onClick={onAddLesson}>
               <Icon name="plus" size={18} />
               {t.addLesson}
             </Button>
-          )}
-          {sidebar ? null : (
             <IconButton
               aria-label={format(t.unitSettings, { unit: unit.title })}
               onClick={onOpenSettings}
             >
               <Icon name="edit" size={18} />
             </IconButton>
-          )}
-        </div>
-      </header>
+          </div>
+        </header>
+      )}
 
       {collapsed ? null : (
         <SortableContext
@@ -389,6 +524,7 @@ function UnitBlock({
                 lesson={lesson}
                 index={lessonIndex}
                 variant={variant}
+                selected={lesson.id === selectedLessonId}
                 onOpen={() => {
                   onOpenLesson(lesson.id);
                 }}
@@ -453,6 +589,7 @@ export interface CourseStructureProps {
     sections: readonly { readonly id: string; readonly lessonIds: readonly string[] }[],
   ) => Promise<ProjectWriteResult>;
   readonly onOpenLesson: (lessonId: string) => void;
+  readonly selectedId?: string | undefined;
   readonly onReorderParts?:
     | ((lessonId: string, orderedPartIds: readonly string[]) => Promise<ProjectWriteResult>)
     | undefined;
@@ -490,6 +627,7 @@ export function CourseStructure({
   onDeleteLesson,
   onReorderOutline,
   onOpenLesson,
+  selectedId,
   onReorderParts,
   onAddPart,
   variant = "page",
@@ -844,6 +982,7 @@ export function CourseStructure({
                     collapsed={collapsedUnitIds.has(unit.id)}
                     addingLesson={addingUnitId === unit.id}
                     variant={variant}
+                    selectedLessonId={selectedId}
                     onToggleCollapsed={() => {
                       toggleUnitCollapsed(unit.id);
                     }}
@@ -854,6 +993,12 @@ export function CourseStructure({
                     onOpenSettings={() => {
                       setFailed(false);
                       setSettingsUnitId(unit.id);
+                    }}
+                    onRename={(title) => {
+                      renameUnit(unit, title);
+                    }}
+                    onRequestDelete={() => {
+                      void removeUnit(unit);
                     }}
                     onOpenLesson={onOpenLesson}
                     onOpenLessonSettings={(lessonId) => {

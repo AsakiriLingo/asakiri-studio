@@ -28,6 +28,7 @@
     "play": "再生",
     "previous": "前へ",
     "remove": "{label}を削除",
+    "rename": "名前を変更",
     "reorder": "{label}を並べ替え。上下の矢印キーを使います。",
     "reveal": "表示",
     "save": "保存",
@@ -601,7 +602,9 @@
     "selectPart": "編集するレッスンパートを選択してください",
     "sourceEmpty": "ここで参照するにはドキュメントをインポートしてください",
     "previewEmpty": "パートを作成するとここにプレビューが表示されます",
-    "outlineEmpty": "ユニットがまだありません"
+    "outlineEmpty": "ユニットがまだありません",
+    "lessons": "レッスン",
+    "unitDetailsAria": "{unit} の詳細"
   },
   "workspace": {
     "areasAria": "コースの領域",
