@@ -641,7 +641,8 @@
     "dialogTitle": "Update to {version}?",
     "installRestart": "Install & restart",
     "installing": "Installing…",
-    "noNotes": "A new version is available."
+    "noNotes": "A new version is available.",
+    "installFailed": "Update failed. Try again."
   },
   "lessonWorkspace": {
     "outline": "Outline",
@@ -674,7 +675,10 @@
     "back": "Back to drafts",
     "editorAria": "Draft content",
     "openAria": "Open {title}",
-    "uploadFailed": "Could not convert that file"
+    "uploadFailed": "Could not convert that file",
+    "confirmDeleteTitle": "Delete this draft?",
+    "confirmDeleteBody": "This permanently deletes the draft. This cannot be undone.",
+    "deleteFailed": "Could not delete the draft"
   },
   "workspace": {
     "areasAria": "Course areas",

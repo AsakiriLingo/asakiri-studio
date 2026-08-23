@@ -641,7 +641,8 @@
     "dialogTitle": "Atualizar para {version}?",
     "installRestart": "Instalar e reiniciar",
     "installing": "A instalar…",
-    "noNotes": "Está disponível uma nova versão."
+    "noNotes": "Está disponível uma nova versão.",
+    "installFailed": "A atualização falhou. Tente novamente."
   },
   "lessonWorkspace": {
     "outline": "Estrutura",
@@ -674,7 +675,10 @@
     "back": "Voltar aos rascunhos",
     "editorAria": "Conteúdo do rascunho",
     "openAria": "Abrir {title}",
-    "uploadFailed": "Não foi possível converter esse arquivo"
+    "uploadFailed": "Não foi possível converter esse arquivo",
+    "confirmDeleteTitle": "Eliminar este rascunho?",
+    "confirmDeleteBody": "Isto elimina o rascunho de forma permanente. Esta ação não pode ser anulada.",
+    "deleteFailed": "Não foi possível eliminar o rascunho"
   },
   "workspace": {
     "areasAria": "Áreas do curso",

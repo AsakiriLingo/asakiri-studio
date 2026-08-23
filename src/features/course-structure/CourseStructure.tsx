@@ -970,6 +970,14 @@ export function CourseStructure({
     setFailed(result.status !== "saved");
   };
 
+  const reorderPartsWithReport = onReorderParts
+    ? (lessonId: string, orderedPartIds: readonly string[]) =>
+        onReorderParts(lessonId, orderedPartIds).then((result) => {
+          report(result);
+          return result;
+        })
+    : undefined;
+
   const createUnit = async () => {
     setCreating(true);
     setFailed(false);
@@ -1081,7 +1089,13 @@ export function CourseStructure({
   const persistLayout = (next: UnitLayout[]) => {
     if (sameLayout(next, course.outline)) return;
     setFailed(false);
-    void onReorderOutline(next).then(report);
+    void onReorderOutline(next).then((result) => {
+      report(result);
+      if (result.status !== "saved") {
+        setSyncedOutline(course.outline);
+        setLayout(outlineToLayout(course.outline));
+      }
+    });
   };
 
   const handleDragStart = (event: DragStartEvent) => {
@@ -1333,7 +1347,7 @@ export function CourseStructure({
                     onRequestDeletePart={(lesson, part) => {
                       void removePart(lesson, part);
                     }}
-                    onReorderParts={onReorderParts}
+                    onReorderParts={reorderPartsWithReport}
                     onRequestAddPart={
                       onAddPart
                         ? (lessonId) => {

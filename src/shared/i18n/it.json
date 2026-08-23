@@ -641,7 +641,8 @@
     "dialogTitle": "Aggiornare alla versione {version}?",
     "installRestart": "Installa e riavvia",
     "installing": "Installazione…",
-    "noNotes": "È disponibile una nuova versione."
+    "noNotes": "È disponibile una nuova versione.",
+    "installFailed": "Aggiornamento non riuscito. Riprova."
   },
   "lessonWorkspace": {
     "outline": "Struttura",
@@ -674,7 +675,10 @@
     "back": "Torna alle bozze",
     "editorAria": "Contenuto della bozza",
     "openAria": "Apri {title}",
-    "uploadFailed": "Impossibile convertire quel file"
+    "uploadFailed": "Impossibile convertire quel file",
+    "confirmDeleteTitle": "Eliminare questa bozza?",
+    "confirmDeleteBody": "La bozza verrà eliminata definitivamente. Questa operazione non può essere annullata.",
+    "deleteFailed": "Impossibile eliminare la bozza"
   },
   "workspace": {
     "areasAria": "Aree del corso",

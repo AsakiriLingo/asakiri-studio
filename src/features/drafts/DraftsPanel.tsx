@@ -4,7 +4,9 @@ import { ContextMenu } from "@base-ui/react/context-menu";
 import type { TiptapDocument, TiptapNode } from "@core/course";
 import type { Draft } from "@core/drafts";
 import { useFormat, useMessages } from "@shared/i18n";
+import { useConfirm } from "@shared/components/confirm-dialog";
 import { Icon } from "@shared/components/icon";
+import { Status } from "@shared/components/status";
 import {
   RichScratch,
   type LoadAssetPreview,
@@ -106,7 +108,19 @@ export function DraftsPanel({
   const messages = useMessages();
   const t = messages.drafts;
   const format = useFormat();
+  const confirm = useConfirm();
   const [renamingId, setRenamingId] = useState<string | null>(null);
+  const [deleteFailed, setDeleteFailed] = useState(false);
+
+  const requestDelete = async (id: string) => {
+    const ok = await confirm({
+      title: t.confirmDeleteTitle,
+      description: t.confirmDeleteBody,
+      confirmLabel: messages.common.delete,
+    });
+    if (!ok) return;
+    setDeleteFailed(!(await onDelete(id)));
+  };
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pending = useRef<{ id: string; document: JSONContent } | null>(null);
 
@@ -165,6 +179,7 @@ export function DraftsPanel({
 
   return (
     <div className={styles.panel}>
+      {deleteFailed ? <Status tone="error">{t.deleteFailed}</Status> : null}
       <ul className={styles.list}>
         {drafts.map((draft) => {
           const excerpt = draftExcerpt(draft.document);
@@ -222,7 +237,7 @@ export function DraftsPanel({
                         <ContextMenu.Item
                           className={[styles.menuItem, styles.menuItemDanger].join(" ")}
                           onClick={() => {
-                            void onDelete(draft.id);
+                            void requestDelete(draft.id);
                           }}
                         >
                           {messages.common.delete}

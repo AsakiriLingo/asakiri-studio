@@ -98,6 +98,7 @@ export function App() {
   const [importNotice, setImportNotice] = useState<"readFailed" | "noTables" | null>(null);
   const [update, setUpdate] = useState<AvailableUpdate | null>(null);
   const [updateInstalling, setUpdateInstalling] = useState(false);
+  const [updateFailed, setUpdateFailed] = useState(false);
   const [autoUpdate, setAutoUpdate] = useState(initialAutoUpdate);
   const [supportPromptEnabled, setSupportPromptEnabled] = useState(initialSupportEnabled);
   const [supportHiddenSession, setSupportHiddenSession] = useState(false);
@@ -199,11 +200,13 @@ export function App() {
 
   const installUpdate = async () => {
     setUpdateInstalling(true);
+    setUpdateFailed(false);
     try {
       await services.appUpdate.downloadAndInstall();
       await services.appUpdate.relaunch();
     } catch {
       setUpdateInstalling(false);
+      setUpdateFailed(true);
     }
   };
 
@@ -308,6 +311,7 @@ export function App() {
         <StartScreen
           update={update}
           updateInstalling={updateInstalling}
+          updateFailed={updateFailed}
           recentProjects={recentProjects}
           showSupport={supportPromptEnabled && !supportHiddenSession}
           onInstallUpdate={() => {
@@ -625,6 +629,7 @@ export function App() {
           version={appVersion}
           update={update}
           updateInstalling={updateInstalling}
+          updateFailed={updateFailed}
           checkForUpdates={checkForUpdates}
           onInstallUpdate={() => {
             void installUpdate();

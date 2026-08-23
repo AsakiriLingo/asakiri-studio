@@ -641,7 +641,8 @@
     "dialogTitle": "{version}に更新しますか？",
     "installRestart": "インストールして再起動",
     "installing": "インストール中…",
-    "noNotes": "新しいバージョンが利用できます。"
+    "noNotes": "新しいバージョンが利用できます。",
+    "installFailed": "更新に失敗しました。もう一度お試しください。"
   },
   "lessonWorkspace": {
     "outline": "アウトライン",
@@ -674,7 +675,10 @@
     "back": "下書きに戻る",
     "editorAria": "下書きの内容",
     "openAria": "{title}を開く",
-    "uploadFailed": "そのファイルを変換できませんでした"
+    "uploadFailed": "そのファイルを変換できませんでした",
+    "confirmDeleteTitle": "この下書きを削除しますか？",
+    "confirmDeleteBody": "下書きを完全に削除します。この操作は取り消せません。",
+    "deleteFailed": "下書きを削除できませんでした"
   },
   "workspace": {
     "areasAria": "コースの領域",

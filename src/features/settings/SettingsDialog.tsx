@@ -30,6 +30,7 @@ export interface SettingsDialogProps {
   readonly version: string;
   readonly update: AvailableUpdate | null;
   readonly updateInstalling: boolean;
+  readonly updateFailed: boolean;
   readonly checkForUpdates: () => Promise<AvailableUpdate | null>;
   readonly onInstallUpdate: () => void;
   readonly autoUpdate: boolean;
@@ -224,6 +225,7 @@ export function SettingsDialog({
   version,
   update,
   updateInstalling,
+  updateFailed,
   checkForUpdates,
   onInstallUpdate,
   autoUpdate,
@@ -369,7 +371,9 @@ export function SettingsDialog({
                       </Button>
                     ) : null}
                   </div>
-                  {update ? (
+                  {updateFailed ? (
+                    <Status tone="error">{messages.update.installFailed}</Status>
+                  ) : update ? (
                     <p className={styles.note}>
                       {format(t.updateReady, { version: update.version })}
                     </p>

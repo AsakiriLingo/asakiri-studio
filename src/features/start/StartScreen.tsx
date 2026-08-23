@@ -6,11 +6,13 @@ import { Icon } from "@shared/components/icon";
 import { Button } from "@shared/components/button";
 import { IconButton } from "@shared/components/icon-button";
 import { ScrollArea } from "@shared/components/scroll-area";
+import { Status } from "@shared/components/status";
 import styles from "@features/start/StartScreen.module.css";
 
 interface StartScreenProps {
   readonly update: AvailableUpdate | null;
   readonly updateInstalling: boolean;
+  readonly updateFailed: boolean;
   readonly recentProjects: readonly RecentProject[];
   readonly showSupport: boolean;
   readonly onInstallUpdate: () => void;
@@ -26,6 +28,7 @@ interface StartScreenProps {
 export function StartScreen({
   update,
   updateInstalling,
+  updateFailed,
   recentProjects,
   showSupport,
   onInstallUpdate,
@@ -56,6 +59,7 @@ export function StartScreen({
     <main className={styles.hub}>
       <div className={styles.bar}>
         <div className={styles.tools}>
+          {updateFailed ? <Status tone="error">{t.installFailed}</Status> : null}
           {update ? (
             <button
               type="button"

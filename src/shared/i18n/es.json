@@ -641,7 +641,8 @@
     "dialogTitle": "¿Actualizar a {version}?",
     "installRestart": "Instalar y reiniciar",
     "installing": "Instalando…",
-    "noNotes": "Hay una nueva versión disponible."
+    "noNotes": "Hay una nueva versión disponible.",
+    "installFailed": "La actualización falló. Inténtalo de nuevo."
   },
   "lessonWorkspace": {
     "outline": "Esquema",
@@ -674,7 +675,10 @@
     "back": "Volver a borradores",
     "editorAria": "Contenido del borrador",
     "openAria": "Abrir {title}",
-    "uploadFailed": "No se pudo convertir ese archivo"
+    "uploadFailed": "No se pudo convertir ese archivo",
+    "confirmDeleteTitle": "¿Eliminar este borrador?",
+    "confirmDeleteBody": "Esto elimina el borrador de forma permanente. Esta acción no se puede deshacer.",
+    "deleteFailed": "No se pudo eliminar el borrador"
   },
   "workspace": {
     "areasAria": "Áreas del curso",
