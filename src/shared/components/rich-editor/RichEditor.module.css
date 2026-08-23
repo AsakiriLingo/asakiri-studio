@@ -24,20 +24,24 @@
   position: fixed;
   inset: 0;
   z-index: var(--z-modal, 100);
-  display: grid;
-  place-items: center;
-  padding: var(--space-4);
   background: var(--color-overlay);
 }
 
 .urlDialog {
-  display: grid;
-  gap: var(--space-3);
-  width: min(100%, 26rem);
+  position: fixed;
+  inset-block-start: 50%;
+  inset-inline-start: 50%;
+  z-index: var(--z-modal, 100);
+  width: min(100% - var(--space-6), 26rem);
   padding: var(--space-5);
+  transform: translate(-50%, -50%);
   border: var(--border-hairline) solid var(--color-border);
   border-radius: var(--radius-lg);
   background: var(--color-surface);
+}
+.urlForm {
+  display: grid;
+  gap: var(--space-3);
 }
 
 .urlLabel {
@@ -195,12 +199,12 @@
 }
 
 .prose :global(.rich-search-match) {
-  border-radius: 2px;
-  background: rgb(255 213 79 / 45%);
+  border-radius: var(--radius-sm);
+  background: var(--color-accent-subtle);
 }
 
 .prose :global(.rich-search-active) {
-  background: rgb(255 213 79 / 90%);
+  background: var(--color-accent);
 }
 
 .prose :global(.ProseMirror-selectednode) {
