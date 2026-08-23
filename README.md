@@ -69,3 +69,7 @@ A validated reference course lives at [examples/courses/japanese-starter](exampl
 The interface is translated with [Lokalise](https://lokalise.com/), which provides its localization platform free of charge to open-source projects.
 
 <a href="https://lokalise.com/"><img src="docs/lokalise-logo.svg" alt="Lokalise" height="28"></a>
+
+## Star History
+
+![Star history chart showing Asakiri Studio's GitHub stars over time.](docs/screenshots/star-history.png)
