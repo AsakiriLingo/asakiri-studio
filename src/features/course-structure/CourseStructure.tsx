@@ -1,4 +1,12 @@
-import { useMemo, useRef, useState, type ReactElement, type ReactNode } from "react";
+import {
+  memo,
+  useCallback,
+  useMemo,
+  useRef,
+  useState,
+  type ReactElement,
+  type ReactNode,
+} from "react";
 import {
   DndContext,
   DragOverlay,
@@ -33,6 +41,9 @@ import { IconButton } from "@shared/components/icon-button";
 import { Status } from "@shared/components/status";
 import { WorkInner } from "@shared/components/work-surface";
 import styles from "@features/course-structure/CourseStructure.module.css";
+
+const LARGE_LESSON_COUNT = 40;
+const LARGE_PART_COUNT = 400;
 
 function orderLabel(index: number): string {
   return String(index + 1).padStart(2, "0");
@@ -215,11 +226,12 @@ function RowMenu({
   );
 }
 
-function LessonRow({
+const LessonRow = memo(function LessonRow({
   lesson,
   index,
   variant,
   selectedPartId,
+  collapseParts,
   onOpenSettings,
   onOpenPart,
   onRename,
@@ -233,16 +245,17 @@ function LessonRow({
   readonly index: number;
   readonly variant: "page" | "sidebar";
   readonly selectedPartId?: string | undefined;
-  readonly onOpenSettings: () => void;
-  readonly onOpenPart: (partId: string) => void;
-  readonly onRename: (title: string) => void;
-  readonly onRequestDelete: () => void;
-  readonly onRenamePart: (part: Part, title: string) => void;
-  readonly onRequestDeletePart: (part: Part) => void;
+  readonly collapseParts: boolean;
+  readonly onOpenSettings: (lessonId: string) => void;
+  readonly onOpenPart: (lessonId: string, partId: string) => void;
+  readonly onRename: (lesson: Lesson, title: string) => void;
+  readonly onRequestDelete: (lesson: Lesson) => void;
+  readonly onRenamePart: (lesson: Lesson, part: Part, title: string) => void;
+  readonly onRequestDeletePart: (lesson: Lesson, part: Part) => void;
   readonly onReorderParts?:
     | ((lessonId: string, orderedPartIds: readonly string[]) => Promise<ProjectWriteResult>)
     | undefined;
-  readonly onRequestAddPart?: (() => void) | undefined;
+  readonly onRequestAddPart?: ((lessonId: string) => void) | undefined;
 }) {
   const messages = useMessages();
   const t = messages.structure;
@@ -254,8 +267,50 @@ function LessonRow({
     transform: CSS.Transform.toString(transform),
     transition,
   };
-  const [partsCollapsed, setPartsCollapsed] = useState(false);
+  const containsSelected =
+    selectedPartId !== undefined && lesson.parts.some((part) => part.id === selectedPartId);
+  const [partsCollapsed, setPartsCollapsed] = useState(() => collapseParts && !containsSelected);
+  const [wasSelected, setWasSelected] = useState(containsSelected);
   const [editing, setEditing] = useState(false);
+
+  if (containsSelected !== wasSelected) {
+    setWasSelected(containsSelected);
+    if (containsSelected) setPartsCollapsed(false);
+  }
+
+  const handleOpenSettings = useCallback(() => {
+    onOpenSettings(lesson.id);
+  }, [onOpenSettings, lesson.id]);
+  const handleRename = useCallback(
+    (title: string) => {
+      onRename(lesson, title);
+    },
+    [onRename, lesson],
+  );
+  const handleRequestDelete = useCallback(() => {
+    onRequestDelete(lesson);
+  }, [onRequestDelete, lesson]);
+  const handleOpenPart = useCallback(
+    (partId: string) => {
+      onOpenPart(lesson.id, partId);
+    },
+    [onOpenPart, lesson.id],
+  );
+  const handleRenamePart = useCallback(
+    (part: Part, title: string) => {
+      onRenamePart(lesson, part, title);
+    },
+    [onRenamePart, lesson],
+  );
+  const handleRequestDeletePart = useCallback(
+    (part: Part) => {
+      onRequestDeletePart(lesson, part);
+    },
+    [onRequestDeletePart, lesson],
+  );
+  const handleRequestAddPart = useCallback(() => {
+    onRequestAddPart?.(lesson.id);
+  }, [onRequestAddPart, lesson.id]);
 
   if (variant === "sidebar") {
     const hasParts = lesson.parts.length > 0;
@@ -269,7 +324,7 @@ function LessonRow({
           onRename={() => {
             setEditing(true);
           }}
-          onDelete={onRequestDelete}
+          onDelete={handleRequestDelete}
           trigger={
             <div className={[styles.treeRow, styles.lessonRow].join(" ")}>
               {hasParts ? (
@@ -303,7 +358,7 @@ function LessonRow({
                   ariaLabel={t.lessonTitleLabel}
                   onCommit={(value) => {
                     setEditing(false);
-                    onRename(value);
+                    handleRename(value);
                   }}
                   onCancel={() => {
                     setEditing(false);
@@ -327,7 +382,7 @@ function LessonRow({
                 <IconButton
                   className={styles.rowAction}
                   aria-label={messages.lesson.addPartTitle}
-                  onClick={onRequestAddPart}
+                  onClick={handleRequestAddPart}
                 >
                   <Icon name="plus" size={16} />
                 </IconButton>
@@ -348,10 +403,10 @@ function LessonRow({
           <PartList
             lesson={lesson}
             selectedPartId={selectedPartId}
-            onOpenPart={onOpenPart}
+            onOpenPart={handleOpenPart}
             onReorderParts={onReorderParts}
-            onRenamePart={onRenamePart}
-            onRequestDeletePart={onRequestDeletePart}
+            onRenamePart={handleRenamePart}
+            onRequestDeletePart={handleRequestDeletePart}
           />
         ) : null}
       </div>
@@ -380,13 +435,13 @@ function LessonRow({
       </button>
       <IconButton
         aria-label={format(t.lessonSettings, { lesson: lesson.title })}
-        onClick={onOpenSettings}
+        onClick={handleOpenSettings}
       >
         <Icon name="edit" size={18} />
       </IconButton>
     </div>
   );
-}
+});
 
 function useReorderSensors() {
   return useSensors(
@@ -395,7 +450,7 @@ function useReorderSensors() {
   );
 }
 
-function SortablePartRow({
+const SortablePartRow = memo(function SortablePartRow({
   part,
   selected,
   reorderable,
@@ -406,9 +461,9 @@ function SortablePartRow({
   readonly part: Part;
   readonly selected: boolean;
   readonly reorderable: boolean;
-  readonly onOpen: () => void;
-  readonly onRename: (title: string) => void;
-  readonly onRequestDelete: () => void;
+  readonly onOpen: (partId: string) => void;
+  readonly onRename: (part: Part, title: string) => void;
+  readonly onRequestDelete: (part: Part) => void;
 }) {
   const messages = useMessages();
   const format = useFormat();
@@ -420,6 +475,12 @@ function SortablePartRow({
     transition,
   };
   const [editing, setEditing] = useState(false);
+  const handleOpen = useCallback(() => {
+    onOpen(part.id);
+  }, [onOpen, part.id]);
+  const handleRequestDelete = useCallback(() => {
+    onRequestDelete(part);
+  }, [onRequestDelete, part]);
 
   return (
     <div ref={setNodeRef} style={style}>
@@ -427,7 +488,7 @@ function SortablePartRow({
         onRename={() => {
           setEditing(true);
         }}
-        onDelete={onRequestDelete}
+        onDelete={handleRequestDelete}
         trigger={
           <div
             className={[
@@ -451,7 +512,7 @@ function SortablePartRow({
                 ariaLabel={messages.lesson.partTitleLabel}
                 onCommit={(value) => {
                   setEditing(false);
-                  onRename(value);
+                  onRename(part, value);
                 }}
                 onCancel={() => {
                   setEditing(false);
@@ -462,7 +523,7 @@ function SortablePartRow({
                 type="button"
                 className={styles.treeMain}
                 aria-current={selected ? "page" : undefined}
-                onClick={onOpen}
+                onClick={handleOpen}
                 onDoubleClick={() => {
                   setEditing(true);
                 }}
@@ -486,7 +547,7 @@ function SortablePartRow({
       />
     </div>
   );
-}
+});
 
 function PartList({
   lesson,
@@ -529,15 +590,9 @@ function PartList({
               part={part}
               selected={part.id === selectedPartId}
               reorderable={reorderable}
-              onOpen={() => {
-                onOpenPart(part.id);
-              }}
-              onRename={(title) => {
-                onRenamePart(part, title);
-              }}
-              onRequestDelete={() => {
-                onRequestDeletePart(part);
-              }}
+              onOpen={onOpenPart}
+              onRename={onRenamePart}
+              onRequestDelete={onRequestDeletePart}
             />
           ))}
         </div>
@@ -546,7 +601,7 @@ function PartList({
   );
 }
 
-function UnitBlock({
+const UnitBlock = memo(function UnitBlock({
   unit,
   index,
   lessons,
@@ -554,6 +609,7 @@ function UnitBlock({
   addingLesson,
   variant,
   selectedPartId,
+  collapseParts,
   onToggleCollapsed,
   onAddLesson,
   onOpenSettings,
@@ -575,11 +631,12 @@ function UnitBlock({
   readonly addingLesson: boolean;
   readonly variant: "page" | "sidebar";
   readonly selectedPartId?: string | undefined;
-  readonly onToggleCollapsed: () => void;
-  readonly onAddLesson: () => void;
-  readonly onOpenSettings: () => void;
-  readonly onRename: (title: string) => void;
-  readonly onRequestDelete: () => void;
+  readonly collapseParts: boolean;
+  readonly onToggleCollapsed: (unitId: string) => void;
+  readonly onAddLesson: (unitId: string) => void;
+  readonly onOpenSettings: (unitId: string) => void;
+  readonly onRename: (unit: OutlineSection, title: string) => void;
+  readonly onRequestDelete: (unit: OutlineSection) => void;
   readonly onOpenPart: (lessonId: string, partId: string) => void;
   readonly onOpenLessonSettings: (lessonId: string) => void;
   readonly onRenameLesson: (lesson: Lesson, title: string) => void;
@@ -605,9 +662,22 @@ function UnitBlock({
   const lessonsId = `unit-lessons-${unit.id}`;
   const [editing, setEditing] = useState(false);
 
+  const handleToggleCollapsed = useCallback(() => {
+    onToggleCollapsed(unit.id);
+  }, [onToggleCollapsed, unit.id]);
+  const handleAddLesson = useCallback(() => {
+    onAddLesson(unit.id);
+  }, [onAddLesson, unit.id]);
+  const handleOpenSettings = useCallback(() => {
+    onOpenSettings(unit.id);
+  }, [onOpenSettings, unit.id]);
+  const handleRequestDelete = useCallback(() => {
+    onRequestDelete(unit);
+  }, [onRequestDelete, unit]);
+
   const commitRename = (value: string) => {
     setEditing(false);
-    onRename(value);
+    onRename(unit, value);
   };
 
   return (
@@ -631,7 +701,7 @@ function UnitBlock({
                       ? format(t.expandUnit, { unit: unit.title })
                       : format(t.collapseUnit, { unit: unit.title })
                   }
-                  onClick={onToggleCollapsed}
+                  onClick={handleToggleCollapsed}
                 >
                   <Icon
                     aria-hidden="true"
@@ -671,7 +741,7 @@ function UnitBlock({
                   <button
                     type="button"
                     className={styles.treeMain}
-                    onClick={onToggleCollapsed}
+                    onClick={handleToggleCollapsed}
                     onDoubleClick={() => {
                       setEditing(true);
                     }}
@@ -683,7 +753,7 @@ function UnitBlock({
                   <IconButton
                     aria-label={t.addLesson}
                     disabled={addingLesson}
-                    onClick={onAddLesson}
+                    onClick={handleAddLesson}
                   >
                     <Icon name="plus" size={18} />
                   </IconButton>
@@ -713,7 +783,7 @@ function UnitBlock({
                 </ContextMenu.Item>
                 <ContextMenu.Item
                   className={[styles.menuItem, styles.menuItemDanger].join(" ")}
-                  onClick={onRequestDelete}
+                  onClick={handleRequestDelete}
                 >
                   {messages.common.delete}
                 </ContextMenu.Item>
@@ -745,7 +815,7 @@ function UnitBlock({
                 ? format(t.expandUnit, { unit: unit.title })
                 : format(t.collapseUnit, { unit: unit.title })
             }
-            onClick={onToggleCollapsed}
+            onClick={handleToggleCollapsed}
           >
             <Icon
               aria-hidden="true"
@@ -761,13 +831,13 @@ function UnitBlock({
             </span>
           </button>
           <div className={styles.unitActions}>
-            <Button variant="ghost" disabled={addingLesson} onClick={onAddLesson}>
+            <Button variant="ghost" disabled={addingLesson} onClick={handleAddLesson}>
               <Icon name="plus" size={18} />
               {t.addLesson}
             </Button>
             <IconButton
               aria-label={format(t.unitSettings, { unit: unit.title })}
-              onClick={onOpenSettings}
+              onClick={handleOpenSettings}
             >
               <Icon name="edit" size={18} />
             </IconButton>
@@ -793,32 +863,15 @@ function UnitBlock({
                 index={lessonIndex}
                 variant={variant}
                 selectedPartId={selectedPartId}
-                onOpenSettings={() => {
-                  onOpenLessonSettings(lesson.id);
-                }}
-                onOpenPart={(partId) => {
-                  onOpenPart(lesson.id, partId);
-                }}
-                onRename={(title) => {
-                  onRenameLesson(lesson, title);
-                }}
-                onRequestDelete={() => {
-                  onRequestDeleteLesson(lesson);
-                }}
-                onRenamePart={(part, title) => {
-                  onRenamePart(lesson, part, title);
-                }}
-                onRequestDeletePart={(part) => {
-                  onRequestDeletePart(lesson, part);
-                }}
+                collapseParts={collapseParts}
+                onOpenSettings={onOpenLessonSettings}
+                onOpenPart={onOpenPart}
+                onRename={onRenameLesson}
+                onRequestDelete={onRequestDeleteLesson}
+                onRenamePart={onRenamePart}
+                onRequestDeletePart={onRequestDeletePart}
                 onReorderParts={onReorderParts}
-                onRequestAddPart={
-                  onRequestAddPart
-                    ? () => {
-                        onRequestAddPart(lesson.id);
-                      }
-                    : undefined
-                }
+                onRequestAddPart={onRequestAddPart}
               />
             ))}
           </div>
@@ -826,7 +879,7 @@ function UnitBlock({
       )}
     </article>
   );
-}
+});
 
 function Modal({
   label,
@@ -934,22 +987,22 @@ export function CourseStructure({
     () => new Set<string>(),
   );
 
-  const toggleUnitCollapsed = (unitId: string) => {
+  const toggleUnitCollapsed = useCallback((unitId: string) => {
     setCollapsedUnitIds((current) => {
       const next = new Set(current);
       if (!next.delete(unitId)) next.add(unitId);
       return next;
     });
-  };
+  }, []);
 
-  const expandUnit = (unitId: string) => {
+  const expandUnit = useCallback((unitId: string) => {
     setCollapsedUnitIds((current) => {
       if (!current.has(unitId)) return current;
       const next = new Set(current);
       next.delete(unitId);
       return next;
     });
-  };
+  }, []);
 
   const allCollapsed =
     course.outline.length > 0 &&
@@ -966,45 +1019,59 @@ export function CourseStructure({
       ? null
       : (course.outline.find((section) => section.id === settingsUnitId) ?? null);
 
-  const report = (result: ProjectWriteResult) => {
+  const report = useCallback((result: ProjectWriteResult) => {
     setFailed(result.status !== "saved");
-  };
+  }, []);
 
-  const reorderPartsWithReport = onReorderParts
-    ? (lessonId: string, orderedPartIds: readonly string[]) =>
-        onReorderParts(lessonId, orderedPartIds).then((result) => {
-          report(result);
-          return result;
-        })
-    : undefined;
+  const reorderPartsWithReport = useMemo(() => {
+    if (!onReorderParts) return undefined;
+    return (lessonId: string, orderedPartIds: readonly string[]) =>
+      onReorderParts(lessonId, orderedPartIds).then((result) => {
+        report(result);
+        return result;
+      });
+  }, [onReorderParts, report]);
 
-  const createUnit = async () => {
+  const createUnit = useCallback(async () => {
     setCreating(true);
     setFailed(false);
     const result = await onNewUnit();
     setCreating(false);
     report(result);
-  };
+  }, [onNewUnit, report]);
 
-  const renameUnit = (unit: OutlineSection, title: string) => {
-    const next = title.trim();
-    if (next === "" || next === unit.title) return;
-    setFailed(false);
-    void onRenameUnit(unit.id, next).then(report);
-  };
+  const renameUnit = useCallback(
+    (unit: OutlineSection, title: string) => {
+      const next = title.trim();
+      if (next === "" || next === unit.title) return;
+      setFailed(false);
+      void onRenameUnit(unit.id, next).then(report);
+    },
+    [onRenameUnit, report],
+  );
 
-  const removeUnit = async (unit: OutlineSection) => {
-    const ok = await confirm({
-      title: t.confirmDeleteUnitTitle,
-      description: format(t.confirmDeleteUnitBody, { unit: unit.title }),
-      confirmLabel: t.deleteUnit,
-      tone: "danger",
-    });
-    if (!ok) return;
-    setSettingsUnitId(null);
-    setFailed(false);
-    report(await onDeleteUnit(unit.id));
-  };
+  const removeUnit = useCallback(
+    async (unit: OutlineSection) => {
+      const ok = await confirm({
+        title: t.confirmDeleteUnitTitle,
+        description: format(t.confirmDeleteUnitBody, { unit: unit.title }),
+        confirmLabel: t.deleteUnit,
+        tone: "danger",
+      });
+      if (!ok) return;
+      setSettingsUnitId(null);
+      setFailed(false);
+      report(await onDeleteUnit(unit.id));
+    },
+    [confirm, t, format, onDeleteUnit, report],
+  );
+
+  const requestDeleteUnit = useCallback(
+    (unit: OutlineSection) => {
+      void removeUnit(unit);
+    },
+    [removeUnit],
+  );
 
   const lessonById = useMemo(
     () => new Map<string, Lesson>(course.lessons.map((lesson) => [lesson.id, lesson])),
@@ -1014,53 +1081,111 @@ export function CourseStructure({
   const settingsLesson =
     settingsLessonId === null ? null : (lessonById.get(settingsLessonId) ?? null);
 
-  const createLesson = async (unitId: string) => {
-    setAddingUnitId(unitId);
-    setFailed(false);
-    const result = await onAddLesson(unitId);
-    setAddingUnitId(null);
-    report(result);
-  };
+  const createLesson = useCallback(
+    async (unitId: string) => {
+      setAddingUnitId(unitId);
+      setFailed(false);
+      const result = await onAddLesson(unitId);
+      setAddingUnitId(null);
+      report(result);
+    },
+    [onAddLesson, report],
+  );
 
-  const renameLesson = (lesson: Lesson, title: string) => {
-    const next = title.trim();
-    if (next === "" || next === lesson.title) return;
-    setFailed(false);
-    void onRenameLesson(lesson.id, next).then(report);
-  };
+  const renameLesson = useCallback(
+    (lesson: Lesson, title: string) => {
+      const next = title.trim();
+      if (next === "" || next === lesson.title) return;
+      setFailed(false);
+      void onRenameLesson(lesson.id, next).then(report);
+    },
+    [onRenameLesson, report],
+  );
 
-  const removeLesson = async (lesson: Lesson) => {
-    const ok = await confirm({
-      title: t.confirmDeleteLessonTitle,
-      description: format(t.confirmDeleteLessonBody, { lesson: lesson.title }),
-      confirmLabel: t.deleteLesson,
-      tone: "danger",
-    });
-    if (!ok) return;
-    setSettingsLessonId(null);
-    setFailed(false);
-    report(await onDeleteLesson(lesson.id));
-  };
+  const removeLesson = useCallback(
+    async (lesson: Lesson) => {
+      const ok = await confirm({
+        title: t.confirmDeleteLessonTitle,
+        description: format(t.confirmDeleteLessonBody, { lesson: lesson.title }),
+        confirmLabel: t.deleteLesson,
+        tone: "danger",
+      });
+      if (!ok) return;
+      setSettingsLessonId(null);
+      setFailed(false);
+      report(await onDeleteLesson(lesson.id));
+    },
+    [confirm, t, format, onDeleteLesson, report],
+  );
 
-  const renamePart = (lesson: Lesson, part: Part, title: string) => {
-    const next = title.trim();
-    if (next === "" || next === part.title || !onRenamePart) return;
-    setFailed(false);
-    void onRenamePart(lesson.id, part.id, next).then(report);
-  };
+  const requestDeleteLesson = useCallback(
+    (lesson: Lesson) => {
+      void removeLesson(lesson);
+    },
+    [removeLesson],
+  );
 
-  const removePart = async (lesson: Lesson, part: Part) => {
-    if (!onDeletePart) return;
-    const ok = await confirm({
-      title: messages.lesson.confirmDeletePartTitle,
-      description: format(messages.lesson.confirmDeletePartBody, { title: part.title }),
-      confirmLabel: messages.lesson.deletePart,
-      tone: "danger",
-    });
-    if (!ok) return;
+  const renamePart = useCallback(
+    (lesson: Lesson, part: Part, title: string) => {
+      const next = title.trim();
+      if (next === "" || next === part.title || !onRenamePart) return;
+      setFailed(false);
+      void onRenamePart(lesson.id, part.id, next).then(report);
+    },
+    [onRenamePart, report],
+  );
+
+  const removePart = useCallback(
+    async (lesson: Lesson, part: Part) => {
+      if (!onDeletePart) return;
+      const ok = await confirm({
+        title: messages.lesson.confirmDeletePartTitle,
+        description: format(messages.lesson.confirmDeletePartBody, { title: part.title }),
+        confirmLabel: messages.lesson.deletePart,
+        tone: "danger",
+      });
+      if (!ok) return;
+      setFailed(false);
+      report(await onDeletePart(lesson.id, part.id));
+    },
+    [onDeletePart, confirm, messages, format, report],
+  );
+
+  const requestDeletePart = useCallback(
+    (lesson: Lesson, part: Part) => {
+      void removePart(lesson, part);
+    },
+    [removePart],
+  );
+
+  const handleAddLesson = useCallback(
+    (unitId: string) => {
+      expandUnit(unitId);
+      void createLesson(unitId);
+    },
+    [expandUnit, createLesson],
+  );
+
+  const openUnitSettings = useCallback((unitId: string) => {
     setFailed(false);
-    report(await onDeletePart(lesson.id, part.id));
-  };
+    setSettingsUnitId(unitId);
+  }, []);
+
+  const openLessonSettings = useCallback((lessonId: string) => {
+    setFailed(false);
+    setSettingsLessonId(lessonId);
+  }, []);
+
+  const handleOpenPart = useCallback(
+    (lessonId: string, partId: string) => {
+      onOpenPart?.(lessonId, partId);
+    },
+    [onOpenPart],
+  );
+
+  const requestAddPart = useCallback((lessonId: string) => {
+    setAddingPartLessonId(lessonId);
+  }, []);
 
   const sensors = useReorderSensors();
   const [layout, setLayout] = useState<UnitLayout[]>(() => outlineToLayout(course.outline));
@@ -1214,6 +1339,16 @@ export function CourseStructure({
     [course.outline],
   );
 
+  const collapsePartsByDefault = useMemo(() => {
+    if (course.lessons.length > LARGE_LESSON_COUNT) return true;
+    let parts = 0;
+    for (const lesson of course.lessons) {
+      parts += lesson.parts.length;
+      if (parts > LARGE_PART_COUNT) return true;
+    }
+    return false;
+  }, [course.lessons]);
+
   return (
     <WorkInner
       className={variant === "sidebar" ? [styles.inner, styles.sidebar].join(" ") : styles.inner}
@@ -1315,46 +1450,20 @@ export function CourseStructure({
                     addingLesson={addingUnitId === unit.id}
                     variant={variant}
                     selectedPartId={selectedId}
-                    onToggleCollapsed={() => {
-                      toggleUnitCollapsed(unit.id);
-                    }}
-                    onAddLesson={() => {
-                      expandUnit(unit.id);
-                      void createLesson(unit.id);
-                    }}
-                    onOpenSettings={() => {
-                      setFailed(false);
-                      setSettingsUnitId(unit.id);
-                    }}
-                    onRename={(title) => {
-                      renameUnit(unit, title);
-                    }}
-                    onRequestDelete={() => {
-                      void removeUnit(unit);
-                    }}
-                    onOpenPart={(lessonId, partId) => {
-                      onOpenPart?.(lessonId, partId);
-                    }}
-                    onOpenLessonSettings={(lessonId) => {
-                      setFailed(false);
-                      setSettingsLessonId(lessonId);
-                    }}
+                    collapseParts={collapsePartsByDefault}
+                    onToggleCollapsed={toggleUnitCollapsed}
+                    onAddLesson={handleAddLesson}
+                    onOpenSettings={openUnitSettings}
+                    onRename={renameUnit}
+                    onRequestDelete={requestDeleteUnit}
+                    onOpenPart={handleOpenPart}
+                    onOpenLessonSettings={openLessonSettings}
                     onRenameLesson={renameLesson}
-                    onRequestDeleteLesson={(lesson) => {
-                      void removeLesson(lesson);
-                    }}
+                    onRequestDeleteLesson={requestDeleteLesson}
                     onRenamePart={renamePart}
-                    onRequestDeletePart={(lesson, part) => {
-                      void removePart(lesson, part);
-                    }}
+                    onRequestDeletePart={requestDeletePart}
                     onReorderParts={reorderPartsWithReport}
-                    onRequestAddPart={
-                      onAddPart
-                        ? (lessonId) => {
-                            setAddingPartLessonId(lessonId);
-                          }
-                        : undefined
-                    }
+                    onRequestAddPart={onAddPart ? requestAddPart : undefined}
                   />
                 );
               })}

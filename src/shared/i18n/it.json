@@ -722,5 +722,23 @@
     "supportPrompt": "Mostra promemoria di supporto",
     "clearRecent": "Cancella corsi recenti",
     "recentEmpty": "Nessun corso recente"
+  },
+  "release": {
+    "chipUpToDate": "Release up to date",
+    "chipRebuilding": "Rebuilding release…",
+    "chipPending": "Changes pending",
+    "chipError": "Release error",
+    "chipNotBuilt": "No release yet",
+    "revision": "Revision {revision}",
+    "version": "Version {version}",
+    "historyTitle": "Release history",
+    "historyEmpty": "No releases yet.",
+    "added": "Added or replaced",
+    "deleted": "Deleted",
+    "markUploaded": "Mark as uploaded",
+    "markedUploaded": "Marked uploaded",
+    "changedSinceUpload": "{count} files changed since your last upload",
+    "missingAssets": "{count} referenced assets have no media file and were left out of the release",
+    "openFolder": "Open project folder"
   }
 }

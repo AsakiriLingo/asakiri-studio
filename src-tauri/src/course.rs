@@ -107,7 +107,7 @@ pub fn create_course(parent_path: String, name: String) -> Result<CreatedCourse,
     })
 }
 
-fn resolve_course_path(root_path: &str, relative_path: &str) -> Option<std::path::PathBuf> {
+pub(crate) fn resolve_course_path(root_path: &str, relative_path: &str) -> Option<std::path::PathBuf> {
     let root = Path::new(root_path);
     let mut target = root.to_path_buf();
     for segment in relative_path.split('/') {
@@ -190,6 +190,68 @@ pub fn hash_course_file(root_path: String, relative_path: String) -> Result<File
         sha256: format!("{:x}", hasher.finalize()),
         byte_size: bytes.len() as u64,
     })
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DigestRequest {
+    pub asset_path: String,
+    pub binary_path: String,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DigestResult {
+    pub asset_path: String,
+    pub sha256: String,
+    pub byte_size: u64,
+}
+
+#[tauri::command]
+pub fn backfill_asset_digests(
+    root_path: String,
+    requests: Vec<DigestRequest>,
+) -> Result<Vec<DigestResult>, String> {
+    let mut results = Vec::new();
+    for request in &requests {
+        let Some(binary) = resolve_course_path(&root_path, &request.binary_path) else {
+            continue;
+        };
+        let Ok(bytes) = fs::read(&binary) else {
+            continue;
+        };
+        let mut hasher = Sha256::new();
+        hasher.update(&bytes);
+        let sha256 = format!("{:x}", hasher.finalize());
+        let byte_size = bytes.len() as u64;
+
+        let Some(asset_file) = resolve_course_path(&root_path, &request.asset_path) else {
+            continue;
+        };
+        let Ok(text) = fs::read_to_string(&asset_file) else {
+            continue;
+        };
+        let Ok(mut value) = serde_json::from_str::<serde_json::Value>(&text) else {
+            continue;
+        };
+        let Some(object) = value.as_object_mut() else {
+            continue;
+        };
+        object.insert("sha256".to_string(), serde_json::Value::String(sha256.clone()));
+        object.insert("byteSize".to_string(), serde_json::json!(byte_size));
+        let Ok(serialized) = serde_json::to_string_pretty(&value) else {
+            continue;
+        };
+        if fs::write(&asset_file, format!("{serialized}\n")).is_err() {
+            continue;
+        }
+        results.push(DigestResult {
+            asset_path: request.asset_path.clone(),
+            sha256,
+            byte_size,
+        });
+    }
+    Ok(results)
 }
 
 #[tauri::command]

@@ -1,5 +1,6 @@
 mod course;
 mod media;
+mod packaging;
 mod tts;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -79,6 +80,7 @@ pub fn run() {
             course::delete_course_file,
             course::copy_course_file,
             course::hash_course_file,
+            course::backfill_asset_digests,
             course::copy_course_image_stripped,
             course::rename_course_file,
             course::read_course_file_base64,
@@ -90,6 +92,9 @@ pub fn run() {
             media::write_temp_media,
             media::list_folder_files,
             media::read_document,
+            packaging::write_stored_zip,
+            packaging::write_release_state,
+            packaging::read_release_state,
             tts::list_tts_voices,
             tts::synthesize_tts,
             tts::preview_tts,

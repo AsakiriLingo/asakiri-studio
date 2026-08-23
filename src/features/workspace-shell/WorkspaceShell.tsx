@@ -23,6 +23,7 @@ export interface WorkspaceShellProps {
   readonly onBack: () => void;
   readonly onOpenSettings: () => void;
   readonly saveStatus?: { readonly label: string; readonly tone: StatusTone } | undefined;
+  readonly extraStatus?: ReactNode;
   readonly flush?: boolean;
   readonly children: ReactNode;
 }
@@ -35,6 +36,7 @@ export function WorkspaceShell({
   onBack,
   onOpenSettings,
   saveStatus,
+  extraStatus,
   flush = false,
   children,
 }: WorkspaceShellProps) {
@@ -79,6 +81,7 @@ export function WorkspaceShell({
           </nav>
         </TooltipProvider>
         <div className={styles.utilities}>
+          {extraStatus}
           {saveStatus ? <Status tone={saveStatus.tone}>{saveStatus.label}</Status> : null}
           <IconButton size="sm" aria-label={messages.common.backToStart} onClick={onBack}>
             <Icon name="back" size={18} />

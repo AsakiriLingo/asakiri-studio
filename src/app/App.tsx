@@ -1,4 +1,4 @@
-import { lazy, Suspense, useCallback, useEffect, useState, type ReactNode } from "react";
+import { lazy, Suspense, useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import type { AvailableUpdate } from "@core/app-update";
 import { createProjectSession, type ProjectDirectory, type RecentProject } from "@core/projects";
 import { I18nProvider, LOCALES, getMessages, useMessages, type Locale } from "@shared/i18n";
@@ -14,11 +14,12 @@ import { SPREADSHEET_EXTENSIONS } from "@core/documents";
 import { CourseStructure, OutlineSearch } from "@features/course-structure";
 import { LessonWorkspace } from "@features/lesson-workspace";
 import type { MediaSelection } from "@features/media";
-import { courseToRichLibrary } from "@features/lesson-editor/rich-library";
-import type { SaveState } from "@features/lesson-editor/PartEditor";
-import { DraftsToolbar } from "@features/drafts/DraftsToolbar";
-import { DraftsSearch } from "@features/drafts/DraftsSearch";
+import { courseToRichLibrary, PartEditor, type SaveState } from "@features/lesson-editor";
+import { DraftsToolbar, DraftsSearch, DraftsPanel } from "@features/drafts";
+import { ReleaseChip } from "@features/release";
 import { createAppServices } from "@app/services";
+import { useRelease } from "@app/useRelease";
+import { useMediaBackfill } from "@app/useMediaBackfill";
 import { useCourseState } from "@app/useCourseState";
 import { useProjectActions } from "@app/useProjectActions";
 import { useOutlineActions } from "@app/useOutlineActions";
@@ -29,25 +30,17 @@ import { useDrafts } from "@app/useDrafts";
 import styles from "@app/App.module.css";
 
 const CourseDetails = lazy(() =>
-  import("@features/course-details/CourseDetails").then((m) => ({ default: m.CourseDetails })),
+  import("@features/course-details").then((m) => ({ default: m.CourseDetails })),
 );
 const CourseAttribution = lazy(() =>
-  import("@features/attribution/CourseAttribution").then((m) => ({ default: m.CourseAttribution })),
+  import("@features/attribution").then((m) => ({ default: m.CourseAttribution })),
 );
 const CourseContent = lazy(() =>
-  import("@features/content/CourseContent").then((m) => ({ default: m.CourseContent })),
+  import("@features/content").then((m) => ({ default: m.CourseContent })),
 );
-const CourseMedia = lazy(() =>
-  import("@features/media/CourseMedia").then((m) => ({ default: m.CourseMedia })),
-);
-const PartEditor = lazy(() =>
-  import("@features/lesson-editor/PartEditor").then((m) => ({ default: m.PartEditor })),
-);
+const CourseMedia = lazy(() => import("@features/media").then((m) => ({ default: m.CourseMedia })));
 const PartPreview = lazy(() =>
-  import("@features/part-preview/PartPreview").then((m) => ({ default: m.PartPreview })),
-);
-const DraftsPanel = lazy(() =>
-  import("@features/drafts/DraftsPanel").then((m) => ({ default: m.DraftsPanel })),
+  import("@features/part-preview").then((m) => ({ default: m.PartPreview })),
 );
 
 function initialThemePreference(): ThemePreference {
@@ -128,6 +121,13 @@ export function App() {
 
   const store = useCourseState(services);
   const { project, courseState } = store;
+  const release = useRelease(services, store);
+  useMediaBackfill(services, store);
+  const readyCourse = courseState?.status === "ready" ? courseState.course : null;
+  const richLibrary = useMemo(
+    () => (readyCourse ? courseToRichLibrary(readyCourse) : null),
+    [readyCourse],
+  );
 
   const closeLessonAfterDelete = (lessonId: string) => {
     const ready = store.courseState?.status === "ready" ? store.courseState.course : null;
@@ -406,6 +406,21 @@ export function App() {
           setSettingsOpen(true);
         }}
         saveStatus={saveStatus}
+        extraStatus={
+          course ? (
+            <ReleaseChip
+              status={release.status}
+              revision={release.revision}
+              version={release.version}
+              history={release.history}
+              uploadedMark={release.uploadedMark}
+              changedSinceUpload={release.changedSinceUpload}
+              missingAssets={release.missingAssets}
+              onMarkUploaded={release.markUploaded}
+              onOpenFolder={release.openFolder}
+            />
+          ) : undefined
+        }
         flush={course !== null}
       >
         {courseState?.status === "loading" ? null : courseState?.status === "failed" ? (
@@ -539,7 +554,7 @@ export function App() {
                     <PartPreview
                       part={openPart}
                       course={course}
-                      library={courseToRichLibrary(course)}
+                      library={richLibrary ?? courseToRichLibrary(course)}
                       onLoadAssetPreview={mediaActions.loadAssetPreview}
                     />
                   </Suspense>
@@ -557,7 +572,7 @@ export function App() {
                     onUpdate={draftActions.updateDraft}
                     onRename={draftActions.renameDraft}
                     onDelete={draftActions.deleteDraft}
-                    library={courseToRichLibrary(course)}
+                    library={richLibrary ?? courseToRichLibrary(course)}
                     onLoadAssetPreview={mediaActions.loadAssetPreview}
                   />
                 </Suspense>

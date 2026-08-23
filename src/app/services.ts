@@ -2,7 +2,7 @@ import type { AppMenuGateway } from "@core/app-menu";
 import type { AppUpdateGateway } from "@core/app-update";
 import type { LinkOpener } from "@core/links";
 import type { MediaSearchGateway } from "@core/media-search";
-import type { AssetReader, MediaPicker } from "@core/project-media";
+import type { AssetDigestBackfiller, AssetReader, MediaPicker } from "@core/project-media";
 import type { ProjectCreationGateway, ProjectDirectoryGateway } from "@core/projects";
 import type { ProjectReader } from "@core/project-reading";
 import type { ProjectSystem } from "@core/project-system";
@@ -10,12 +10,19 @@ import type { ProjectWriter } from "@core/project-writing";
 import type { RecordingGateway } from "@core/recording";
 import type { TtsGateway } from "@core/tts";
 import type { DocumentGateway } from "@core/documents";
+import type { ReleaseDeps } from "@features/release";
 import { createAppMenuGateway } from "@platform/app-menu";
+import { createPackWriter } from "@platform/packaging";
+import { createReleaseGateway, createReleaseStateStore } from "@platform/release";
 import { createAppUpdateGateway } from "@platform/app-update";
 import { createLinkOpener } from "@platform/links";
 import { createProjectCreationGateway } from "@platform/project-creation";
 import { createProjectDirectoryGateway } from "@platform/project-directory";
-import { createAssetReader, createMediaPicker } from "@platform/project-media";
+import {
+  createAssetDigestBackfiller,
+  createAssetReader,
+  createMediaPicker,
+} from "@platform/project-media";
 import { ProjectLocationRegistry, RecentProjectsStore } from "@platform/project-location";
 import { createProjectReader } from "@platform/project-reading";
 import { createProjectSystem } from "@platform/project-system";
@@ -33,6 +40,7 @@ export interface AppServices {
   readonly system: ProjectSystem;
   readonly mediaPicker: MediaPicker;
   readonly assetReader: AssetReader;
+  readonly assetDigests?: AssetDigestBackfiller;
   readonly mediaSearch: MediaSearchGateway;
   readonly appUpdate: AppUpdateGateway;
   readonly menu: AppMenuGateway;
@@ -40,6 +48,7 @@ export interface AppServices {
   readonly tts: TtsGateway;
   readonly recording: RecordingGateway;
   readonly documents: DocumentGateway;
+  readonly release?: ReleaseDeps;
 }
 
 /**
@@ -58,6 +67,7 @@ export function createAppServices(): AppServices {
     system: createProjectSystem(locations),
     mediaPicker: createMediaPicker(),
     assetReader: createAssetReader(locations),
+    assetDigests: createAssetDigestBackfiller(locations),
     mediaSearch: createTauriMediaSearchGateway(),
     appUpdate: createAppUpdateGateway(),
     menu: createAppMenuGateway(),
@@ -65,5 +75,14 @@ export function createAppServices(): AppServices {
     tts: createTauriTtsGateway(),
     recording: createTauriRecordingGateway(),
     documents: createDocumentGateway(),
+    release: {
+      writer: createPackWriter(locations),
+      gateway: createReleaseGateway(locations),
+      store: createReleaseStateStore(),
+      clock: {
+        now: () => new Date().toISOString(),
+        newId: () => crypto.randomUUID(),
+      },
+    },
   };
 }
