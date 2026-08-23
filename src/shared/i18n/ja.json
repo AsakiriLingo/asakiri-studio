@@ -18,6 +18,8 @@
     "addLink": "リンクを追加",
     "backToStart": "スタートに戻る",
     "cancel": "キャンセル",
+    "decrement": "減らす",
+    "increment": "増やす",
     "delete": "削除",
     "done": "完了",
     "edit": "編集",
@@ -127,7 +129,7 @@
     "fieldTitle": "コースタイトル",
     "fieldTitleHelp": "フォルダ名とは別です。いつでも変更できます。",
     "fieldVersion": "コースのバージョン",
-    "fieldVersionHelp": "学習者に表示される、このコース独自のバージョンです。アプリのバージョンとは関係ありません。",
+    "fieldVersionHelp": "学習者に表示される、このコース独自のバージョンです。",
     "flagHint": "カスタム旗：正方形の画像（SVG または PNG）、128×128 px 以上。",
     "flagUpload": "カスタム旗をアップロード",
     "folder": "フォルダ",
@@ -548,7 +550,7 @@
     "usedBy": "{count}件で使用"
   },
   "newCourse": {
-    "calloutBody": "スタジオがフォルダを作成し、コースファイルを追加して Git を初期化します。あとはお好みの Git ツールを使えます。",
+    "calloutBody": "スタジオがフォルダを作成し、コースファイルを追加します。",
     "calloutTitle": "ローカルに作成されます",
     "description": "プロジェクトに名前をつけ、フォルダを作成する場所を選びます。",
     "errorAlreadyExists": "その場所には同じ名前のフォルダがすでにあります。別の名前を選んでください。",

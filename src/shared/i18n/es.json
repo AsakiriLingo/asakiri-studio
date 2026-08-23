@@ -18,6 +18,8 @@
     "addLink": "Agregar enlace",
     "backToStart": "Volver al inicio",
     "cancel": "Cancelar",
+    "decrement": "Disminuir",
+    "increment": "Aumentar",
     "delete": "Eliminar",
     "done": "Listo",
     "edit": "Editar",
@@ -127,7 +129,7 @@
     "fieldTitle": "Título del curso",
     "fieldTitleHelp": "Independiente del nombre de la carpeta. Puedes cambiarlo en cualquier momento.",
     "fieldVersion": "Versión del curso",
-    "fieldVersionHelp": "Tu propia versión de este curso, visible para los estudiantes. No tiene relación con la versión de la aplicación.",
+    "fieldVersionHelp": "Tu propia versión de este curso, visible para los estudiantes.",
     "flagHint": "Bandera personalizada: imagen cuadrada (SVG o PNG), de al menos 128×128 px.",
     "flagUpload": "Subir bandera personalizada",
     "folder": "Carpeta",
@@ -548,7 +550,7 @@
     "usedBy": "Usado por {count}"
   },
   "newCourse": {
-    "calloutBody": "Studio crea la carpeta, agrega los archivos del curso e inicializa Git. Después puedes usar tus herramientas de Git preferidas.",
+    "calloutBody": "Studio crea la carpeta y agrega los archivos del curso.",
     "calloutTitle": "Creado localmente",
     "description": "Ponle nombre al proyecto y luego elige dónde se creará su carpeta.",
     "errorAlreadyExists": "Ya existe una carpeta con este nombre en esa ubicación. Elige otro nombre.",

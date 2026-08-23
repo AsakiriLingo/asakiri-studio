@@ -7,7 +7,7 @@ import { Menu } from "@base-ui/react/menu";
 import { Button } from "@shared/components/button";
 import { Callout } from "@shared/components/callout";
 import { DatePicker } from "@shared/components/date-picker";
-import { Field, TextArea, TextInput } from "@shared/components/form";
+import { Field, NumberInput, TextArea, TextInput } from "@shared/components/form";
 import { FlagPicker } from "@shared/components/flag";
 import { Select, type SelectOption } from "@shared/components/select";
 import { Icon, type IconName } from "@shared/components/icon";
@@ -17,6 +17,13 @@ import styles from "@features/course-details/CourseDetails.module.css";
 
 const LICENSE_CODES = ["by", "bySa", "byNc", "byNcSa", "byNd", "byNcNd", "cc0", "arr"] as const;
 type LicenseCode = (typeof LICENSE_CODES)[number];
+
+function parseVersion(value: string): number | null {
+  const trimmed = value.trim();
+  if (trimmed === "") return null;
+  const parsed = Number(trimmed);
+  return Number.isFinite(parsed) ? parsed : null;
+}
 
 function isLicenseCode(value: string): value is LicenseCode {
   return (LICENSE_CODES as readonly string[]).includes(value);
@@ -607,13 +614,14 @@ export function CourseDetails({
                 />
               </Field>
               <Field label={t.fieldVersion} help={t.fieldVersionHelp}>
-                <TextInput
+                <NumberInput
                   name="version"
-                  defaultValue={project.version}
+                  min={0}
+                  step={0.1}
+                  defaultValue={parseVersion(project.version)}
                   placeholder={t.versionPlaceholder}
-                  autoComplete="off"
-                  onBlur={(event) => {
-                    patchField("version", event.currentTarget.value);
+                  onValueChange={(value) => {
+                    patchField("version", value === null ? "" : String(value));
                   }}
                 />
               </Field>

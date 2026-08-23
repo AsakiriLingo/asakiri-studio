@@ -18,6 +18,8 @@
     "addLink": "Aggiungi link",
     "backToStart": "Torna all’inizio",
     "cancel": "Annulla",
+    "decrement": "Diminuisci",
+    "increment": "Aumenta",
     "delete": "Elimina",
     "done": "Fatto",
     "edit": "Modifica",
@@ -127,7 +129,7 @@
     "fieldTitle": "Titolo del corso",
     "fieldTitleHelp": "Separato dal nome della cartella. Puoi rinominarlo in qualsiasi momento.",
     "fieldVersion": "Versione del corso",
-    "fieldVersionHelp": "La tua versione per questo corso, mostrata agli studenti. Non è legata alla versione dell’app.",
+    "fieldVersionHelp": "La tua versione per questo corso, mostrata agli studenti.",
     "flagHint": "Bandiera personalizzata: immagine quadrata (SVG o PNG), almeno 128×128 px.",
     "flagUpload": "Carica bandiera personalizzata",
     "folder": "Cartella",
@@ -548,7 +550,7 @@
     "usedBy": "Usato da {count}"
   },
   "newCourse": {
-    "calloutBody": "Studio crea la cartella, aggiunge i file del corso e inizializza Git. In seguito puoi usare i tuoi strumenti Git preferiti.",
+    "calloutBody": "Studio crea la cartella e aggiunge i file del corso.",
     "calloutTitle": "Creato in locale",
     "description": "Dai un nome al progetto, poi scegli dove creare la sua cartella.",
     "errorAlreadyExists": "Una cartella con questo nome esiste già in quella posizione. Scegli un altro nome.",

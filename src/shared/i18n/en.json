@@ -18,6 +18,8 @@
     "addLink": "Add link",
     "backToStart": "Back to Start",
     "cancel": "Cancel",
+    "decrement": "Decrease",
+    "increment": "Increase",
     "delete": "Delete",
     "done": "Done",
     "edit": "Edit",
@@ -127,7 +129,7 @@
     "fieldTitle": "Course title",
     "fieldTitleHelp": "Separate from the folder name. You can rename it any time.",
     "fieldVersion": "Course version",
-    "fieldVersionHelp": "Your own version for this course, shown to learners. Unrelated to the app version.",
+    "fieldVersionHelp": "Your own version for this course, shown to learners.",
     "flagHint": "Custom flag: square image (SVG or PNG), at least 128×128 px.",
     "flagUpload": "Upload custom flag",
     "folder": "Folder",
@@ -548,7 +550,7 @@
     "usedBy": "Used by {count}"
   },
   "newCourse": {
-    "calloutBody": "Studio creates the folder, adds the course files, and initializes Git. You can use your preferred Git tools later.",
+    "calloutBody": "Studio creates the folder and adds the course files.",
     "calloutTitle": "Created locally",
     "description": "Name the project, then choose where its folder should be created.",
     "errorAlreadyExists": "A folder with this name already exists in that location. Pick another name.",

@@ -12,7 +12,6 @@ use serde::{Deserialize, Serialize};
 pub struct CreatedCourse {
     pub name: String,
     pub path: String,
-    pub git_initialized: bool,
 }
 
 fn slugify(name: &str) -> String {
@@ -102,17 +101,9 @@ pub fn create_course(parent_path: String, name: String) -> Result<CreatedCourse,
         serde_json::to_string_pretty(&manifest).map_err(|_| "unknown".to_string())?;
     fs::write(course_dir.join("project.json"), manifest_text).map_err(|_| "unknown".to_string())?;
 
-    let git_initialized = Command::new("git")
-        .arg("init")
-        .current_dir(&course_dir)
-        .output()
-        .map(|output| output.status.success())
-        .unwrap_or(false);
-
     Ok(CreatedCourse {
         name: title.to_string(),
         path: course_dir.to_string_lossy().into_owned(),
-        git_initialized,
     })
 }
 
@@ -333,55 +324,6 @@ pub fn reveal_path(path: String) -> Result<(), String> {
         .spawn()
         .map(|_| ())
         .map_err(|_| "unknown".to_string())
-}
-
-#[derive(Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct GitStatus {
-    pub initialized: bool,
-    pub commit_count: u32,
-    pub clean: bool,
-}
-
-#[tauri::command]
-pub fn git_status(path: String) -> GitStatus {
-    let dir = Path::new(&path);
-    let is_repo = Command::new("git")
-        .args(["rev-parse", "--is-inside-work-tree"])
-        .current_dir(dir)
-        .output()
-        .map(|output| output.status.success())
-        .unwrap_or(false);
-
-    if !is_repo {
-        return GitStatus {
-            initialized: false,
-            commit_count: 0,
-            clean: true,
-        };
-    }
-
-    let commit_count = Command::new("git")
-        .args(["rev-list", "--count", "HEAD"])
-        .current_dir(dir)
-        .output()
-        .ok()
-        .and_then(|output| String::from_utf8(output.stdout).ok())
-        .and_then(|text| text.trim().parse::<u32>().ok())
-        .unwrap_or(0);
-
-    let clean = Command::new("git")
-        .args(["status", "--porcelain"])
-        .current_dir(dir)
-        .output()
-        .map(|output| output.stdout.is_empty())
-        .unwrap_or(false);
-
-    GitStatus {
-        initialized: true,
-        commit_count,
-        clean,
-    }
 }
 
 #[tauri::command]

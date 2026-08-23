@@ -18,6 +18,8 @@
     "addLink": "Adicionar link",
     "backToStart": "Voltar ao Início",
     "cancel": "Cancelar",
+    "decrement": "Diminuir",
+    "increment": "Aumentar",
     "delete": "Eliminar",
     "done": "Concluído",
     "edit": "Editar",
@@ -127,7 +129,7 @@
     "fieldTitle": "Título do curso",
     "fieldTitleHelp": "Independente do nome da pasta. Pode mudá-lo a qualquer momento.",
     "fieldVersion": "Versão do curso",
-    "fieldVersionHelp": "A sua própria versão para este curso, mostrada aos alunos. Não está relacionada com a versão da aplicação.",
+    "fieldVersionHelp": "A sua própria versão para este curso, mostrada aos alunos.",
     "flagHint": "Bandeira personalizada: imagem quadrada (SVG ou PNG), com pelo menos 128×128 px.",
     "flagUpload": "Carregar bandeira personalizada",
     "folder": "Pasta",
@@ -548,7 +550,7 @@
     "usedBy": "Usado por {count}"
   },
   "newCourse": {
-    "calloutBody": "O Studio cria a pasta, adiciona os ficheiros do curso e inicializa o Git. Depois, pode usar as ferramentas Git da sua preferência.",
+    "calloutBody": "O Studio cria a pasta e adiciona os ficheiros do curso.",
     "calloutTitle": "Criado localmente",
     "description": "Dê um nome ao projeto e depois escolha onde a pasta deve ser criada.",
     "errorAlreadyExists": "Já existe uma pasta com este nome nesse local. Escolha outro nome.",

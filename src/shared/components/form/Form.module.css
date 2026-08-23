@@ -52,3 +52,73 @@
     background: var(--color-control-hover);
   }
 }
+
+.numberGroup {
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+  min-height: var(--control-height-md);
+  overflow: hidden;
+  border: var(--border-hairline) solid transparent;
+  border-radius: var(--radius-md);
+  outline: 2px solid transparent;
+  outline-offset: 1px;
+  background: var(--color-control);
+  color: var(--color-text);
+}
+
+.numberGroup:focus-within {
+  outline-color: var(--color-focus-ring);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .numberGroup:hover {
+    background: var(--color-control-hover);
+  }
+}
+
+.numberInput {
+  flex: 1;
+  min-width: 0;
+  padding-inline: var(--space-3);
+  border: 0;
+  background: transparent;
+  color: inherit;
+  outline: none;
+}
+
+.numberInput::placeholder {
+  color: var(--color-text-muted);
+}
+
+.numberSteppers {
+  display: grid;
+  grid-template-rows: 1fr 1fr;
+  border-inline-start: var(--border-hairline) solid var(--color-border);
+}
+
+.numberStepper {
+  display: grid;
+  place-items: center;
+  width: var(--control-height-md);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+}
+
+.numberStepper + .numberStepper {
+  border-block-start: var(--border-hairline) solid var(--color-border);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .numberStepper:hover {
+    background: var(--color-control-hover);
+    color: var(--color-text);
+  }
+}
+
+.numberStepperUp {
+  transform: rotate(180deg);
+}

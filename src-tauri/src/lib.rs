@@ -85,7 +85,6 @@ pub fn run() {
             course::read_course_file,
             course::remove_course_dir,
             course::reveal_path,
-            course::git_status,
             media::http_get_text,
             media::download_media_file,
             media::write_temp_media,
