@@ -8,6 +8,10 @@ export interface PlannableBlob extends BlobRef {
   readonly referencingUnitIds: readonly string[];
 }
 
+export interface ReachableBlob extends PlannableBlob {
+  readonly sourceRelativePath: string;
+}
+
 export type PackOwner = string | null;
 
 export interface PlanInput {
@@ -26,6 +30,23 @@ export interface LogicalPack {
 export interface PackPlan {
   readonly packs: readonly LogicalPack[];
   readonly assignments: Readonly<Record<string, PackOwner>>;
+}
+
+export interface StoredZipEntry {
+  readonly name: string;
+  readonly sourceRelativePath: string;
+}
+
+export interface WrittenZipEntry {
+  readonly name: string;
+  readonly offset: number;
+  readonly length: number;
+}
+
+export interface WrittenZip {
+  readonly sha256: string;
+  readonly byteSize: number;
+  readonly entries: readonly WrittenZipEntry[];
 }
 
 export interface WrittenBlobEntry {

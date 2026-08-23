@@ -9,7 +9,7 @@ import type {
   RenderFragment,
   TiptapNode,
 } from "@core/course";
-import type { PlannableBlob } from "@core/packaging/model";
+import type { ReachableBlob } from "@core/packaging/model";
 
 interface UnknownRefs {
   readonly assetIds: Set<string>;
@@ -176,14 +176,20 @@ function partAssetIds(part: Part, records: ReadonlyMap<string, ContentRecord>): 
   }
 }
 
-export function collectReachableBlobs(course: Course): PlannableBlob[] {
+export function collectReachableBlobs(course: Course): ReachableBlob[] {
   const assets = new Map(course.assets.map((asset) => [asset.id, asset]));
   const records = new Map(course.records.map((record) => [record.id, record]));
   const lessons = new Map(course.lessons.map((lesson) => [lesson.id, lesson]));
 
   const byHash = new Map<
     string,
-    { byteSize: number; mime: string; units: string[]; seen: Set<string> }
+    {
+      byteSize: number;
+      mime: string;
+      sourceRelativePath: string;
+      units: string[];
+      seen: Set<string>;
+    }
   >();
 
   const note = (assetId: string, unitId: string | null): void => {
@@ -192,6 +198,7 @@ export function collectReachableBlobs(course: Course): PlannableBlob[] {
     const entry = byHash.get(asset.sha256) ?? {
       byteSize: asset.byteSize,
       mime: asset.mimeType,
+      sourceRelativePath: `media/assets/${asset.id}/${asset.file}`,
       units: [],
       seen: new Set<string>(),
     };
@@ -219,6 +226,7 @@ export function collectReachableBlobs(course: Course): PlannableBlob[] {
     sha256,
     byteSize: entry.byteSize,
     mime: entry.mime,
+    sourceRelativePath: entry.sourceRelativePath,
     referencingUnitIds: entry.units,
   }));
 }

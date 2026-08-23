@@ -4,7 +4,51 @@ use std::io::{BufWriter, Write};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 
+use tauri::Manager;
+
 use crate::course::resolve_course_path;
+
+fn release_state_path(app: &tauri::AppHandle, project_id: &str) -> Result<std::path::PathBuf, String> {
+    if project_id.is_empty()
+        || matches!(project_id, "." | "..")
+        || project_id.contains('/')
+        || project_id.contains('\\')
+    {
+        return Err("invalidId".to_string());
+    }
+    let dir = app
+        .path()
+        .app_data_dir()
+        .map_err(|_| "unknown".to_string())?
+        .join("releases");
+    Ok(dir.join(format!("{project_id}.json")))
+}
+
+#[tauri::command]
+pub fn write_release_state(
+    app: tauri::AppHandle,
+    project_id: String,
+    contents: String,
+) -> Result<(), String> {
+    let target = release_state_path(&app, &project_id)?;
+    if let Some(parent) = target.parent() {
+        fs::create_dir_all(parent).map_err(|_| "unknown".to_string())?;
+    }
+    fs::write(&target, contents).map_err(|_| "unknown".to_string())
+}
+
+#[tauri::command]
+pub fn read_release_state(
+    app: tauri::AppHandle,
+    project_id: String,
+) -> Result<Option<String>, String> {
+    let target = release_state_path(&app, &project_id)?;
+    match fs::read_to_string(&target) {
+        Ok(contents) => Ok(Some(contents)),
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(None),
+        Err(_) => Err("unknown".to_string()),
+    }
+}
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]

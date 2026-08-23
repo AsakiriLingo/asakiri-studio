@@ -92,6 +92,8 @@ pub fn run() {
             media::list_folder_files,
             media::read_document,
             packaging::write_stored_zip,
+            packaging::write_release_state,
+            packaging::read_release_state,
             tts::list_tts_voices,
             tts::synthesize_tts,
             tts::preview_tts,
