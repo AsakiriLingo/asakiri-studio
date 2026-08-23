@@ -42,6 +42,9 @@ import { Status } from "@shared/components/status";
 import { WorkInner } from "@shared/components/work-surface";
 import styles from "@features/course-structure/CourseStructure.module.css";
 
+const LARGE_LESSON_COUNT = 40;
+const LARGE_PART_COUNT = 400;
+
 function orderLabel(index: number): string {
   return String(index + 1).padStart(2, "0");
 }
@@ -228,6 +231,7 @@ const LessonRow = memo(function LessonRow({
   index,
   variant,
   selectedPartId,
+  collapseParts,
   onOpenSettings,
   onOpenPart,
   onRename,
@@ -241,6 +245,7 @@ const LessonRow = memo(function LessonRow({
   readonly index: number;
   readonly variant: "page" | "sidebar";
   readonly selectedPartId?: string | undefined;
+  readonly collapseParts: boolean;
   readonly onOpenSettings: (lessonId: string) => void;
   readonly onOpenPart: (lessonId: string, partId: string) => void;
   readonly onRename: (lesson: Lesson, title: string) => void;
@@ -262,8 +267,16 @@ const LessonRow = memo(function LessonRow({
     transform: CSS.Transform.toString(transform),
     transition,
   };
-  const [partsCollapsed, setPartsCollapsed] = useState(false);
+  const containsSelected =
+    selectedPartId !== undefined && lesson.parts.some((part) => part.id === selectedPartId);
+  const [partsCollapsed, setPartsCollapsed] = useState(() => collapseParts && !containsSelected);
+  const [wasSelected, setWasSelected] = useState(containsSelected);
   const [editing, setEditing] = useState(false);
+
+  if (containsSelected !== wasSelected) {
+    setWasSelected(containsSelected);
+    if (containsSelected) setPartsCollapsed(false);
+  }
 
   const handleOpenSettings = useCallback(() => {
     onOpenSettings(lesson.id);
@@ -596,6 +609,7 @@ const UnitBlock = memo(function UnitBlock({
   addingLesson,
   variant,
   selectedPartId,
+  collapseParts,
   onToggleCollapsed,
   onAddLesson,
   onOpenSettings,
@@ -617,6 +631,7 @@ const UnitBlock = memo(function UnitBlock({
   readonly addingLesson: boolean;
   readonly variant: "page" | "sidebar";
   readonly selectedPartId?: string | undefined;
+  readonly collapseParts: boolean;
   readonly onToggleCollapsed: (unitId: string) => void;
   readonly onAddLesson: (unitId: string) => void;
   readonly onOpenSettings: (unitId: string) => void;
@@ -848,6 +863,7 @@ const UnitBlock = memo(function UnitBlock({
                 index={lessonIndex}
                 variant={variant}
                 selectedPartId={selectedPartId}
+                collapseParts={collapseParts}
                 onOpenSettings={onOpenLessonSettings}
                 onOpenPart={onOpenPart}
                 onRename={onRenameLesson}
@@ -1323,6 +1339,16 @@ export function CourseStructure({
     [course.outline],
   );
 
+  const collapsePartsByDefault = useMemo(() => {
+    if (course.lessons.length > LARGE_LESSON_COUNT) return true;
+    let parts = 0;
+    for (const lesson of course.lessons) {
+      parts += lesson.parts.length;
+      if (parts > LARGE_PART_COUNT) return true;
+    }
+    return false;
+  }, [course.lessons]);
+
   return (
     <WorkInner
       className={variant === "sidebar" ? [styles.inner, styles.sidebar].join(" ") : styles.inner}
@@ -1424,6 +1450,7 @@ export function CourseStructure({
                     addingLesson={addingUnitId === unit.id}
                     variant={variant}
                     selectedPartId={selectedId}
+                    collapseParts={collapsePartsByDefault}
                     onToggleCollapsed={toggleUnitCollapsed}
                     onAddLesson={handleAddLesson}
                     onOpenSettings={openUnitSettings}
