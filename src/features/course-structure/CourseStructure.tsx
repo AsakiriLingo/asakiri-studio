@@ -1241,7 +1241,7 @@ export function CourseStructure({
             {t.newUnit}
           </Button>
           <div className={styles.actionsEnd}>
-            {failed ? <Status tone="warning">{messages.common.saveFailed}</Status> : null}
+            {failed ? <Status tone="error">{messages.common.saveFailed}</Status> : null}
             {course.outline.length > 0 ? (
               <Button variant="ghost" size="compact" onClick={toggleAllUnits}>
                 <Icon

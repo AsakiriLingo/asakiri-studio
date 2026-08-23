@@ -274,7 +274,7 @@ export function RecordDialog({ onClose, onAddRecording }: RecordDialogProps) {
               </div>
             ) : null}
 
-            {error === "failed" ? <Status tone="warning">{t.recordFailed}</Status> : null}
+            {error === "failed" ? <Status tone="error">{t.recordFailed}</Status> : null}
           </div>
 
           <footer className={styles.footer}>

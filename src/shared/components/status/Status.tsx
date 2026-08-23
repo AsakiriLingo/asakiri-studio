@@ -24,5 +24,13 @@ const rootClass = requiredStyle("root");
 export function Status({ children, tone = "default" }: StatusProps) {
   const className = tone === "default" ? rootClass : `${rootClass} ${toneClasses[tone]}`;
 
-  return <span className={className}>{children}</span>;
+  return (
+    <span
+      className={className}
+      role={tone === "error" ? "alert" : "status"}
+      aria-live={tone === "error" ? "assertive" : "polite"}
+    >
+      {children}
+    </span>
+  );
 }

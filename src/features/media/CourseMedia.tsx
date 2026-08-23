@@ -806,7 +806,7 @@ export function CourseMedia({
               )}
               {importing ? <Status>{t.importing}</Status> : null}
               {!importing && saveState === "failed" ? (
-                <Status tone="warning">{t.importFailed}</Status>
+                <Status tone="error">{t.importFailed}</Status>
               ) : null}
               {addMenu}
             </div>

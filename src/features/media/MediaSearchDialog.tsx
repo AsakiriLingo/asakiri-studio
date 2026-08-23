@@ -217,7 +217,7 @@ export function MediaSearchDialog({
         <div className={styles.body} ref={scrollRef}>
           {failed ? (
             <Message>
-              <Status tone="warning">{t.searchFailed}</Status>
+              <Status tone="error">{t.searchFailed}</Status>
             </Message>
           ) : !submitted ? (
             <Message>{t.searchPrompt}</Message>

@@ -40,7 +40,7 @@ export function CourseAttribution({ course, onSaveAttribution }: CourseAttributi
     ) : saveState === "saved" ? (
       <Status>{t.saved}</Status>
     ) : saveState === "failed" ? (
-      <Status tone="warning">{t.saveFailed}</Status>
+      <Status tone="error">{t.saveFailed}</Status>
     ) : null;
 
   return (

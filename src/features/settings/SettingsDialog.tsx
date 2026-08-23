@@ -209,7 +209,7 @@ function VoiceManager({
           })}
         </div>
       )}
-      {downloadFailed ? <Status tone="warning">{t.ttsDownloadFailed}</Status> : null}
+      {downloadFailed ? <Status tone="error">{t.ttsDownloadFailed}</Status> : null}
     </>
   );
 }

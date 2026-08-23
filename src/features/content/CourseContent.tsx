@@ -519,7 +519,7 @@ export function CourseContent({
     saveState === "saving" ? (
       <Status>{messages.common.saving}</Status>
     ) : saveState === "failed" ? (
-      <Status tone="warning">{messages.common.saveFailed}</Status>
+      <Status tone="error">{messages.common.saveFailed}</Status>
     ) : null;
 
   return (
