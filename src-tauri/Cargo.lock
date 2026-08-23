@@ -142,7 +142,7 @@ dependencies = [
 
 [[package]]
 name = "asakiri-studio"
-version = "0.4.0"
+version = "0.4.1"
 dependencies = [
  "anydoc",
  "base64 0.22.1",
