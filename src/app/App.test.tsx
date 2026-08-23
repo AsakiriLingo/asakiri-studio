@@ -219,7 +219,7 @@ vi.mock("@features/workspace-shell", () => ({
   },
 }));
 
-vi.mock("@features/course-details", () => ({
+vi.mock("@features/course-details/CourseDetails", () => ({
   CourseDetails: (props: DetailsProps) => {
     captured.details = props;
     return <div data-testid="details">{props.attributionSlot}</div>;
@@ -234,36 +234,39 @@ vi.mock("@features/course-structure", () => ({
   OutlineSearch: () => <div data-testid="outline-search" />,
 }));
 
-vi.mock("@features/content", () => ({
+vi.mock("@features/content/CourseContent", () => ({
   CourseContent: (props: ContentProps) => {
     captured.content = props;
     return <div data-testid="content" />;
   },
 }));
 
-vi.mock("@features/media", () => ({
+vi.mock("@features/media/CourseMedia", () => ({
   CourseMedia: (props: MediaProps) => {
     captured.media = props;
     return <div data-testid="media" />;
   },
 }));
 
-vi.mock("@features/attribution", () => ({
+vi.mock("@features/attribution/CourseAttribution", () => ({
   CourseAttribution: (props: AttributionProps) => {
     captured.attribution = props;
     return <div data-testid="attribution" />;
   },
 }));
 
-vi.mock("@features/lesson-editor", () => ({
+vi.mock("@features/lesson-editor/PartEditor", () => ({
   PartEditor: (props: PartProps) => {
     captured.part = props;
     return <div data-testid="part-editor" />;
   },
+}));
+
+vi.mock("@features/lesson-editor/rich-library", () => ({
   courseToRichLibrary: () => ({}),
 }));
 
-vi.mock("@features/part-preview", () => ({
+vi.mock("@features/part-preview/PartPreview", () => ({
   PartPreview: (props: PartPreviewProps) => {
     captured.partPreview = props;
     return <div data-testid="part-preview" />;
@@ -525,6 +528,19 @@ async function navigate(section: string) {
     must(captured.shell, "WorkspaceShell").onNavigate(section);
     await Promise.resolve();
   });
+  if (section === "details") {
+    await waitFor(() => {
+      expect(captured.details).toBeDefined();
+    });
+  } else if (section === "content") {
+    await waitFor(() => {
+      expect(captured.content).toBeDefined();
+    });
+  } else if (section === "media") {
+    await waitFor(() => {
+      expect(captured.media).toBeDefined();
+    });
+  }
 }
 
 beforeEach(() => {
@@ -724,6 +740,9 @@ describe("App", () => {
       must(captured.structure, "CourseStructure").onOpenPart("l1", "part1");
       await Promise.resolve();
     });
+    await waitFor(() => {
+      expect(captured.part).toBeDefined();
+    });
     const part = must(captured.part, "PartEditor");
     expect(part.part.id).toBe("part1");
 
@@ -887,6 +906,9 @@ describe("App", () => {
   it("saves the attribution file", async () => {
     await openWorkspace();
     await navigate("details");
+    await waitFor(() => {
+      expect(captured.attribution).toBeDefined();
+    });
 
     await act(async () => {
       await must(captured.attribution, "CourseAttribution").onSaveAttribution("# Credits");
