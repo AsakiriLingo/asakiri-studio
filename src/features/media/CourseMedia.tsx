@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Menu } from "@base-ui/react/menu";
+import { ContextMenu } from "@base-ui/react/context-menu";
+import { Group, Panel, Separator, type PanelImperativeHandle } from "react-resizable-panels";
 import type { Asset, ContentRecord, Course } from "@core/course";
 import type { AudioSearchResult, ImageSearchResult, SearchPage } from "@core/media-search";
 import type { ProjectWriteResult } from "@core/project-writing";
@@ -8,17 +10,24 @@ import { useFormat, useMessages, type StudioMessages } from "@shared/i18n";
 import { Button } from "@shared/components/button";
 import { useConfirm } from "@shared/components/confirm-dialog";
 import { Field, TextInput } from "@shared/components/form";
-import { Icon } from "@shared/components/icon";
+import { Icon, type IconName } from "@shared/components/icon";
 import { IconButton } from "@shared/components/icon-button";
-import { PanelHeader } from "@shared/components/panel";
+import { ScrollArea } from "@shared/components/scroll-area";
 import { Status } from "@shared/components/status";
-import { WorkHeader, WorkInner } from "@shared/components/work-surface";
 import { MediaSearchDialog, type MediaSearchMode } from "@features/media/MediaSearchDialog";
 import { TtsDialog } from "@features/media/TtsDialog";
 import { RecordDialog } from "@features/media/RecordDialog";
+import { InspectorPlayer } from "@features/media/InspectorPlayer";
 import styles from "@features/media/CourseMedia.module.css";
 
 const PAGE_SIZE = 24;
+const ANIMATION_MS = 180;
+
+type MediaView = "all" | "image" | "audio" | "video" | "unreferenced";
+
+function joinClassNames(...classNames: (string | undefined | false)[]): string {
+  return classNames.filter(Boolean).join(" ");
+}
 
 function referencedAssetIds(record: ContentRecord): string[] {
   const ids: string[] = [];
@@ -42,6 +51,18 @@ function matchesQuery(asset: Asset, query: string): boolean {
   const haystack =
     `${assetName(asset)} ${asset.label} ${asset.kind} ${asset.mimeType}`.toLowerCase();
   return haystack.includes(query);
+}
+
+function formatBytes(bytes: number): string {
+  if (bytes < 1024) return `${String(bytes)} B`;
+  const units = ["KB", "MB", "GB"];
+  let value = bytes / 1024;
+  let unit = 0;
+  while (value >= 1024 && unit < units.length - 1) {
+    value /= 1024;
+    unit += 1;
+  }
+  return `${value.toFixed(value >= 10 || unit === 0 ? 0 : 1)} ${units[unit] ?? "KB"}`;
 }
 
 function scrollParentOf(element: Element | null): Element | null {
@@ -107,15 +128,42 @@ export function CourseMedia({
   const [saveState, setSaveState] = useState<"idle" | "saved" | "failed">("idle");
   const [query, setQuery] = useState("");
   const [settledQuery, setSettledQuery] = useState("");
-  const [lastQuery, setLastQuery] = useState("");
+  const [lastKey, setLastKey] = useState("all|");
+  const [view, setView] = useState<MediaView>("all");
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [playingId, setPlayingId] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [previews, setPreviews] = useState<Record<string, string>>({});
   const [searchMode, setSearchMode] = useState<MediaSearchMode | null>(null);
   const [showTts, setShowTts] = useState(false);
   const [showRecord, setShowRecord] = useState(false);
   const [renameTarget, setRenameTarget] = useState<Asset | null>(null);
   const [renameValue, setRenameValue] = useState("");
+  const [inspectorCollapsed, setInspectorCollapsed] = useState(false);
+  const [animating, setAnimating] = useState(false);
+  const inspectorRef = useRef<PanelImperativeHandle>(null);
+  const animationTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(
+    () => () => {
+      if (animationTimer.current) clearTimeout(animationTimer.current);
+    },
+    [],
+  );
+
+  const animate = (action: () => void) => {
+    setAnimating(true);
+    action();
+    if (animationTimer.current) clearTimeout(animationTimer.current);
+    animationTimer.current = setTimeout(() => {
+      setAnimating(false);
+    }, ANIMATION_MS);
+  };
+
+  const selectAsset = (id: string) => {
+    setSelectedId(id);
+    if (inspectorCollapsed) animate(() => inspectorRef.current?.expand());
+  };
 
   useEffect(() => {
     const handle = setTimeout(() => {
@@ -131,12 +179,6 @@ export function CourseMedia({
     loadRef.current = onLoadPreview;
   });
 
-  const kindLabel: Record<Asset["kind"], string> = {
-    audio: t.kindAudio,
-    image: t.kindImage,
-    video: t.kindVideo,
-  };
-
   const usage = useMemo(() => {
     const counts = new Map<string, number>();
     for (const record of course.records) {
@@ -147,13 +189,30 @@ export function CourseMedia({
     return counts;
   }, [course.records]);
 
-  const filtered = useMemo(() => {
-    if (!settledQuery) return course.assets;
-    return course.assets.filter((asset) => matchesQuery(asset, settledQuery));
-  }, [course.assets, settledQuery]);
+  const counts = useMemo(() => {
+    const tally = { all: 0, image: 0, audio: 0, video: 0, unreferenced: 0 };
+    for (const asset of course.assets) {
+      tally.all += 1;
+      tally[asset.kind] += 1;
+      if ((usage.get(asset.id) ?? 0) === 0) tally.unreferenced += 1;
+    }
+    return tally;
+  }, [course.assets, usage]);
 
-  if (settledQuery !== lastQuery) {
-    setLastQuery(settledQuery);
+  const filtered = useMemo(() => {
+    return course.assets.filter((asset) => {
+      if (view === "unreferenced") {
+        if ((usage.get(asset.id) ?? 0) !== 0) return false;
+      } else if (view !== "all" && asset.kind !== view) {
+        return false;
+      }
+      return settledQuery === "" || matchesQuery(asset, settledQuery);
+    });
+  }, [course.assets, view, settledQuery, usage]);
+
+  const currentKey = `${view}|${settledQuery}`;
+  if (currentKey !== lastKey) {
+    setLastKey(currentKey);
     setVisibleCount(PAGE_SIZE);
     setPlayingId(null);
   }
@@ -161,14 +220,22 @@ export function CourseMedia({
   const visible = filtered.slice(0, visibleCount);
   const hasMore = visibleCount < filtered.length;
 
+  const selected =
+    selectedId === null ? null : (course.assets.find((a) => a.id === selectedId) ?? null);
+
   const requested = useRef<Set<string>>(new Set());
-  const visibleImageIds = visible
-    .filter((asset) => asset.kind === "image" && asset.availability === "ready" && asset.file)
+  const visiblePreviewIds = visible
+    .filter(
+      (asset) =>
+        (asset.kind === "image" || asset.kind === "video") &&
+        asset.availability === "ready" &&
+        asset.file,
+    )
     .map((asset) => asset.id)
     .join(",");
   useEffect(() => {
     let cancelled = false;
-    for (const id of visibleImageIds.split(",").filter(Boolean)) {
+    for (const id of visiblePreviewIds.split(",").filter(Boolean)) {
       if (requested.current.has(id)) continue;
       requested.current.add(id);
       void loadRef.current(id).then((url) => {
@@ -178,7 +245,18 @@ export function CourseMedia({
     return () => {
       cancelled = true;
     };
-  }, [visibleImageIds]);
+  }, [visiblePreviewIds]);
+
+  useEffect(() => {
+    const target = selected;
+    if (target === null) return;
+    if (target.availability !== "ready" || !target.file) return;
+    if (requested.current.has(target.id)) return;
+    requested.current.add(target.id);
+    void loadRef.current(target.id).then((url) => {
+      if (url) setPreviews((prev) => ({ ...prev, [target.id]: url }));
+    });
+  }, [selected]);
 
   const sentinelRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
@@ -233,6 +311,7 @@ export function CourseMedia({
     }).then((ok) => {
       if (!ok) return;
       if (playingId === asset.id) setPlayingId(null);
+      if (selectedId === asset.id) setSelectedId(null);
       void onDeleteAsset(asset.id).then((result) => {
         setSaveState(result.status === "saved" ? "saved" : "failed");
       });
@@ -255,153 +334,267 @@ export function CourseMedia({
     });
   };
 
-  const status = importing ? (
-    <Status>{t.importing}</Status>
-  ) : saveState === "failed" ? (
-    <Status tone="warning">{t.importFailed}</Status>
-  ) : null;
+  const views: readonly { key: MediaView; label: string; icon: IconName; count: number }[] = [
+    { key: "all", label: t.viewAll, icon: "media", count: counts.all },
+    { key: "image", label: t.kindImage, icon: "image", count: counts.image },
+    { key: "audio", label: t.kindAudio, icon: "audio", count: counts.audio },
+    { key: "video", label: t.kindVideo, icon: "video", count: counts.video },
+    { key: "unreferenced", label: t.notReferenced, icon: "eye", count: counts.unreferenced },
+  ];
 
-  return (
-    <WorkInner>
-      <WorkHeader
-        title={t.title}
-        description={t.description}
-        actions={
-          <Menu.Root>
-            <Menu.Trigger
-              render={
-                <Button size="compact" disabled={importing}>
-                  <Icon name="plus" size={18} />
-                  {t.addMedia}
-                  <Icon name="chevron-down" size={16} />
-                </Button>
-              }
-            />
-            <Menu.Portal>
-              <Menu.Positioner className={styles.menuPositioner} sideOffset={4} align="end">
-                <Menu.Popup className={styles.menuPopup}>
-                  <Menu.Item className={styles.menuItem} onClick={runImport}>
-                    <Icon name="upload" size={18} />
-                    {t.importFromDevice}
-                  </Menu.Item>
-                  <Menu.Item className={styles.menuItem} onClick={runFolderImport}>
-                    <Icon name="folder" size={18} />
-                    {t.importFolder}
-                  </Menu.Item>
-                  <Menu.Item
-                    className={styles.menuItem}
-                    onClick={() => {
-                      setSearchMode("images");
-                    }}
-                  >
-                    <Icon name="image" size={18} />
-                    {t.searchUnsplashImages}
-                  </Menu.Item>
-                  <Menu.Item
-                    className={styles.menuItem}
-                    onClick={() => {
-                      setSearchMode("audio");
-                    }}
-                  >
-                    <Icon name="audio" size={18} />
-                    {t.searchTatoebaAudio}
-                  </Menu.Item>
-                  <Menu.Item
-                    className={styles.menuItem}
-                    onClick={() => {
-                      setShowTts(true);
-                    }}
-                  >
-                    <Icon name="audio" size={18} />
-                    {t.addTts}
-                  </Menu.Item>
-                  <Menu.Item
-                    className={styles.menuItem}
-                    onClick={() => {
-                      setShowRecord(true);
-                    }}
-                  >
-                    <Icon name="mic" size={18} />
-                    {t.recordAudio}
-                  </Menu.Item>
-                </Menu.Popup>
-              </Menu.Positioner>
-            </Menu.Portal>
-          </Menu.Root>
+  const addMenu = (
+    <Menu.Root>
+      <Menu.Trigger
+        render={
+          <Button size="compact" disabled={importing}>
+            <Icon name="plus" size={18} />
+            {t.addMedia}
+            <Icon name="chevron-down" size={16} />
+          </Button>
         }
       />
+      <Menu.Portal>
+        <Menu.Positioner className={styles.menuPositioner} sideOffset={4} align="end">
+          <Menu.Popup className={styles.menuPopup}>
+            <Menu.Item className={styles.menuItem} onClick={runImport}>
+              <Icon name="upload" size={18} />
+              {t.importFromDevice}
+            </Menu.Item>
+            <Menu.Item className={styles.menuItem} onClick={runFolderImport}>
+              <Icon name="folder" size={18} />
+              {t.importFolder}
+            </Menu.Item>
+            <Menu.Item
+              className={styles.menuItem}
+              onClick={() => {
+                setSearchMode("images");
+              }}
+            >
+              <Icon name="image" size={18} />
+              {t.searchUnsplashImages}
+            </Menu.Item>
+            <Menu.Item
+              className={styles.menuItem}
+              onClick={() => {
+                setSearchMode("audio");
+              }}
+            >
+              <Icon name="audio" size={18} />
+              {t.searchTatoebaAudio}
+            </Menu.Item>
+            <Menu.Item
+              className={styles.menuItem}
+              onClick={() => {
+                setShowTts(true);
+              }}
+            >
+              <Icon name="audio" size={18} />
+              {t.addTts}
+            </Menu.Item>
+            <Menu.Item
+              className={styles.menuItem}
+              onClick={() => {
+                setShowRecord(true);
+              }}
+            >
+              <Icon name="mic" size={18} />
+              {t.recordAudio}
+            </Menu.Item>
+          </Menu.Popup>
+        </Menu.Positioner>
+      </Menu.Portal>
+    </Menu.Root>
+  );
 
-      <section aria-labelledby="media-title">
-        <PanelHeader
-          title={t.projectMedia}
-          titleId="media-title"
-          description={format(t.showing, {
-            shown: Math.min(visibleCount, filtered.length),
-            total: filtered.length,
-          })}
-          actions={status}
-        />
-
-        <div className={styles.searchBar}>
-          <Icon name="search" size={18} />
-          <TextInput
-            type="search"
-            className={styles.searchInput}
-            style={{ paddingInlineStart: "2.5rem" }}
-            aria-label={t.searchLabel}
-            placeholder={t.searchPlaceholder}
-            value={query}
-            onChange={(event) => {
-              setQuery(event.currentTarget.value);
-            }}
-          />
+  return (
+    <div className={styles.media}>
+      <aside className={styles.sidebar} aria-label={t.projectMedia}>
+        <div className={styles.sidebarHeader}>
+          <span className={styles.sidebarTitle}>{t.projectMedia}</span>
         </div>
+        <div className={styles.list}>
+          {views.map((entry) => (
+            <button
+              key={entry.key}
+              type="button"
+              className={joinClassNames(styles.viewRow, view === entry.key && styles.viewSelected)}
+              aria-pressed={view === entry.key}
+              onClick={() => {
+                setView(entry.key);
+              }}
+            >
+              <Icon name={entry.icon} size={16} />
+              <span className={styles.viewLabel}>{entry.label}</span>
+              <span className={styles.count}>{entry.count}</span>
+            </button>
+          ))}
+        </div>
+      </aside>
 
-        {course.assets.length === 0 ? (
-          <p className={styles.empty}>{t.empty}</p>
-        ) : filtered.length === 0 ? (
-          <p className={styles.empty}>{t.noResults}</p>
-        ) : (
-          <>
-            <div className={styles.grid} aria-label={t.projectMedia}>
-              {visible.map((asset) => (
-                <MediaCard
-                  key={asset.id}
-                  asset={asset}
-                  preview={previews[asset.id]}
-                  kindLabel={kindLabel[asset.kind]}
-                  playing={playingId === asset.id}
-                  messages={messages}
-                  onTogglePlay={(next) => {
-                    setPlayingId(next ? asset.id : null);
-                  }}
-                  onLoadUrl={onLoadPreview}
-                  onDelete={() => {
-                    removeAsset(asset);
-                  }}
-                  onRename={() => {
-                    openRename(asset);
-                  }}
-                />
-              ))}
+      <Group
+        orientation="horizontal"
+        id="asakiri.media-inspector"
+        className={joinClassNames(styles.group, animating && styles.animating)}
+      >
+        <Panel id="grid" minSize="24rem" className={styles.gridPanel}>
+          <div className={styles.toolbar}>
+            <div className={styles.searchBar}>
+              <Icon name="search" size={18} />
+              <TextInput
+                type="search"
+                className={styles.searchInput}
+                style={{ paddingInlineStart: "2.25rem" }}
+                aria-label={t.searchLabel}
+                placeholder={t.searchPlaceholder}
+                value={query}
+                onChange={(event) => {
+                  setQuery(event.currentTarget.value);
+                }}
+              />
             </div>
-
-            {hasMore ? (
-              <div className={styles.more}>
-                <div ref={sentinelRef} aria-hidden className={styles.sentinel} />
-                <Button
-                  variant="ghost"
-                  onClick={() => {
-                    setVisibleCount((count) => Math.min(count + PAGE_SIZE, filtered.length));
-                  }}
-                >
-                  {t.loadMore}
-                </Button>
-              </div>
+            <span className={styles.toolbarCount}>
+              {format(t.showing, {
+                shown: Math.min(visibleCount, filtered.length),
+                total: filtered.length,
+              })}
+            </span>
+            {importing ? <Status>{t.importing}</Status> : null}
+            {!importing && saveState === "failed" ? (
+              <Status tone="warning">{t.importFailed}</Status>
             ) : null}
-          </>
-        )}
-      </section>
+            {addMenu}
+          </div>
+
+          <div className={styles.body}>
+            {course.assets.length === 0 ? (
+              <div className={styles.emptyState}>
+                <span className={styles.emptyIcon}>
+                  <Icon name="media" size={32} />
+                </span>
+                <p className={styles.empty}>{t.empty}</p>
+                {addMenu}
+              </div>
+            ) : filtered.length === 0 ? (
+              <div className={styles.emptyState}>
+                <p className={styles.empty}>{t.noResults}</p>
+              </div>
+            ) : (
+              <ScrollArea className={styles.gridScroll} contentClassName={styles.gridContent}>
+                <div className={styles.grid} aria-label={t.projectMedia}>
+                  {visible.map((asset) => (
+                    <MediaCard
+                      key={asset.id}
+                      asset={asset}
+                      preview={previews[asset.id]}
+                      uses={usage.get(asset.id) ?? 0}
+                      playing={playingId === asset.id}
+                      selected={selectedId === asset.id}
+                      messages={messages}
+                      onSelect={() => {
+                        selectAsset(asset.id);
+                      }}
+                      onTogglePlay={(next) => {
+                        setPlayingId(next ? asset.id : null);
+                      }}
+                      onLoadUrl={onLoadPreview}
+                      onDelete={() => {
+                        removeAsset(asset);
+                      }}
+                      onRename={() => {
+                        openRename(asset);
+                      }}
+                    />
+                  ))}
+                </div>
+
+                {hasMore ? (
+                  <div className={styles.more}>
+                    <div ref={sentinelRef} aria-hidden className={styles.sentinel} />
+                    <Button
+                      variant="ghost"
+                      onClick={() => {
+                        setVisibleCount((count) => Math.min(count + PAGE_SIZE, filtered.length));
+                      }}
+                    >
+                      {t.loadMore}
+                    </Button>
+                  </div>
+                ) : null}
+              </ScrollArea>
+            )}
+          </div>
+        </Panel>
+
+        <Separator className={styles.handle} />
+
+        <Panel
+          id="inspector"
+          collapsible
+          collapsedSize={0}
+          minSize="306px"
+          maxSize="40%"
+          defaultSize="20rem"
+          panelRef={inspectorRef}
+          onResize={(size) => {
+            setInspectorCollapsed(size.inPixels === 0);
+          }}
+          className={styles.inspectorPanel}
+        >
+          <div className={styles.inspectorHeader}>
+            <span
+              className={styles.inspectorTitle}
+              title={selected ? assetName(selected) : undefined}
+            >
+              {selected ? assetName(selected) : ""}
+            </span>
+            <IconButton
+              size="sm"
+              aria-label={t.hideDetails}
+              onClick={() => {
+                animate(() => inspectorRef.current?.collapse());
+              }}
+            >
+              <Icon name="sidebar-right" size={18} />
+            </IconButton>
+          </div>
+          <ScrollArea
+            className={styles.inspectorScroll}
+            contentClassName={styles.inspectorScrollBody}
+            contentStyle={{ minWidth: 0 }}
+          >
+            {selected ? (
+              <MediaInspectorBody
+                asset={selected}
+                preview={previews[selected.id]}
+                uses={usage.get(selected.id) ?? 0}
+                messages={messages}
+                onRename={() => {
+                  openRename(selected);
+                }}
+                onDelete={() => {
+                  removeAsset(selected);
+                }}
+              />
+            ) : (
+              <p className={styles.inspectorEmpty}>{t.inspectorEmpty}</p>
+            )}
+          </ScrollArea>
+        </Panel>
+      </Group>
+
+      {inspectorCollapsed ? (
+        <div className={joinClassNames(styles.pill, styles.pillRight)}>
+          <IconButton
+            size="sm"
+            aria-label={t.showDetails}
+            onClick={() => {
+              animate(() => inspectorRef.current?.expand());
+            }}
+          >
+            <Icon name="sidebar-right" size={18} />
+          </IconButton>
+        </div>
+      ) : null}
 
       {searchMode ? (
         <MediaSearchDialog
@@ -497,16 +690,18 @@ export function CourseMedia({
           </form>
         </div>
       ) : null}
-    </WorkInner>
+    </div>
   );
 }
 
 interface MediaCardProps {
   readonly asset: Asset;
   readonly preview: string | undefined;
-  readonly kindLabel: string;
+  readonly uses: number;
   readonly playing: boolean;
+  readonly selected: boolean;
   readonly messages: StudioMessages;
+  readonly onSelect: () => void;
   readonly onTogglePlay: (next: boolean) => void;
   readonly onLoadUrl: (assetId: string) => Promise<string | null>;
   readonly onDelete: () => void;
@@ -516,9 +711,11 @@ interface MediaCardProps {
 function MediaCard({
   asset,
   preview,
-  kindLabel,
+  uses,
   playing,
+  selected,
   messages,
+  onSelect,
   onTogglePlay,
   onLoadUrl,
   onDelete,
@@ -528,9 +725,6 @@ function MediaCard({
   const format = useFormat();
   const name = assetName(asset);
   const ready = asset.availability === "ready" && Boolean(asset.file);
-  const author = typeof asset.metadata?.author === "string" ? asset.metadata.author : "";
-  const license = typeof asset.metadata?.license === "string" ? asset.metadata.license : "";
-  const credit = author && license ? format(t.credit, { author, license }) : author || license;
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
 
@@ -562,65 +756,192 @@ function MediaCard({
   };
 
   return (
-    <article className={styles.card}>
-      <div className={styles.thumb}>
-        {asset.kind === "image" && ready && preview ? (
-          <img className={styles.image} src={preview} alt="" loading="lazy" decoding="async" />
-        ) : asset.kind === "audio" && ready ? (
-          <button
-            type="button"
-            className={styles.playButton}
-            aria-label={playing ? format(t.stop, { name }) : format(t.play, { name })}
-            onClick={() => {
-              void toggleAudio();
+    <ContextMenu.Root>
+      <ContextMenu.Trigger
+        render={
+          <article
+            className={joinClassNames(styles.card, selected && styles.cardSelected)}
+            role="button"
+            tabIndex={0}
+            aria-label={name}
+            aria-pressed={selected}
+            onClick={onSelect}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                onSelect();
+              }
             }}
           >
-            <Icon name={playing ? "stop" : "play"} size={28} />
-          </button>
-        ) : (
-          <span className={styles.placeholderIcon}>
-            <Icon name={asset.kind} size={28} />
-          </span>
-        )}
-      </div>
+            <div className={styles.thumb}>
+              {asset.kind === "image" && ready && preview ? (
+                <img
+                  className={styles.image}
+                  src={preview}
+                  alt=""
+                  loading="lazy"
+                  decoding="async"
+                />
+              ) : asset.kind === "video" && ready && preview ? (
+                <video
+                  className={styles.image}
+                  src={preview}
+                  muted
+                  preload="metadata"
+                  playsInline
+                />
+              ) : asset.kind === "audio" && ready ? (
+                <button
+                  type="button"
+                  className={styles.playButton}
+                  aria-label={playing ? format(t.stop, { name }) : format(t.play, { name })}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    void toggleAudio();
+                  }}
+                >
+                  <Icon name={playing ? "stop" : "play"} size={28} />
+                </button>
+              ) : (
+                <span className={styles.placeholderIcon}>
+                  <Icon name={asset.kind} size={28} />
+                </span>
+              )}
+              {!ready ? <span className={styles.badge}>{t.placeholder}</span> : null}
+            </div>
 
-      <div className={styles.cardBody}>
-        <span className={styles.cardTitle} title={name}>
-          {name}
-        </span>
-        <span className={styles.meta}>
-          <span>{kindLabel}</span>
-          <span>{asset.mimeType}</span>
-        </span>
-        {credit ? (
-          <span className={styles.credit} title={credit}>
-            {credit}
-          </span>
-        ) : null}
-        <div className={styles.cardFooter}>
-          <IconButton aria-label={t.renameMedia} size="sm" onClick={onRename}>
-            <Icon name="edit" size={18} />
-          </IconButton>
-          <IconButton
-            aria-label={format(messages.common.remove, { label: name })}
-            size="sm"
-            onClick={onDelete}
-          >
-            <Icon name="trash" size={18} />
-          </IconButton>
-        </div>
-      </div>
+            <div className={styles.cardBody}>
+              <span className={styles.cardTitle} title={name}>
+                {name}
+              </span>
+              <span className={styles.meta}>
+                {uses > 0 ? format(t.usedIn, { count: uses }) : t.notReferenced}
+              </span>
+            </div>
 
-      {asset.kind === "audio" && ready ? (
-        <audio
-          ref={audioRef}
-          src={audioUrl ?? undefined}
-          preload="none"
-          onEnded={() => {
-            onTogglePlay(false);
-          }}
+            {asset.kind === "audio" && ready ? (
+              <audio
+                ref={audioRef}
+                src={audioUrl ?? undefined}
+                preload="none"
+                onEnded={() => {
+                  onTogglePlay(false);
+                }}
+              />
+            ) : null}
+          </article>
+        }
+      />
+      <ContextMenu.Portal>
+        <ContextMenu.Positioner className={styles.menuPositioner}>
+          <ContextMenu.Popup className={styles.menuPopup}>
+            <ContextMenu.Item className={styles.menuItem} onClick={onRename}>
+              <Icon name="edit" size={18} />
+              {t.renameMedia}
+            </ContextMenu.Item>
+            <ContextMenu.Item
+              className={joinClassNames(styles.menuItem, styles.menuItemDanger)}
+              onClick={onDelete}
+            >
+              <Icon name="trash" size={18} />
+              {t.deleteMedia}
+            </ContextMenu.Item>
+          </ContextMenu.Popup>
+        </ContextMenu.Positioner>
+      </ContextMenu.Portal>
+    </ContextMenu.Root>
+  );
+}
+
+interface MediaInspectorBodyProps {
+  readonly asset: Asset;
+  readonly preview: string | undefined;
+  readonly uses: number;
+  readonly messages: StudioMessages;
+  readonly onRename: () => void;
+  readonly onDelete: () => void;
+}
+
+function MediaInspectorBody({
+  asset,
+  preview,
+  uses,
+  messages,
+  onRename,
+  onDelete,
+}: MediaInspectorBodyProps) {
+  const t = messages.media;
+  const format = useFormat();
+  const ready = asset.availability === "ready" && Boolean(asset.file);
+  const author = typeof asset.metadata?.author === "string" ? asset.metadata.author : "";
+  const license = typeof asset.metadata?.license === "string" ? asset.metadata.license : "";
+  const credit = author && license ? format(t.credit, { author, license }) : author || license;
+
+  return (
+    <>
+      {asset.kind === "audio" && ready && preview ? (
+        <InspectorPlayer src={preview} type={asset.mimeType} title={assetName(asset)} />
+      ) : asset.kind === "video" && ready && preview ? (
+        <video
+          className={styles.inspectorVideo}
+          src={preview}
+          controls
+          preload="metadata"
+          playsInline
         />
-      ) : null}
-    </article>
+      ) : (
+        <div className={styles.inspectorPreview}>
+          {asset.kind === "image" && ready && preview ? (
+            <img className={styles.inspectorImage} src={preview} alt="" />
+          ) : (
+            <span className={styles.placeholderIcon}>
+              <Icon name={asset.kind} size={40} />
+            </span>
+          )}
+        </div>
+      )}
+
+      <dl className={styles.details}>
+        <div className={styles.detailRow}>
+          <dt>{asset.mimeType}</dt>
+          <dd />
+        </div>
+        {typeof asset.byteSize === "number" ? (
+          <div className={styles.detailRow}>
+            <dt>{formatBytes(asset.byteSize)}</dt>
+            <dd />
+          </div>
+        ) : null}
+        <div className={styles.detailRow}>
+          <dt>{uses > 0 ? format(t.usedIn, { count: uses }) : t.notReferenced}</dt>
+          <dd />
+        </div>
+        {credit ? (
+          <div className={styles.detailRow}>
+            <dt title={credit}>{credit}</dt>
+            <dd />
+          </div>
+        ) : null}
+        {!ready ? (
+          <div className={styles.detailRow}>
+            <dt>
+              <span className={styles.badge}>{t.placeholder}</span>
+            </dt>
+            <dd />
+          </div>
+        ) : null}
+      </dl>
+
+      <div className={styles.inspectorActions}>
+        <Button variant="secondary" size="compact" onClick={onRename}>
+          <Icon name="edit" size={16} />
+          {t.renameMedia}
+        </Button>
+        <Button variant="secondary" size="compact" onClick={onDelete}>
+          <Icon name="trash" size={16} />
+          {t.deleteMedia}
+        </Button>
+      </div>
+    </>
   );
 }
