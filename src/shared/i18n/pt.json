@@ -722,5 +722,22 @@
     "supportPrompt": "Mostrar lembrete de apoio",
     "clearRecent": "Limpar cursos recentes",
     "recentEmpty": "Nenhum curso recente"
+  },
+  "release": {
+    "chipUpToDate": "Release up to date",
+    "chipRebuilding": "Rebuilding release…",
+    "chipError": "Release error",
+    "chipNotBuilt": "No release yet",
+    "revision": "Revision {revision}",
+    "version": "Version {version}",
+    "historyTitle": "Release history",
+    "historyEmpty": "No releases yet.",
+    "added": "Added or replaced",
+    "deleted": "Deleted",
+    "markUploaded": "Mark as uploaded",
+    "markedUploaded": "Marked uploaded",
+    "changedSinceUpload": "{count} files changed since your last upload",
+    "openFolder": "Open project folder",
+    "gitHint": "Using git? Read git status instead."
   }
 }

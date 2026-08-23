@@ -10,7 +10,10 @@ import type { ProjectWriter } from "@core/project-writing";
 import type { RecordingGateway } from "@core/recording";
 import type { TtsGateway } from "@core/tts";
 import type { DocumentGateway } from "@core/documents";
+import type { ReleaseDeps } from "@features/release";
 import { createAppMenuGateway } from "@platform/app-menu";
+import { createPackWriter } from "@platform/packaging";
+import { createReleaseGateway, createReleaseStateStore } from "@platform/release";
 import { createAppUpdateGateway } from "@platform/app-update";
 import { createLinkOpener } from "@platform/links";
 import { createProjectCreationGateway } from "@platform/project-creation";
@@ -40,6 +43,7 @@ export interface AppServices {
   readonly tts: TtsGateway;
   readonly recording: RecordingGateway;
   readonly documents: DocumentGateway;
+  readonly release?: ReleaseDeps;
 }
 
 /**
@@ -65,5 +69,14 @@ export function createAppServices(): AppServices {
     tts: createTauriTtsGateway(),
     recording: createTauriRecordingGateway(),
     documents: createDocumentGateway(),
+    release: {
+      writer: createPackWriter(locations),
+      gateway: createReleaseGateway(locations),
+      store: createReleaseStateStore(),
+      clock: {
+        now: () => new Date().toISOString(),
+        newId: () => crypto.randomUUID(),
+      },
+    },
   };
 }

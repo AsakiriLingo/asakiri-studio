@@ -16,7 +16,9 @@ import { LessonWorkspace } from "@features/lesson-workspace";
 import type { MediaSelection } from "@features/media";
 import { courseToRichLibrary, PartEditor, type SaveState } from "@features/lesson-editor";
 import { DraftsToolbar, DraftsSearch, DraftsPanel } from "@features/drafts";
+import { ReleaseChip } from "@features/release";
 import { createAppServices } from "@app/services";
+import { useRelease } from "@app/useRelease";
 import { useCourseState } from "@app/useCourseState";
 import { useProjectActions } from "@app/useProjectActions";
 import { useOutlineActions } from "@app/useOutlineActions";
@@ -118,6 +120,7 @@ export function App() {
 
   const store = useCourseState(services);
   const { project, courseState } = store;
+  const release = useRelease(services, store);
 
   const closeLessonAfterDelete = (lessonId: string) => {
     const ready = store.courseState?.status === "ready" ? store.courseState.course : null;
@@ -396,6 +399,20 @@ export function App() {
           setSettingsOpen(true);
         }}
         saveStatus={saveStatus}
+        extraStatus={
+          course ? (
+            <ReleaseChip
+              status={release.status}
+              revision={release.revision}
+              version={release.version}
+              history={release.history}
+              uploadedMark={release.uploadedMark}
+              changedSinceUpload={release.changedSinceUpload}
+              onMarkUploaded={release.markUploaded}
+              onOpenFolder={release.openFolder}
+            />
+          ) : undefined
+        }
         flush={course !== null}
       >
         {courseState?.status === "loading" ? null : courseState?.status === "failed" ? (
