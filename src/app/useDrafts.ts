@@ -4,7 +4,6 @@ import { TEXT_DOCUMENT_EXTENSIONS } from "@core/documents";
 import type { Draft } from "@core/drafts";
 import { labelForFile } from "@core/course";
 import { createProjectSession, type ProjectDirectory } from "@core/projects";
-import { markdownToTiptapChunked } from "@shared/components/rich-editor";
 import type { AppServices } from "@app/services";
 import type { CourseStateStore } from "@app/useCourseState";
 
@@ -74,6 +73,7 @@ export function useDrafts(services: AppServices, store: CourseStateStore): Draft
         throw new Error(`Could not read the document (${read.code}).`);
       }
       onProgress?.({ phase: "converting", fraction: 0 });
+      const { markdownToTiptapChunked } = await import("@shared/components/rich-editor/markdown");
       const document = (await markdownToTiptapChunked(read.document.markdown, (fraction) => {
         onProgress?.({ phase: "converting", fraction });
       })) as unknown as TiptapDocument;

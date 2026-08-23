@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, type ReactNode } from "react";
+import { lazy, Suspense, useCallback, useEffect, useState, type ReactNode } from "react";
 import type { AvailableUpdate } from "@core/app-update";
 import { createProjectSession, type ProjectDirectory, type RecentProject } from "@core/projects";
 import { I18nProvider, LOCALES, getMessages, useMessages, type Locale } from "@shared/i18n";
@@ -13,13 +13,11 @@ import type { DocumentTable } from "@core/documents";
 import { SPREADSHEET_EXTENSIONS } from "@core/documents";
 import { CourseStructure, OutlineSearch } from "@features/course-structure";
 import { LessonWorkspace } from "@features/lesson-workspace";
-import { CourseContent } from "@features/content";
-import { CourseMedia, type MediaSelection } from "@features/media";
-import { CourseAttribution } from "@features/attribution";
-import { CourseDetails } from "@features/course-details";
-import { PartEditor, courseToRichLibrary, type SaveState } from "@features/lesson-editor";
-import { PartPreview } from "@features/part-preview";
-import { DraftsPanel, DraftsToolbar, DraftsSearch } from "@features/drafts";
+import type { MediaSelection } from "@features/media";
+import { courseToRichLibrary } from "@features/lesson-editor/rich-library";
+import type { SaveState } from "@features/lesson-editor/PartEditor";
+import { DraftsToolbar } from "@features/drafts/DraftsToolbar";
+import { DraftsSearch } from "@features/drafts/DraftsSearch";
 import { createAppServices } from "@app/services";
 import { useCourseState } from "@app/useCourseState";
 import { useProjectActions } from "@app/useProjectActions";
@@ -29,6 +27,28 @@ import { usePartActions } from "@app/usePartActions";
 import { useMediaActions } from "@app/useMediaActions";
 import { useDrafts } from "@app/useDrafts";
 import styles from "@app/App.module.css";
+
+const CourseDetails = lazy(() =>
+  import("@features/course-details/CourseDetails").then((m) => ({ default: m.CourseDetails })),
+);
+const CourseAttribution = lazy(() =>
+  import("@features/attribution/CourseAttribution").then((m) => ({ default: m.CourseAttribution })),
+);
+const CourseContent = lazy(() =>
+  import("@features/content/CourseContent").then((m) => ({ default: m.CourseContent })),
+);
+const CourseMedia = lazy(() =>
+  import("@features/media/CourseMedia").then((m) => ({ default: m.CourseMedia })),
+);
+const PartEditor = lazy(() =>
+  import("@features/lesson-editor/PartEditor").then((m) => ({ default: m.PartEditor })),
+);
+const PartPreview = lazy(() =>
+  import("@features/part-preview/PartPreview").then((m) => ({ default: m.PartPreview })),
+);
+const DraftsPanel = lazy(() =>
+  import("@features/drafts/DraftsPanel").then((m) => ({ default: m.DraftsPanel })),
+);
 
 function initialThemePreference(): ThemePreference {
   const saved = localStorage.getItem("asakiri-theme");
@@ -395,63 +415,69 @@ export function App() {
           />
         ) : course ? (
           section === "details" ? (
-            <CourseDetails
-              course={course}
-              location={projectLocation}
-              onSaveProject={saveProject}
-              onRevealFolder={revealFolder}
-              onImportImage={mediaActions.importAssetForField}
-              onLoadAssetPreview={mediaActions.loadAssetPreview}
-              attributionSlot={
-                <CourseAttribution course={course} onSaveAttribution={saveAttribution} />
-              }
-            />
+            <Suspense fallback={null}>
+              <CourseDetails
+                course={course}
+                location={projectLocation}
+                onSaveProject={saveProject}
+                onRevealFolder={revealFolder}
+                onImportImage={mediaActions.importAssetForField}
+                onLoadAssetPreview={mediaActions.loadAssetPreview}
+                attributionSlot={
+                  <CourseAttribution course={course} onSaveAttribution={saveAttribution} />
+                }
+              />
+            </Suspense>
           ) : section === "content" ? (
-            <CourseContent
-              course={course}
-              onSaveRecord={contentActions.saveRecord}
-              onAddRecord={contentActions.addRecord}
-              onDeleteRecord={contentActions.deleteRecord}
-              onAddCollection={contentActions.addCollection}
-              onUpdateCollection={contentActions.updateCollection}
-              onDeleteCollection={contentActions.deleteCollection}
-              onImportAsset={mediaActions.importAssetForField}
-              onImportSpreadsheet={pickSpreadsheet}
-              onLoadPreview={mediaActions.loadAssetPreview}
-              sidebarCollapsed={collectionsCollapsed}
-              onSidebarCollapsedChange={setCollectionsCollapsed}
-            />
+            <Suspense fallback={null}>
+              <CourseContent
+                course={course}
+                onSaveRecord={contentActions.saveRecord}
+                onAddRecord={contentActions.addRecord}
+                onDeleteRecord={contentActions.deleteRecord}
+                onAddCollection={contentActions.addCollection}
+                onUpdateCollection={contentActions.updateCollection}
+                onDeleteCollection={contentActions.deleteCollection}
+                onImportAsset={mediaActions.importAssetForField}
+                onImportSpreadsheet={pickSpreadsheet}
+                onLoadPreview={mediaActions.loadAssetPreview}
+                sidebarCollapsed={collectionsCollapsed}
+                onSidebarCollapsedChange={setCollectionsCollapsed}
+              />
+            </Suspense>
           ) : section === "media" ? (
-            <CourseMedia
-              course={course}
-              onImportMedia={mediaActions.importMedia}
-              onImportMediaFolder={mediaActions.importMediaFolder}
-              onDeleteAsset={mediaActions.deleteAsset}
-              onLoadPreview={mediaActions.loadAssetPreview}
-              onSearchImages={(query, page) => services.mediaSearch.searchImages(query, page)}
-              onSearchAudio={(query, page) => services.mediaSearch.searchAudio(query, page)}
-              onAddRemoteMedia={mediaActions.addRemoteMedia}
-              onRenameAsset={mediaActions.renameAsset}
-              inspectorCollapsed={mediaInspectorCollapsed}
-              onInspectorCollapsedChange={setMediaInspectorCollapsed}
-              selection={mediaSelection}
-              onSelectionChange={setMediaSelection}
-              selectedId={mediaSelectedId}
-              onSelectedIdChange={setMediaSelectedId}
-              onMoveAsset={mediaActions.moveAssetToFolder}
-              onCreateFolder={mediaActions.createFolder}
-              onRenameFolder={mediaActions.renameFolder}
-              onDeleteFolder={mediaActions.deleteFolder}
-              onListTtsVoices={() => services.tts.listVoices()}
-              onPreviewTtsVoice={mediaActions.previewTtsVoice}
-              onListAvailableVoices={() => services.tts.listAvailableVoices()}
-              onDownloadVoice={(voiceId, onProgress) =>
-                services.tts.downloadVoice(voiceId, onProgress)
-              }
-              onRemoveVoice={(voiceId) => services.tts.removeVoice(voiceId)}
-              onAddTtsAudio={mediaActions.addTtsAudio}
-              onAddRecording={mediaActions.addRecording}
-            />
+            <Suspense fallback={null}>
+              <CourseMedia
+                course={course}
+                onImportMedia={mediaActions.importMedia}
+                onImportMediaFolder={mediaActions.importMediaFolder}
+                onDeleteAsset={mediaActions.deleteAsset}
+                onLoadPreview={mediaActions.loadAssetPreview}
+                onSearchImages={(query, page) => services.mediaSearch.searchImages(query, page)}
+                onSearchAudio={(query, page) => services.mediaSearch.searchAudio(query, page)}
+                onAddRemoteMedia={mediaActions.addRemoteMedia}
+                onRenameAsset={mediaActions.renameAsset}
+                inspectorCollapsed={mediaInspectorCollapsed}
+                onInspectorCollapsedChange={setMediaInspectorCollapsed}
+                selection={mediaSelection}
+                onSelectionChange={setMediaSelection}
+                selectedId={mediaSelectedId}
+                onSelectedIdChange={setMediaSelectedId}
+                onMoveAsset={mediaActions.moveAssetToFolder}
+                onCreateFolder={mediaActions.createFolder}
+                onRenameFolder={mediaActions.renameFolder}
+                onDeleteFolder={mediaActions.deleteFolder}
+                onListTtsVoices={() => services.tts.listVoices()}
+                onPreviewTtsVoice={mediaActions.previewTtsVoice}
+                onListAvailableVoices={() => services.tts.listAvailableVoices()}
+                onDownloadVoice={(voiceId, onProgress) =>
+                  services.tts.downloadVoice(voiceId, onProgress)
+                }
+                onRemoveVoice={(voiceId) => services.tts.removeVoice(voiceId)}
+                onAddTtsAudio={mediaActions.addTtsAudio}
+                onAddRecording={mediaActions.addRecording}
+              />
+            </Suspense>
           ) : (
             <LessonWorkspace
               outlineSlot={
@@ -489,46 +515,52 @@ export function App() {
               onReferenceCollapsedChange={setReferenceCollapsed}
               editorSlot={
                 openPart && openPartLesson ? (
-                  <PartEditor
-                    part={openPart}
-                    course={course}
-                    onSaveDocument={(partId, document) =>
-                      partActions.savePartDocument(openPartLesson.id, partId, document)
-                    }
-                    onSaveExercise={(partId, exercise) =>
-                      partActions.savePartExercise(openPartLesson.id, partId, exercise)
-                    }
-                    onSaveRecord={contentActions.saveRecord}
-                    onLoadAssetPreview={mediaActions.loadAssetPreview}
-                    onImportMedia={mediaActions.importAssetForField}
-                    onSaveStateChange={setPartSaveState}
-                  />
+                  <Suspense fallback={null}>
+                    <PartEditor
+                      part={openPart}
+                      course={course}
+                      onSaveDocument={(partId, document) =>
+                        partActions.savePartDocument(openPartLesson.id, partId, document)
+                      }
+                      onSaveExercise={(partId, exercise) =>
+                        partActions.savePartExercise(openPartLesson.id, partId, exercise)
+                      }
+                      onSaveRecord={contentActions.saveRecord}
+                      onLoadAssetPreview={mediaActions.loadAssetPreview}
+                      onImportMedia={mediaActions.importAssetForField}
+                      onSaveStateChange={setPartSaveState}
+                    />
+                  </Suspense>
                 ) : undefined
               }
               previewSlot={
                 openPart ? (
-                  <PartPreview
-                    part={openPart}
-                    course={course}
-                    library={courseToRichLibrary(course)}
-                    onLoadAssetPreview={mediaActions.loadAssetPreview}
-                  />
+                  <Suspense fallback={null}>
+                    <PartPreview
+                      part={openPart}
+                      course={course}
+                      library={courseToRichLibrary(course)}
+                      onLoadAssetPreview={mediaActions.loadAssetPreview}
+                    />
+                  </Suspense>
                 ) : undefined
               }
               draftsSlot={
-                <DraftsPanel
-                  drafts={draftActions.drafts}
-                  query={draftQuery}
-                  searchActive={draftHitActive}
-                  onSearchTotal={setDraftHitTotal}
-                  selectedId={draftSelectedId}
-                  onSelect={openDraft}
-                  onUpdate={draftActions.updateDraft}
-                  onRename={draftActions.renameDraft}
-                  onDelete={draftActions.deleteDraft}
-                  library={courseToRichLibrary(course)}
-                  onLoadAssetPreview={mediaActions.loadAssetPreview}
-                />
+                <Suspense fallback={null}>
+                  <DraftsPanel
+                    drafts={draftActions.drafts}
+                    query={draftQuery}
+                    searchActive={draftHitActive}
+                    onSearchTotal={setDraftHitTotal}
+                    selectedId={draftSelectedId}
+                    onSelect={openDraft}
+                    onUpdate={draftActions.updateDraft}
+                    onRename={draftActions.renameDraft}
+                    onDelete={draftActions.deleteDraft}
+                    library={courseToRichLibrary(course)}
+                    onLoadAssetPreview={mediaActions.loadAssetPreview}
+                  />
+                </Suspense>
               }
               draftsActions={
                 <DraftsToolbar
