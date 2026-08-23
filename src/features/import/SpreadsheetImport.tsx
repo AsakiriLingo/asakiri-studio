@@ -329,7 +329,7 @@ export function SpreadsheetImport({
 
             {mapping.keyColumn === null ? <Status tone="warning">{t.noKeyWarning}</Status> : null}
             {phase === "failed" ? (
-              <Status tone="warning">{format(t.importFailed, { written, total })}</Status>
+              <Status tone="error">{format(t.importFailed, { written, total })}</Status>
             ) : null}
           </div>
         )}

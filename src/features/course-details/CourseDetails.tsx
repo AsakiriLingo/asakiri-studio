@@ -7,17 +7,23 @@ import { Menu } from "@base-ui/react/menu";
 import { Button } from "@shared/components/button";
 import { Callout } from "@shared/components/callout";
 import { DatePicker } from "@shared/components/date-picker";
-import { Field, TextArea, TextInput } from "@shared/components/form";
+import { Field, NumberInput, TextArea, TextInput } from "@shared/components/form";
 import { FlagPicker } from "@shared/components/flag";
 import { Select, type SelectOption } from "@shared/components/select";
-import { Icon } from "@shared/components/icon";
+import { Icon, type IconName } from "@shared/components/icon";
 import { IconButton } from "@shared/components/icon-button";
-import { PanelHeader } from "@shared/components/panel";
-import { WorkHeader, WorkInner } from "@shared/components/work-surface";
+import { WorkInner } from "@shared/components/work-surface";
 import styles from "@features/course-details/CourseDetails.module.css";
 
 const LICENSE_CODES = ["by", "bySa", "byNc", "byNcSa", "byNd", "byNcNd", "cc0", "arr"] as const;
 type LicenseCode = (typeof LICENSE_CODES)[number];
+
+function parseVersion(value: string): number | null {
+  const trimmed = value.trim();
+  if (trimmed === "") return null;
+  const parsed = Number(trimmed);
+  return Number.isFinite(parsed) ? parsed : null;
+}
 
 function isLicenseCode(value: string): value is LicenseCode {
   return (LICENSE_CODES as readonly string[]).includes(value);
@@ -101,16 +107,18 @@ function SectionGroup({
   title,
   titleId,
   description,
+  active = true,
   children,
 }: {
   readonly title: string;
   readonly titleId: string;
   readonly description: string;
+  readonly active?: boolean;
   readonly children: ReactNode;
 }) {
   return (
-    <section className={styles.settingGroup} aria-labelledby={titleId}>
-      <PanelHeader title={title} titleId={titleId} description={description} />
+    <section id={titleId} className={styles.settingGroup} aria-label={title} hidden={!active}>
+      <p className={styles.sectionDescription}>{description}</p>
       {children}
     </section>
   );
@@ -332,7 +340,18 @@ export interface CourseDetailsProps {
   readonly onRevealFolder: () => void;
   readonly onImportImage: () => Promise<Asset | null>;
   readonly onLoadAssetPreview: (assetId: string) => Promise<string | null>;
+  readonly attributionSlot?: ReactNode;
 }
+
+type DetailsSection =
+  | "overview"
+  | "language"
+  | "contributors"
+  | "funding"
+  | "sponsors"
+  | "license"
+  | "attribution"
+  | "project";
 
 export function CourseDetails({
   course,
@@ -341,10 +360,26 @@ export function CourseDetails({
   onRevealFolder,
   onImportImage,
   onLoadAssetPreview,
+  attributionSlot,
 }: CourseDetailsProps) {
   const messages = useMessages();
   const t = messages.details;
   const { project } = course;
+  const [section, setSection] = useState<DetailsSection>("overview");
+  const sections: readonly {
+    readonly id: DetailsSection;
+    readonly label: string;
+    readonly icon: IconName;
+  }[] = [
+    { id: "overview", label: t.overviewTitle, icon: "details" },
+    { id: "language", label: t.languageTitle, icon: "language" },
+    { id: "contributors", label: t.contributorsTitle, icon: "users" },
+    { id: "funding", label: t.fundingTitle, icon: "heart" },
+    { id: "sponsors", label: t.sponsorsTitle, icon: "award" },
+    { id: "license", label: t.licenseTitle, icon: "scale" },
+    { id: "attribution", label: messages.attribution.title, icon: "copyright" },
+    { id: "project", label: t.projectTitle, icon: "folder" },
+  ];
 
   const patch = (
     changes: Partial<CourseProject> | ((current: CourseProject) => Partial<CourseProject>),
@@ -396,389 +431,411 @@ export function CourseDetails({
   };
 
   return (
-    <WorkInner>
-      <WorkHeader title={t.title} description={t.description} />
-
-      <div className={styles.settingsStack}>
-        <SectionGroup
-          title={t.overviewTitle}
-          titleId="overview-title"
-          description={t.overviewDescription}
-        >
-          <div className={joinClassNames(styles.formGrid, styles.detailBody)}>
-            <Field label={t.fieldTitle} help={t.fieldTitleHelp}>
-              <TextInput
-                name="title"
-                defaultValue={project.title}
-                autoComplete="off"
-                onBlur={(event) => {
-                  patchField("title", event.currentTarget.value);
-                }}
-              />
-            </Field>
-            <Field label={t.fieldSubtitle} help={t.fieldSubtitleHelp}>
-              <TextInput
-                name="subtitle"
-                defaultValue={project.subtitle}
-                autoComplete="off"
-                onBlur={(event) => {
-                  patchField("subtitle", event.currentTarget.value);
-                }}
-              />
-            </Field>
-            <Field label={t.fieldDescription} help={t.fieldDescriptionHelp}>
-              <TextArea
-                name="description"
-                rows={3}
-                defaultValue={project.description}
-                placeholder={t.fieldDescriptionPlaceholder}
-                onBlur={(event) => {
-                  patchField("description", event.currentTarget.value);
-                }}
-              />
-            </Field>
-          </div>
-        </SectionGroup>
-
-        <SectionGroup
-          title={t.languageTitle}
-          titleId="language-title"
-          description={t.languageDescription}
-        >
-          <div className={joinClassNames(styles.formGrid, styles.two, styles.detailBody)}>
-            <Field label={t.fieldTaught} help={t.fieldTaughtHelp}>
-              <div className={styles.taughtField}>
+    <div className={styles.details}>
+      <nav className={styles.sidebar} aria-label={t.title}>
+        {sections.map((item) => (
+          <button
+            key={item.id}
+            type="button"
+            className={styles.sectionNavItem}
+            aria-current={section === item.id ? "page" : undefined}
+            onClick={() => {
+              setSection(item.id);
+            }}
+          >
+            <Icon name={item.icon} size={16} aria-hidden="true" />
+            {item.label}
+          </button>
+        ))}
+      </nav>
+      <div className={styles.content}>
+        <WorkInner>
+          <SectionGroup
+            title={t.overviewTitle}
+            titleId="overview-title"
+            description={t.overviewDescription}
+            active={section === "overview"}
+          >
+            <div className={joinClassNames(styles.formGrid, styles.detailBody)}>
+              <Field label={t.fieldTitle} help={t.fieldTitleHelp}>
                 <TextInput
-                  className={styles.taughtInput}
-                  name="target-language"
-                  defaultValue={project.learningLocales[0] ?? ""}
+                  name="title"
+                  defaultValue={project.title}
                   autoComplete="off"
                   onBlur={(event) => {
-                    const value = event.currentTarget.value;
-                    if (value !== (project.learningLocales[0] ?? "")) {
-                      patch((current) => ({
-                        learningLocales: [value, ...current.learningLocales.slice(1)],
-                      }));
+                    patchField("title", event.currentTarget.value);
+                  }}
+                />
+              </Field>
+              <Field label={t.fieldSubtitle} help={t.fieldSubtitleHelp}>
+                <TextInput
+                  name="subtitle"
+                  defaultValue={project.subtitle}
+                  autoComplete="off"
+                  onBlur={(event) => {
+                    patchField("subtitle", event.currentTarget.value);
+                  }}
+                />
+              </Field>
+              <Field label={t.fieldDescription} help={t.fieldDescriptionHelp}>
+                <TextArea
+                  name="description"
+                  rows={3}
+                  defaultValue={project.description}
+                  placeholder={t.fieldDescriptionPlaceholder}
+                  onBlur={(event) => {
+                    patchField("description", event.currentTarget.value);
+                  }}
+                />
+              </Field>
+              <Field label={t.coverTitle} help={t.coverDescription}>
+                <div className={styles.inlineActions}>
+                  <span className={styles.assetRef}>
+                    <Icon name="image" size={16} />
+                    {coverAsset ? (coverAsset.file ?? coverAsset.label) : t.noCover}
+                  </span>
+                  {imageAssets.length > 0 ? (
+                    <Select
+                      searchable
+                      aria-label={t.chooseMedia}
+                      items={coverItems}
+                      placeholder={t.chooseMedia}
+                      value={project.coverAssetId ?? ""}
+                      onValueChange={(assetId) => {
+                        patch({ coverAssetId: assetId || null });
+                      }}
+                    />
+                  ) : null}
+                  <Button variant="secondary" onClick={importCover}>
+                    {t.coverImport}
+                  </Button>
+                  {project.coverAssetId === null ? null : (
+                    <Button
+                      variant="ghost"
+                      onClick={() => {
+                        patch({ coverAssetId: null });
+                      }}
+                    >
+                      {t.remove}
+                    </Button>
+                  )}
+                </div>
+              </Field>
+            </div>
+          </SectionGroup>
+
+          <SectionGroup
+            title={t.languageTitle}
+            titleId="language-title"
+            description={t.languageDescription}
+            active={section === "language"}
+          >
+            <div className={joinClassNames(styles.formGrid, styles.two, styles.detailBody)}>
+              <Field label={t.fieldTaught} help={t.fieldTaughtHelp}>
+                <div className={styles.taughtField}>
+                  <TextInput
+                    className={styles.taughtInput}
+                    name="target-language"
+                    defaultValue={project.learningLocales[0] ?? ""}
+                    autoComplete="off"
+                    onBlur={(event) => {
+                      const value = event.currentTarget.value;
+                      if (value !== (project.learningLocales[0] ?? "")) {
+                        patch((current) => ({
+                          learningLocales: [value, ...current.learningLocales.slice(1)],
+                        }));
+                      }
+                    }}
+                  />
+                  {taughtFlagAsset ? (
+                    <span className={styles.assetRef}>
+                      <FlagAssetPreview asset={taughtFlagAsset} loadPreview={onLoadAssetPreview} />
+                      {taughtFlagAsset.file ?? taughtFlagAsset.label}
+                      <IconButton
+                        aria-label={t.remove}
+                        onClick={() => {
+                          patch({ taughtFlagAssetId: null });
+                        }}
+                      >
+                        <Icon name="close" size={14} />
+                      </IconButton>
+                    </span>
+                  ) : (
+                    <FlagPicker
+                      value={project.taughtFlag}
+                      onChange={(code) => {
+                        patch({ taughtFlag: code, taughtFlagAssetId: null });
+                      }}
+                    />
+                  )}
+                  <Button variant="ghost" size="sm" onClick={importFlag} title={t.flagHint}>
+                    <Icon name="upload" size={16} />
+                    {t.flagUpload}
+                  </Button>
+                </div>
+              </Field>
+              <Field label={t.fieldExplained} help={t.fieldExplainedHelp}>
+                <TextInput
+                  name="source-language"
+                  defaultValue={project.defaultLocale}
+                  autoComplete="off"
+                  onBlur={(event) => {
+                    if (event.currentTarget.value !== project.defaultLocale) {
+                      patch({ defaultLocale: event.currentTarget.value });
                     }
                   }}
                 />
-                {taughtFlagAsset ? (
-                  <span className={styles.assetRef}>
-                    <FlagAssetPreview asset={taughtFlagAsset} loadPreview={onLoadAssetPreview} />
-                    {taughtFlagAsset.file ?? taughtFlagAsset.label}
-                    <IconButton
-                      aria-label={t.remove}
-                      onClick={() => {
-                        patch({ taughtFlagAssetId: null });
-                      }}
-                    >
-                      <Icon name="close" size={14} />
-                    </IconButton>
-                  </span>
-                ) : (
-                  <FlagPicker
-                    value={project.taughtFlag}
-                    onChange={(code) => {
-                      patch({ taughtFlag: code, taughtFlagAssetId: null });
-                    }}
-                  />
-                )}
-                <Button variant="ghost" size="sm" onClick={importFlag} title={t.flagHint}>
-                  <Icon name="upload" size={16} />
-                  {t.flagUpload}
-                </Button>
-              </div>
-            </Field>
-            <Field label={t.fieldExplained} help={t.fieldExplainedHelp}>
-              <TextInput
-                name="source-language"
-                defaultValue={project.defaultLocale}
-                autoComplete="off"
-                onBlur={(event) => {
-                  if (event.currentTarget.value !== project.defaultLocale) {
-                    patch({ defaultLocale: event.currentTarget.value });
-                  }
-                }}
-              />
-            </Field>
-            <Field label={t.fieldLevel} help={t.fieldLevelHelp}>
-              <Select
-                aria-label={t.fieldLevel}
-                items={[
-                  { value: "a1", label: t.levelA1 },
-                  { value: "a2", label: t.levelA2 },
-                  { value: "b1", label: t.levelB1 },
-                  { value: "b2", label: t.levelB2 },
-                  { value: "c1", label: t.levelC1 },
-                  { value: "c2", label: t.levelC2 },
-                ]}
-                value={project.level}
-                onValueChange={(level) => {
-                  patch({ level });
-                }}
-              />
-            </Field>
-            <Field label={t.fieldLength} help={t.fieldLengthHelp}>
-              <TextInput
-                name="length"
-                defaultValue={project.estimatedLength}
-                autoComplete="off"
-                onBlur={(event) => {
-                  patchField("estimatedLength", event.currentTarget.value);
-                }}
-              />
-            </Field>
-            <Field label={t.fieldVersion} help={t.fieldVersionHelp}>
-              <TextInput
-                name="version"
-                defaultValue={project.version}
-                placeholder={t.versionPlaceholder}
-                autoComplete="off"
-                onBlur={(event) => {
-                  patchField("version", event.currentTarget.value);
-                }}
-              />
-            </Field>
-            <Field label={t.fieldReleased} help={t.fieldReleasedHelp}>
-              <DatePicker
-                aria-label={t.fieldReleased}
-                value={project.releasedOn}
-                onValueChange={(released) => {
-                  patchField("releasedOn", released);
-                }}
-              />
-            </Field>
-          </div>
-        </SectionGroup>
-
-        <SectionGroup title={t.coverTitle} titleId="cover-title" description={t.coverDescription}>
-          <div className={styles.detailBody}>
-            <div className={styles.inlineActions}>
-              <span className={styles.assetRef}>
-                <Icon name="image" size={16} />
-                {coverAsset ? (coverAsset.file ?? coverAsset.label) : t.noCover}
-              </span>
-              {imageAssets.length > 0 ? (
+              </Field>
+              <Field label={t.fieldLevel} help={t.fieldLevelHelp}>
                 <Select
-                  searchable
-                  aria-label={t.chooseMedia}
-                  items={coverItems}
-                  placeholder={t.chooseMedia}
-                  value={project.coverAssetId ?? ""}
-                  onValueChange={(assetId) => {
-                    patch({ coverAssetId: assetId || null });
+                  aria-label={t.fieldLevel}
+                  items={[
+                    { value: "a1", label: t.levelA1 },
+                    { value: "a2", label: t.levelA2 },
+                    { value: "b1", label: t.levelB1 },
+                    { value: "b2", label: t.levelB2 },
+                    { value: "c1", label: t.levelC1 },
+                    { value: "c2", label: t.levelC2 },
+                  ]}
+                  value={project.level}
+                  onValueChange={(level) => {
+                    patch({ level });
                   }}
                 />
-              ) : null}
-              <Button variant="secondary" onClick={importCover}>
-                {t.coverImport}
-              </Button>
-              {project.coverAssetId === null ? null : (
-                <Button
-                  variant="ghost"
-                  onClick={() => {
-                    patch({ coverAssetId: null });
+              </Field>
+              <Field label={t.fieldLength} help={t.fieldLengthHelp}>
+                <TextInput
+                  name="length"
+                  defaultValue={project.estimatedLength}
+                  autoComplete="off"
+                  onBlur={(event) => {
+                    patchField("estimatedLength", event.currentTarget.value);
                   }}
-                >
-                  {t.remove}
-                </Button>
-              )}
+                />
+              </Field>
+              <Field label={t.fieldVersion} help={t.fieldVersionHelp}>
+                <NumberInput
+                  name="version"
+                  min={0}
+                  step={0.1}
+                  defaultValue={parseVersion(project.version)}
+                  placeholder={t.versionPlaceholder}
+                  onValueChange={(value) => {
+                    patchField("version", value === null ? "" : String(value));
+                  }}
+                />
+              </Field>
+              <Field label={t.fieldReleased} help={t.fieldReleasedHelp}>
+                <DatePicker
+                  aria-label={t.fieldReleased}
+                  value={project.releasedOn}
+                  onValueChange={(released) => {
+                    patchField("releasedOn", released);
+                  }}
+                />
+              </Field>
             </div>
-          </div>
-        </SectionGroup>
+          </SectionGroup>
 
-        <SectionGroup
-          title={t.contributorsTitle}
-          titleId="contributors-title"
-          description={t.contributorsDescription}
-        >
-          {project.contributors.map((contributor) => (
-            <ContributorRow
-              key={contributor.id}
-              contributor={contributor}
-              messages={messages}
-              onChange={(changes) => {
-                patch((current) => ({
-                  contributors: current.contributors.map((item) =>
-                    item.id === contributor.id ? { ...item, ...changes } : item,
-                  ),
-                }));
-              }}
-              onRemove={() => {
-                patch((current) => ({
-                  contributors: current.contributors.filter((item) => item.id !== contributor.id),
-                }));
-              }}
-            />
-          ))}
-          <div className={styles.detailBody}>
-            <Button
-              variant="secondary"
-              onClick={() => {
-                patch((current) => ({
-                  contributors: [
-                    ...current.contributors,
-                    { id: crypto.randomUUID(), name: "", role: "author", links: [] },
-                  ],
-                }));
-              }}
-            >
-              <Icon name="plus" size={18} />
-              {messages.common.add}
-            </Button>
-          </div>
-        </SectionGroup>
-
-        <SectionGroup
-          title={t.fundingTitle}
-          titleId="funding-title"
-          description={t.fundingDescription}
-        >
-          {project.funding.map((entry) => (
-            <FundingRow
-              key={entry.id}
-              entry={entry}
-              messages={messages}
-              onChange={(changes) => {
-                patch((current) => ({
-                  funding: current.funding.map((item) =>
-                    item.id === entry.id ? { ...item, ...changes } : item,
-                  ),
-                }));
-              }}
-              onRemove={() => {
-                patch((current) => ({
-                  funding: current.funding.filter((item) => item.id !== entry.id),
-                }));
-              }}
-            />
-          ))}
-          <div className={styles.detailBody}>
-            <Button
-              variant="secondary"
-              onClick={() => {
-                patch((current) => ({
-                  funding: [
-                    ...current.funding,
-                    { id: crypto.randomUUID(), platform: "githubSponsors", url: "" },
-                  ],
-                }));
-              }}
-            >
-              <Icon name="plus" size={18} />
-              {messages.common.add}
-            </Button>
-          </div>
-        </SectionGroup>
-
-        <SectionGroup
-          title={t.sponsorsTitle}
-          titleId="sponsors-title"
-          description={t.sponsorsDescription}
-        >
-          {project.sponsors.map((sponsor) => (
-            <SponsorRow
-              key={sponsor.id}
-              sponsor={sponsor}
-              messages={messages}
-              onChange={(changes) => {
-                patch((current) => ({
-                  sponsors: current.sponsors.map((item) =>
-                    item.id === sponsor.id ? { ...item, ...changes } : item,
-                  ),
-                }));
-              }}
-              onRemove={() => {
-                patch((current) => ({
-                  sponsors: current.sponsors.filter((item) => item.id !== sponsor.id),
-                }));
-              }}
-            />
-          ))}
-          <div className={styles.detailBody}>
-            <Button
-              variant="secondary"
-              onClick={() => {
-                patch((current) => ({
-                  sponsors: [
-                    ...current.sponsors,
-                    { id: crypto.randomUUID(), name: "", tier: "gold", url: "" },
-                  ],
-                }));
-              }}
-            >
-              <Icon name="plus" size={18} />
-              {messages.common.add}
-            </Button>
-          </div>
-        </SectionGroup>
-
-        <SectionGroup
-          title={t.licenseTitle}
-          titleId="license-title"
-          description={t.licenseDescription}
-        >
-          <div className={joinClassNames(styles.formGrid, styles.two, styles.detailBody)}>
-            <Field label={t.licenseLabel} className={styles.spanAll} help={t.licenseHelp}>
-              <Select
-                aria-label={t.licenseLabel}
-                items={LICENSE_CODES.map((code) => ({ value: code, label: t.licenses[code] }))}
-                value={project.license}
-                onValueChange={(license) => {
-                  patch({ license });
+          <SectionGroup
+            title={t.contributorsTitle}
+            titleId="contributors-title"
+            description={t.contributorsDescription}
+            active={section === "contributors"}
+          >
+            {project.contributors.map((contributor) => (
+              <ContributorRow
+                key={contributor.id}
+                contributor={contributor}
+                messages={messages}
+                onChange={(changes) => {
+                  patch((current) => ({
+                    contributors: current.contributors.map((item) =>
+                      item.id === contributor.id ? { ...item, ...changes } : item,
+                    ),
+                  }));
+                }}
+                onRemove={() => {
+                  patch((current) => ({
+                    contributors: current.contributors.filter((item) => item.id !== contributor.id),
+                  }));
                 }}
               />
-            </Field>
-            <Field label={t.copyrightHolder}>
-              <TextInput
-                name="copyright-holder"
-                defaultValue={project.copyrightHolder}
-                autoComplete="off"
-                onBlur={(event) => {
-                  patchField("copyrightHolder", event.currentTarget.value);
+            ))}
+            <div className={styles.detailBody}>
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  patch((current) => ({
+                    contributors: [
+                      ...current.contributors,
+                      { id: crypto.randomUUID(), name: "", role: "author", links: [] },
+                    ],
+                  }));
                 }}
-              />
-            </Field>
-            <Field label={t.yearLabel}>
-              <TextInput
-                name="copyright-year"
-                defaultValue={project.copyrightYear}
-                inputMode="numeric"
-                autoComplete="off"
-                onBlur={(event) => {
-                  patchField("copyrightYear", event.currentTarget.value);
-                }}
-              />
-            </Field>
-            {isLicenseCode(project.license) ? (
-              <Callout icon="details" className={styles.spanAll}>
-                <strong>{t.licenses[project.license]}</strong>
-                {t.licenseSummaries[project.license]}
-              </Callout>
-            ) : null}
-          </div>
-        </SectionGroup>
-
-        <SectionGroup
-          title={t.projectTitle}
-          titleId="project-title"
-          description={t.projectDescription}
-        >
-          <div className={styles.settingList}>
-            <div className={styles.settingRow}>
-              <span>
-                <span className={styles.settingName}>{t.folder}</span>
-                <span className={joinClassNames(styles.settingDetail, styles.mono)}>
-                  {location}
-                </span>
-              </span>
-              <Button variant="ghost" onClick={onRevealFolder}>
-                {messages.common.reveal}
+              >
+                <Icon name="plus" size={18} />
+                {messages.common.add}
               </Button>
             </div>
-          </div>
-        </SectionGroup>
+          </SectionGroup>
+
+          <SectionGroup
+            title={t.fundingTitle}
+            titleId="funding-title"
+            description={t.fundingDescription}
+            active={section === "funding"}
+          >
+            {project.funding.map((entry) => (
+              <FundingRow
+                key={entry.id}
+                entry={entry}
+                messages={messages}
+                onChange={(changes) => {
+                  patch((current) => ({
+                    funding: current.funding.map((item) =>
+                      item.id === entry.id ? { ...item, ...changes } : item,
+                    ),
+                  }));
+                }}
+                onRemove={() => {
+                  patch((current) => ({
+                    funding: current.funding.filter((item) => item.id !== entry.id),
+                  }));
+                }}
+              />
+            ))}
+            <div className={styles.detailBody}>
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  patch((current) => ({
+                    funding: [
+                      ...current.funding,
+                      { id: crypto.randomUUID(), platform: "githubSponsors", url: "" },
+                    ],
+                  }));
+                }}
+              >
+                <Icon name="plus" size={18} />
+                {messages.common.add}
+              </Button>
+            </div>
+          </SectionGroup>
+
+          <SectionGroup
+            title={t.sponsorsTitle}
+            titleId="sponsors-title"
+            description={t.sponsorsDescription}
+            active={section === "sponsors"}
+          >
+            {project.sponsors.map((sponsor) => (
+              <SponsorRow
+                key={sponsor.id}
+                sponsor={sponsor}
+                messages={messages}
+                onChange={(changes) => {
+                  patch((current) => ({
+                    sponsors: current.sponsors.map((item) =>
+                      item.id === sponsor.id ? { ...item, ...changes } : item,
+                    ),
+                  }));
+                }}
+                onRemove={() => {
+                  patch((current) => ({
+                    sponsors: current.sponsors.filter((item) => item.id !== sponsor.id),
+                  }));
+                }}
+              />
+            ))}
+            <div className={styles.detailBody}>
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  patch((current) => ({
+                    sponsors: [
+                      ...current.sponsors,
+                      { id: crypto.randomUUID(), name: "", tier: "gold", url: "" },
+                    ],
+                  }));
+                }}
+              >
+                <Icon name="plus" size={18} />
+                {messages.common.add}
+              </Button>
+            </div>
+          </SectionGroup>
+
+          <SectionGroup
+            title={t.licenseTitle}
+            titleId="license-title"
+            description={t.licenseDescription}
+            active={section === "license"}
+          >
+            <div className={joinClassNames(styles.formGrid, styles.two, styles.detailBody)}>
+              <Field label={t.licenseLabel} className={styles.spanAll} help={t.licenseHelp}>
+                <Select
+                  aria-label={t.licenseLabel}
+                  items={LICENSE_CODES.map((code) => ({ value: code, label: t.licenses[code] }))}
+                  value={project.license}
+                  onValueChange={(license) => {
+                    patch({ license });
+                  }}
+                />
+              </Field>
+              <Field label={t.copyrightHolder}>
+                <TextInput
+                  name="copyright-holder"
+                  defaultValue={project.copyrightHolder}
+                  autoComplete="off"
+                  onBlur={(event) => {
+                    patchField("copyrightHolder", event.currentTarget.value);
+                  }}
+                />
+              </Field>
+              <Field label={t.yearLabel}>
+                <TextInput
+                  name="copyright-year"
+                  defaultValue={project.copyrightYear}
+                  inputMode="numeric"
+                  autoComplete="off"
+                  onBlur={(event) => {
+                    patchField("copyrightYear", event.currentTarget.value);
+                  }}
+                />
+              </Field>
+              {isLicenseCode(project.license) ? (
+                <Callout icon="details" className={styles.spanAll}>
+                  <strong>{t.licenses[project.license]}</strong>
+                  {t.licenseSummaries[project.license]}
+                </Callout>
+              ) : null}
+            </div>
+          </SectionGroup>
+
+          <SectionGroup
+            title={t.projectTitle}
+            titleId="project-title"
+            description={t.projectDescription}
+            active={section === "project"}
+          >
+            <div className={styles.settingList}>
+              <div className={styles.settingRow}>
+                <span>
+                  <span className={styles.settingName}>{t.folder}</span>
+                  <span className={joinClassNames(styles.settingDetail, styles.mono)}>
+                    {location}
+                  </span>
+                </span>
+                <Button variant="ghost" onClick={onRevealFolder}>
+                  {messages.common.reveal}
+                </Button>
+              </div>
+            </div>
+          </SectionGroup>
+          {section === "attribution" ? attributionSlot : null}
+        </WorkInner>
       </div>
-    </WorkInner>
+    </div>
   );
 }

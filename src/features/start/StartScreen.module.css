@@ -1,10 +1,18 @@
 .hub {
   position: relative;
-  min-height: 100svh;
+  height: 100svh;
+  overflow: hidden;
+  background: var(--color-canvas);
+}
+
+.scroll {
+  height: 100%;
+}
+
+.scrollContent {
   padding: calc(max(var(--space-4), env(safe-area-inset-top)) + var(--titlebar-height))
     max(var(--space-4), env(safe-area-inset-right)) max(var(--space-8), env(safe-area-inset-bottom))
     max(var(--space-4), env(safe-area-inset-left));
-  background: var(--color-canvas);
 }
 
 .bar {
@@ -75,6 +83,7 @@
   align-items: center;
   gap: var(--space-3);
   margin-bottom: var(--space-4);
+  padding-left: var(--space-4);
   color: var(--color-text);
   font-size: var(--font-size-400);
   font-weight: var(--font-weight-bold);
@@ -88,16 +97,6 @@
 .brand strong {
   color: var(--color-text-muted);
   font-weight: var(--font-weight-medium);
-}
-
-.title {
-  margin: 0 0 var(--space-6);
-  font-family: var(--font-family-display);
-  font-size: clamp(2rem, 4vw, 2.75rem);
-  font-weight: var(--font-weight-medium);
-  letter-spacing: -0.03em;
-  line-height: 1.05;
-  text-wrap: balance;
 }
 
 .list {
@@ -146,12 +145,13 @@
   outline-offset: calc(var(--space-1) / -2);
 }
 
-.row > svg:last-child {
-  transition: transform var(--duration-fast) var(--ease-out);
+.arrow {
+  display: inline-flex;
+  transition: transform var(--duration-normal) var(--ease-out);
 }
 
-.row:focus-visible > svg:last-child {
-  transform: translateX(0.125rem);
+.row:focus-visible .arrow {
+  transform: translateX(0.25rem);
 }
 
 .icon {
@@ -210,8 +210,8 @@
     background: var(--color-surface-subtle);
   }
 
-  .row:hover > svg:last-child {
-    transform: translateX(0.125rem);
+  .row:hover .arrow {
+    transform: translateX(0.25rem);
   }
 
   .row:hover .tileAccent {

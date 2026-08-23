@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Popover } from "@base-ui/react/popover";
 import { Icon, type IconName } from "@shared/components/icon";
+import { Tooltip } from "@shared/components/tooltip";
 import styles from "@shared/components/rich-editor/RichEditor.module.css";
 
 export interface Swatch {
@@ -34,9 +35,11 @@ export function ColorMenu({
 
   return (
     <Popover.Root open={open} onOpenChange={setOpen}>
-      <Popover.Trigger className={styles.toolButton} aria-label={menuLabel}>
-        <Icon name={icon} size={18} />
-      </Popover.Trigger>
+      <Tooltip content={menuLabel}>
+        <Popover.Trigger className={styles.toolButton} aria-label={menuLabel}>
+          <Icon name={icon} size={18} />
+        </Popover.Trigger>
+      </Tooltip>
       <Popover.Portal>
         <Popover.Positioner sideOffset={6}>
           <Popover.Popup className={styles.swatchPopup} aria-label={menuLabel}>

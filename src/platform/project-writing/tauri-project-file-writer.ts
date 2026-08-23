@@ -1,11 +1,10 @@
 import { invoke } from "@tauri-apps/api/core";
-import { readTextFile } from "@tauri-apps/plugin-fs";
 import type { ProjectFileAccess } from "@platform/project-writing/layout-project-writer";
 import { projectRelativePathSegments } from "@platform/project-reading/project-relative-path";
 
 export interface TauriProjectFileWriterOptions {
   readonly rootPath: string;
-  readonly readTextFile?: (path: string) => Promise<string>;
+  readonly readCourseFile?: (rootPath: string, relativePath: string) => Promise<string>;
   readonly writeFile?: (rootPath: string, relativePath: string, contents: string) => Promise<void>;
   readonly deleteFile?: (rootPath: string, relativePath: string) => Promise<void>;
   readonly renameFile?: (
@@ -24,11 +23,6 @@ export interface TauriProjectFileWriterOptions {
     rootPath: string,
     relativePath: string,
   ) => Promise<{ sha256: string; byteSize: number }>;
-}
-
-function joinPath(rootPath: string, relativePath: string): string {
-  const trimmedRoot = rootPath.replace(/[\\/]+$/, "");
-  return `${trimmedRoot}/${projectRelativePathSegments(relativePath).join("/")}`;
 }
 
 async function invokeWrite(
@@ -78,9 +72,13 @@ async function invokeHash(
   return await invoke("hash_course_file", { rootPath, relativePath });
 }
 
+async function invokeReadCourseFile(rootPath: string, relativePath: string): Promise<string> {
+  return await invoke<string>("read_course_file", { rootPath, relativePath });
+}
+
 export function createTauriProjectFileWriter({
   rootPath,
-  readTextFile: read = readTextFile,
+  readCourseFile = invokeReadCourseFile,
   writeFile = invokeWrite,
   deleteFile = invokeDelete,
   renameFile = invokeRename,
@@ -91,7 +89,8 @@ export function createTauriProjectFileWriter({
 }: TauriProjectFileWriterOptions): ProjectFileAccess {
   return {
     async readTextFile(relativePath) {
-      return read(joinPath(rootPath, relativePath));
+      projectRelativePathSegments(relativePath);
+      return readCourseFile(rootPath, relativePath);
     },
     async writeTextFile(relativePath, contents) {
       // Validate before crossing the bridge; the Rust command validates again.

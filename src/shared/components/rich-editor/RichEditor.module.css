@@ -1,39 +1,47 @@
 .frame {
-  overflow: clip;
-  border: var(--border-hairline) solid var(--color-border);
-  border-radius: var(--radius-lg);
-  background: var(--color-surface);
+  background: transparent;
 }
 
 .toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 2;
   display: flex;
   align-items: center;
   gap: var(--space-1);
   min-height: 3rem;
-  padding: var(--space-2);
+  padding: var(--space-2) clamp(var(--space-4), 4vw, var(--space-8));
   overflow-x: auto;
-  border-bottom: 0;
-  background: var(--color-control);
+  border-bottom: var(--border-hairline) solid var(--color-border);
+  background: var(--color-surface);
+}
+
+.toolbar > * {
+  flex: none;
 }
 
 .urlOverlay {
   position: fixed;
   inset: 0;
   z-index: var(--z-modal, 100);
-  display: grid;
-  place-items: center;
-  padding: var(--space-4);
   background: var(--color-overlay);
 }
 
 .urlDialog {
-  display: grid;
-  gap: var(--space-3);
-  width: min(100%, 26rem);
+  position: fixed;
+  inset-block-start: 50%;
+  inset-inline-start: 50%;
+  z-index: var(--z-modal, 100);
+  width: min(100% - var(--space-6), 26rem);
   padding: var(--space-5);
+  transform: translate(-50%, -50%);
   border: var(--border-hairline) solid var(--color-border);
   border-radius: var(--radius-lg);
   background: var(--color-surface);
+}
+.urlForm {
+  display: grid;
+  gap: var(--space-3);
 }
 
 .urlLabel {
@@ -174,9 +182,8 @@
 
 .prose {
   min-height: 34rem;
-  max-width: 46rem;
-  margin-inline: auto;
-  padding: clamp(var(--space-4), 3vw, var(--space-8));
+  margin-inline: 0;
+  padding: var(--space-6) clamp(var(--space-4), 4vw, var(--space-8));
   outline: 0;
 }
 
@@ -184,6 +191,20 @@
   min-height: 0;
   max-width: none;
   padding: 0;
+}
+
+.scratchProse {
+  min-height: 12rem;
+  padding: 0;
+}
+
+.prose :global(.rich-search-match) {
+  border-radius: var(--radius-sm);
+  background: var(--color-accent-subtle);
+}
+
+.prose :global(.rich-search-active) {
+  background: var(--color-accent);
 }
 
 .prose :global(.ProseMirror-selectednode) {
@@ -436,11 +457,19 @@
   z-index: var(--z-dropdown);
   width: 20rem;
   max-height: 22rem;
-  overflow-y: auto;
-  padding: var(--space-2);
+  overflow: hidden;
   border: var(--border-hairline) solid var(--color-border);
   border-radius: var(--radius-md);
   background: var(--color-surface);
+}
+
+.slashScroll,
+.slashScrollViewport {
+  max-height: inherit;
+}
+
+.slashScrollContent {
+  padding: var(--space-2);
 }
 
 .slashList {
@@ -492,6 +521,25 @@
 .slashRowMeta {
   color: var(--color-text-muted);
   font-size: var(--font-size-100);
+}
+
+.slashThumb,
+.slashThumbFallback {
+  flex: none;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: var(--radius-sm);
+}
+
+.slashThumb {
+  object-fit: cover;
+  background: var(--color-surface-subtle);
+}
+
+.slashThumbFallback {
+  display: grid;
+  place-items: center;
+  color: var(--color-text-muted);
 }
 
 .slashEmpty {

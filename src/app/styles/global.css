@@ -59,6 +59,24 @@ select {
   font: inherit;
 }
 
+:focus-visible {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 2px;
+}
+
+body {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+input,
+textarea,
+[contenteditable]:not([contenteditable="false"]),
+[data-selectable] {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
 * {
   scrollbar-width: thin;
   scrollbar-color: transparent transparent;

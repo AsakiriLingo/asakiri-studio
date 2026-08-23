@@ -115,8 +115,8 @@
 
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --color-canvas: oklch(0.155 0.005 105);
-  --color-surface: oklch(0.195 0.006 105);
+  --color-canvas: oklch(0.195 0.006 105);
+  --color-surface: oklch(0.155 0.005 105);
   --color-surface-subtle: oklch(0.245 0.008 105);
   --color-control: oklch(0.235 0.007 105);
   --color-control-hover: oklch(0.265 0.009 105);

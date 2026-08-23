@@ -3,6 +3,7 @@ import type { AvailableUpdate } from "@core/app-update";
 import { createProjectSession, type ProjectDirectory, type RecentProject } from "@core/projects";
 import { I18nProvider, LOCALES, getMessages, useMessages, type Locale } from "@shared/i18n";
 import { ConfirmProvider } from "@shared/components/confirm-dialog";
+import type { StatusTone } from "@shared/components/status";
 import { StartScreen } from "@features/start";
 import { SettingsDialog, type ThemePreference } from "@features/settings";
 import { NewCourseDialog } from "@features/new-course";
@@ -10,12 +11,15 @@ import { WorkspaceShell, type WorkspaceSection } from "@features/workspace-shell
 import { SpreadsheetImport } from "@features/import";
 import type { DocumentTable } from "@core/documents";
 import { SPREADSHEET_EXTENSIONS } from "@core/documents";
-import { CourseStructure } from "@features/course-structure";
+import { CourseStructure, OutlineSearch } from "@features/course-structure";
+import { LessonWorkspace } from "@features/lesson-workspace";
 import { CourseContent } from "@features/content";
-import { CourseMedia } from "@features/media";
+import { CourseMedia, type MediaSelection } from "@features/media";
 import { CourseAttribution } from "@features/attribution";
 import { CourseDetails } from "@features/course-details";
-import { LessonEditor } from "@features/lesson-editor";
+import { PartEditor, courseToRichLibrary, type SaveState } from "@features/lesson-editor";
+import { PartPreview } from "@features/part-preview";
+import { DraftsPanel, DraftsToolbar, DraftsSearch } from "@features/drafts";
 import { createAppServices } from "@app/services";
 import { useCourseState } from "@app/useCourseState";
 import { useProjectActions } from "@app/useProjectActions";
@@ -23,6 +27,7 @@ import { useOutlineActions } from "@app/useOutlineActions";
 import { useContentActions } from "@app/useContentActions";
 import { usePartActions } from "@app/usePartActions";
 import { useMediaActions } from "@app/useMediaActions";
+import { useDrafts } from "@app/useDrafts";
 import styles from "@app/App.module.css";
 
 function initialThemePreference(): ThemePreference {
@@ -64,7 +69,28 @@ export function App() {
   const [locale, setLocale] = useState<Locale>(initialLocale);
   const [view, setView] = useState<View>("start");
   const [section, setSection] = useState<WorkspaceSection>("lessons");
-  const [openLessonId, setOpenLessonId] = useState<string | null>(null);
+  const [openPartId, setOpenPartId] = useState<string | null>(null);
+  const [draftSelectedId, setDraftSelectedId] = useState<string | null>(null);
+  const [draftQuery, setDraftQuery] = useState("");
+  const [draftHitActive, setDraftHitActive] = useState(0);
+  const [draftHitTotal, setDraftHitTotal] = useState(0);
+  const [outlineQuery, setOutlineQuery] = useState("");
+  const [outlineCollapsed, setOutlineCollapsed] = useState(false);
+  const [referenceCollapsed, setReferenceCollapsed] = useState(false);
+  const [collectionsCollapsed, setCollectionsCollapsed] = useState(false);
+  const [mediaInspectorCollapsed, setMediaInspectorCollapsed] = useState(false);
+  const [mediaSelection, setMediaSelection] = useState<MediaSelection>({
+    kind: "view",
+    view: "all",
+  });
+  const [mediaSelectedId, setMediaSelectedId] = useState<string | null>(null);
+  const [partSaveState, setPartSaveState] = useState<SaveState>("idle");
+  const [savedPartId, setSavedPartId] = useState<string | null>(null);
+
+  if (openPartId !== savedPartId) {
+    setSavedPartId(openPartId);
+    setPartSaveState("idle");
+  }
   const [spreadsheet, setSpreadsheet] = useState<{
     readonly fileName: string;
     readonly tables: readonly DocumentTable[];
@@ -72,6 +98,7 @@ export function App() {
   const [importNotice, setImportNotice] = useState<"readFailed" | "noTables" | null>(null);
   const [update, setUpdate] = useState<AvailableUpdate | null>(null);
   const [updateInstalling, setUpdateInstalling] = useState(false);
+  const [updateFailed, setUpdateFailed] = useState(false);
   const [autoUpdate, setAutoUpdate] = useState(initialAutoUpdate);
   const [supportPromptEnabled, setSupportPromptEnabled] = useState(initialSupportEnabled);
   const [supportHiddenSession, setSupportHiddenSession] = useState(false);
@@ -83,7 +110,12 @@ export function App() {
   const { project, courseState } = store;
 
   const closeLessonAfterDelete = (lessonId: string) => {
-    setOpenLessonId((current) => (current === lessonId ? null : current));
+    const ready = store.courseState?.status === "ready" ? store.courseState.course : null;
+    const lesson = ready?.lessons.find((entry) => entry.id === lessonId);
+    if (!lesson) return;
+    setOpenPartId((current) =>
+      current && lesson.parts.some((part) => part.id === current) ? null : current,
+    );
   };
 
   const { saveProject, saveAttribution } = useProjectActions(services, store);
@@ -91,6 +123,17 @@ export function App() {
   const contentActions = useContentActions(services, store);
   const partActions = usePartActions(services, store, locale);
   const mediaActions = useMediaActions(services, store);
+  const draftActions = useDrafts(services, store);
+
+  const openPartView = (_lessonId: string, partId: string) => {
+    setOpenPartId(partId);
+  };
+
+  const deletePart = async (lessonId: string, partId: string) => {
+    const result = await partActions.deletePart(lessonId, partId);
+    setOpenPartId((current) => (current === partId ? null : current));
+    return result;
+  };
 
   const messages = getMessages(locale);
   const isDark = themePreference === "dark" || (themePreference === "system" && systemDark);
@@ -157,11 +200,13 @@ export function App() {
 
   const installUpdate = async () => {
     setUpdateInstalling(true);
+    setUpdateFailed(false);
     try {
       await services.appUpdate.downloadAndInstall();
       await services.appUpdate.relaunch();
     } catch {
       setUpdateInstalling(false);
+      setUpdateFailed(true);
     }
   };
 
@@ -199,8 +244,8 @@ export function App() {
 
   const enterWorkspace = (directory: ProjectDirectory) => {
     store.openProject(directory);
-    setSection("details");
-    setOpenLessonId(null);
+    setSection("lessons");
+    setOpenPartId(null);
     setView("workspace");
     setRecentProjects(services.directory.listRecentProjects());
   };
@@ -223,13 +268,19 @@ export function App() {
 
   const goToStart = () => {
     store.closeProject();
-    setOpenLessonId(null);
+    setOpenPartId(null);
     setView("start");
   };
 
   const navigate = (target: WorkspaceSection) => {
     setSection(target);
-    setOpenLessonId(null);
+  };
+
+  const openDraft = (id: string | null) => {
+    setDraftSelectedId(id);
+    setDraftQuery("");
+    setDraftHitActive(0);
+    setDraftHitTotal(0);
   };
 
   const revealFolder = useCallback(() => {
@@ -260,6 +311,7 @@ export function App() {
         <StartScreen
           update={update}
           updateInstalling={updateInstalling}
+          updateFailed={updateFailed}
           recentProjects={recentProjects}
           showSupport={supportPromptEnabled && !supportHiddenSession}
           onInstallUpdate={() => {
@@ -302,29 +354,41 @@ export function App() {
     const course = courseState?.status === "ready" ? courseState.course : null;
     const projectName = course?.project.title ?? project?.name ?? messages.workspace.fallbackName;
     const projectLocation = project?.locationLabel ?? "";
-    const openLesson =
-      course && openLessonId
-        ? (course.lessons.find((lesson) => lesson.id === openLessonId) ?? null)
+    const openPartLesson =
+      course && openPartId
+        ? (course.lessons.find((lesson) => lesson.parts.some((part) => part.id === openPartId)) ??
+          null)
         : null;
+    const openPart = openPartLesson
+      ? (openPartLesson.parts.find((part) => part.id === openPartId) ?? null)
+      : null;
+    const saveStatus =
+      section === "lessons" && openPart && partSaveState !== "idle"
+        ? {
+            label:
+              partSaveState === "saving"
+                ? messages.common.saving
+                : partSaveState === "failed"
+                  ? messages.common.saveFailed
+                  : messages.common.saved,
+            tone: (partSaveState === "failed" ? "warning" : "default") as StatusTone,
+          }
+        : undefined;
 
     return (
       <WorkspaceShell
         projectName={projectName}
         projectLocation={projectLocation}
-        flagCode={course?.project.taughtFlag}
         active={section}
         onNavigate={navigate}
         onBack={goToStart}
         onOpenSettings={() => {
           setSettingsOpen(true);
         }}
+        saveStatus={saveStatus}
+        flush={course !== null}
       >
-        {courseState?.status === "loading" ? (
-          <WorkspaceMessage
-            title={messages.workspace.openingTitle}
-            body={messages.workspace.openingBody}
-          />
-        ) : courseState?.status === "failed" ? (
+        {courseState?.status === "loading" ? null : courseState?.status === "failed" ? (
           <WorkspaceMessage
             title={messages.workspace.failedTitle}
             body={messages.workspace.failedBody}
@@ -338,6 +402,9 @@ export function App() {
               onRevealFolder={revealFolder}
               onImportImage={mediaActions.importAssetForField}
               onLoadAssetPreview={mediaActions.loadAssetPreview}
+              attributionSlot={
+                <CourseAttribution course={course} onSaveAttribution={saveAttribution} />
+              }
             />
           ) : section === "content" ? (
             <CourseContent
@@ -351,6 +418,8 @@ export function App() {
               onImportAsset={mediaActions.importAssetForField}
               onImportSpreadsheet={pickSpreadsheet}
               onLoadPreview={mediaActions.loadAssetPreview}
+              sidebarCollapsed={collectionsCollapsed}
+              onSidebarCollapsedChange={setCollectionsCollapsed}
             />
           ) : section === "media" ? (
             <CourseMedia
@@ -363,6 +432,16 @@ export function App() {
               onSearchAudio={(query, page) => services.mediaSearch.searchAudio(query, page)}
               onAddRemoteMedia={mediaActions.addRemoteMedia}
               onRenameAsset={mediaActions.renameAsset}
+              inspectorCollapsed={mediaInspectorCollapsed}
+              onInspectorCollapsedChange={setMediaInspectorCollapsed}
+              selection={mediaSelection}
+              onSelectionChange={setMediaSelection}
+              selectedId={mediaSelectedId}
+              onSelectedIdChange={setMediaSelectedId}
+              onMoveAsset={mediaActions.moveAssetToFolder}
+              onCreateFolder={mediaActions.createFolder}
+              onRenameFolder={mediaActions.renameFolder}
+              onDeleteFolder={mediaActions.deleteFolder}
               onListTtsVoices={() => services.tts.listVoices()}
               onPreviewTtsVoice={mediaActions.previewTtsVoice}
               onListAvailableVoices={() => services.tts.listAvailableVoices()}
@@ -373,45 +452,118 @@ export function App() {
               onAddTtsAudio={mediaActions.addTtsAudio}
               onAddRecording={mediaActions.addRecording}
             />
-          ) : section === "attribution" ? (
-            <CourseAttribution course={course} onSaveAttribution={saveAttribution} />
-          ) : openLesson ? (
-            <LessonEditor
-              course={course}
-              lesson={openLesson}
-              onBackToStructure={() => {
-                setOpenLessonId(null);
-              }}
-              onSaveDocument={(partId, document) =>
-                partActions.savePartDocument(openLesson.id, partId, document)
-              }
-              onSaveExercise={(partId, exercise) =>
-                partActions.savePartExercise(openLesson.id, partId, exercise)
-              }
-              onSaveContentTitle={(partId, title) =>
-                partActions.savePartContentTitle(openLesson.id, partId, title)
-              }
-              onRenamePart={(partId, title) => partActions.renamePart(openLesson.id, partId, title)}
-              onDeletePart={(partId) => partActions.deletePart(openLesson.id, partId)}
-              onAddPart={(kind) => partActions.addPart(openLesson.id, kind)}
-              onReorderParts={(orderedIds) => partActions.reorderParts(openLesson.id, orderedIds)}
-              onSaveRecord={contentActions.saveRecord}
-              onLoadAssetPreview={mediaActions.loadAssetPreview}
-              onImportMedia={mediaActions.importAssetForField}
-            />
           ) : (
-            <CourseStructure
-              course={course}
-              onNewUnit={outlineActions.addUnit}
-              onRenameUnit={outlineActions.renameUnit}
-              onDeleteUnit={outlineActions.deleteUnit}
-              onAddLesson={outlineActions.addLesson}
-              onRenameLesson={outlineActions.renameLesson}
-              onDeleteLesson={outlineActions.deleteLesson}
-              onReorderOutline={outlineActions.reorderOutline}
-              onOpenLesson={(lessonId) => {
-                setOpenLessonId(lessonId);
-              }}
+            <LessonWorkspace
+              outlineSlot={
+                <CourseStructure
+                  variant="sidebar"
+                  course={course}
+                  selectedId={openPartId ?? undefined}
+                  onNewUnit={outlineActions.addUnit}
+                  onRenameUnit={outlineActions.renameUnit}
+                  onDeleteUnit={outlineActions.deleteUnit}
+                  onAddLesson={outlineActions.addLesson}
+                  onRenameLesson={outlineActions.renameLesson}
+                  onDeleteLesson={outlineActions.deleteLesson}
+                  onReorderOutline={outlineActions.reorderOutline}
+                  onOpenPart={openPartView}
+                  onReorderParts={partActions.reorderParts}
+                  onAddPart={(lessonId, kind) => {
+                    void partActions.addPart(lessonId, kind).then((partId) => {
+                      if (partId) setOpenPartId(partId);
+                    });
+                  }}
+                  onRenamePart={partActions.renamePart}
+                  onDeletePart={deletePart}
+                  query={outlineQuery}
+                />
+              }
+              outlineFooter={
+                course.outline.length > 0 ? (
+                  <OutlineSearch value={outlineQuery} onChange={setOutlineQuery} />
+                ) : undefined
+              }
+              outlineCollapsed={outlineCollapsed}
+              onOutlineCollapsedChange={setOutlineCollapsed}
+              referenceCollapsed={referenceCollapsed}
+              onReferenceCollapsedChange={setReferenceCollapsed}
+              editorSlot={
+                openPart && openPartLesson ? (
+                  <PartEditor
+                    part={openPart}
+                    course={course}
+                    onSaveDocument={(partId, document) =>
+                      partActions.savePartDocument(openPartLesson.id, partId, document)
+                    }
+                    onSaveExercise={(partId, exercise) =>
+                      partActions.savePartExercise(openPartLesson.id, partId, exercise)
+                    }
+                    onSaveRecord={contentActions.saveRecord}
+                    onLoadAssetPreview={mediaActions.loadAssetPreview}
+                    onImportMedia={mediaActions.importAssetForField}
+                    onSaveStateChange={setPartSaveState}
+                  />
+                ) : undefined
+              }
+              previewSlot={
+                openPart ? (
+                  <PartPreview
+                    part={openPart}
+                    course={course}
+                    library={courseToRichLibrary(course)}
+                    onLoadAssetPreview={mediaActions.loadAssetPreview}
+                  />
+                ) : undefined
+              }
+              draftsSlot={
+                <DraftsPanel
+                  drafts={draftActions.drafts}
+                  query={draftQuery}
+                  searchActive={draftHitActive}
+                  onSearchTotal={setDraftHitTotal}
+                  selectedId={draftSelectedId}
+                  onSelect={openDraft}
+                  onUpdate={draftActions.updateDraft}
+                  onRename={draftActions.renameDraft}
+                  onDelete={draftActions.deleteDraft}
+                  library={courseToRichLibrary(course)}
+                  onLoadAssetPreview={mediaActions.loadAssetPreview}
+                />
+              }
+              draftsActions={
+                <DraftsToolbar
+                  editing={draftSelectedId !== null}
+                  onBack={() => {
+                    openDraft(null);
+                  }}
+                  onCreate={draftActions.createDraft}
+                  onUpload={draftActions.uploadDraft}
+                  onOpen={openDraft}
+                />
+              }
+              draftsFooter={
+                draftSelectedId !== null ? (
+                  <DraftsSearch
+                    value={draftQuery}
+                    total={draftHitTotal}
+                    active={draftHitActive}
+                    onChange={(next) => {
+                      setDraftQuery(next);
+                      setDraftHitActive(0);
+                    }}
+                    onPrev={() => {
+                      setDraftHitActive((current) =>
+                        draftHitTotal === 0 ? 0 : (current - 1 + draftHitTotal) % draftHitTotal,
+                      );
+                    }}
+                    onNext={() => {
+                      setDraftHitActive((current) =>
+                        draftHitTotal === 0 ? 0 : (current + 1) % draftHitTotal,
+                      );
+                    }}
+                  />
+                ) : undefined
+              }
             />
           )
         ) : null}
@@ -448,6 +600,14 @@ export function App() {
       <ConfirmProvider>
         <div className={styles.titlebar} data-tauri-drag-region />
         {renderView()}
+        {view === "workspace" && courseState?.status === "loading" ? (
+          <div className={styles.openingOverlay} role="presentation">
+            <div className={styles.openingDialog} role="alertdialog" aria-busy="true">
+              <p className={styles.openingTitle}>{messages.workspace.openingTitle}</p>
+              <p className={styles.openingBody}>{messages.workspace.openingBody}</p>
+            </div>
+          </div>
+        ) : null}
         {importDialog}
         {importNotice !== null ? (
           <ImportNotice
@@ -469,6 +629,7 @@ export function App() {
           version={appVersion}
           update={update}
           updateInstalling={updateInstalling}
+          updateFailed={updateFailed}
           checkForUpdates={checkForUpdates}
           onInstallUpdate={() => {
             void installUpdate();

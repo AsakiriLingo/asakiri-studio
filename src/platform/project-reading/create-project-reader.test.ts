@@ -10,19 +10,19 @@ describe("createProjectReader", () => {
     const locations = new ProjectLocationRegistry();
     locations.register(session.id, { rootPath: "/courses/Japanese Starter" });
     const files: Readonly<Record<string, string>> = {
-      "/courses/Japanese Starter/project.json": JSON.stringify({
+      "project.json": JSON.stringify({
         collections: ["content/collections/vocabulary.json"],
       }),
-      "/courses/Japanese Starter/content/collections/vocabulary.json": JSON.stringify({
+      "content/collections/vocabulary.json": JSON.stringify({
         id: "vocabulary",
         name: "Vocabulary",
         recordFiles: ["content/records/cat.json"],
       }),
     };
-    const reader = createProjectReader(locations, (path) => {
-      const content = files[path];
+    const reader = createProjectReader(locations, (rootPath, relativePath) => {
+      const content = files[relativePath];
       return content === undefined
-        ? Promise.reject(new Error(`Missing ${path}`))
+        ? Promise.reject(new Error(`Missing ${rootPath}/${relativePath}`))
         : Promise.resolve(content);
     });
 

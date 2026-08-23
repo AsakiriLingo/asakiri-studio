@@ -33,8 +33,8 @@ Light mode:
 
 Dark mode:
 
-- `--color-canvas` `oklch(0.155 0.005 105)`
-- `--color-surface` `oklch(0.195 0.006 105)`
+- `--color-canvas` `oklch(0.195 0.006 105)`
+- `--color-surface` `oklch(0.155 0.005 105)`
 - `--color-surface-subtle` `oklch(0.245 0.008 105)`
 - `--color-text` `oklch(0.94 0.008 155)`
 - `--color-text-muted` `oklch(0.72 0.012 155)`

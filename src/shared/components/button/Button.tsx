@@ -42,7 +42,15 @@ function joinClassNames(...classNames: (string | undefined)[]) {
 }
 
 export const Button = forwardRef<HTMLElement, ButtonProps>(function Button(
-  { className, nativeButton = true, size = "md", type, variant = "primary", ...props },
+  {
+    className,
+    nativeButton = true,
+    size = "md",
+    type,
+    variant = "primary",
+    focusableWhenDisabled = true,
+    ...props
+  },
   ref,
 ) {
   const resolveClassName = (state: ButtonState) =>
@@ -59,6 +67,7 @@ export const Button = forwardRef<HTMLElement, ButtonProps>(function Button(
       className={resolveClassName}
       nativeButton={nativeButton}
       type={nativeButton ? (type ?? "button") : type}
+      focusableWhenDisabled={focusableWhenDisabled}
       {...props}
     />
   );

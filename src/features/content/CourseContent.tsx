@@ -10,6 +10,8 @@ import type {
   RecordFieldValue,
 } from "@core/course";
 import type { ProjectWriteResult } from "@core/project-writing";
+import { ContextMenu } from "@base-ui/react/context-menu";
+import { Dialog } from "@base-ui/react/dialog";
 import { useFormat, useMessages } from "@shared/i18n";
 import { Button } from "@shared/components/button";
 import { useConfirm } from "@shared/components/confirm-dialog";
@@ -22,7 +24,6 @@ import { PanelHeader } from "@shared/components/panel";
 import { Select } from "@shared/components/select";
 import { Status } from "@shared/components/status";
 import { Tag } from "@shared/components/tag";
-import { WorkHeader, WorkInner } from "@shared/components/work-surface";
 import {
   AssetFieldControl,
   AssetListFieldControl,
@@ -197,22 +198,24 @@ function Modal({
   readonly children: ReactNode;
 }) {
   return (
-    <div className={styles.overlay} role="presentation" onClick={onClose}>
-      <div
-        className={joinClassNames(styles.dialog, wide ? styles.dialogWide : undefined)}
-        role="dialog"
-        aria-modal="true"
-        aria-label={label}
-        onClick={(event) => {
-          event.stopPropagation();
-        }}
-        onKeyDown={(event) => {
-          if (event.key === "Escape") onClose();
-        }}
-      >
-        {children}
-      </div>
-    </div>
+    <Dialog.Root
+      open
+      onOpenChange={(next) => {
+        if (!next) onClose();
+      }}
+    >
+      <Dialog.Portal>
+        <Dialog.Backdrop className={styles.overlay} />
+        <Dialog.Popup
+          className={joinClassNames(styles.dialog, wide ? styles.dialogWide : undefined)}
+        >
+          <div className={styles.dialogHeader}>
+            <Dialog.Title className={styles.dialogTitle}>{label}</Dialog.Title>
+          </div>
+          {children}
+        </Dialog.Popup>
+      </Dialog.Portal>
+    </Dialog.Root>
   );
 }
 
@@ -227,6 +230,8 @@ export interface CourseContentProps {
   readonly onImportAsset: ImportAsset;
   readonly onImportSpreadsheet: () => Promise<void>;
   readonly onLoadPreview: LoadPreview;
+  readonly sidebarCollapsed?: boolean;
+  readonly onSidebarCollapsedChange?: (collapsed: boolean) => void;
 }
 
 export function CourseContent({
@@ -240,6 +245,8 @@ export function CourseContent({
   onImportAsset,
   onImportSpreadsheet,
   onLoadPreview,
+  sidebarCollapsed = false,
+  onSidebarCollapsedChange,
 }: CourseContentProps) {
   const messages = useMessages();
   const format = useFormat();
@@ -279,6 +286,22 @@ export function CourseContent({
     void run.then((result) => {
       setSaveState(result.status === "saved" ? "saved" : "failed");
     });
+  };
+
+  const editCollection = (entry: Collection) => {
+    setSelectedId(entry.id);
+    setShowingSettings(true);
+  };
+
+  const removeCollection = async (entry: Collection) => {
+    const ok = await confirm({
+      title: t.confirmDeleteCollectionTitle,
+      description: format(t.confirmDeleteCollectionBody, { name: entry.name }),
+      confirmLabel: t.deleteCollection,
+    });
+    if (!ok) return;
+    if (entry.id === selectedId) setShowingSettings(false);
+    persist(onDeleteCollection(entry.id));
   };
 
   const saveField: SaveField = (record, fieldId, value) => {
@@ -499,96 +522,134 @@ export function CourseContent({
     saveState === "saving" ? (
       <Status>{messages.common.saving}</Status>
     ) : saveState === "failed" ? (
-      <Status tone="warning">{messages.common.saveFailed}</Status>
+      <Status tone="error">{messages.common.saveFailed}</Status>
     ) : null;
 
   return (
-    <WorkInner>
-      <WorkHeader
-        title={t.title}
-        description={t.description}
-        actions={
-          <>
-            <Button
-              variant="ghost"
-              size="compact"
-              disabled={importing}
-              onClick={runSpreadsheetImport}
-            >
-              <Icon name="upload" size={18} />
-              {messages.importer.importSpreadsheet}
-            </Button>
-            <Button size="compact" onClick={openNewCollection}>
-              <Icon name="plus" size={18} />
-              {t.newCollection}
-            </Button>
-          </>
-        }
-      />
-
-      {course.collections.length === 0 || !collection ? (
-        <PanelHeader title={t.noCollectionsTitle} description={t.noCollectionsBody} />
-      ) : (
-        <div className={styles.layout}>
-          <aside className={styles.collectionList}>
-            <PanelHeader title={t.collections} />
-            <div className={styles.list}>
-              {course.collections.map((entry) => {
-                const count = course.records.filter((r) => r.collectionId === entry.id).length;
-                return (
-                  <button
-                    key={entry.id}
-                    type="button"
-                    className={joinClassNames(
-                      styles.listRow,
-                      entry.id === collection.id ? styles.selected : undefined,
-                    )}
-                    aria-pressed={entry.id === collection.id}
-                    onClick={() => {
-                      setSelectedId(entry.id);
-                    }}
-                  >
-                    <span>
-                      <span className={styles.rowTitle}>{entry.name}</span>
-                      {entry.description ? (
-                        <span className={styles.rowDetail}>{entry.description}</span>
-                      ) : null}
-                    </span>
-                    <span className={styles.count}>{count}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </aside>
-
-          <section aria-label={collection.name}>
-            <div className={styles.tableToolbar}>
-              <Button variant="secondary" onClick={addRecord}>
+    <div className={styles.library}>
+      <nav
+        className={joinClassNames(styles.sidebar, sidebarCollapsed ? styles.collapsed : undefined)}
+        aria-label={t.collections}
+      >
+        {sidebarCollapsed ? null : (
+          <div className={styles.sidebarHeader}>
+            <span className={styles.sidebarTitle}>{t.collections}</span>
+            <div className={styles.sidebarHeaderActions}>
+              <IconButton aria-label={t.newCollection} onClick={openNewCollection}>
                 <Icon name="plus" size={18} />
-                {t.addRecord}
-              </Button>
-              <span className={styles.barSpacer} />
-              {saveStatus}
-              <IconButton
-                aria-label={t.collectionSettings}
-                size="sm"
-                onClick={() => {
-                  setShowingSettings(true);
-                }}
-              >
-                <Icon name="edit" size={18} />
               </IconButton>
             </div>
+          </div>
+        )}
+        {sidebarCollapsed ? null : course.collections.length === 0 ? (
+          <p className={styles.sidebarEmpty}>{t.noCollectionsBody}</p>
+        ) : (
+          <div className={styles.list}>
+            {course.collections.map((entry) => {
+              const count = course.records.filter((r) => r.collectionId === entry.id).length;
+              return (
+                <ContextMenu.Root key={entry.id}>
+                  <ContextMenu.Trigger
+                    render={
+                      <button
+                        type="button"
+                        className={joinClassNames(
+                          styles.listRow,
+                          entry.id === collection?.id ? styles.selected : undefined,
+                        )}
+                        aria-current={entry.id === collection?.id ? "page" : undefined}
+                        onClick={() => {
+                          setSelectedId(entry.id);
+                        }}
+                      >
+                        <span className={styles.rowTitle}>{entry.name}</span>
+                        <span className={styles.count}>{count}</span>
+                      </button>
+                    }
+                  />
+                  <ContextMenu.Portal>
+                    <ContextMenu.Positioner className={styles.menuPositioner}>
+                      <ContextMenu.Popup className={styles.menuPopup}>
+                        <ContextMenu.Item
+                          className={styles.menuItem}
+                          onClick={() => {
+                            editCollection(entry);
+                          }}
+                        >
+                          {messages.common.edit}
+                        </ContextMenu.Item>
+                        <ContextMenu.Item
+                          className={joinClassNames(styles.menuItem, styles.menuItemDanger)}
+                          onClick={() => {
+                            void removeCollection(entry);
+                          }}
+                        >
+                          {messages.common.delete}
+                        </ContextMenu.Item>
+                      </ContextMenu.Popup>
+                    </ContextMenu.Positioner>
+                  </ContextMenu.Portal>
+                </ContextMenu.Root>
+              );
+            })}
+          </div>
+        )}
+        <div
+          className={joinClassNames(
+            styles.sidebarFooter,
+            sidebarCollapsed ? styles.sidebarFooterCollapsed : undefined,
+          )}
+        >
+          <IconButton
+            aria-label={
+              sidebarCollapsed
+                ? messages.workspace.expandSidebar
+                : messages.workspace.collapseSidebar
+            }
+            onClick={() => {
+              onSidebarCollapsedChange?.(!sidebarCollapsed);
+            }}
+          >
+            <Icon name="sidebar" size={18} />
+          </IconButton>
+        </div>
+      </nav>
+
+      <div className={styles.content}>
+        {course.collections.length === 0 || !collection ? (
+          <div className={styles.empty}>
+            <PanelHeader title={t.noCollectionsTitle} description={t.noCollectionsBody} />
+          </div>
+        ) : (
+          <section className={styles.tableSection} aria-label={collection.name}>
             <DataTable
               columns={columns}
               data={displayRecords}
               ariaLabel={format(t.recordsAria, { collection: collection.name })}
               searchable
               onEditCell={handleEditCell}
+              actions={
+                <>
+                  {saveStatus}
+                  <Button
+                    variant="ghost"
+                    size="compact"
+                    disabled={importing}
+                    onClick={runSpreadsheetImport}
+                  >
+                    <Icon name="upload" size={18} />
+                    {messages.importer.importSpreadsheet}
+                  </Button>
+                  <Button variant="secondary" onClick={addRecord}>
+                    <Icon name="plus" size={18} />
+                    {t.addRecord}
+                  </Button>
+                </>
+              }
             />
           </section>
-        </div>
-      )}
+        )}
+      </div>
 
       {creatingCollection ? (
         <Modal
@@ -603,9 +664,6 @@ export function CourseContent({
               confirmNewCollection();
             }}
           >
-            <div className={styles.dialogHeader}>
-              <h2 className={styles.dialogTitle}>{t.newCollection}</h2>
-            </div>
             <div className={styles.dialogBody}>
               <Field label={t.collectionName}>
                 <TextInput
@@ -642,9 +700,6 @@ export function CourseContent({
             setEditingRecordId(null);
           }}
         >
-          <div className={styles.dialogHeader}>
-            <h2 className={styles.dialogTitle}>{t.editRecord}</h2>
-          </div>
           <ScrollArea
             viewportClassName={styles.dialogViewport}
             contentClassName={styles.dialogBody}
@@ -773,23 +828,6 @@ export function CourseContent({
             </div>
           </ScrollArea>
           <div className={styles.dialogActions}>
-            <Button
-              variant="danger"
-              onClick={() => {
-                void (async () => {
-                  const ok = await confirm({
-                    title: t.confirmDeleteCollectionTitle,
-                    description: format(t.confirmDeleteCollectionBody, { name: collection.name }),
-                    confirmLabel: t.deleteCollection,
-                  });
-                  if (!ok) return;
-                  setShowingSettings(false);
-                  persist(onDeleteCollection(collection.id));
-                })();
-              }}
-            >
-              {t.deleteCollection}
-            </Button>
             <span className={styles.barSpacer} />
             <Button
               onClick={() => {
@@ -801,6 +839,6 @@ export function CourseContent({
           </div>
         </Modal>
       ) : null}
-    </WorkInner>
+    </div>
   );
 }

@@ -1292,3 +1292,95 @@ describe("layout project writer rollback edge cases", () => {
     expect(files.has("media/bin/a9.png")).toBe(false);
   });
 });
+
+const DRAFT_DOC: TiptapDocument = {
+  type: "doc",
+  content: [{ type: "paragraph", content: [{ type: "text", text: "draft body" }] }],
+};
+
+describe("layout project writer drafts", () => {
+  it("writes the body and manifest as plain JSON without the course format envelope", async () => {
+    const files = new Map([["project.json", MANIFEST]]);
+    const writer = createLayoutProjectWriter(() => fileAccess(files));
+
+    const result = await writer.importDraft(
+      SESSION,
+      { id: "d1", title: "Notes", updatedAt: "2026-08-23T00:00:00.000Z" },
+      DRAFT_DOC,
+    );
+
+    expect(result).toEqual({ status: "saved" });
+    const body: unknown = JSON.parse(files.get(".asakiri/drafts/d1/document.json") ?? "");
+    expect(body).toEqual(DRAFT_DOC);
+    const manifest = JSON.parse(files.get(".asakiri/drafts/drafts.json") ?? "") as Record<
+      string,
+      unknown
+    >;
+    expect(manifest.format).toBeUndefined();
+    expect(manifest.drafts).toEqual([
+      { id: "d1", title: "Notes", updatedAt: "2026-08-23T00:00:00.000Z", body: "d1/document.json" },
+    ]);
+    expect(files.get("project.json")).toBe(MANIFEST);
+  });
+
+  it("replaces the manifest entry when importing over an existing id", async () => {
+    const files = new Map([["project.json", MANIFEST]]);
+    const writer = createLayoutProjectWriter(() => fileAccess(files));
+
+    await writer.importDraft(SESSION, { id: "d1", title: "One", updatedAt: "t1" }, DRAFT_DOC);
+    await writer.importDraft(SESSION, { id: "d1", title: "Two", updatedAt: "t2" }, DRAFT_DOC);
+
+    const manifest = JSON.parse(files.get(".asakiri/drafts/drafts.json") ?? "") as {
+      drafts: { id: string; title: string }[];
+    };
+    expect(manifest.drafts).toHaveLength(1);
+    expect(manifest.drafts[0]).toMatchObject({ id: "d1", title: "Two" });
+  });
+
+  it("bumps updatedAt and rewrites the body on update", async () => {
+    const files = new Map([["project.json", MANIFEST]]);
+    const writer = createLayoutProjectWriter(() => fileAccess(files));
+    await writer.importDraft(SESSION, { id: "d1", title: "Notes", updatedAt: "t1" }, DRAFT_DOC);
+
+    const next: TiptapDocument = { type: "doc", content: [] };
+    const result = await writer.updateDraft(SESSION, "d1", next, "t2");
+
+    expect(result).toEqual({ status: "saved" });
+    expect(JSON.parse(files.get(".asakiri/drafts/d1/document.json") ?? "")).toEqual(next);
+    const manifest = JSON.parse(files.get(".asakiri/drafts/drafts.json") ?? "") as {
+      drafts: { updatedAt: string }[];
+    };
+    expect(manifest.drafts[0]?.updatedAt).toBe("t2");
+  });
+
+  it("rewrites only the manifest title on rename, leaving the body untouched", async () => {
+    const files = new Map([["project.json", MANIFEST]]);
+    const writer = createLayoutProjectWriter(() => fileAccess(files));
+    await writer.importDraft(SESSION, { id: "d1", title: "One", updatedAt: "t1" }, DRAFT_DOC);
+
+    const result = await writer.renameDraft(SESSION, "d1", "Renamed");
+
+    expect(result).toEqual({ status: "saved" });
+    const manifest = JSON.parse(files.get(".asakiri/drafts/drafts.json") ?? "") as {
+      drafts: { title: string }[];
+    };
+    expect(manifest.drafts[0]?.title).toBe("Renamed");
+    expect(JSON.parse(files.get(".asakiri/drafts/d1/document.json") ?? "")).toEqual(DRAFT_DOC);
+  });
+
+  it("removes the manifest entry and the draft directory on delete", async () => {
+    const files = new Map([["project.json", MANIFEST]]);
+    const writer = createLayoutProjectWriter(() => fileAccess(files));
+    await writer.importDraft(SESSION, { id: "d1", title: "One", updatedAt: "t1" }, DRAFT_DOC);
+    await writer.importDraft(SESSION, { id: "d2", title: "Two", updatedAt: "t2" }, DRAFT_DOC);
+
+    const result = await writer.deleteDraft(SESSION, "d1");
+
+    expect(result).toEqual({ status: "saved" });
+    expect(files.has(".asakiri/drafts/d1/document.json")).toBe(false);
+    const manifest = JSON.parse(files.get(".asakiri/drafts/drafts.json") ?? "") as {
+      drafts: { id: string }[];
+    };
+    expect(manifest.drafts.map((entry) => entry.id)).toEqual(["d2"]);
+  });
+});

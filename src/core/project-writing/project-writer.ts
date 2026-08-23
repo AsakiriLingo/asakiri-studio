@@ -5,6 +5,7 @@ import type {
   CourseProject,
   Exercise,
   Lesson,
+  MediaFolder,
   OutlineSection,
   TiptapDocument,
 } from "@core/course";
@@ -160,4 +161,26 @@ export interface ProjectWriter {
     oldFile: string | null,
     asset: Asset,
   ): Promise<ProjectWriteResult>;
+  moveAssetToFolder(
+    session: ProjectSession,
+    assetPath: string,
+    asset: Asset,
+  ): Promise<ProjectWriteResult>;
+  writeMediaFolders(
+    session: ProjectSession,
+    folders: readonly MediaFolder[],
+  ): Promise<ProjectWriteResult>;
+  importDraft(
+    session: ProjectSession,
+    draft: { readonly id: string; readonly title: string; readonly updatedAt: string },
+    document: TiptapDocument,
+  ): Promise<ProjectWriteResult>;
+  updateDraft(
+    session: ProjectSession,
+    draftId: string,
+    document: TiptapDocument,
+    updatedAt: string,
+  ): Promise<ProjectWriteResult>;
+  renameDraft(session: ProjectSession, draftId: string, title: string): Promise<ProjectWriteResult>;
+  deleteDraft(session: ProjectSession, draftId: string): Promise<ProjectWriteResult>;
 }

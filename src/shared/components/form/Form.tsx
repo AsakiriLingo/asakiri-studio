@@ -1,4 +1,12 @@
-import type { InputHTMLAttributes, ReactNode, TextareaHTMLAttributes } from "react";
+import type {
+  FocusEventHandler,
+  InputHTMLAttributes,
+  ReactNode,
+  TextareaHTMLAttributes,
+} from "react";
+import { NumberField } from "@base-ui/react/number-field";
+import { Icon } from "@shared/components/icon";
+import { useMessages } from "@shared/i18n";
 import styles from "@shared/components/form/Form.module.css";
 
 function joinClassNames(...classNames: (string | undefined)[]) {
@@ -50,4 +58,68 @@ export interface TextAreaProps extends Omit<
 
 export function TextArea({ className, ...props }: TextAreaProps) {
   return <textarea className={joinClassNames(styles.textarea, className)} {...props} />;
+}
+
+export interface NumberInputProps {
+  readonly name?: string;
+  readonly id?: string;
+  readonly value?: number | null;
+  readonly defaultValue?: number | null;
+  readonly onValueChange?: (value: number | null) => void;
+  readonly onBlur?: FocusEventHandler<HTMLInputElement>;
+  readonly min?: number;
+  readonly max?: number;
+  readonly step?: number;
+  readonly placeholder?: string;
+  readonly disabled?: boolean;
+  readonly className?: string | undefined;
+}
+
+export function NumberInput({
+  className,
+  onValueChange,
+  onBlur,
+  placeholder,
+  value,
+  defaultValue,
+  ...root
+}: NumberInputProps) {
+  const messages = useMessages();
+  return (
+    <NumberField.Root
+      className={joinClassNames(styles.number, className)}
+      value={value}
+      defaultValue={defaultValue ?? undefined}
+      onValueChange={(next) => onValueChange?.(next)}
+      {...root}
+    >
+      <NumberField.Group className={styles.numberGroup}>
+        <NumberField.Input
+          className={styles.numberInput}
+          placeholder={placeholder}
+          autoComplete="off"
+          onBlur={onBlur}
+        />
+        <div className={styles.numberSteppers}>
+          <NumberField.Increment
+            className={styles.numberStepper}
+            aria-label={messages.common.increment}
+          >
+            <Icon
+              name="chevron-down"
+              size={14}
+              className={styles.numberStepperUp}
+              aria-hidden="true"
+            />
+          </NumberField.Increment>
+          <NumberField.Decrement
+            className={styles.numberStepper}
+            aria-label={messages.common.decrement}
+          >
+            <Icon name="chevron-down" size={14} aria-hidden="true" />
+          </NumberField.Decrement>
+        </div>
+      </NumberField.Group>
+    </NumberField.Root>
+  );
 }

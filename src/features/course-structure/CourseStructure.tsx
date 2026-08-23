@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState, type ReactNode } from "react";
+import { useMemo, useRef, useState, type ReactElement, type ReactNode } from "react";
 import {
   DndContext,
   DragOverlay,
@@ -19,16 +19,19 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import type { Course, Lesson, OutlineSection } from "@core/course";
+import { ContextMenu } from "@base-ui/react/context-menu";
+import { Dialog } from "@base-ui/react/dialog";
+import type { Course, Lesson, OutlineSection, Part, PartKind } from "@core/course";
+import { PART_KINDS, partKind } from "@core/course";
 import type { ProjectWriteResult } from "@core/project-writing";
 import { useFormat, useMessages } from "@shared/i18n";
 import { Button } from "@shared/components/button";
 import { useConfirm } from "@shared/components/confirm-dialog";
 import { Field, TextInput } from "@shared/components/form";
-import { Icon } from "@shared/components/icon";
+import { Icon, type IconName } from "@shared/components/icon";
 import { IconButton } from "@shared/components/icon-button";
 import { Status } from "@shared/components/status";
-import { WorkHeader, WorkInner } from "@shared/components/work-surface";
+import { WorkInner } from "@shared/components/work-surface";
 import styles from "@features/course-structure/CourseStructure.module.css";
 
 function orderLabel(index: number): string {
@@ -39,16 +42,207 @@ function chevronClass(collapsed: boolean): string {
   return [styles.unitChevron, collapsed ? styles.chevronCollapsed : ""].filter(Boolean).join(" ");
 }
 
+function partIconName(part: Part): IconName {
+  switch (partKind(part.content)) {
+    case "rich-text":
+    case "unknown":
+      return "file-text";
+    case "speak":
+      return "mic";
+    case "listen":
+      return "headphones";
+    default:
+      return "dumbbell";
+  }
+}
+
+interface OutlineResultLesson {
+  readonly lesson: Lesson;
+  readonly parts: readonly Part[];
+}
+
+interface OutlineResultUnit {
+  readonly section: OutlineSection;
+  readonly lessons: readonly OutlineResultLesson[];
+}
+
+function OutlineResults({
+  course,
+  lessonById,
+  query,
+  selectedId,
+  onOpenPart,
+}: {
+  readonly course: Course;
+  readonly lessonById: ReadonlyMap<string, Lesson>;
+  readonly query: string;
+  readonly selectedId?: string | undefined;
+  readonly onOpenPart?: ((lessonId: string, partId: string) => void) | undefined;
+}) {
+  const messages = useMessages();
+  const needle = query.trim().toLowerCase();
+  const hit = (title: string) => title.toLowerCase().includes(needle);
+
+  const groups = course.outline
+    .map((section): OutlineResultUnit | null => {
+      const unitHit = hit(section.title);
+      const lessons = section.lessonIds
+        .map((id) => lessonById.get(id))
+        .filter((lesson): lesson is Lesson => lesson !== undefined)
+        .map((lesson): OutlineResultLesson | null => {
+          const lessonHit = hit(lesson.title);
+          const parts = lessonHit ? lesson.parts : lesson.parts.filter((part) => hit(part.title));
+          return lessonHit || parts.length > 0 ? { lesson, parts } : null;
+        })
+        .filter((entry): entry is OutlineResultLesson => entry !== null);
+      return unitHit || lessons.length > 0 ? { section, lessons } : null;
+    })
+    .filter((group): group is OutlineResultUnit => group !== null);
+
+  if (groups.length === 0) {
+    return <p className={styles.empty}>{messages.common.noResults}</p>;
+  }
+
+  return (
+    <div className={styles.results}>
+      {groups.map((group) => (
+        <div key={group.section.id} className={styles.resultUnit}>
+          <span className={styles.resultUnitTitle}>{group.section.title}</span>
+          {group.lessons.map((entry) => (
+            <div key={entry.lesson.id} className={styles.resultLesson}>
+              <span className={styles.resultLessonTitle}>{entry.lesson.title}</span>
+              {entry.parts.map((part) => (
+                <button
+                  key={part.id}
+                  type="button"
+                  className={[
+                    styles.resultPart,
+                    part.id === selectedId ? styles.resultPartActive : "",
+                  ]
+                    .filter(Boolean)
+                    .join(" ")}
+                  onClick={() => onOpenPart?.(entry.lesson.id, part.id)}
+                >
+                  <Icon
+                    className={styles.typeIcon}
+                    name={partIconName(part)}
+                    size={16}
+                    aria-hidden="true"
+                  />
+                  <span className={styles.rowTitle}>{part.title}</span>
+                </button>
+              ))}
+            </div>
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function RenameInput({
+  defaultValue,
+  ariaLabel,
+  onCommit,
+  onCancel,
+}: {
+  readonly defaultValue: string;
+  readonly ariaLabel: string;
+  readonly onCommit: (value: string) => void;
+  readonly onCancel: () => void;
+}) {
+  return (
+    <input
+      className={styles.renameInput}
+      defaultValue={defaultValue}
+      aria-label={ariaLabel}
+      autoComplete="off"
+      autoFocus
+      onFocus={(event) => {
+        event.currentTarget.select();
+      }}
+      onClick={(event) => {
+        event.stopPropagation();
+      }}
+      onDoubleClick={(event) => {
+        event.stopPropagation();
+      }}
+      onKeyDown={(event) => {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          onCommit(event.currentTarget.value);
+        } else if (event.key === "Escape") {
+          event.preventDefault();
+          onCancel();
+        }
+      }}
+      onBlur={(event) => {
+        onCommit(event.currentTarget.value);
+      }}
+    />
+  );
+}
+
+function RowMenu({
+  trigger,
+  onRename,
+  onDelete,
+}: {
+  readonly trigger: ReactElement;
+  readonly onRename: () => void;
+  readonly onDelete: () => void;
+}) {
+  const messages = useMessages();
+  return (
+    <ContextMenu.Root>
+      <ContextMenu.Trigger render={trigger} />
+      <ContextMenu.Portal>
+        <ContextMenu.Positioner className={styles.menuPositioner}>
+          <ContextMenu.Popup className={styles.menuPopup}>
+            <ContextMenu.Item className={styles.menuItem} onClick={onRename}>
+              {messages.common.rename}
+            </ContextMenu.Item>
+            <ContextMenu.Item
+              className={[styles.menuItem, styles.menuItemDanger].join(" ")}
+              onClick={onDelete}
+            >
+              {messages.common.delete}
+            </ContextMenu.Item>
+          </ContextMenu.Popup>
+        </ContextMenu.Positioner>
+      </ContextMenu.Portal>
+    </ContextMenu.Root>
+  );
+}
+
 function LessonRow({
   lesson,
   index,
-  onOpen,
+  variant,
+  selectedPartId,
   onOpenSettings,
+  onOpenPart,
+  onRename,
+  onRequestDelete,
+  onRenamePart,
+  onRequestDeletePart,
+  onReorderParts,
+  onRequestAddPart,
 }: {
   readonly lesson: Lesson;
   readonly index: number;
-  readonly onOpen: () => void;
+  readonly variant: "page" | "sidebar";
+  readonly selectedPartId?: string | undefined;
   readonly onOpenSettings: () => void;
+  readonly onOpenPart: (partId: string) => void;
+  readonly onRename: (title: string) => void;
+  readonly onRequestDelete: () => void;
+  readonly onRenamePart: (part: Part, title: string) => void;
+  readonly onRequestDeletePart: (part: Part) => void;
+  readonly onReorderParts?:
+    | ((lessonId: string, orderedPartIds: readonly string[]) => Promise<ProjectWriteResult>)
+    | undefined;
+  readonly onRequestAddPart?: (() => void) | undefined;
 }) {
   const messages = useMessages();
   const t = messages.structure;
@@ -60,6 +254,109 @@ function LessonRow({
     transform: CSS.Transform.toString(transform),
     transition,
   };
+  const [partsCollapsed, setPartsCollapsed] = useState(false);
+  const [editing, setEditing] = useState(false);
+
+  if (variant === "sidebar") {
+    const hasParts = lesson.parts.length > 0;
+    return (
+      <div
+        ref={setNodeRef}
+        style={style}
+        className={[styles.lessonNode, isDragging ? styles.dragging : ""].filter(Boolean).join(" ")}
+      >
+        <RowMenu
+          onRename={() => {
+            setEditing(true);
+          }}
+          onDelete={onRequestDelete}
+          trigger={
+            <div className={[styles.treeRow, styles.lessonRow].join(" ")}>
+              {hasParts ? (
+                <button
+                  type="button"
+                  className={styles.disclosure}
+                  aria-expanded={!partsCollapsed}
+                  aria-label={
+                    partsCollapsed
+                      ? format(t.expandUnit, { unit: lesson.title })
+                      : format(t.collapseUnit, { unit: lesson.title })
+                  }
+                  onClick={() => {
+                    setPartsCollapsed((value) => !value);
+                  }}
+                >
+                  <Icon
+                    aria-hidden="true"
+                    className={chevronClass(partsCollapsed)}
+                    name="chevron-down"
+                    size={16}
+                  />
+                </button>
+              ) : (
+                <span className={styles.disclosureSpacer} aria-hidden="true" />
+              )}
+              <Icon className={styles.typeIcon} name="lessons" size={16} aria-hidden="true" />
+              {editing ? (
+                <RenameInput
+                  defaultValue={lesson.title}
+                  ariaLabel={t.lessonTitleLabel}
+                  onCommit={(value) => {
+                    setEditing(false);
+                    onRename(value);
+                  }}
+                  onCancel={() => {
+                    setEditing(false);
+                  }}
+                />
+              ) : (
+                <button
+                  type="button"
+                  className={styles.treeMain}
+                  onClick={() => {
+                    setPartsCollapsed((value) => !value);
+                  }}
+                  onDoubleClick={() => {
+                    setEditing(true);
+                  }}
+                >
+                  <span className={styles.rowTitle}>{lesson.title}</span>
+                </button>
+              )}
+              {onRequestAddPart ? (
+                <IconButton
+                  className={styles.rowAction}
+                  aria-label={messages.lesson.addPartTitle}
+                  onClick={onRequestAddPart}
+                >
+                  <Icon name="plus" size={16} />
+                </IconButton>
+              ) : null}
+              <button
+                type="button"
+                className={styles.dragHandle}
+                aria-label={format(messages.common.reorder, { label: lesson.title })}
+                {...attributes}
+                {...listeners}
+              >
+                <Icon name="grip" size={16} />
+              </button>
+            </div>
+          }
+        />
+        {hasParts && !partsCollapsed ? (
+          <PartList
+            lesson={lesson}
+            selectedPartId={selectedPartId}
+            onOpenPart={onOpenPart}
+            onReorderParts={onReorderParts}
+            onRenamePart={onRenamePart}
+            onRequestDeletePart={onRequestDeletePart}
+          />
+        ) : null}
+      </div>
+    );
+  }
 
   return (
     <div
@@ -77,7 +374,7 @@ function LessonRow({
         <Icon name="grip" size={18} />
       </button>
       <span className={styles.orderIndex}>{orderLabel(index)}</span>
-      <button type="button" className={styles.orderedMain} onClick={onOpen}>
+      <button type="button" className={styles.orderedMain}>
         <span className={styles.rowTitle}>{lesson.title}</span>
         <span className={styles.rowDetail}>{format(t.parts, { count: lesson.parts.length })}</span>
       </button>
@@ -98,29 +395,203 @@ function useReorderSensors() {
   );
 }
 
+function SortablePartRow({
+  part,
+  selected,
+  reorderable,
+  onOpen,
+  onRename,
+  onRequestDelete,
+}: {
+  readonly part: Part;
+  readonly selected: boolean;
+  readonly reorderable: boolean;
+  readonly onOpen: () => void;
+  readonly onRename: (title: string) => void;
+  readonly onRequestDelete: () => void;
+}) {
+  const messages = useMessages();
+  const format = useFormat();
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: part.id,
+  });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+  const [editing, setEditing] = useState(false);
+
+  return (
+    <div ref={setNodeRef} style={style}>
+      <RowMenu
+        onRename={() => {
+          setEditing(true);
+        }}
+        onDelete={onRequestDelete}
+        trigger={
+          <div
+            className={[
+              styles.treeRow,
+              selected ? styles.active : "",
+              isDragging ? styles.dragging : "",
+            ]
+              .filter(Boolean)
+              .join(" ")}
+          >
+            <span className={styles.disclosureSpacer} aria-hidden="true" />
+            <Icon
+              className={styles.typeIcon}
+              name={partIconName(part)}
+              size={16}
+              aria-hidden="true"
+            />
+            {editing ? (
+              <RenameInput
+                defaultValue={part.title}
+                ariaLabel={messages.lesson.partTitleLabel}
+                onCommit={(value) => {
+                  setEditing(false);
+                  onRename(value);
+                }}
+                onCancel={() => {
+                  setEditing(false);
+                }}
+              />
+            ) : (
+              <button
+                type="button"
+                className={styles.treeMain}
+                aria-current={selected ? "page" : undefined}
+                onClick={onOpen}
+                onDoubleClick={() => {
+                  setEditing(true);
+                }}
+              >
+                <span className={styles.rowTitle}>{part.title}</span>
+              </button>
+            )}
+            {reorderable ? (
+              <button
+                type="button"
+                className={styles.dragHandle}
+                aria-label={format(messages.common.reorder, { label: part.title })}
+                {...attributes}
+                {...listeners}
+              >
+                <Icon name="grip" size={16} />
+              </button>
+            ) : null}
+          </div>
+        }
+      />
+    </div>
+  );
+}
+
+function PartList({
+  lesson,
+  selectedPartId,
+  onOpenPart,
+  onReorderParts,
+  onRenamePart,
+  onRequestDeletePart,
+}: {
+  readonly lesson: Lesson;
+  readonly selectedPartId?: string | undefined;
+  readonly onOpenPart: (partId: string) => void;
+  readonly onReorderParts?:
+    | ((lessonId: string, orderedPartIds: readonly string[]) => Promise<ProjectWriteResult>)
+    | undefined;
+  readonly onRenamePart: (part: Part, title: string) => void;
+  readonly onRequestDeletePart: (part: Part) => void;
+}) {
+  const sensors = useReorderSensors();
+  const ids = lesson.parts.map((part) => part.id);
+  const reorderable = onReorderParts !== undefined;
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    if (!onReorderParts) return;
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const from = ids.indexOf(String(active.id));
+    const to = ids.indexOf(String(over.id));
+    if (from < 0 || to < 0) return;
+    void onReorderParts(lesson.id, arrayMove([...ids], from, to));
+  };
+
+  return (
+    <DndContext sensors={sensors} collisionDetection={closestCorners} onDragEnd={handleDragEnd}>
+      <SortableContext items={ids} strategy={verticalListSortingStrategy}>
+        <div className={styles.partList}>
+          {lesson.parts.map((part) => (
+            <SortablePartRow
+              key={part.id}
+              part={part}
+              selected={part.id === selectedPartId}
+              reorderable={reorderable}
+              onOpen={() => {
+                onOpenPart(part.id);
+              }}
+              onRename={(title) => {
+                onRenamePart(part, title);
+              }}
+              onRequestDelete={() => {
+                onRequestDeletePart(part);
+              }}
+            />
+          ))}
+        </div>
+      </SortableContext>
+    </DndContext>
+  );
+}
+
 function UnitBlock({
   unit,
   index,
   lessons,
   collapsed,
   addingLesson,
+  variant,
+  selectedPartId,
   onToggleCollapsed,
   onAddLesson,
   onOpenSettings,
-  onOpenLesson,
+  onRename,
+  onRequestDelete,
+  onOpenPart,
   onOpenLessonSettings,
+  onRenameLesson,
+  onRequestDeleteLesson,
+  onRenamePart,
+  onRequestDeletePart,
+  onReorderParts,
+  onRequestAddPart,
 }: {
   readonly unit: OutlineSection;
   readonly index: number;
   readonly lessons: readonly Lesson[];
   readonly collapsed: boolean;
   readonly addingLesson: boolean;
+  readonly variant: "page" | "sidebar";
+  readonly selectedPartId?: string | undefined;
   readonly onToggleCollapsed: () => void;
   readonly onAddLesson: () => void;
   readonly onOpenSettings: () => void;
-  readonly onOpenLesson: (lessonId: string) => void;
+  readonly onRename: (title: string) => void;
+  readonly onRequestDelete: () => void;
+  readonly onOpenPart: (lessonId: string, partId: string) => void;
   readonly onOpenLessonSettings: (lessonId: string) => void;
+  readonly onRenameLesson: (lesson: Lesson, title: string) => void;
+  readonly onRequestDeleteLesson: (lesson: Lesson) => void;
+  readonly onRenamePart: (lesson: Lesson, part: Part, title: string) => void;
+  readonly onRequestDeletePart: (lesson: Lesson, part: Part) => void;
+  readonly onReorderParts?:
+    | ((lessonId: string, orderedPartIds: readonly string[]) => Promise<ProjectWriteResult>)
+    | undefined;
+  readonly onRequestAddPart?: ((lessonId: string) => void) | undefined;
 }) {
+  const sidebar = variant === "sidebar";
   const messages = useMessages();
   const t = messages.structure;
   const format = useFormat();
@@ -132,6 +603,12 @@ function UnitBlock({
     transition,
   };
   const lessonsId = `unit-lessons-${unit.id}`;
+  const [editing, setEditing] = useState(false);
+
+  const commitRename = (value: string) => {
+    setEditing(false);
+    onRename(value);
+  };
 
   return (
     <article
@@ -139,55 +616,164 @@ function UnitBlock({
       style={style}
       className={[styles.unitBlock, isDragging ? styles.dragging : ""].filter(Boolean).join(" ")}
     >
-      <header className={styles.unitHeader}>
-        <button
-          type="button"
-          className={styles.reorderHandle}
-          aria-label={format(messages.common.reorder, { label: unit.title })}
-          {...attributes}
-          {...listeners}
-        >
-          <Icon name="grip" size={18} />
-        </button>
-        <span className={[styles.orderIndex, styles.unitIndex].join(" ")}>{orderLabel(index)}</span>
-        <button
-          type="button"
-          className={styles.unitToggle}
-          aria-expanded={!collapsed}
-          aria-controls={lessonsId}
-          aria-label={
-            collapsed
-              ? format(t.expandUnit, { unit: unit.title })
-              : format(t.collapseUnit, { unit: unit.title })
-          }
-          onClick={onToggleCollapsed}
-        >
-          <Icon
-            aria-hidden="true"
-            className={chevronClass(collapsed)}
-            name="chevron-down"
-            size={18}
+      {sidebar ? (
+        <ContextMenu.Root>
+          <ContextMenu.Trigger
+            render={
+              <header className={styles.unitHeader}>
+                <button
+                  type="button"
+                  className={styles.disclosure}
+                  aria-expanded={!collapsed}
+                  aria-controls={lessonsId}
+                  aria-label={
+                    collapsed
+                      ? format(t.expandUnit, { unit: unit.title })
+                      : format(t.collapseUnit, { unit: unit.title })
+                  }
+                  onClick={onToggleCollapsed}
+                >
+                  <Icon
+                    aria-hidden="true"
+                    className={chevronClass(collapsed)}
+                    name="chevron-down"
+                    size={16}
+                  />
+                </button>
+                <Icon className={styles.typeIcon} name="folder" size={16} aria-hidden="true" />
+                {editing ? (
+                  <input
+                    className={styles.renameInput}
+                    defaultValue={unit.title}
+                    aria-label={t.unitTitleLabel}
+                    autoComplete="off"
+                    autoFocus
+                    onFocus={(event) => {
+                      event.currentTarget.select();
+                    }}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                    }}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter") {
+                        event.preventDefault();
+                        commitRename(event.currentTarget.value);
+                      } else if (event.key === "Escape") {
+                        event.preventDefault();
+                        setEditing(false);
+                      }
+                    }}
+                    onBlur={(event) => {
+                      commitRename(event.currentTarget.value);
+                    }}
+                  />
+                ) : (
+                  <button
+                    type="button"
+                    className={styles.treeMain}
+                    onClick={onToggleCollapsed}
+                    onDoubleClick={() => {
+                      setEditing(true);
+                    }}
+                  >
+                    <span className={styles.unitName}>{unit.title}</span>
+                  </button>
+                )}
+                <div className={styles.unitActions}>
+                  <IconButton
+                    aria-label={t.addLesson}
+                    disabled={addingLesson}
+                    onClick={onAddLesson}
+                  >
+                    <Icon name="plus" size={18} />
+                  </IconButton>
+                </div>
+                <button
+                  type="button"
+                  className={styles.reorderHandle}
+                  aria-label={format(messages.common.reorder, { label: unit.title })}
+                  {...attributes}
+                  {...listeners}
+                >
+                  <Icon name="grip" size={16} />
+                </button>
+              </header>
+            }
           />
-          <span className={styles.unitHeading}>
-            <span className={styles.unitName}>{unit.title}</span>
-            <span className={styles.rowDetail}>
-              {format(t.unitLessons, { count: lessons.length })}
-            </span>
-          </span>
-        </button>
-        <div className={styles.unitActions}>
-          <Button variant="ghost" disabled={addingLesson} onClick={onAddLesson}>
-            <Icon name="plus" size={18} />
-            {t.addLesson}
-          </Button>
-          <IconButton
-            aria-label={format(t.unitSettings, { unit: unit.title })}
-            onClick={onOpenSettings}
+          <ContextMenu.Portal>
+            <ContextMenu.Positioner className={styles.menuPositioner}>
+              <ContextMenu.Popup className={styles.menuPopup}>
+                <ContextMenu.Item
+                  className={styles.menuItem}
+                  onClick={() => {
+                    setEditing(true);
+                  }}
+                >
+                  {messages.common.rename}
+                </ContextMenu.Item>
+                <ContextMenu.Item
+                  className={[styles.menuItem, styles.menuItemDanger].join(" ")}
+                  onClick={onRequestDelete}
+                >
+                  {messages.common.delete}
+                </ContextMenu.Item>
+              </ContextMenu.Popup>
+            </ContextMenu.Positioner>
+          </ContextMenu.Portal>
+        </ContextMenu.Root>
+      ) : (
+        <header className={styles.unitHeader}>
+          <button
+            type="button"
+            className={styles.reorderHandle}
+            aria-label={format(messages.common.reorder, { label: unit.title })}
+            {...attributes}
+            {...listeners}
           >
-            <Icon name="edit" size={18} />
-          </IconButton>
-        </div>
-      </header>
+            <Icon name="grip" size={18} />
+          </button>
+          <span className={[styles.orderIndex, styles.unitIndex].join(" ")}>
+            {orderLabel(index)}
+          </span>
+          <button
+            type="button"
+            className={styles.unitToggle}
+            aria-expanded={!collapsed}
+            aria-controls={lessonsId}
+            aria-label={
+              collapsed
+                ? format(t.expandUnit, { unit: unit.title })
+                : format(t.collapseUnit, { unit: unit.title })
+            }
+            onClick={onToggleCollapsed}
+          >
+            <Icon
+              aria-hidden="true"
+              className={chevronClass(collapsed)}
+              name="chevron-down"
+              size={18}
+            />
+            <span className={styles.unitHeading}>
+              <span className={styles.unitName}>{unit.title}</span>
+              <span className={styles.rowDetail}>
+                {format(t.unitLessons, { count: lessons.length })}
+              </span>
+            </span>
+          </button>
+          <div className={styles.unitActions}>
+            <Button variant="ghost" disabled={addingLesson} onClick={onAddLesson}>
+              <Icon name="plus" size={18} />
+              {t.addLesson}
+            </Button>
+            <IconButton
+              aria-label={format(t.unitSettings, { unit: unit.title })}
+              onClick={onOpenSettings}
+            >
+              <Icon name="edit" size={18} />
+            </IconButton>
+          </div>
+        </header>
+      )}
 
       {collapsed ? null : (
         <SortableContext
@@ -205,12 +791,34 @@ function UnitBlock({
                 key={lesson.id}
                 lesson={lesson}
                 index={lessonIndex}
-                onOpen={() => {
-                  onOpenLesson(lesson.id);
-                }}
+                variant={variant}
+                selectedPartId={selectedPartId}
                 onOpenSettings={() => {
                   onOpenLessonSettings(lesson.id);
                 }}
+                onOpenPart={(partId) => {
+                  onOpenPart(lesson.id, partId);
+                }}
+                onRename={(title) => {
+                  onRenameLesson(lesson, title);
+                }}
+                onRequestDelete={() => {
+                  onRequestDeleteLesson(lesson);
+                }}
+                onRenamePart={(part, title) => {
+                  onRenamePart(lesson, part, title);
+                }}
+                onRequestDeletePart={(part) => {
+                  onRequestDeletePart(lesson, part);
+                }}
+                onReorderParts={onReorderParts}
+                onRequestAddPart={
+                  onRequestAddPart
+                    ? () => {
+                        onRequestAddPart(lesson.id);
+                      }
+                    : undefined
+                }
               />
             ))}
           </div>
@@ -230,22 +838,22 @@ function Modal({
   readonly children: ReactNode;
 }) {
   return (
-    <div className={styles.overlay} role="presentation" onClick={onClose}>
-      <div
-        className={styles.dialog}
-        role="dialog"
-        aria-modal="true"
-        aria-label={label}
-        onClick={(event) => {
-          event.stopPropagation();
-        }}
-        onKeyDown={(event) => {
-          if (event.key === "Escape") onClose();
-        }}
-      >
-        {children}
-      </div>
-    </div>
+    <Dialog.Root
+      open
+      onOpenChange={(next) => {
+        if (!next) onClose();
+      }}
+    >
+      <Dialog.Portal>
+        <Dialog.Backdrop className={styles.overlay} />
+        <Dialog.Popup className={styles.dialog}>
+          <div className={styles.dialogHeader}>
+            <Dialog.Title className={styles.dialogTitle}>{label}</Dialog.Title>
+          </div>
+          {children}
+        </Dialog.Popup>
+      </Dialog.Portal>
+    </Dialog.Root>
   );
 }
 
@@ -260,7 +868,18 @@ export interface CourseStructureProps {
   readonly onReorderOutline: (
     sections: readonly { readonly id: string; readonly lessonIds: readonly string[] }[],
   ) => Promise<ProjectWriteResult>;
-  readonly onOpenLesson: (lessonId: string) => void;
+  readonly onOpenPart?: ((lessonId: string, partId: string) => void) | undefined;
+  readonly selectedId?: string | undefined;
+  readonly onReorderParts?:
+    | ((lessonId: string, orderedPartIds: readonly string[]) => Promise<ProjectWriteResult>)
+    | undefined;
+  readonly onAddPart?: ((lessonId: string, kind: PartKind) => void) | undefined;
+  readonly onRenamePart?:
+    ((lessonId: string, partId: string, title: string) => Promise<ProjectWriteResult>) | undefined;
+  readonly onDeletePart?:
+    ((lessonId: string, partId: string) => Promise<ProjectWriteResult>) | undefined;
+  readonly query?: string;
+  readonly variant?: "page" | "sidebar";
 }
 
 interface UnitLayout {
@@ -292,7 +911,14 @@ export function CourseStructure({
   onRenameLesson,
   onDeleteLesson,
   onReorderOutline,
-  onOpenLesson,
+  onOpenPart,
+  selectedId,
+  onReorderParts,
+  onAddPart,
+  onRenamePart,
+  onDeletePart,
+  query = "",
+  variant = "page",
 }: CourseStructureProps) {
   const messages = useMessages();
   const t = messages.structure;
@@ -303,6 +929,7 @@ export function CourseStructure({
   const [failed, setFailed] = useState(false);
   const [settingsUnitId, setSettingsUnitId] = useState<string | null>(null);
   const [settingsLessonId, setSettingsLessonId] = useState<string | null>(null);
+  const [addingPartLessonId, setAddingPartLessonId] = useState<string | null>(null);
   const [collapsedUnitIds, setCollapsedUnitIds] = useState<ReadonlySet<string>>(
     () => new Set<string>(),
   );
@@ -342,6 +969,14 @@ export function CourseStructure({
   const report = (result: ProjectWriteResult) => {
     setFailed(result.status !== "saved");
   };
+
+  const reorderPartsWithReport = onReorderParts
+    ? (lessonId: string, orderedPartIds: readonly string[]) =>
+        onReorderParts(lessonId, orderedPartIds).then((result) => {
+          report(result);
+          return result;
+        })
+    : undefined;
 
   const createUnit = async () => {
     setCreating(true);
@@ -407,6 +1042,26 @@ export function CourseStructure({
     report(await onDeleteLesson(lesson.id));
   };
 
+  const renamePart = (lesson: Lesson, part: Part, title: string) => {
+    const next = title.trim();
+    if (next === "" || next === part.title || !onRenamePart) return;
+    setFailed(false);
+    void onRenamePart(lesson.id, part.id, next).then(report);
+  };
+
+  const removePart = async (lesson: Lesson, part: Part) => {
+    if (!onDeletePart) return;
+    const ok = await confirm({
+      title: messages.lesson.confirmDeletePartTitle,
+      description: format(messages.lesson.confirmDeletePartBody, { title: part.title }),
+      confirmLabel: messages.lesson.deletePart,
+      tone: "danger",
+    });
+    if (!ok) return;
+    setFailed(false);
+    report(await onDeletePart(lesson.id, part.id));
+  };
+
   const sensors = useReorderSensors();
   const [layout, setLayout] = useState<UnitLayout[]>(() => outlineToLayout(course.outline));
   const [syncedOutline, setSyncedOutline] = useState(course.outline);
@@ -434,7 +1089,13 @@ export function CourseStructure({
   const persistLayout = (next: UnitLayout[]) => {
     if (sameLayout(next, course.outline)) return;
     setFailed(false);
-    void onReorderOutline(next).then(report);
+    void onReorderOutline(next).then((result) => {
+      report(result);
+      if (result.status !== "saved") {
+        setSyncedOutline(course.outline);
+        setLayout(outlineToLayout(course.outline));
+      }
+    });
   };
 
   const handleDragStart = (event: DragStartEvent) => {
@@ -554,13 +1215,48 @@ export function CourseStructure({
   );
 
   return (
-    <WorkInner className={styles.inner}>
-      <WorkHeader
-        title={t.title}
-        description={t.description}
-        actions={
-          <>
-            {failed ? <Status tone="warning">{messages.common.saveFailed}</Status> : null}
+    <WorkInner
+      className={variant === "sidebar" ? [styles.inner, styles.sidebar].join(" ") : styles.inner}
+    >
+      {variant === "sidebar" ? (
+        <div className={styles.sidebarHeader}>
+          <span className={styles.sidebarTitle}>{messages.lessonWorkspace.outline}</span>
+          <div className={styles.sidebarHeaderActions}>
+            {course.outline.length > 0 ? (
+              <IconButton
+                size="sm"
+                aria-label={allCollapsed ? t.expandAll : t.collapseAll}
+                onClick={toggleAllUnits}
+              >
+                <Icon name={allCollapsed ? "arrows-expand" : "minimize"} size={18} />
+              </IconButton>
+            ) : null}
+            <IconButton
+              size="sm"
+              aria-label={t.newUnit}
+              disabled={creating}
+              onClick={() => {
+                void createUnit();
+              }}
+            >
+              <Icon name="plus" size={18} />
+            </IconButton>
+          </div>
+        </div>
+      ) : (
+        <div className={styles.actionsRow}>
+          <Button
+            size="compact"
+            disabled={creating}
+            onClick={() => {
+              void createUnit();
+            }}
+          >
+            <Icon name="plus" size={18} />
+            {t.newUnit}
+          </Button>
+          <div className={styles.actionsEnd}>
+            {failed ? <Status tone="error">{messages.common.saveFailed}</Status> : null}
             {course.outline.length > 0 ? (
               <Button variant="ghost" size="compact" onClick={toggleAllUnits}>
                 <Icon
@@ -572,21 +1268,19 @@ export function CourseStructure({
                 {allCollapsed ? t.expandAll : t.collapseAll}
               </Button>
             ) : null}
-            <Button
-              size="compact"
-              disabled={creating}
-              onClick={() => {
-                void createUnit();
-              }}
-            >
-              <Icon name="plus" size={18} />
-              {t.newUnit}
-            </Button>
-          </>
-        }
-      />
+          </div>
+        </div>
+      )}
 
-      {course.outline.length === 0 ? (
+      {query.trim() !== "" ? (
+        <OutlineResults
+          course={course}
+          lessonById={lessonById}
+          query={query}
+          selectedId={selectedId}
+          onOpenPart={onOpenPart}
+        />
+      ) : course.outline.length === 0 ? (
         <p className={styles.empty}>{t.empty}</p>
       ) : (
         <DndContext
@@ -619,6 +1313,8 @@ export function CourseStructure({
                     lessons={lessons}
                     collapsed={collapsedUnitIds.has(unit.id)}
                     addingLesson={addingUnitId === unit.id}
+                    variant={variant}
+                    selectedPartId={selectedId}
                     onToggleCollapsed={() => {
                       toggleUnitCollapsed(unit.id);
                     }}
@@ -630,11 +1326,35 @@ export function CourseStructure({
                       setFailed(false);
                       setSettingsUnitId(unit.id);
                     }}
-                    onOpenLesson={onOpenLesson}
+                    onRename={(title) => {
+                      renameUnit(unit, title);
+                    }}
+                    onRequestDelete={() => {
+                      void removeUnit(unit);
+                    }}
+                    onOpenPart={(lessonId, partId) => {
+                      onOpenPart?.(lessonId, partId);
+                    }}
                     onOpenLessonSettings={(lessonId) => {
                       setFailed(false);
                       setSettingsLessonId(lessonId);
                     }}
+                    onRenameLesson={renameLesson}
+                    onRequestDeleteLesson={(lesson) => {
+                      void removeLesson(lesson);
+                    }}
+                    onRenamePart={renamePart}
+                    onRequestDeletePart={(lesson, part) => {
+                      void removePart(lesson, part);
+                    }}
+                    onReorderParts={reorderPartsWithReport}
+                    onRequestAddPart={
+                      onAddPart
+                        ? (lessonId) => {
+                            setAddingPartLessonId(lessonId);
+                          }
+                        : undefined
+                    }
                   />
                 );
               })}
@@ -666,9 +1386,6 @@ export function CourseStructure({
             setSettingsUnitId(null);
           }}
         >
-          <div className={styles.dialogHeader}>
-            <h2 className={styles.dialogTitle}>{t.unitSettingsLabel}</h2>
-          </div>
           <div className={styles.dialogBody}>
             <Field label={t.unitTitleLabel}>
               <TextInput
@@ -709,9 +1426,6 @@ export function CourseStructure({
             setSettingsLessonId(null);
           }}
         >
-          <div className={styles.dialogHeader}>
-            <h2 className={styles.dialogTitle}>{t.lessonSettingsLabel}</h2>
-          </div>
           <div className={styles.dialogBody}>
             <Field label={t.lessonTitleLabel}>
               <TextInput
@@ -741,6 +1455,33 @@ export function CourseStructure({
             >
               {messages.common.done}
             </Button>
+          </div>
+        </Modal>
+      ) : null}
+
+      {onAddPart && addingPartLessonId !== null ? (
+        <Modal
+          label={messages.lesson.addPartTitle}
+          onClose={() => {
+            setAddingPartLessonId(null);
+          }}
+        >
+          <div className={styles.dialogBody}>
+            <div className={styles.typeList}>
+              {PART_KINDS.map((kind) => (
+                <button
+                  key={kind}
+                  type="button"
+                  className={styles.typeOption}
+                  onClick={() => {
+                    onAddPart(addingPartLessonId, kind);
+                    setAddingPartLessonId(null);
+                  }}
+                >
+                  {messages.lesson.kind[kind]}
+                </button>
+              ))}
+            </div>
           </div>
         </Modal>
       ) : null}

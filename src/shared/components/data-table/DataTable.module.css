@@ -1,17 +1,33 @@
 .wrap {
+  display: flex;
+  flex-direction: column;
   min-width: 0;
-  overflow-x: auto;
-  border: var(--border-hairline) solid var(--color-border);
-  border-radius: var(--radius-md);
-  background: var(--color-surface);
+  min-height: 0;
+  height: 100%;
+  background: transparent;
+}
+
+.scroller {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
 }
 
 .toolbar {
   display: flex;
   align-items: center;
-  gap: var(--space-3);
-  padding: var(--space-2) var(--space-4) var(--space-4);
-  border: 0;
+  gap: var(--space-2) var(--space-3);
+  padding: var(--space-4);
+  border-bottom: var(--border-hairline) solid var(--color-border);
+}
+
+.toolbarActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+  margin-left: auto;
 }
 
 .search {
@@ -147,12 +163,14 @@
 }
 
 .pagination {
+  flex: none;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-3);
   padding: var(--space-2) var(--space-4);
   border-top: var(--border-hairline) solid var(--color-border);
+  background: var(--color-surface);
 }
 
 .pageInfo {
@@ -164,4 +182,8 @@
 .pageControls {
   display: inline-flex;
   gap: var(--space-2);
+}
+
+.table th.editableHead {
+  padding-left: calc(var(--space-3) + var(--space-2) + var(--border-hairline));
 }

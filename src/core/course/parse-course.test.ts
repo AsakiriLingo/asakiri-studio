@@ -90,6 +90,74 @@ describe("parseCourse", () => {
     );
   });
 
+  it("parses media folders and asset folderId, defaulting to no folders", async () => {
+    const withFolders: CourseFileReader = {
+      readTextFile: (relativePath) => {
+        if (relativePath === "project.json") {
+          return Promise.resolve(
+            JSON.stringify({
+              project: {
+                id: "c",
+                title: "C",
+                description: "",
+                defaultLocale: "en",
+                learningLocales: [],
+              },
+              collections: [],
+              assets: ["media/assets/a1/asset.json"],
+              lessons: [],
+              outline: [],
+              mediaFolders: [
+                { id: "f1", name: "Chapter 1", parentId: null },
+                { id: "f2", name: "Audio", parentId: "f1" },
+              ],
+            }),
+          );
+        }
+        return Promise.resolve(
+          JSON.stringify({
+            id: "a1",
+            kind: "image",
+            label: "a1",
+            availability: "ready",
+            file: "a1.png",
+            mimeType: "image/png",
+            folderId: "f2",
+          }),
+        );
+      },
+    };
+    const course = await parseCourse(withFolders);
+    expect(course.mediaFolders).toEqual([
+      { id: "f1", name: "Chapter 1", parentId: null },
+      { id: "f2", name: "Audio", parentId: "f1" },
+    ]);
+    expect(course.assets[0]?.folderId).toBe("f2");
+  });
+
+  it("defaults media folders to empty when the manifest omits them", async () => {
+    const noFolders: CourseFileReader = {
+      readTextFile: () =>
+        Promise.resolve(
+          JSON.stringify({
+            project: {
+              id: "c",
+              title: "C",
+              description: "",
+              defaultLocale: "en",
+              learningLocales: [],
+            },
+            collections: [],
+            assets: [],
+            lessons: [],
+            outline: [],
+          }),
+        ),
+    };
+    const course = await parseCourse(noFolders);
+    expect(course.mediaFolders).toEqual([]);
+  });
+
   it("throws a parse error on invalid JSON", async () => {
     const reader: CourseFileReader = { readTextFile: () => Promise.resolve("{ not json") };
 

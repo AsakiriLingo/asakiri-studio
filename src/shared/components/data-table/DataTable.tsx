@@ -1,4 +1,4 @@
-import { memo, useEffect, useMemo, useRef, useState } from "react";
+import { memo, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
   flexRender,
   getCoreRowModel,
@@ -106,6 +106,7 @@ export interface DataTableProps<TData> {
   readonly data: readonly TData[];
   readonly ariaLabel?: string;
   readonly searchable?: boolean;
+  readonly actions?: ReactNode;
   readonly onEditCell?: (rowIndex: number, columnId: string, value: string) => void;
 }
 
@@ -114,6 +115,7 @@ function DataTableInner<TData>({
   data,
   ariaLabel,
   searchable,
+  actions,
   onEditCell,
 }: DataTableProps<TData>) {
   const messages = useMessages();
@@ -144,93 +146,105 @@ function DataTableInner<TData>({
 
   return (
     <div className={styles.wrap}>
-      {searchable ? (
-        <div className={styles.toolbar}>
-          <span className={styles.search}>
-            <Icon name="search" size={16} className={styles.searchIcon} />
-            <TextInput
-              type="search"
-              className={styles.searchInput}
-              value={globalFilter}
-              placeholder={messages.common.searchPlaceholder}
-              aria-label={messages.common.search}
-              autoComplete="off"
-              onChange={(event) => {
-                setGlobalFilter(event.currentTarget.value);
-                table.setPageIndex(0);
-              }}
-            />
-          </span>
-        </div>
-      ) : null}
-      <table className={styles.table} aria-label={ariaLabel}>
-        <thead>
-          {table.getHeaderGroups().map((headerGroup) => (
-            <tr key={headerGroup.id}>
-              {headerGroup.headers.map((header) => {
-                if (header.isPlaceholder) return <th key={header.id} scope="col" />;
-                const content = flexRender(header.column.columnDef.header, header.getContext());
-                if (!header.column.getCanSort()) {
+      <div className={styles.scroller}>
+        {searchable || actions ? (
+          <div className={styles.toolbar}>
+            {searchable ? (
+              <span className={styles.search}>
+                <Icon name="search" size={16} className={styles.searchIcon} />
+                <TextInput
+                  type="search"
+                  className={styles.searchInput}
+                  value={globalFilter}
+                  placeholder={messages.common.searchPlaceholder}
+                  aria-label={messages.common.search}
+                  autoComplete="off"
+                  onChange={(event) => {
+                    setGlobalFilter(event.currentTarget.value);
+                    table.setPageIndex(0);
+                  }}
+                />
+              </span>
+            ) : null}
+            {actions ? <div className={styles.toolbarActions}>{actions}</div> : null}
+          </div>
+        ) : null}
+        <table className={styles.table} aria-label={ariaLabel}>
+          <thead>
+            {table.getHeaderGroups().map((headerGroup) => (
+              <tr key={headerGroup.id}>
+                {headerGroup.headers.map((header) => {
+                  if (header.isPlaceholder) return <th key={header.id} scope="col" />;
+                  const content = flexRender(header.column.columnDef.header, header.getContext());
+                  if (!header.column.getCanSort()) {
+                    return (
+                      <th key={header.id} scope="col">
+                        {content}
+                      </th>
+                    );
+                  }
+                  const sorted = header.column.getIsSorted();
+                  const label =
+                    typeof header.column.columnDef.header === "string"
+                      ? header.column.columnDef.header
+                      : header.column.id;
                   return (
-                    <th key={header.id} scope="col">
-                      {content}
+                    <th
+                      key={header.id}
+                      scope="col"
+                      aria-sort={ariaSort(sorted)}
+                      className={
+                        header.column.columnDef.meta?.editable ? styles.editableHead : undefined
+                      }
+                    >
+                      <button
+                        type="button"
+                        className={styles.sortHeader}
+                        aria-label={format(messages.common.sortBy, { column: label })}
+                        onClick={header.column.getToggleSortingHandler()}
+                      >
+                        {content}
+                        <Icon
+                          name="chevron-down"
+                          size={14}
+                          className={joinSortIcon(sorted)}
+                          aria-hidden
+                        />
+                      </button>
                     </th>
                   );
-                }
-                const sorted = header.column.getIsSorted();
-                const label =
-                  typeof header.column.columnDef.header === "string"
-                    ? header.column.columnDef.header
-                    : header.column.id;
-                return (
-                  <th key={header.id} scope="col" aria-sort={ariaSort(sorted)}>
-                    <button
-                      type="button"
-                      className={styles.sortHeader}
-                      aria-label={format(messages.common.sortBy, { column: label })}
-                      onClick={header.column.getToggleSortingHandler()}
-                    >
-                      {content}
-                      <Icon
-                        name="chevron-down"
-                        size={14}
-                        className={joinSortIcon(sorted)}
-                        aria-hidden
-                      />
-                    </button>
-                  </th>
-                );
-              })}
-            </tr>
-          ))}
-        </thead>
-        <tbody>
-          {hasRows ? (
-            table.getRowModel().rows.map((row) => (
-              <tr key={row.id}>
-                {row.getVisibleCells().map((cell) => (
-                  <td
-                    key={cell.id}
-                    className={cell.column.columnDef.meta?.primary ? styles.primary : undefined}
-                  >
-                    {cell.column.columnDef.meta?.editable && onEditCell ? (
-                      <EditableCell cell={cell} />
-                    ) : (
-                      flexRender(cell.column.columnDef.cell, cell.getContext())
-                    )}
-                  </td>
-                ))}
+                })}
               </tr>
-            ))
-          ) : (
-            <tr>
-              <td colSpan={columnCount} className={styles.emptyRow}>
-                {messages.common.noResults}
-              </td>
-            </tr>
-          )}
-        </tbody>
-      </table>
+            ))}
+          </thead>
+          <tbody>
+            {hasRows ? (
+              table.getRowModel().rows.map((row) => (
+                <tr key={row.id}>
+                  {row.getVisibleCells().map((cell) => (
+                    <td
+                      key={cell.id}
+                      className={cell.column.columnDef.meta?.primary ? styles.primary : undefined}
+                    >
+                      {cell.column.columnDef.meta?.editable && onEditCell ? (
+                        <EditableCell cell={cell} />
+                      ) : (
+                        flexRender(cell.column.columnDef.cell, cell.getContext())
+                      )}
+                    </td>
+                  ))}
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan={columnCount} className={styles.emptyRow}>
+                  {messages.common.noResults}
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
       {pageCount > 1 ? (
         <div className={styles.pagination}>
           <span className={styles.pageInfo}>

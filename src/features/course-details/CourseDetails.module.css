@@ -4,8 +4,75 @@
   max-width: 48rem;
 }
 
+.details {
+  display: flex;
+  height: 100%;
+  min-height: 0;
+}
+
+.sidebar {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  width: 15rem;
+  height: 100%;
+  overflow-y: auto;
+  padding: var(--space-4) var(--space-3);
+  border-right: var(--border-hairline) solid var(--color-border);
+  background: var(--color-canvas);
+}
+
+.content {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  overflow-y: auto;
+  padding: var(--space-8) clamp(var(--space-6), 4vw, var(--space-12));
+}
+
+.sectionNavItem {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-300);
+  font-weight: var(--font-weight-medium);
+  text-align: start;
+  cursor: pointer;
+  transition: background-color var(--duration-fast) var(--ease-out);
+}
+
+.sectionNavItem > svg {
+  flex: none;
+}
+
+.sectionNavItem[aria-current="page"] {
+  background: var(--color-surface-subtle);
+  color: var(--color-text);
+  font-weight: var(--font-weight-semibold);
+}
+
+.sectionNavItem[aria-current="page"] > svg {
+  color: var(--color-brand);
+}
+
 .settingGroup {
   border: 0;
+}
+
+.sectionDescription {
+  margin: 0 0 var(--space-5);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-300);
+}
+
+.content .settingGroup + .settingGroup::before {
+  display: none;
 }
 
 .settingGroup + .settingGroup::before {

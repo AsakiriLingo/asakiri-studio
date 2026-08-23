@@ -5,11 +5,14 @@ import { useConfirm } from "@shared/components/confirm-dialog";
 import { Icon } from "@shared/components/icon";
 import { Button } from "@shared/components/button";
 import { IconButton } from "@shared/components/icon-button";
+import { ScrollArea } from "@shared/components/scroll-area";
+import { Status } from "@shared/components/status";
 import styles from "@features/start/StartScreen.module.css";
 
 interface StartScreenProps {
   readonly update: AvailableUpdate | null;
   readonly updateInstalling: boolean;
+  readonly updateFailed: boolean;
   readonly recentProjects: readonly RecentProject[];
   readonly showSupport: boolean;
   readonly onInstallUpdate: () => void;
@@ -25,6 +28,7 @@ interface StartScreenProps {
 export function StartScreen({
   update,
   updateInstalling,
+  updateFailed,
   recentProjects,
   showSupport,
   onInstallUpdate,
@@ -55,6 +59,7 @@ export function StartScreen({
     <main className={styles.hub}>
       <div className={styles.bar}>
         <div className={styles.tools}>
+          {updateFailed ? <Status tone="error">{t.installFailed}</Status> : null}
           {update ? (
             <button
               type="button"
@@ -73,65 +78,78 @@ export function StartScreen({
           </IconButton>
         </div>
       </div>
-      <div className={styles.main}>
-        <div className={styles.brand}>
-          <img className={styles.brandMark} src="/asakiri-mark.svg" alt="" width={32} height={32} />
-          <span>
-            Asakiri <strong>Studio</strong>
-          </span>
-        </div>
-        <h1 className={styles.title}>{messages.start.title}</h1>
-        <div className={styles.list} aria-label={messages.start.projectActions}>
-          <button className={styles.row} type="button" onClick={onNewCourse}>
-            <span className={[styles.tile, styles.tileBrand].join(" ")}>
-              <Icon name="plus" size={18} />
-            </span>
+      <ScrollArea className={styles.scroll} contentClassName={styles.scrollContent}>
+        <div className={styles.main}>
+          <div className={styles.brand}>
+            <img
+              className={styles.brandMark}
+              src="/asakiri-mark.svg"
+              alt=""
+              width={32}
+              height={32}
+            />
             <span>
-              <span className={styles.name}>{messages.start.newCourseName}</span>
-              <span className={styles.detail}>{messages.start.newCourseDetail}</span>
+              Asakiri <strong>Studio</strong>
             </span>
-            <Icon name="arrow" size={18} />
-          </button>
-          <button className={styles.row} type="button" onClick={onOpenCourse}>
-            <span className={[styles.tile, styles.tileAccent].join(" ")}>
-              <Icon name="folder" size={18} />
-            </span>
-            <span>
-              <span className={styles.name}>{messages.start.openCourseName}</span>
-              <span className={styles.detail}>{messages.start.openCourseDetail}</span>
-            </span>
-            <Icon name="arrow" size={18} />
-          </button>
+          </div>
+          <div className={styles.list} aria-label={messages.start.projectActions}>
+            <button className={styles.row} type="button" onClick={onNewCourse}>
+              <span className={[styles.tile, styles.tileBrand].join(" ")}>
+                <Icon name="plus" size={18} />
+              </span>
+              <span>
+                <span className={styles.name}>{messages.start.newCourseName}</span>
+                <span className={styles.detail}>{messages.start.newCourseDetail}</span>
+              </span>
+              <span className={styles.arrow}>
+                <Icon name="arrow" size={18} />
+              </span>
+            </button>
+            <button className={styles.row} type="button" onClick={onOpenCourse}>
+              <span className={[styles.tile, styles.tileAccent].join(" ")}>
+                <Icon name="folder" size={18} />
+              </span>
+              <span>
+                <span className={styles.name}>{messages.start.openCourseName}</span>
+                <span className={styles.detail}>{messages.start.openCourseDetail}</span>
+              </span>
+              <span className={styles.arrow}>
+                <Icon name="arrow" size={18} />
+              </span>
+            </button>
+          </div>
+          {recentProjects.length > 0 ? (
+            <section className={styles.recent} aria-labelledby="recent-title">
+              <h2 id="recent-title" className={styles.recentTitle}>
+                {messages.start.recentTitle}
+              </h2>
+              <div className={styles.list}>
+                {recentProjects.slice(0, 3).map((recent) => (
+                  <button
+                    key={recent.id}
+                    className={styles.row}
+                    type="button"
+                    onClick={() => {
+                      onOpenRecent(recent.id);
+                    }}
+                  >
+                    <span className={styles.icon}>
+                      <Icon name="book" size={18} />
+                    </span>
+                    <span>
+                      <span className={styles.name}>{recent.name}</span>
+                      <span className={styles.detail}>{recent.locationLabel}</span>
+                    </span>
+                    <span className={styles.arrow}>
+                      <Icon name="arrow" size={18} />
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </section>
+          ) : null}
         </div>
-        {recentProjects.length > 0 ? (
-          <section className={styles.recent} aria-labelledby="recent-title">
-            <h2 id="recent-title" className={styles.recentTitle}>
-              {messages.start.recentTitle}
-            </h2>
-            <div className={styles.list}>
-              {recentProjects.slice(0, 3).map((recent) => (
-                <button
-                  key={recent.id}
-                  className={styles.row}
-                  type="button"
-                  onClick={() => {
-                    onOpenRecent(recent.id);
-                  }}
-                >
-                  <span className={styles.icon}>
-                    <Icon name="book" size={18} />
-                  </span>
-                  <span>
-                    <span className={styles.name}>{recent.name}</span>
-                    <span className={styles.detail}>{recent.locationLabel}</span>
-                  </span>
-                  <Icon name="arrow" size={18} />
-                </button>
-              ))}
-            </div>
-          </section>
-        ) : null}
-      </div>
+      </ScrollArea>
       {showSupport ? (
         <div className={styles.support} role="complementary" aria-label={messages.support.message}>
           <span className={styles.supportIcon} aria-hidden="true">

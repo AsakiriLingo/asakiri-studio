@@ -1,6 +1,11 @@
 import { useMemo, useState } from "react";
 import { EditorContent, useEditor, useEditorState, type JSONContent } from "@tiptap/react";
+import { Dialog } from "@base-ui/react/dialog";
+import { useMessages } from "@shared/i18n";
+import { Button } from "@shared/components/button";
+import { TextInput } from "@shared/components/form";
 import { Icon } from "@shared/components/icon";
+import { Tooltip, TooltipProvider } from "@shared/components/tooltip";
 import { ColorMenu, type Swatch } from "@shared/components/rich-editor/ColorMenu";
 import { baseExtensions } from "@shared/components/rich-editor/extensions";
 import { RichEditorProvider } from "@shared/components/rich-editor/context";
@@ -28,23 +33,6 @@ export interface RichEditorProps {
   readonly onImportMedia?: ImportMedia;
 }
 
-const TEXT_COLORS: readonly Swatch[] = [
-  { value: "#e5484d", label: "Red" },
-  { value: "#f76b15", label: "Orange" },
-  { value: "#ffb224", label: "Amber" },
-  { value: "#30a46c", label: "Green" },
-  { value: "#0091ff", label: "Blue" },
-  { value: "#8e4ec6", label: "Purple" },
-];
-
-const HIGHLIGHT_COLORS: readonly Swatch[] = [
-  { value: "#fff3a3", label: "Yellow" },
-  { value: "#c7f0d2", label: "Green" },
-  { value: "#c2e7ff", label: "Blue" },
-  { value: "#ffd1e0", label: "Pink" },
-  { value: "#e3d3ff", label: "Purple" },
-];
-
 export function RichEditor({
   value,
   onChange,
@@ -54,6 +42,23 @@ export function RichEditor({
   onLoadAssetPreview,
   onImportMedia,
 }: RichEditorProps) {
+  const messages = useMessages();
+  const t = messages.lesson.richEditor;
+  const textColors: readonly Swatch[] = [
+    { value: "#e5484d", label: t.colorRed },
+    { value: "#f76b15", label: t.colorOrange },
+    { value: "#ffb224", label: t.colorAmber },
+    { value: "#30a46c", label: t.colorGreen },
+    { value: "#0091ff", label: t.colorBlue },
+    { value: "#8e4ec6", label: t.colorPurple },
+  ];
+  const highlightColors: readonly Swatch[] = [
+    { value: "#fff3a3", label: t.colorYellow },
+    { value: "#c7f0d2", label: t.colorGreen },
+    { value: "#c2e7ff", label: t.colorBlue },
+    { value: "#ffd1e0", label: t.colorPink },
+    { value: "#e3d3ff", label: t.colorPurple },
+  ];
   const lib = library ?? EMPTY_LIBRARY;
   const contextValue = useMemo(
     () => ({
@@ -82,7 +87,7 @@ export function RichEditor({
     editorProps: {
       attributes: {
         class: styles.prose ?? "",
-        "aria-label": ariaLabel ?? "Rich content",
+        "aria-label": ariaLabel ?? t.editorLabel,
       },
     },
     onUpdate: ({ editor: instance }) => {
@@ -193,150 +198,168 @@ export function RichEditor({
   return (
     <RichEditorProvider value={contextValue}>
       <div className={styles.frame}>
-        <div className={styles.toolbar} role="toolbar" aria-label="Rich content formatting">
-          <button
-            className={styles.toolButton}
-            type="button"
-            aria-label="Bold"
-            aria-pressed={active?.bold ?? false}
-            onClick={() => editor.chain().focus().toggleBold().run()}
-          >
-            <Icon name="bold" size={18} />
-          </button>
-          <button
-            className={styles.toolButton}
-            type="button"
-            aria-label="Italic"
-            aria-pressed={active?.italic ?? false}
-            onClick={() => editor.chain().focus().toggleItalic().run()}
-          >
-            <Icon name="italic" size={18} />
-          </button>
-          <button
-            className={styles.toolButton}
-            type="button"
-            aria-label="Underline"
-            aria-pressed={active?.underline ?? false}
-            onClick={() => editor.chain().focus().toggleUnderline().run()}
-          >
-            <Icon name="underline" size={18} />
-          </button>
-          <button
-            className={styles.toolButton}
-            type="button"
-            aria-label="Strikethrough"
-            aria-pressed={active?.strike ?? false}
-            onClick={() => editor.chain().focus().toggleStrike().run()}
-          >
-            <Icon name="strikethrough" size={18} />
-          </button>
-          <span className={styles.divider} aria-hidden="true" />
-          <ColorMenu
-            icon="palette"
-            menuLabel="Text color"
-            clearLabel="Default"
-            swatches={TEXT_COLORS}
-            onSelect={(color) => editor.chain().focus().setColor(color).run()}
-            onClear={() => editor.chain().focus().unsetColor().run()}
-          />
-          <ColorMenu
-            icon="highlighter"
-            menuLabel="Highlight color"
-            clearLabel="None"
-            swatches={HIGHLIGHT_COLORS}
-            onSelect={(color) => editor.chain().focus().setHighlight({ color }).run()}
-            onClear={() => editor.chain().focus().unsetHighlight().run()}
-          />
-          <span className={styles.divider} aria-hidden="true" />
-          <button
-            className={styles.toolButton}
-            type="button"
-            aria-label="Heading"
-            aria-pressed={active?.heading ?? false}
-            onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-          >
-            <Icon name="heading" size={18} />
-          </button>
-          <button
-            className={styles.toolButton}
-            type="button"
-            aria-label="Bulleted list"
-            aria-pressed={active?.bullet ?? false}
-            onClick={() => editor.chain().focus().toggleBulletList().run()}
-          >
-            <Icon name="list" size={18} />
-          </button>
-          <span className={styles.divider} aria-hidden="true" />
-          <button
-            className={styles.toolButton}
-            type="button"
-            aria-label="Link"
-            aria-pressed={active?.link ?? false}
-            onClick={toggleLink}
-          >
-            <Icon name="link" size={18} />
-          </button>
-          <button
-            className={styles.toolButton}
-            type="button"
-            aria-label="Insert YouTube video"
-            onClick={insertYoutube}
-          >
-            <Icon name="youtube" size={18} />
-          </button>
-          <button
-            className={styles.toolButton}
-            type="button"
-            aria-label="Insert table"
-            onClick={insertTable}
-          >
-            <Icon name="table" size={18} />
-          </button>
-        </div>
+        <TooltipProvider>
+          <div className={styles.toolbar} role="toolbar" aria-label={t.toolbar}>
+            <Tooltip content={t.bold}>
+              <button
+                className={styles.toolButton}
+                type="button"
+                aria-label={t.bold}
+                aria-pressed={active?.bold ?? false}
+                onClick={() => editor.chain().focus().toggleBold().run()}
+              >
+                <Icon name="bold" size={18} />
+              </button>
+            </Tooltip>
+            <Tooltip content={t.italic}>
+              <button
+                className={styles.toolButton}
+                type="button"
+                aria-label={t.italic}
+                aria-pressed={active?.italic ?? false}
+                onClick={() => editor.chain().focus().toggleItalic().run()}
+              >
+                <Icon name="italic" size={18} />
+              </button>
+            </Tooltip>
+            <Tooltip content={t.underline}>
+              <button
+                className={styles.toolButton}
+                type="button"
+                aria-label={t.underline}
+                aria-pressed={active?.underline ?? false}
+                onClick={() => editor.chain().focus().toggleUnderline().run()}
+              >
+                <Icon name="underline" size={18} />
+              </button>
+            </Tooltip>
+            <Tooltip content={t.strikethrough}>
+              <button
+                className={styles.toolButton}
+                type="button"
+                aria-label={t.strikethrough}
+                aria-pressed={active?.strike ?? false}
+                onClick={() => editor.chain().focus().toggleStrike().run()}
+              >
+                <Icon name="strikethrough" size={18} />
+              </button>
+            </Tooltip>
+            <span className={styles.divider} aria-hidden="true" />
+            <ColorMenu
+              icon="palette"
+              menuLabel={t.textColor}
+              clearLabel={t.textColorDefault}
+              swatches={textColors}
+              onSelect={(color) => editor.chain().focus().setColor(color).run()}
+              onClear={() => editor.chain().focus().unsetColor().run()}
+            />
+            <ColorMenu
+              icon="highlighter"
+              menuLabel={t.highlightColor}
+              clearLabel={t.highlightNone}
+              swatches={highlightColors}
+              onSelect={(color) => editor.chain().focus().setHighlight({ color }).run()}
+              onClear={() => editor.chain().focus().unsetHighlight().run()}
+            />
+            <span className={styles.divider} aria-hidden="true" />
+            <Tooltip content={t.heading}>
+              <button
+                className={styles.toolButton}
+                type="button"
+                aria-label={t.heading}
+                aria-pressed={active?.heading ?? false}
+                onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
+              >
+                <Icon name="heading" size={18} />
+              </button>
+            </Tooltip>
+            <Tooltip content={t.bulletedList}>
+              <button
+                className={styles.toolButton}
+                type="button"
+                aria-label={t.bulletedList}
+                aria-pressed={active?.bullet ?? false}
+                onClick={() => editor.chain().focus().toggleBulletList().run()}
+              >
+                <Icon name="list" size={18} />
+              </button>
+            </Tooltip>
+            <span className={styles.divider} aria-hidden="true" />
+            <Tooltip content={t.link}>
+              <button
+                className={styles.toolButton}
+                type="button"
+                aria-label={t.link}
+                aria-pressed={active?.link ?? false}
+                onClick={toggleLink}
+              >
+                <Icon name="link" size={18} />
+              </button>
+            </Tooltip>
+            <Tooltip content={t.insertYoutube}>
+              <button
+                className={styles.toolButton}
+                type="button"
+                aria-label={t.insertYoutube}
+                onClick={insertYoutube}
+              >
+                <Icon name="youtube" size={18} />
+              </button>
+            </Tooltip>
+            <Tooltip content={t.insertTable}>
+              <button
+                className={styles.toolButton}
+                type="button"
+                aria-label={t.insertTable}
+                onClick={insertTable}
+              >
+                <Icon name="table" size={18} />
+              </button>
+            </Tooltip>
+          </div>
+        </TooltipProvider>
         {urlPrompt ? (
-          <div className={styles.urlOverlay} role="presentation" onClick={cancelUrlPrompt}>
-            <div
-              className={styles.urlDialog}
-              role="dialog"
-              aria-modal="true"
-              aria-label={urlPrompt.kind === "youtube" ? "Insert YouTube video" : "Add link"}
-              onClick={(event) => {
-                event.stopPropagation();
-              }}
-            >
-              <span className={styles.urlLabel}>
-                {urlPrompt.kind === "youtube" ? "YouTube URL" : "Link URL"}
-              </span>
-              <input
-                className={styles.urlInput}
-                type="url"
-                value={urlValue}
-                autoFocus
-                placeholder="https://…"
-                aria-label={urlPrompt.kind === "youtube" ? "YouTube URL" : "Link URL"}
-                onChange={(event) => {
-                  setUrlValue(event.currentTarget.value);
-                }}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter") {
+          <Dialog.Root
+            open
+            onOpenChange={(next) => {
+              if (!next) cancelUrlPrompt();
+            }}
+          >
+            <Dialog.Portal>
+              <Dialog.Backdrop className={styles.urlOverlay} />
+              <Dialog.Popup className={styles.urlDialog}>
+                <form
+                  className={styles.urlForm}
+                  onSubmit={(event) => {
                     event.preventDefault();
                     submitUrlPrompt();
-                  } else if (event.key === "Escape") {
-                    event.preventDefault();
-                    cancelUrlPrompt();
-                  }
-                }}
-              />
-              <div className={styles.urlActions}>
-                <button className={styles.urlCancel} type="button" onClick={cancelUrlPrompt}>
-                  Cancel
-                </button>
-                <button className={styles.urlAdd} type="button" onClick={submitUrlPrompt}>
-                  {urlPrompt.kind === "youtube" ? "Insert" : "Add link"}
-                </button>
-              </div>
-            </div>
-          </div>
+                  }}
+                >
+                  <Dialog.Title className={styles.urlLabel}>
+                    {urlPrompt.kind === "youtube" ? t.youtubeUrl : t.linkUrl}
+                  </Dialog.Title>
+                  <TextInput
+                    type="url"
+                    value={urlValue}
+                    autoFocus
+                    placeholder="https://…"
+                    aria-label={urlPrompt.kind === "youtube" ? t.youtubeUrl : t.linkUrl}
+                    onChange={(event) => {
+                      setUrlValue(event.currentTarget.value);
+                    }}
+                  />
+                  <div className={styles.urlActions}>
+                    <Button variant="ghost" type="button" onClick={cancelUrlPrompt}>
+                      {messages.common.cancel}
+                    </Button>
+                    <Button type="submit">
+                      {urlPrompt.kind === "youtube" ? t.insert : t.addLink}
+                    </Button>
+                  </div>
+                </form>
+              </Dialog.Popup>
+            </Dialog.Portal>
+          </Dialog.Root>
         ) : null}
         <EditorContent editor={editor} />
         {slash ? (

@@ -409,7 +409,7 @@ export function TtsDialog({
                     })}
                   </div>
                 )}
-                {downloadFailed ? <Status tone="warning">{t.ttsDownloadFailed}</Status> : null}
+                {downloadFailed ? <Status tone="error">{t.ttsDownloadFailed}</Status> : null}
               </>
             ) : voices === null ? (
               <p className={styles.hint}>{t.ttsLoadingVoices}</p>
@@ -456,7 +456,7 @@ export function TtsDialog({
                 </Field>
               </>
             )}
-            {failed ? <Status tone="warning">{errorMessage ?? t.ttsFailed}</Status> : null}
+            {failed ? <Status tone="error">{errorMessage ?? t.ttsFailed}</Status> : null}
           </div>
 
           <footer className={styles.footer}>

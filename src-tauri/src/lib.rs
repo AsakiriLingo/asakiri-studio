@@ -13,6 +13,7 @@ pub fn run() {
     let builder = builder
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_process::init())
+        .plugin(tauri_plugin_decorum::init())
         .menu(|handle| {
             use tauri::menu::{MenuBuilder, MenuItemBuilder, SubmenuBuilder};
             let preferences = MenuItemBuilder::with_id("preferences", "Preferences…")
@@ -59,7 +60,15 @@ pub fn run() {
                     let _ = window.maximize();
                 }
             }
-            #[cfg(not(target_os = "windows"))]
+            #[cfg(target_os = "macos")]
+            {
+                use tauri::Manager;
+                use tauri_plugin_decorum::WebviewWindowExt;
+                if let Some(window) = app.get_webview_window("main") {
+                    let _ = window.set_traffic_lights_inset(16.0, 28.0);
+                }
+            }
+            #[cfg(not(any(target_os = "windows", target_os = "macos")))]
             let _ = app;
             Ok(())
         })
@@ -73,9 +82,9 @@ pub fn run() {
             course::copy_course_image_stripped,
             course::rename_course_file,
             course::read_course_file_base64,
+            course::read_course_file,
             course::remove_course_dir,
             course::reveal_path,
-            course::git_status,
             media::http_get_text,
             media::download_media_file,
             media::write_temp_media,

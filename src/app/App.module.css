@@ -47,3 +47,37 @@
   font: inherit;
   cursor: pointer;
 }
+
+.openingOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal);
+  display: grid;
+  place-items: center;
+  padding: var(--space-4);
+  background: var(--color-overlay);
+}
+
+.openingDialog {
+  display: grid;
+  gap: var(--space-2);
+  width: min(100%, 24rem);
+  padding: var(--space-6);
+  border: var(--border-hairline) solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  text-align: center;
+}
+
+.openingTitle {
+  margin: 0;
+  font-size: var(--font-size-500);
+  font-weight: var(--font-weight-bold);
+}
+
+.openingBody {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-200);
+  text-wrap: balance;
+}

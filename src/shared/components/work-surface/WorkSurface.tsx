@@ -15,7 +15,7 @@ export function WorkInner({ children, className }: WorkInnerProps) {
 }
 
 export interface WorkHeaderProps {
-  readonly title: string;
+  readonly title?: string;
   readonly description?: string;
   readonly actions?: ReactNode;
 }
@@ -24,7 +24,7 @@ export function WorkHeader({ title, description, actions }: WorkHeaderProps) {
   return (
     <header className={styles.header}>
       <div className={styles.heading}>
-        <h1 className={styles.title}>{title}</h1>
+        {title === undefined ? null : <h1 className={styles.title}>{title}</h1>}
         {description === undefined ? null : <p className={styles.description}>{description}</p>}
       </div>
       {actions === undefined ? null : <div className={styles.actions}>{actions}</div>}

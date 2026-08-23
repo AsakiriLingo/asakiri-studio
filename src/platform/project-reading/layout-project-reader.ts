@@ -1,5 +1,7 @@
 import type { LoadedCourse } from "@core/course";
 import { parseCourseWithSources } from "@core/course";
+import type { LoadedDrafts } from "@core/drafts";
+import { parseDrafts } from "@core/drafts";
 import type {
   ContentCollectionSummary,
   ProjectReader,
@@ -78,6 +80,13 @@ export function createLayoutProjectReader(
       } catch {
         return { status: "failed", code: "unavailable" };
       }
+    },
+    async readDrafts(session): Promise<ProjectReadResult<LoadedDrafts>> {
+      const files = resolveFileReader(session);
+      if (!files) {
+        return { status: "failed", code: "unavailable" };
+      }
+      return { status: "ready", data: await parseDrafts(files) };
     },
   };
 }

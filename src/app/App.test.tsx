@@ -9,7 +9,7 @@ import type {
   CourseProject,
   CourseSources,
   Exercise,
-  Lesson,
+  Part,
   TiptapDocument,
 } from "@core/course";
 import { createDefaultExercise } from "@core/course";
@@ -72,6 +72,7 @@ interface DetailsProps {
   readonly onRevealFolder: () => void;
   readonly onImportImage: () => Promise<Asset | null>;
   readonly onLoadAssetPreview: (assetId: string) => Promise<string | null>;
+  readonly attributionSlot?: ReactNode;
 }
 
 interface StructureProps {
@@ -85,7 +86,19 @@ interface StructureProps {
   readonly onReorderOutline: (
     sections: readonly { readonly id: string; readonly lessonIds: readonly string[] }[],
   ) => Promise<ProjectWriteResult>;
-  readonly onOpenLesson: (lessonId: string) => void;
+  readonly onOpenPart: (lessonId: string, partId: string) => void;
+  readonly onReorderParts: (
+    lessonId: string,
+    orderedPartIds: readonly string[],
+  ) => Promise<ProjectWriteResult>;
+  readonly onAddPart: (lessonId: string, kind: string) => void;
+  readonly onRenamePart: (
+    lessonId: string,
+    partId: string,
+    title: string,
+  ) => Promise<ProjectWriteResult>;
+  readonly onDeletePart: (lessonId: string, partId: string) => Promise<ProjectWriteResult>;
+  readonly selectedId?: string;
 }
 
 interface ContentProps {
@@ -136,20 +149,20 @@ interface AttributionProps {
   readonly onSaveAttribution: (markdown: string) => Promise<ProjectWriteResult>;
 }
 
-interface LessonProps {
+interface PartProps {
   readonly course: Course;
-  readonly lesson: Lesson;
-  readonly onBackToStructure: () => void;
+  readonly part: Part;
   readonly onSaveDocument: (
     partId: string,
     document: TiptapDocument,
   ) => Promise<ProjectWriteResult>;
   readonly onSaveExercise: (partId: string, exercise: Exercise) => Promise<ProjectWriteResult>;
-  readonly onSaveContentTitle: (partId: string, title: string) => Promise<ProjectWriteResult>;
-  readonly onRenamePart: (partId: string, title: string) => Promise<ProjectWriteResult>;
-  readonly onDeletePart: (partId: string) => Promise<ProjectWriteResult>;
-  readonly onAddPart: (kind: string) => Promise<string | null>;
-  readonly onReorderParts: (orderedIds: readonly string[]) => Promise<ProjectWriteResult>;
+}
+
+interface PartPreviewProps {
+  readonly course: Course;
+  readonly part: Part;
+  readonly library: unknown;
 }
 
 interface NewCourseProps {
@@ -177,7 +190,8 @@ interface Captured {
   content?: ContentProps;
   media?: MediaProps;
   attribution?: AttributionProps;
-  lesson?: LessonProps;
+  part?: PartProps;
+  partPreview?: PartPreviewProps;
   newCourse?: NewCourseProps;
   importer?: ImporterProps;
 }
@@ -208,7 +222,7 @@ vi.mock("@features/workspace-shell", () => ({
 vi.mock("@features/course-details", () => ({
   CourseDetails: (props: DetailsProps) => {
     captured.details = props;
-    return <div data-testid="details" />;
+    return <div data-testid="details">{props.attributionSlot}</div>;
   },
 }));
 
@@ -217,6 +231,7 @@ vi.mock("@features/course-structure", () => ({
     captured.structure = props;
     return <div data-testid="structure" />;
   },
+  OutlineSearch: () => <div data-testid="outline-search" />,
 }));
 
 vi.mock("@features/content", () => ({
@@ -241,11 +256,18 @@ vi.mock("@features/attribution", () => ({
 }));
 
 vi.mock("@features/lesson-editor", () => ({
-  LessonEditor: (props: LessonProps) => {
-    captured.lesson = props;
-    return <div data-testid="lesson" />;
+  PartEditor: (props: PartProps) => {
+    captured.part = props;
+    return <div data-testid="part-editor" />;
   },
-  exerciseTypeForKind: () => "multiple-choice",
+  courseToRichLibrary: () => ({}),
+}));
+
+vi.mock("@features/part-preview", () => ({
+  PartPreview: (props: PartPreviewProps) => {
+    captured.partPreview = props;
+    return <div data-testid="part-preview" />;
+  },
 }));
 
 vi.mock("@features/new-course", () => ({
@@ -329,6 +351,7 @@ function makeCourse(title: string): Course {
         ],
       },
     ],
+    mediaFolders: [],
     outline: [{ id: "u1", title: "Unit 1", lessonIds: ["l1"] }],
   };
 }
@@ -371,6 +394,10 @@ function makeWriter() {
     deleteAsset: vi.fn().mockResolvedValue(SAVED),
     writeAttribution: vi.fn().mockResolvedValue(SAVED),
     renameAsset: vi.fn().mockResolvedValue(SAVED),
+    importDraft: vi.fn().mockResolvedValue(SAVED),
+    updateDraft: vi.fn().mockResolvedValue(SAVED),
+    renameDraft: vi.fn().mockResolvedValue(SAVED),
+    deleteDraft: vi.fn().mockResolvedValue(SAVED),
   };
 }
 
@@ -400,6 +427,10 @@ function makeServices() {
           },
         }),
       ),
+      readDrafts: vi.fn().mockResolvedValue({
+        status: "ready",
+        data: { drafts: [], sources: { manifest: ".asakiri/drafts/drafts.json", bodies: {} } },
+      }),
     },
     writer,
     system: { revealFolder: vi.fn().mockResolvedValue(undefined) },
@@ -485,7 +516,7 @@ async function openWorkspace() {
     await Promise.resolve();
   });
   await waitFor(() => {
-    expect(captured.details).toBeDefined();
+    expect(captured.shell).toBeDefined();
   });
 }
 
@@ -510,7 +541,8 @@ beforeEach(() => {
   delete captured.content;
   delete captured.media;
   delete captured.attribution;
-  delete captured.lesson;
+  delete captured.part;
+  delete captured.partPreview;
   delete captured.newCourse;
   delete captured.importer;
   const built = makeServices();
@@ -522,6 +554,7 @@ beforeEach(() => {
 describe("App", () => {
   it("opens a recent project and shows its details", async () => {
     await openWorkspace();
+    await navigate("details");
 
     const details = must(captured.details, "CourseDetails");
     expect(details.course.project.title).toBe("Course A");
@@ -543,6 +576,7 @@ describe("App", () => {
 
   it("serializes overlapping project saves so both edits survive", async () => {
     await openWorkspace();
+    await navigate("details");
     const details = must(captured.details, "CourseDetails");
 
     const first = deferred<ProjectWriteResult>();
@@ -581,6 +615,7 @@ describe("App", () => {
 
   it("drops a save that completes after switching projects", async () => {
     await openWorkspace();
+    await navigate("details");
     const details = must(captured.details, "CourseDetails");
 
     const pending = deferred<ProjectWriteResult>();
@@ -600,6 +635,7 @@ describe("App", () => {
       must(captured.start, "StartScreen").onOpenRecent("p2");
       await Promise.resolve();
     });
+    await navigate("details");
     await waitFor(() => {
       expect(must(captured.details, "CourseDetails").course.project.title).toBe("Course B");
     });
@@ -675,59 +711,56 @@ describe("App", () => {
     expect(missing).toEqual({ status: "failed", code: "unavailable" });
   });
 
-  it("edits lesson parts through the lesson editor", async () => {
+  it("edits lesson parts from the outline and part editor", async () => {
     await openWorkspace();
     await navigate("lessons");
-    await act(async () => {
-      must(captured.structure, "CourseStructure").onOpenLesson("l1");
-      await Promise.resolve();
-    });
-    const lesson = must(captured.lesson, "LessonEditor");
-    expect(lesson.lesson.id).toBe("l1");
+
+    const lessonParts = () => {
+      const course = must(captured.structure, "CourseStructure").course;
+      return course.lessons.find((lesson) => lesson.id === "l1")?.parts ?? [];
+    };
 
     await act(async () => {
-      await lesson.onSaveDocument("part1", DOCUMENT);
-      await lesson.onSaveExercise("part2", createDefaultExercise("multiple-choice"));
-      await lesson.onSaveContentTitle("part1", "Intro");
-      await lesson.onRenamePart("part1", "Renamed Part");
+      must(captured.structure, "CourseStructure").onOpenPart("l1", "part1");
+      await Promise.resolve();
+    });
+    const part = must(captured.part, "PartEditor");
+    expect(part.part.id).toBe("part1");
+
+    await act(async () => {
+      await part.onSaveDocument("part1", DOCUMENT);
+      await part.onSaveExercise("part2", createDefaultExercise("multiple-choice"));
     });
     expect(writer.updatePartDocument).toHaveBeenCalledTimes(1);
     expect(writer.updatePartExercise).toHaveBeenCalledTimes(1);
-    expect(writer.updatePartContentTitle).toHaveBeenCalledTimes(1);
-    let parts = must(captured.lesson, "LessonEditor").lesson.parts;
-    expect(parts[0]?.title).toBe("Renamed Part");
 
-    let created: string | null = null;
     await act(async () => {
-      created = await lesson.onAddPart("rich-text");
+      await must(captured.structure, "CourseStructure").onRenamePart("l1", "part1", "Renamed Part");
     });
-    expect(created).not.toBeNull();
+    expect(lessonParts()[0]?.title).toBe("Renamed Part");
+
+    await act(async () => {
+      must(captured.structure, "CourseStructure").onAddPart("l1", "rich-text");
+      await Promise.resolve();
+    });
     expect(writer.createPart).toHaveBeenCalledTimes(1);
 
     await act(async () => {
-      created = await lesson.onAddPart("multiple-choice");
-    });
-    expect(writer.createExercisePart).toHaveBeenCalledTimes(1);
-    parts = must(captured.lesson, "LessonEditor").lesson.parts;
-    expect(parts).toHaveLength(4);
-
-    await act(async () => {
-      await lesson.onReorderParts(["part2", "part1"]);
-    });
-    parts = must(captured.lesson, "LessonEditor").lesson.parts;
-    expect(parts[0]?.id).toBe("part2");
-
-    await act(async () => {
-      await lesson.onDeletePart("part1");
-    });
-    parts = must(captured.lesson, "LessonEditor").lesson.parts;
-    expect(parts.some((part) => part.id === "part1")).toBe(false);
-
-    await act(async () => {
-      lesson.onBackToStructure();
+      must(captured.structure, "CourseStructure").onAddPart("l1", "multiple-choice");
       await Promise.resolve();
     });
-    expect(captured.structure).toBeDefined();
+    expect(writer.createExercisePart).toHaveBeenCalledTimes(1);
+    expect(lessonParts()).toHaveLength(4);
+
+    await act(async () => {
+      await must(captured.structure, "CourseStructure").onReorderParts("l1", ["part2", "part1"]);
+    });
+    expect(lessonParts()[0]?.id).toBe("part2");
+
+    await act(async () => {
+      await must(captured.structure, "CourseStructure").onDeletePart("l1", "part1");
+    });
+    expect(lessonParts().some((entry) => entry.id === "part1")).toBe(false);
   });
 
   it("manages records and collections through the content section", async () => {
@@ -853,7 +886,7 @@ describe("App", () => {
 
   it("saves the attribution file", async () => {
     await openWorkspace();
-    await navigate("attribution");
+    await navigate("details");
 
     await act(async () => {
       await must(captured.attribution, "CourseAttribution").onSaveAttribution("# Credits");
@@ -991,7 +1024,7 @@ describe("App", () => {
       await Promise.resolve();
     });
     await waitFor(() => {
-      expect(captured.details).toBeDefined();
+      expect(captured.shell).toBeDefined();
     });
   });
 
@@ -1008,13 +1041,14 @@ describe("App", () => {
       await Promise.resolve();
     });
     await waitFor(() => {
-      expect(captured.details).toBeDefined();
+      expect(captured.shell).toBeDefined();
     });
     expect(services.directory.openProjectDirectory).toHaveBeenCalledTimes(1);
   });
 
   it("reveals the project folder and rejects writes without a project", async () => {
     await openWorkspace();
+    await navigate("details");
     const details = must(captured.details, "CourseDetails");
 
     details.onRevealFolder();
@@ -1031,6 +1065,7 @@ describe("App", () => {
 
   it("imports a single image for a field", async () => {
     await openWorkspace();
+    await navigate("details");
     const details = must(captured.details, "CourseDetails");
 
     services.mediaPicker.pickMediaFiles.mockResolvedValue([

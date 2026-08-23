@@ -7,16 +7,18 @@ import type {
   Course,
   MatchPairsExercise,
   Part,
+  PartDisplayKind,
   ResolvedValue,
 } from "@core/course";
-import { createBindingResolver } from "@core/course";
+import { createBindingResolver, partKind } from "@core/course";
 import { useMessages } from "@shared/i18n";
 import { Icon } from "@shared/components/icon";
-import { RichContent, type LoadAssetPreview } from "@shared/components/rich-editor";
-import { Status } from "@shared/components/status";
-import { partKind, type PartDisplayKind } from "@features/lesson-editor/parts";
-import { courseToRichLibrary } from "@features/lesson-editor/rich-library";
-import styles from "@features/lesson-editor/LessonEditor.module.css";
+import {
+  RichContent,
+  type LoadAssetPreview,
+  type RichEditorLibrary,
+} from "@shared/components/rich-editor";
+import styles from "@features/part-preview/PartPreview.module.css";
 
 function joinClassNames(...classNames: (string | undefined)[]) {
   return classNames.filter(Boolean).join(" ");
@@ -24,11 +26,11 @@ function joinClassNames(...classNames: (string | undefined)[]) {
 
 function RichTextPreview({
   part,
-  course,
+  library,
   onLoadAssetPreview,
 }: {
   readonly part: Part;
-  readonly course: Course;
+  readonly library: RichEditorLibrary;
   readonly onLoadAssetPreview: LoadAssetPreview;
 }) {
   if (part.content.kind !== "tiptap") {
@@ -40,7 +42,7 @@ function RichTextPreview({
       {heading ? <h2>{heading}</h2> : null}
       <RichContent
         value={part.content.document as unknown as JSONContent}
-        library={courseToRichLibrary(course)}
+        library={library}
         onLoadAssetPreview={onLoadAssetPreview}
       />
     </>
@@ -416,17 +418,19 @@ function PreviewBody({
   kind,
   part,
   course,
+  library,
   onLoadAssetPreview,
 }: {
   readonly kind: PartDisplayKind;
   readonly part: Part;
   readonly course: Course;
+  readonly library: RichEditorLibrary;
   readonly onLoadAssetPreview: LoadAssetPreview;
 }) {
   switch (kind) {
     case "rich-text":
       return (
-        <RichTextPreview part={part} course={course} onLoadAssetPreview={onLoadAssetPreview} />
+        <RichTextPreview part={part} library={library} onLoadAssetPreview={onLoadAssetPreview} />
       );
     case "select-image":
       return (
@@ -458,38 +462,27 @@ function UnsupportedPreview() {
   );
 }
 
-export function PartPreview({
-  part,
-  course,
-  onLoadAssetPreview,
-}: {
+export interface PartPreviewProps {
   readonly part: Part;
   readonly course: Course;
+  readonly library: RichEditorLibrary;
   readonly onLoadAssetPreview: LoadAssetPreview;
-}) {
+}
+
+export function PartPreview({ part, course, library, onLoadAssetPreview }: PartPreviewProps) {
   const messages = useMessages();
   const t = messages.lesson;
   const kind = partKind(part.content);
-  const runsOnDevice = kind === "speak";
   return (
     <aside className={styles.previewPane} aria-label={t.previewAria}>
-      <div className={styles.previewSurface}>
-        <div className={styles.previewHeader}>
-          <span>{t.learnerPreview}</span>
-          {runsOnDevice ? (
-            <Status tone="warning">{t.runsOnDevice}</Status>
-          ) : (
-            <Status>{t.currentPart}</Status>
-          )}
-        </div>
-        <div className={styles.previewBody}>
-          <PreviewBody
-            kind={kind}
-            part={part}
-            course={course}
-            onLoadAssetPreview={onLoadAssetPreview}
-          />
-        </div>
+      <div className={styles.previewBody}>
+        <PreviewBody
+          kind={kind}
+          part={part}
+          course={course}
+          library={library}
+          onLoadAssetPreview={onLoadAssetPreview}
+        />
       </div>
     </aside>
   );

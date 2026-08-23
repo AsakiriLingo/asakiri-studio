@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import { Dialog } from "@base-ui/react/dialog";
 import type {
   AudioSearchResult,
   ImageSearchResult,
@@ -169,141 +170,138 @@ export function MediaSearchDialog({
   const hasResults = mode === "images" ? images.length > 0 : audios.length > 0;
 
   return (
-    <div className={styles.overlay} role="presentation" onClick={onClose}>
-      <div
-        className={styles.dialog}
-        role="dialog"
-        aria-modal="true"
-        aria-label={title}
-        onClick={(event) => {
-          event.stopPropagation();
-        }}
-        onKeyDown={(event) => {
-          if (event.key === "Escape") onClose();
-        }}
-      >
-        <header className={styles.header}>
-          <h2 className={styles.title}>{title}</h2>
-          <IconButton aria-label={t.closeDialog} onClick={onClose}>
-            <Icon name="close" size={18} />
-          </IconButton>
-        </header>
+    <Dialog.Root
+      open
+      onOpenChange={(next) => {
+        if (!next) onClose();
+      }}
+    >
+      <Dialog.Portal>
+        <Dialog.Backdrop className={styles.overlay} />
+        <Dialog.Popup className={styles.dialog}>
+          <header className={styles.header}>
+            <Dialog.Title className={styles.title}>{title}</Dialog.Title>
+            <IconButton aria-label={t.closeDialog} onClick={onClose}>
+              <Icon name="close" size={18} />
+            </IconButton>
+          </header>
 
-        <form
-          className={styles.searchRow}
-          onSubmit={(event) => {
-            event.preventDefault();
-            submit();
-          }}
-        >
-          <div className={styles.searchField}>
-            <Icon name="search" size={18} />
-            <input
-              className={styles.searchInput}
-              type="search"
-              autoFocus
-              placeholder={placeholder}
-              value={query}
-              onChange={(event) => {
-                setQuery(event.currentTarget.value);
-              }}
-            />
-          </div>
-          <Button type="submit" disabled={loading || query.trim() === ""}>
-            {t.searchSubmit}
-          </Button>
-        </form>
+          <form
+            className={styles.searchRow}
+            onSubmit={(event) => {
+              event.preventDefault();
+              submit();
+            }}
+          >
+            <div className={styles.searchField}>
+              <Icon name="search" size={18} />
+              <input
+                className={styles.searchInput}
+                type="search"
+                autoFocus
+                placeholder={placeholder}
+                value={query}
+                onChange={(event) => {
+                  setQuery(event.currentTarget.value);
+                }}
+              />
+            </div>
+            <Button type="submit" disabled={loading || query.trim() === ""}>
+              {t.searchSubmit}
+            </Button>
+          </form>
 
-        <div className={styles.body} ref={scrollRef}>
-          {failed ? (
-            <Message>
-              <Status tone="warning">{t.searchFailed}</Status>
-            </Message>
-          ) : !submitted ? (
-            <Message>{t.searchPrompt}</Message>
-          ) : !hasResults && loading ? (
-            <Message>{t.searching}</Message>
-          ) : !hasResults ? (
-            <Message>{t.noSearchResults}</Message>
-          ) : (
-            <>
-              <div className={styles.grid}>
-                {mode === "images"
-                  ? images.map((item) => (
-                      <figure key={item.id} className={styles.card}>
-                        <div className={styles.thumb}>
-                          <img
-                            className={styles.image}
-                            src={item.thumbUrl}
-                            alt={item.description ?? ""}
-                            loading="lazy"
-                            decoding="async"
-                          />
-                        </div>
-                        <figcaption className={styles.caption}>
-                          <span className={styles.audioText}>
-                            {format(t.byAuthor, { name: item.attribution.author })}
-                          </span>
-                          <span className={styles.audioLang}>{item.attribution.license}</span>
-                        </figcaption>
-                        <AddButton
-                          added={added[item.id]}
-                          adding={addingId === item.id}
-                          onAdd={() => {
-                            addImage(item);
-                          }}
-                          labels={{ add: t.add, adding: t.adding, added: t.added }}
-                        />
-                      </figure>
-                    ))
-                  : audios.map((item) => (
-                      <figure key={item.id} className={styles.card}>
-                        <div className={styles.thumb}>
-                          <AudioPreview
-                            url={item.audioUrl}
-                            playing={playingId === item.id}
-                            onToggle={(next) => {
-                              setPlayingId(next ? item.id : null);
+          <div className={styles.body} ref={scrollRef}>
+            {failed ? (
+              <Message>
+                <Status tone="error">{t.searchFailed}</Status>
+              </Message>
+            ) : !submitted ? (
+              <Message>{t.searchPrompt}</Message>
+            ) : !hasResults && loading ? (
+              <Message>{t.searching}</Message>
+            ) : !hasResults ? (
+              <Message>{t.noSearchResults}</Message>
+            ) : (
+              <>
+                <div className={styles.grid}>
+                  {mode === "images"
+                    ? images.map((item) => (
+                        <figure key={item.id} className={styles.card}>
+                          <div className={styles.thumb}>
+                            <img
+                              className={styles.image}
+                              src={item.thumbUrl}
+                              alt={item.description ?? ""}
+                              loading="lazy"
+                              decoding="async"
+                            />
+                          </div>
+                          <figcaption className={styles.caption}>
+                            <span className={styles.audioText}>
+                              {format(t.byAuthor, { name: item.attribution.author })}
+                            </span>
+                            <span className={styles.audioLang}>{item.attribution.license}</span>
+                          </figcaption>
+                          <AddButton
+                            added={added[item.id]}
+                            adding={addingId === item.id}
+                            onAdd={() => {
+                              addImage(item);
                             }}
-                            label={
-                              playingId === item.id
-                                ? format(t.stop, { name: item.text })
-                                : format(t.play, { name: item.text })
-                            }
+                            labels={{ add: t.add, adding: t.adding, added: t.added }}
                           />
-                        </div>
-                        <figcaption className={styles.caption} title={item.text}>
-                          <span className={styles.audioText}>{item.text}</span>
-                          <span className={styles.audioLang}>
-                            {format(t.resultLang, { lang: item.lang })}
-                          </span>
-                        </figcaption>
-                        <AddButton
-                          added={added[item.id]}
-                          adding={addingId === item.id}
-                          onAdd={() => {
-                            addAudio(item);
-                          }}
-                          labels={{ add: t.add, adding: t.adding, added: t.added }}
-                        />
-                      </figure>
-                    ))}
-              </div>
-              {hasMore ? (
-                <div className={styles.more}>
-                  <div ref={sentinelRef} aria-hidden className={styles.sentinel} />
-                  <Button variant="ghost" disabled={loading} onClick={loadMore}>
-                    {loading ? t.searching : t.loadMore}
-                  </Button>
+                        </figure>
+                      ))
+                    : audios.map((item) => (
+                        <figure key={item.id} className={styles.card}>
+                          <div className={styles.thumb}>
+                            <AudioPreview
+                              url={item.audioUrl}
+                              playing={playingId === item.id}
+                              onToggle={(next) => {
+                                setPlayingId(next ? item.id : null);
+                              }}
+                              label={
+                                playingId === item.id
+                                  ? format(t.stop, { name: item.text })
+                                  : format(t.play, { name: item.text })
+                              }
+                            />
+                          </div>
+                          <figcaption className={styles.caption} title={item.text}>
+                            <span className={styles.audioText}>{item.text}</span>
+                            <span className={styles.audioLang}>
+                              {format(t.resultLang, { lang: item.lang })}
+                            </span>
+                          </figcaption>
+                          <AddButton
+                            added={added[item.id]}
+                            adding={addingId === item.id}
+                            onAdd={() => {
+                              addAudio(item);
+                            }}
+                            labels={{ add: t.add, adding: t.adding, added: t.added }}
+                          />
+                        </figure>
+                      ))}
                 </div>
-              ) : null}
-            </>
-          )}
-        </div>
+                {hasMore ? (
+                  <div className={styles.more}>
+                    <div ref={sentinelRef} aria-hidden className={styles.sentinel} />
+                    <Button variant="ghost" disabled={loading} onClick={loadMore}>
+                      {loading ? t.searching : t.loadMore}
+                    </Button>
+                  </div>
+                ) : null}
+              </>
+            )}
+          </div>
 
-        <footer className={styles.footer}>{credit}</footer>
-      </div>
-    </div>
+          <footer className={styles.footer}>{credit}</footer>
+        </Dialog.Popup>
+      </Dialog.Portal>
+    </Dialog.Root>
   );
 }
 

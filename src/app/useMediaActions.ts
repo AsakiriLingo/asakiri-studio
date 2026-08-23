@@ -1,6 +1,6 @@
 import { useCallback } from "react";
-import type { Asset } from "@core/course";
-import { labelForFile, mediaTypeForFile } from "@core/course";
+import type { Asset, MediaFolder } from "@core/course";
+import { foldersAfterDelete, labelForFile, mediaTypeForFile } from "@core/course";
 import type { TtsSaveResult } from "@core/tts";
 import type { PickedMediaFile } from "@core/project-media";
 import type { ProjectWriteResult } from "@core/project-writing";
@@ -10,24 +10,38 @@ import { WRITE_UNAVAILABLE } from "@app/course-state";
 import type { CourseStateStore } from "@app/useCourseState";
 
 export interface MediaActions {
-  readonly importMedia: () => Promise<ProjectWriteResult | null>;
-  readonly importMediaFolder: () => Promise<ProjectWriteResult | null>;
+  readonly importMedia: (folderId: string | null) => Promise<ProjectWriteResult | null>;
+  readonly importMediaFolder: (folderId: string | null) => Promise<ProjectWriteResult | null>;
   readonly importAssetForField: () => Promise<Asset | null>;
   readonly addRemoteMedia: (
     url: string,
     fileName: string,
     metadata?: Readonly<Record<string, unknown>>,
+    folderId?: string | null,
   ) => Promise<ProjectWriteResult | null>;
-  readonly addTtsAudio: (text: string, voice: string, fileName: string) => Promise<TtsSaveResult>;
+  readonly addTtsAudio: (
+    text: string,
+    voice: string,
+    fileName: string,
+    folderId?: string | null,
+  ) => Promise<TtsSaveResult>;
   readonly previewTtsVoice: (text: string, voice: string) => Promise<string>;
   readonly addRecording: (
     bytes: Uint8Array,
     mimeType: string,
     ext: string,
+    folderId?: string | null,
   ) => Promise<ProjectWriteResult | null>;
   readonly renameAsset: (assetId: string, rawName: string) => Promise<ProjectWriteResult>;
   readonly deleteAsset: (assetId: string) => Promise<ProjectWriteResult>;
   readonly loadAssetPreview: (assetId: string) => Promise<string | null>;
+  readonly moveAssetToFolder: (
+    assetId: string,
+    folderId: string | null,
+  ) => Promise<ProjectWriteResult>;
+  readonly createFolder: (name: string, parentId: string | null) => Promise<string | null>;
+  readonly renameFolder: (folderId: string, name: string) => Promise<ProjectWriteResult>;
+  readonly deleteFolder: (folderId: string) => Promise<ProjectWriteResult>;
 }
 
 export function useMediaActions(services: AppServices, store: CourseStateStore): MediaActions {
@@ -37,6 +51,7 @@ export function useMediaActions(services: AppServices, store: CourseStateStore):
   const importPickedMedia = (
     picked: readonly PickedMediaFile[],
     metadata?: Readonly<Record<string, unknown>>,
+    folderId?: string | null,
   ): Promise<{ readonly assets: readonly Asset[]; readonly allOk: boolean }> =>
     store.withCourse<{ readonly assets: readonly Asset[]; readonly allOk: boolean }>(
       { assets: [], allOk: false },
@@ -59,6 +74,7 @@ export function useMediaActions(services: AppServices, store: CourseStateStore):
             availability: "ready",
             file: file.name,
             mimeType: type.mimeType,
+            ...(folderId ? { folderId } : {}),
             ...(metadata ? { metadata } : {}),
           };
           const result = await services.writer.importAsset(
@@ -92,23 +108,23 @@ export function useMediaActions(services: AppServices, store: CourseStateStore):
       },
     );
 
-  const importMedia = async (): Promise<ProjectWriteResult | null> => {
+  const importMedia = async (folderId: string | null): Promise<ProjectWriteResult | null> => {
     if (!ready) {
       return WRITE_UNAVAILABLE;
     }
     const picked = await services.mediaPicker.pickMediaFiles();
     if (picked.length === 0) return null;
-    const { allOk } = await importPickedMedia(picked);
+    const { allOk } = await importPickedMedia(picked, undefined, folderId);
     return allOk ? { status: "saved" } : { status: "failed", code: "unknown" };
   };
 
-  const importMediaFolder = async (): Promise<ProjectWriteResult | null> => {
+  const importMediaFolder = async (folderId: string | null): Promise<ProjectWriteResult | null> => {
     if (!ready) {
       return WRITE_UNAVAILABLE;
     }
     const picked = await services.mediaPicker.pickMediaFolder();
     if (picked.length === 0) return null;
-    const { allOk } = await importPickedMedia(picked);
+    const { allOk } = await importPickedMedia(picked, undefined, folderId);
     return allOk ? { status: "saved" } : { status: "failed", code: "unknown" };
   };
 
@@ -124,13 +140,14 @@ export function useMediaActions(services: AppServices, store: CourseStateStore):
     url: string,
     fileName: string,
     metadata?: Readonly<Record<string, unknown>>,
+    folderId?: string | null,
   ): Promise<ProjectWriteResult | null> => {
     if (!ready) {
       return WRITE_UNAVAILABLE;
     }
     const picked = await services.mediaSearch.downloadToTemp(url, fileName);
     if (!picked) return { status: "failed", code: "unknown" };
-    const { allOk } = await importPickedMedia([picked], metadata);
+    const { allOk } = await importPickedMedia([picked], metadata, folderId);
     return allOk ? { status: "saved" } : { status: "failed", code: "unknown" };
   };
 
@@ -138,6 +155,7 @@ export function useMediaActions(services: AppServices, store: CourseStateStore):
     text: string,
     voice: string,
     fileName: string,
+    folderId?: string | null,
   ): Promise<TtsSaveResult> => {
     if (!ready) {
       return { ok: false, error: "Project is not ready." };
@@ -148,7 +166,7 @@ export function useMediaActions(services: AppServices, store: CourseStateStore):
     } catch (error) {
       return { ok: false, error: String(error) };
     }
-    const { allOk } = await importPickedMedia([picked]);
+    const { allOk } = await importPickedMedia([picked], undefined, folderId);
     return allOk ? { ok: true } : { ok: false, error: "Could not import the generated audio." };
   };
 
@@ -159,6 +177,7 @@ export function useMediaActions(services: AppServices, store: CourseStateStore):
     bytes: Uint8Array,
     mimeType: string,
     ext: string,
+    folderId?: string | null,
   ): Promise<ProjectWriteResult | null> => {
     if (!ready) {
       return WRITE_UNAVAILABLE;
@@ -177,6 +196,7 @@ export function useMediaActions(services: AppServices, store: CourseStateStore):
         availability: "ready",
         file: fileName,
         mimeType,
+        ...(folderId ? { folderId } : {}),
       };
       const result = await services.writer.importAsset(
         session,
@@ -256,6 +276,97 @@ export function useMediaActions(services: AppServices, store: CourseStateStore):
       return result;
     });
 
+  const applyAssetFolder = (asset: Asset, folderId: string | null): Asset => {
+    const { folderId: _omit, ...rest } = asset;
+    return folderId === null ? rest : { ...rest, folderId };
+  };
+
+  const moveAssetToFolder = (
+    assetId: string,
+    folderId: string | null,
+  ): Promise<ProjectWriteResult> =>
+    store.withCourse(WRITE_UNAVAILABLE, async ({ session, course, sources, apply }) => {
+      const asset = course.assets.find((entry) => entry.id === assetId);
+      const assetPath = sources.assets[assetId];
+      if (!asset || assetPath === undefined) return WRITE_UNAVAILABLE;
+      const nextAsset = applyAssetFolder(asset, folderId);
+      const result = await services.writer.moveAssetToFolder(session, assetPath, nextAsset);
+      if (result.status === "saved") {
+        apply((current) => ({
+          ...current,
+          course: {
+            ...current.course,
+            assets: current.course.assets.map((entry) =>
+              entry.id === assetId ? nextAsset : entry,
+            ),
+          },
+        }));
+      }
+      return result;
+    });
+
+  const createFolder = (name: string, parentId: string | null): Promise<string | null> =>
+    store.withCourse<string | null>(null, async ({ session, course, apply }) => {
+      const trimmed = name.trim();
+      if (trimmed === "") return null;
+      const folder: MediaFolder = { id: `folder_${crypto.randomUUID()}`, name: trimmed, parentId };
+      const nextFolders = [...course.mediaFolders, folder];
+      const result = await services.writer.writeMediaFolders(session, nextFolders);
+      if (result.status !== "saved") return null;
+      apply((current) => ({
+        ...current,
+        course: { ...current.course, mediaFolders: nextFolders },
+      }));
+      return folder.id;
+    });
+
+  const renameFolder = (folderId: string, name: string): Promise<ProjectWriteResult> =>
+    store.withCourse(WRITE_UNAVAILABLE, async ({ session, course, apply }) => {
+      const trimmed = name.trim();
+      if (trimmed === "") return { status: "saved" };
+      const nextFolders = course.mediaFolders.map((folder) =>
+        folder.id === folderId ? { ...folder, name: trimmed } : folder,
+      );
+      const result = await services.writer.writeMediaFolders(session, nextFolders);
+      if (result.status === "saved") {
+        apply((current) => ({
+          ...current,
+          course: { ...current.course, mediaFolders: nextFolders },
+        }));
+      }
+      return result;
+    });
+
+  const deleteFolder = (folderId: string): Promise<ProjectWriteResult> =>
+    store.withCourse(WRITE_UNAVAILABLE, async ({ session, course, sources, apply }) => {
+      const folder = course.mediaFolders.find((entry) => entry.id === folderId);
+      if (!folder) return { status: "saved" };
+      const parentId = folder.parentId;
+      const nextFolders = foldersAfterDelete(course.mediaFolders, folderId);
+      const affected = course.assets.filter((entry) => entry.folderId === folderId);
+      const moved = new Map<string, Asset>();
+      for (const asset of affected) {
+        const assetPath = sources.assets[asset.id];
+        if (assetPath === undefined) continue;
+        const nextAsset = applyAssetFolder(asset, parentId);
+        const result = await services.writer.moveAssetToFolder(session, assetPath, nextAsset);
+        if (result.status !== "saved") return result;
+        moved.set(asset.id, nextAsset);
+      }
+      const result = await services.writer.writeMediaFolders(session, nextFolders);
+      if (result.status === "saved") {
+        apply((current) => ({
+          ...current,
+          course: {
+            ...current.course,
+            mediaFolders: nextFolders,
+            assets: current.course.assets.map((entry) => moved.get(entry.id) ?? entry),
+          },
+        }));
+      }
+      return result;
+    });
+
   const loadAssetPreview = useCallback(
     async (assetId: string): Promise<string | null> => {
       if (!project || courseState?.status !== "ready") return null;
@@ -285,5 +396,9 @@ export function useMediaActions(services: AppServices, store: CourseStateStore):
     renameAsset,
     deleteAsset,
     loadAssetPreview,
+    moveAssetToFolder,
+    createFolder,
+    renameFolder,
+    deleteFolder,
   };
 }

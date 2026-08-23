@@ -34,6 +34,7 @@ const COURSE: Course = {
   collections: [],
   records: [],
   assets: [],
+  mediaFolders: [],
   lessons: [],
   outline: [],
 };
@@ -106,6 +107,8 @@ describe("CourseDetails", () => {
   it("adds contributors to the latest list, not the rendered one", () => {
     const { onSaveProject } = renderDetails();
 
+    fireEvent.click(screen.getByRole("button", { name: t.contributorsTitle }));
+
     const addButtons = screen.getAllByRole("button", { name: messages.common.add });
     const contributorsAdd = addButtons[0];
     if (!contributorsAdd) throw new Error("missing add button");
@@ -120,6 +123,8 @@ describe("CourseDetails", () => {
 
   it("renames and removes a contributor functionally", () => {
     const { onSaveProject } = renderDetails();
+
+    fireEvent.click(screen.getByRole("button", { name: t.contributorsTitle }));
 
     fireEvent.blur(screen.getByLabelText(t.nameLabel), { target: { value: "Alok S" } });
     let update = lastUpdate(onSaveProject);

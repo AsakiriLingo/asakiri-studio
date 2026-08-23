@@ -34,6 +34,7 @@ function makeCourse(): Course {
     collections: [],
     records: [],
     assets: [],
+    mediaFolders: [],
     lessons: [
       { id: "lesson-1", title: "Greetings", parts: [] },
       { id: "lesson-2", title: "Numbers", parts: [] },
@@ -58,7 +59,7 @@ function renderStructure() {
           onRenameLesson={vi.fn().mockResolvedValue(saved)}
           onDeleteLesson={vi.fn().mockResolvedValue(saved)}
           onReorderOutline={vi.fn().mockResolvedValue(saved)}
-          onOpenLesson={vi.fn()}
+          onOpenPart={vi.fn()}
         />
       </ConfirmProvider>
     </I18nProvider>,

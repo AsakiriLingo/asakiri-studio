@@ -1,6 +1,16 @@
 export type { PortableValue, Binding, RenderFragment, AcceptedValue } from "@core/course/binding";
-export type { AssetKind, AssetAvailability, Asset } from "@core/course/media";
-export { SUPPORTED_MEDIA_EXTENSIONS, mediaTypeForFile, labelForFile } from "@core/course/media";
+export type { AssetKind, AssetAvailability, Asset, MediaFolder } from "@core/course/media";
+export {
+  SUPPORTED_MEDIA_EXTENSIONS,
+  MAX_MEDIA_FOLDER_DEPTH,
+  mediaTypeForFile,
+  labelForFile,
+  mediaFolderChildren,
+  mediaFolderDepth,
+  canAddSubfolder,
+  mediaFolderSubtreeIds,
+  foldersAfterDelete,
+} from "@core/course/media";
 export type {
   FieldKind,
   FieldCardinality,
@@ -39,6 +49,8 @@ export type {
   Exercise,
 } from "@core/course/exercise";
 export { createDefaultExercise } from "@core/course/exercise-defaults";
+export { PART_KINDS, exerciseTypeForKind, partKind } from "@core/course/part-kind";
+export type { PartKind, PartDisplayKind } from "@core/course/part-kind";
 export type { PartContent, Part, Lesson } from "@core/course/lesson";
 export type {
   CourseProject,

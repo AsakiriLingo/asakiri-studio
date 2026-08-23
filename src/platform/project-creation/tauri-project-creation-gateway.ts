@@ -8,7 +8,6 @@ import type { RecentProjectsStore } from "@platform/project-location/recent-proj
 interface CreatedCourse {
   readonly name: string;
   readonly path: string;
-  readonly gitInitialized: boolean;
 }
 
 const KNOWN_ERROR_CODES: readonly ProjectCreationErrorCode[] = [

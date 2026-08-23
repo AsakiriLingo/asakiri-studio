@@ -52,6 +52,7 @@ const course: Course = {
     },
   ],
   lessons: [],
+  mediaFolders: [],
   outline: [],
 };
 
