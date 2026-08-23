@@ -511,6 +511,25 @@
   font-size: var(--font-size-100);
 }
 
+.slashThumb,
+.slashThumbFallback {
+  flex: none;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: var(--radius-sm);
+}
+
+.slashThumb {
+  object-fit: cover;
+  background: var(--color-surface-subtle);
+}
+
+.slashThumbFallback {
+  display: grid;
+  place-items: center;
+  color: var(--color-text-muted);
+}
+
 .slashEmpty {
   padding: var(--space-3);
   color: var(--color-text-muted);

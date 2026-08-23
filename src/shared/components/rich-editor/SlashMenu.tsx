@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
 import { CheckChoice, RadioChoice, RadioChoices } from "@shared/components/choice";
 import { Icon, type IconName } from "@shared/components/icon";
+import { useAssetPreview } from "@shared/components/rich-editor/context";
 import { useMessages } from "@shared/i18n";
 import type {
   EditorAsset,
@@ -29,6 +30,73 @@ function makePresentationId(): string {
 
 function matches(haystack: string, needle: string): boolean {
   return haystack.toLowerCase().includes(needle.toLowerCase());
+}
+
+const DIRECT_URL = /^(https?:|data:|blob:)/;
+
+function useAssetThumbUrl(asset: EditorAsset): string | null {
+  const loadAssetPreview = useAssetPreview();
+  const direct = asset.file && DIRECT_URL.test(asset.file) ? asset.file : null;
+  const [loaded, setLoaded] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (direct || asset.kind !== "image") return;
+    let active = true;
+    void loadAssetPreview(asset.id).then((result) => {
+      if (active) setLoaded(result);
+    });
+    return () => {
+      active = false;
+    };
+  }, [direct, asset.id, asset.kind, loadAssetPreview]);
+
+  return direct ?? loaded;
+}
+
+function AssetThumb({ asset }: { readonly asset: EditorAsset }) {
+  const url = useAssetThumbUrl(asset);
+  if (asset.kind === "image" && url) {
+    return <img className={styles.slashThumb} src={url} alt="" aria-hidden="true" />;
+  }
+  return (
+    <span className={styles.slashThumbFallback}>
+      <Icon name={ASSET_ICON[asset.kind]} size={16} aria-hidden="true" />
+    </span>
+  );
+}
+
+const MENU_GAP = 6;
+const MENU_MARGIN = 12;
+const MENU_MAX_HEIGHT = 352;
+
+function placementStyle(rect: DOMRect): CSSProperties {
+  const viewport = typeof window !== "undefined" ? window.innerHeight : 0;
+  const left = Math.round(rect.left);
+  if (viewport === 0) {
+    return {
+      position: "fixed",
+      left: `${String(left)}px`,
+      top: `${String(Math.round(rect.bottom + MENU_GAP))}px`,
+    };
+  }
+  const spaceBelow = viewport - rect.bottom - MENU_GAP - MENU_MARGIN;
+  const spaceAbove = rect.top - MENU_GAP - MENU_MARGIN;
+  const openUp = spaceBelow < MENU_MAX_HEIGHT && spaceAbove > spaceBelow;
+  const available = Math.max(160, Math.floor(openUp ? spaceAbove : spaceBelow));
+  const maxHeight = `${String(Math.min(MENU_MAX_HEIGHT, available))}px`;
+  return openUp
+    ? {
+        position: "fixed",
+        left: `${String(left)}px`,
+        bottom: `${String(Math.round(viewport - rect.top + MENU_GAP))}px`,
+        maxHeight,
+      }
+    : {
+        position: "fixed",
+        left: `${String(left)}px`,
+        top: `${String(Math.round(rect.bottom + MENU_GAP))}px`,
+        maxHeight,
+      };
 }
 
 type Screen =
@@ -63,21 +131,29 @@ export function SlashMenu({
   const [screen, setScreen] = useState<Screen>({ kind: "root" });
   const [highlight, setHighlight] = useState(0);
   const [importing, setImporting] = useState(false);
+  const [search, setSearch] = useState(state.query);
+
+  const searching = search.trim() !== "";
 
   const assets = useMemo(
-    () => library.assets.filter((asset) => matches(asset.label, state.query)),
-    [library.assets, state.query],
+    () => (searching ? library.assets.filter((asset) => matches(asset.label, search)) : []),
+    [library.assets, search, searching],
   );
   const collections = useMemo(
-    () => library.collections.filter((collection) => matches(collection.name, state.query)),
-    [library.collections, state.query],
+    () => library.collections.filter((collection) => matches(collection.name, search)),
+    [library.collections, search],
   );
+
+  const changeSearch = useCallback((value: string) => {
+    setSearch(value);
+    setHighlight(0);
+  }, []);
 
   const rootRows = useMemo(
     () => [
       ...(onImportMedia ? [{ type: "import" as const }] : []),
-      ...assets.map((asset) => ({ type: "asset" as const, asset })),
       ...collections.map((collection) => ({ type: "collection" as const, collection })),
+      ...assets.map((asset) => ({ type: "asset" as const, asset })),
     ],
     [onImportMedia, assets, collections],
   );
@@ -147,11 +223,7 @@ export function SlashMenu({
     };
   }, [screen, rootRows, highlightIndex, onClose, onInsertAsset, runImport]);
 
-  const style = {
-    position: "fixed" as const,
-    left: `${String(Math.round(state.rect.left))}px`,
-    top: `${String(Math.round(state.rect.bottom + 6))}px`,
-  };
+  const style = placementStyle(state.rect);
 
   return createPortal(
     <div
@@ -176,6 +248,10 @@ export function SlashMenu({
           emptyLabel={t.empty}
           assetsLabel={t.assetsSection}
           collectionsLabel={t.collectionsSection}
+          search={search}
+          searching={searching}
+          onSearchChange={changeSearch}
+          searchLabel={t.searchLibrary}
         />
       ) : screen.kind === "records" ? (
         <RecordsScreen
@@ -215,6 +291,10 @@ function RootScreen({
   emptyLabel,
   assetsLabel,
   collectionsLabel,
+  search,
+  searching,
+  onSearchChange,
+  searchLabel,
 }: {
   readonly assets: readonly EditorAsset[];
   readonly collections: readonly EditorCollection[];
@@ -233,87 +313,108 @@ function RootScreen({
   readonly emptyLabel: string;
   readonly assetsLabel: string;
   readonly collectionsLabel: string;
+  readonly search: string;
+  readonly searching: boolean;
+  readonly onSearchChange: (value: string) => void;
+  readonly searchLabel: string;
 }) {
-  if (rootRows.length === 0) {
-    return <p className={styles.slashEmpty}>{emptyLabel}</p>;
-  }
+  const searchRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    searchRef.current?.focus();
+  }, []);
   const importIndex = rootRows.findIndex((row) => row.type === "import");
   const indexOfAsset = (asset: EditorAsset) =>
     rootRows.findIndex((row) => row.type === "asset" && row.asset.id === asset.id);
   const indexOfCollection = (collection: EditorCollection) =>
     rootRows.findIndex((row) => row.type === "collection" && row.collection.id === collection.id);
   return (
-    <div className={styles.slashList} role="listbox">
-      {onImport ? (
-        <button
-          type="button"
-          role="option"
-          aria-selected={importIndex === highlight}
-          className={importIndex === highlight ? styles.slashRowActive : styles.slashRow}
-          onMouseEnter={() => {
-            onHover(importIndex);
-          }}
-          onClick={onImport}
-          disabled={importing}
-        >
-          <Icon name="upload" size={16} aria-hidden="true" />
-          <span className={styles.slashRowLabel}>{importLabel}</span>
-        </button>
-      ) : null}
-      {assets.length > 0 ? (
-        <div className={styles.slashSection}>
-          <p className={styles.slashSectionLabel}>{assetsLabel}</p>
-          {assets.map((asset) => {
-            const index = indexOfAsset(asset);
-            return (
-              <button
-                key={asset.id}
-                type="button"
-                role="option"
-                aria-selected={index === highlight}
-                className={index === highlight ? styles.slashRowActive : styles.slashRow}
-                onMouseEnter={() => {
-                  onHover(index);
-                }}
-                onClick={() => {
-                  onPickAsset(asset);
-                }}
-              >
-                <Icon name={ASSET_ICON[asset.kind]} size={16} aria-hidden="true" />
-                <span className={styles.slashRowLabel}>{asset.label}</span>
-                <span className={styles.slashRowMeta}>{asset.kind}</span>
-              </button>
-            );
-          })}
-        </div>
-      ) : null}
-      {collections.length > 0 ? (
-        <div className={styles.slashSection}>
-          <p className={styles.slashSectionLabel}>{collectionsLabel}</p>
-          {collections.map((collection) => {
-            const index = indexOfCollection(collection);
-            return (
-              <button
-                key={collection.id}
-                type="button"
-                role="option"
-                aria-selected={index === highlight}
-                className={index === highlight ? styles.slashRowActive : styles.slashRow}
-                onMouseEnter={() => {
-                  onHover(index);
-                }}
-                onClick={() => {
-                  onPickCollection(collection);
-                }}
-              >
-                <Icon name="content" size={16} aria-hidden="true" />
-                <span className={styles.slashRowLabel}>{collection.name}</span>
-                <Icon name="arrow" size={16} aria-hidden="true" />
-              </button>
-            );
-          })}
-        </div>
-      ) : null}
+    <div className={styles.slashPanel}>
+      <input
+        ref={searchRef}
+        className={styles.slashSearch}
+        type="text"
+        value={search}
+        placeholder={searchLabel}
+        aria-label={searchLabel}
+        onChange={(event) => {
+          onSearchChange(event.target.value);
+        }}
+      />
+      <div className={styles.slashList} role="listbox">
+        {onImport ? (
+          <button
+            type="button"
+            role="option"
+            aria-selected={importIndex === highlight}
+            className={importIndex === highlight ? styles.slashRowActive : styles.slashRow}
+            onMouseEnter={() => {
+              onHover(importIndex);
+            }}
+            onClick={onImport}
+            disabled={importing}
+          >
+            <Icon name="upload" size={16} aria-hidden="true" />
+            <span className={styles.slashRowLabel}>{importLabel}</span>
+          </button>
+        ) : null}
+        {collections.length > 0 ? (
+          <div className={styles.slashSection}>
+            <p className={styles.slashSectionLabel}>{collectionsLabel}</p>
+            {collections.map((collection) => {
+              const index = indexOfCollection(collection);
+              return (
+                <button
+                  key={collection.id}
+                  type="button"
+                  role="option"
+                  aria-selected={index === highlight}
+                  className={index === highlight ? styles.slashRowActive : styles.slashRow}
+                  onMouseEnter={() => {
+                    onHover(index);
+                  }}
+                  onClick={() => {
+                    onPickCollection(collection);
+                  }}
+                >
+                  <Icon name="content" size={16} aria-hidden="true" />
+                  <span className={styles.slashRowLabel}>{collection.name}</span>
+                  <Icon name="arrow" size={16} aria-hidden="true" />
+                </button>
+              );
+            })}
+          </div>
+        ) : null}
+        {assets.length > 0 ? (
+          <div className={styles.slashSection}>
+            <p className={styles.slashSectionLabel}>{assetsLabel}</p>
+            {assets.map((asset) => {
+              const index = indexOfAsset(asset);
+              return (
+                <button
+                  key={asset.id}
+                  type="button"
+                  role="option"
+                  aria-selected={index === highlight}
+                  className={index === highlight ? styles.slashRowActive : styles.slashRow}
+                  onMouseEnter={() => {
+                    onHover(index);
+                  }}
+                  onClick={() => {
+                    onPickAsset(asset);
+                  }}
+                >
+                  <AssetThumb asset={asset} />
+                  <span className={styles.slashRowLabel}>{asset.label}</span>
+                  <span className={styles.slashRowMeta}>{asset.kind}</span>
+                </button>
+              );
+            })}
+          </div>
+        ) : null}
+        {searching && assets.length === 0 && collections.length === 0 ? (
+          <p className={styles.slashEmpty}>{emptyLabel}</p>
+        ) : null}
+      </div>
     </div>
   );
 }
