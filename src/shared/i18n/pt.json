@@ -339,7 +339,7 @@
       "selectMany": "Várias respostas corretas",
       "selectMode": "Respostas corretas",
       "selectOne": "Uma resposta correta",
-      "sentenceHelp": "Escreva a frase e marque cada lacuna com {{ }}. Exemplo: これは {{}} です。",
+      "sentenceHelp": "Escreve a frase e marca cada lacuna com {{ }}. Exemplo: Isto é um {{}}.",
       "sentenceLabel": "Frase",
       "tileLabel": "Peça {token}",
       "tokenContent": "Palavra",

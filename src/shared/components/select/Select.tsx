@@ -86,7 +86,11 @@ export function Select({
               <BaseCombobox.Empty className={styles.empty}>
                 {messages.common.noResults}
               </BaseCombobox.Empty>
-              <ScrollArea viewportClassName={styles.scrollViewport} contentStyle={{ minWidth: 0 }}>
+              <ScrollArea
+                className={styles.scroll}
+                viewportClassName={styles.scrollViewport}
+                contentStyle={{ minWidth: 0 }}
+              >
                 <BaseCombobox.List className={styles.list}>
                   {(item: SelectOption, index: number) => (
                     <BaseCombobox.Item
@@ -139,7 +143,11 @@ export function Select({
           sideOffset={4}
         >
           <BaseSelect.Popup className={styles.popup}>
-            <ScrollArea viewportClassName={styles.scrollViewport} contentStyle={{ minWidth: 0 }}>
+            <ScrollArea
+              className={styles.scroll}
+              viewportClassName={styles.scrollViewport}
+              contentStyle={{ minWidth: 0 }}
+            >
               {items.map((item) => (
                 <BaseSelect.Item key={item.value} className={styles.item} value={item.value}>
                   <BaseSelect.ItemText>{item.label}</BaseSelect.ItemText>

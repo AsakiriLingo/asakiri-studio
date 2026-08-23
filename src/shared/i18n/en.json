@@ -339,7 +339,7 @@
       "selectMany": "Multiple correct answers",
       "selectMode": "Correct answers",
       "selectOne": "One correct answer",
-      "sentenceHelp": "Type the sentence and mark each blank with {{ }}. Example: これは {{}} です。",
+      "sentenceHelp": "Type the sentence and mark each blank with {{ }}. Example: This is a {{}}.",
       "sentenceLabel": "Sentence",
       "tileLabel": "Tile {token}",
       "tokenContent": "Word",

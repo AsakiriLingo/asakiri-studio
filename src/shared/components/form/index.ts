@@ -1,4 +1,10 @@
-export { Field, TextInput, PasswordInput, TextArea, NumberInput } from "@shared/components/form/Form";
+export {
+  Field,
+  TextInput,
+  PasswordInput,
+  TextArea,
+  NumberInput,
+} from "@shared/components/form/Form";
 export type {
   FieldProps,
   TextInputProps,

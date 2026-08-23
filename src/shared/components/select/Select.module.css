@@ -112,14 +112,16 @@
 
 .popup {
   overflow: hidden;
+  max-height: var(--available-height);
   padding: var(--space-1);
   border: var(--border-hairline) solid var(--color-border);
   border-radius: var(--radius-md);
   background: var(--color-surface);
 }
 
+.scroll,
 .scrollViewport {
-  max-height: var(--available-height);
+  max-height: inherit;
 }
 
 .list {

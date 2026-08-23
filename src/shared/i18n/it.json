@@ -339,7 +339,7 @@
       "selectMany": "Più risposte corrette",
       "selectMode": "Risposte corrette",
       "selectOne": "Una risposta corretta",
-      "sentenceHelp": "Scrivi la frase e contrassegna ogni spazio con {{ }}. Esempio: これは {{}} です。",
+      "sentenceHelp": "Scrivi la frase e contrassegna ogni spazio con {{ }}. Esempio: Questo è un {{}}.",
       "sentenceLabel": "Frase",
       "tileLabel": "Tessera {token}",
       "tokenContent": "Parola",

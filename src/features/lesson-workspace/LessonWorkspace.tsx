@@ -107,7 +107,11 @@ export function LessonWorkspace({
           }}
           className={[styles.panel, styles.outlinePanel].join(" ")}
         >
-          <ScrollArea className={styles.scrollHost} contentClassName={styles.outlineScroll}>
+          <ScrollArea
+            className={styles.scrollHost}
+            contentClassName={styles.outlineScroll}
+            contentStyle={{ minWidth: 0 }}
+          >
             {outlineSlot ??
               (outline.length === 0 ? (
                 <p className={styles.empty}>{t.outlineEmpty}</p>

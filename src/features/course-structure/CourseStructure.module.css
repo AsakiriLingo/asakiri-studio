@@ -319,6 +319,7 @@
 }
 
 .sidebar .unitStack {
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-1);
 }
 
@@ -450,12 +451,14 @@
 }
 
 .sidebar .lessonOrder {
+  grid-template-columns: minmax(0, 1fr);
   gap: 0;
   padding: 0 0 0 var(--space-4);
 }
 
 .sidebar .partList {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 0;
   padding-left: var(--space-5);
 }
