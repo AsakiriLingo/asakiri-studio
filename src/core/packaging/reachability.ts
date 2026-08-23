@@ -3,6 +3,7 @@ import type {
   Composition,
   ContentRecord,
   Course,
+  CourseSources,
   Exercise,
   Part,
   RecordFieldValue,
@@ -176,7 +177,12 @@ function partAssetIds(part: Part, records: ReadonlyMap<string, ContentRecord>): 
   }
 }
 
-export function collectReachableBlobs(course: Course): ReachableBlob[] {
+function assetDirectory(assetJsonPath: string): string {
+  const slash = assetJsonPath.lastIndexOf("/");
+  return slash >= 0 ? assetJsonPath.slice(0, slash) : "";
+}
+
+export function collectReachableBlobs(course: Course, sources: CourseSources): ReachableBlob[] {
   const assets = new Map(course.assets.map((asset) => [asset.id, asset]));
   const records = new Map(course.records.map((record) => [record.id, record]));
   const lessons = new Map(course.lessons.map((lesson) => [lesson.id, lesson]));
@@ -195,10 +201,12 @@ export function collectReachableBlobs(course: Course): ReachableBlob[] {
   const note = (assetId: string, unitId: string | null): void => {
     const asset = assets.get(assetId);
     if (!asset?.file || !asset.sha256 || asset.byteSize === undefined) return;
+    const assetJsonPath = sources.assets[asset.id];
+    if (assetJsonPath === undefined) return;
     const entry = byHash.get(asset.sha256) ?? {
       byteSize: asset.byteSize,
       mime: asset.mimeType,
-      sourceRelativePath: `media/assets/${asset.id}/${asset.file}`,
+      sourceRelativePath: `${assetDirectory(assetJsonPath)}/${asset.file}`,
       units: [],
       seen: new Set<string>(),
     };

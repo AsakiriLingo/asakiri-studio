@@ -59,7 +59,7 @@ export function planRelease(input: {
   prior: ReleaseState | null;
   sizeCap?: number;
 }): ReleasePlan {
-  const reachable = collectReachableBlobs(input.course);
+  const reachable = collectReachableBlobs(input.course, input.sources);
   const sourceBySha = new Map(reachable.map((blob) => [blob.sha256, blob.sourceRelativePath]));
   const blobInfo: Record<string, BlobRef> = {};
   for (const blob of reachable) {

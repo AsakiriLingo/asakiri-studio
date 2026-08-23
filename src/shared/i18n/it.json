@@ -726,6 +726,7 @@
   "release": {
     "chipUpToDate": "Release up to date",
     "chipRebuilding": "Rebuilding release…",
+    "chipPending": "Changes pending",
     "chipError": "Release error",
     "chipNotBuilt": "No release yet",
     "revision": "Revision {revision}",
@@ -737,7 +738,6 @@
     "markUploaded": "Mark as uploaded",
     "markedUploaded": "Marked uploaded",
     "changedSinceUpload": "{count} files changed since your last upload",
-    "openFolder": "Open project folder",
-    "gitHint": "Using git? Read git status instead."
+    "openFolder": "Open project folder"
   }
 }

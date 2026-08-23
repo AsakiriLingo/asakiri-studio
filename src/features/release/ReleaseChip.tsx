@@ -3,7 +3,7 @@ import type { ReleaseHistoryEntry } from "@core/packaging";
 import { useFormat, useMessages } from "@shared/i18n";
 import styles from "@features/release/ReleaseChip.module.css";
 
-export type ReleaseChipStatus = "idle" | "rebuilding" | "upToDate" | "error";
+export type ReleaseChipStatus = "idle" | "pending" | "rebuilding" | "upToDate" | "error";
 
 export interface ReleaseChipProps {
   readonly status: ReleaseChipStatus;
@@ -31,18 +31,26 @@ export function ReleaseChip({
   const release = messages.release;
 
   const label =
-    status === "rebuilding"
-      ? release.chipRebuilding
-      : status === "error"
-        ? release.chipError
-        : revision === null
-          ? release.chipNotBuilt
-          : version !== null
-            ? format(release.version, { version })
-            : release.chipUpToDate;
+    status === "pending"
+      ? release.chipPending
+      : status === "rebuilding"
+        ? release.chipRebuilding
+        : status === "error"
+          ? release.chipError
+          : revision === null
+            ? release.chipNotBuilt
+            : version !== null
+              ? format(release.version, { version })
+              : release.chipUpToDate;
 
   const tone =
-    status === "error" ? styles.error : status === "rebuilding" ? styles.busy : undefined;
+    status === "error"
+      ? styles.error
+      : status === "rebuilding"
+        ? styles.busy
+        : status === "pending"
+          ? styles.pending
+          : undefined;
   const chipClass = [styles.chip, tone].filter(Boolean).join(" ");
 
   return (
@@ -103,8 +111,6 @@ export function ReleaseChip({
                 ))}
               </ul>
             )}
-
-            <p className={styles.hint}>{release.gitHint}</p>
           </Popover.Popup>
         </Popover.Positioner>
       </Popover.Portal>

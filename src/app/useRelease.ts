@@ -1,11 +1,12 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import type { Course } from "@core/course";
 import { createProjectSession } from "@core/projects";
 import type { ReleaseHistoryEntry, ReleaseState } from "@core/packaging";
 import { buildRelease } from "@features/release";
 import type { AppServices } from "@app/services";
 import type { CourseStateStore } from "@app/useCourseState";
 
-export type ReleaseStatus = "idle" | "rebuilding" | "upToDate" | "error";
+export type ReleaseStatus = "idle" | "pending" | "rebuilding" | "upToDate" | "error";
 
 export interface ReleaseController {
   readonly status: ReleaseStatus;
@@ -18,7 +19,7 @@ export interface ReleaseController {
   readonly openFolder: () => void;
 }
 
-const REBUILD_DELAY_MS = 2000;
+const REBUILD_IDLE_MS = 30000;
 
 function changedSince(history: readonly ReleaseHistoryEntry[], mark: string | null): number {
   if (mark === null) return 0;
@@ -35,6 +36,7 @@ export function useRelease(services: AppServices, store: CourseStateStore): Rele
   const deps = services.release;
   const [state, setState] = useState<ReleaseState | null>(null);
   const [status, setStatus] = useState<ReleaseStatus>("idle");
+  const lastBuiltCourse = useRef<Course | null>(null);
 
   const project = store.project;
   const courseState = store.courseState;
@@ -43,6 +45,7 @@ export function useRelease(services: AppServices, store: CourseStateStore): Rele
   const sources = ready?.sources ?? null;
 
   useEffect(() => {
+    lastBuiltCourse.current = null;
     let cancelled = false;
     const load = async (): Promise<ReleaseState | null> => {
       if (!deps || !project) return null;
@@ -54,7 +57,8 @@ export function useRelease(services: AppServices, store: CourseStateStore): Rele
         setState(loaded);
         setStatus(loaded ? "upToDate" : "idle");
       })
-      .catch(() => {
+      .catch((error: unknown) => {
+        console.error("release: failed to load release state", error);
         if (!cancelled) setStatus("error");
       });
     return () => {
@@ -64,18 +68,22 @@ export function useRelease(services: AppServices, store: CourseStateStore): Rele
 
   useEffect(() => {
     if (!deps || !project || !course || !sources) return;
+    const isEdit = lastBuiltCourse.current !== null && lastBuiltCourse.current !== course;
+    if (isEdit) setStatus("pending");
     const session = createProjectSession(project);
     const timer = setTimeout(() => {
       setStatus("rebuilding");
       void buildRelease(deps, session, course, sources)
         .then((next) => {
+          lastBuiltCourse.current = course;
           setState(next);
           setStatus("upToDate");
         })
-        .catch(() => {
+        .catch((error: unknown) => {
+          console.error("release: failed to build release", error);
           setStatus("error");
         });
-    }, REBUILD_DELAY_MS);
+    }, REBUILD_IDLE_MS);
     return () => {
       clearTimeout(timer);
     };
