@@ -242,14 +242,18 @@
   position: fixed;
   inset: 0;
   z-index: var(--z-modal);
-  display: grid;
-  place-items: center;
-  padding: var(--space-4);
   background: var(--color-overlay);
 }
 
 .dialog {
-  width: min(100%, 26rem);
+  position: fixed;
+  inset-block-start: 50%;
+  inset-inline-start: 50%;
+  z-index: var(--z-modal);
+  width: min(100% - var(--space-6), 26rem);
+  max-height: min(90vh, 40rem);
+  overflow: auto;
+  transform: translate(-50%, -50%);
   border: var(--border-hairline) solid var(--color-border);
   border-radius: var(--radius-lg);
   background: var(--color-surface);

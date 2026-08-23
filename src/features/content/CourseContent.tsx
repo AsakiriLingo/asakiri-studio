@@ -11,6 +11,7 @@ import type {
 } from "@core/course";
 import type { ProjectWriteResult } from "@core/project-writing";
 import { ContextMenu } from "@base-ui/react/context-menu";
+import { Dialog } from "@base-ui/react/dialog";
 import { useFormat, useMessages } from "@shared/i18n";
 import { Button } from "@shared/components/button";
 import { useConfirm } from "@shared/components/confirm-dialog";
@@ -197,22 +198,24 @@ function Modal({
   readonly children: ReactNode;
 }) {
   return (
-    <div className={styles.overlay} role="presentation" onClick={onClose}>
-      <div
-        className={joinClassNames(styles.dialog, wide ? styles.dialogWide : undefined)}
-        role="dialog"
-        aria-modal="true"
-        aria-label={label}
-        onClick={(event) => {
-          event.stopPropagation();
-        }}
-        onKeyDown={(event) => {
-          if (event.key === "Escape") onClose();
-        }}
-      >
-        {children}
-      </div>
-    </div>
+    <Dialog.Root
+      open
+      onOpenChange={(next) => {
+        if (!next) onClose();
+      }}
+    >
+      <Dialog.Portal>
+        <Dialog.Backdrop className={styles.overlay} />
+        <Dialog.Popup
+          className={joinClassNames(styles.dialog, wide ? styles.dialogWide : undefined)}
+        >
+          <div className={styles.dialogHeader}>
+            <Dialog.Title className={styles.dialogTitle}>{label}</Dialog.Title>
+          </div>
+          {children}
+        </Dialog.Popup>
+      </Dialog.Portal>
+    </Dialog.Root>
   );
 }
 
@@ -661,9 +664,6 @@ export function CourseContent({
               confirmNewCollection();
             }}
           >
-            <div className={styles.dialogHeader}>
-              <h2 className={styles.dialogTitle}>{t.newCollection}</h2>
-            </div>
             <div className={styles.dialogBody}>
               <Field label={t.collectionName}>
                 <TextInput
@@ -700,9 +700,6 @@ export function CourseContent({
             setEditingRecordId(null);
           }}
         >
-          <div className={styles.dialogHeader}>
-            <h2 className={styles.dialogTitle}>{t.editRecord}</h2>
-          </div>
           <ScrollArea
             viewportClassName={styles.dialogViewport}
             contentClassName={styles.dialogBody}

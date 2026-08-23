@@ -20,6 +20,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { ContextMenu } from "@base-ui/react/context-menu";
+import { Dialog } from "@base-ui/react/dialog";
 import type { Course, Lesson, OutlineSection, Part, PartKind } from "@core/course";
 import { PART_KINDS, partKind } from "@core/course";
 import type { ProjectWriteResult } from "@core/project-writing";
@@ -837,22 +838,22 @@ function Modal({
   readonly children: ReactNode;
 }) {
   return (
-    <div className={styles.overlay} role="presentation" onClick={onClose}>
-      <div
-        className={styles.dialog}
-        role="dialog"
-        aria-modal="true"
-        aria-label={label}
-        onClick={(event) => {
-          event.stopPropagation();
-        }}
-        onKeyDown={(event) => {
-          if (event.key === "Escape") onClose();
-        }}
-      >
-        {children}
-      </div>
-    </div>
+    <Dialog.Root
+      open
+      onOpenChange={(next) => {
+        if (!next) onClose();
+      }}
+    >
+      <Dialog.Portal>
+        <Dialog.Backdrop className={styles.overlay} />
+        <Dialog.Popup className={styles.dialog}>
+          <div className={styles.dialogHeader}>
+            <Dialog.Title className={styles.dialogTitle}>{label}</Dialog.Title>
+          </div>
+          {children}
+        </Dialog.Popup>
+      </Dialog.Portal>
+    </Dialog.Root>
   );
 }
 
@@ -1371,9 +1372,6 @@ export function CourseStructure({
             setSettingsUnitId(null);
           }}
         >
-          <div className={styles.dialogHeader}>
-            <h2 className={styles.dialogTitle}>{t.unitSettingsLabel}</h2>
-          </div>
           <div className={styles.dialogBody}>
             <Field label={t.unitTitleLabel}>
               <TextInput
@@ -1414,9 +1412,6 @@ export function CourseStructure({
             setSettingsLessonId(null);
           }}
         >
-          <div className={styles.dialogHeader}>
-            <h2 className={styles.dialogTitle}>{t.lessonSettingsLabel}</h2>
-          </div>
           <div className={styles.dialogBody}>
             <Field label={t.lessonTitleLabel}>
               <TextInput
@@ -1457,9 +1452,6 @@ export function CourseStructure({
             setAddingPartLessonId(null);
           }}
         >
-          <div className={styles.dialogHeader}>
-            <h2 className={styles.dialogTitle}>{messages.lesson.addPartTitle}</h2>
-          </div>
           <div className={styles.dialogBody}>
             <div className={styles.typeList}>
               {PART_KINDS.map((kind) => (
