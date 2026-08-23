@@ -351,6 +351,7 @@ function makeCourse(title: string): Course {
         ],
       },
     ],
+    mediaFolders: [],
     outline: [{ id: "u1", title: "Unit 1", lessonIds: ["l1"] }],
   };
 }

@@ -34,6 +34,7 @@ function makeCourse(): Course {
     collections: [],
     records: [],
     assets: [],
+    mediaFolders: [],
     lessons: [
       { id: "lesson-1", title: "Greetings", parts: [] },
       { id: "lesson-2", title: "Numbers", parts: [] },

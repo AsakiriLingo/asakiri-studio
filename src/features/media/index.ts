@@ -1,1 +1,1 @@
-export { CourseMedia } from "@features/media/CourseMedia";
+export { CourseMedia, type MediaSelection } from "@features/media/CourseMedia";

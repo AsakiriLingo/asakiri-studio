@@ -1,6 +1,16 @@
 export type { PortableValue, Binding, RenderFragment, AcceptedValue } from "@core/course/binding";
-export type { AssetKind, AssetAvailability, Asset } from "@core/course/media";
-export { SUPPORTED_MEDIA_EXTENSIONS, mediaTypeForFile, labelForFile } from "@core/course/media";
+export type { AssetKind, AssetAvailability, Asset, MediaFolder } from "@core/course/media";
+export {
+  SUPPORTED_MEDIA_EXTENSIONS,
+  MAX_MEDIA_FOLDER_DEPTH,
+  mediaTypeForFile,
+  labelForFile,
+  mediaFolderChildren,
+  mediaFolderDepth,
+  canAddSubfolder,
+  mediaFolderSubtreeIds,
+  foldersAfterDelete,
+} from "@core/course/media";
 export type {
   FieldKind,
   FieldCardinality,

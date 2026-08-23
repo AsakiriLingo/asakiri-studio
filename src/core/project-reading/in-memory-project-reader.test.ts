@@ -30,6 +30,7 @@ const course: Course = {
   collections: [],
   records: [],
   assets: [],
+  mediaFolders: [],
   lessons: [],
   outline: [],
 };

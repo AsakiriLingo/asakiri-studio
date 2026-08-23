@@ -1,6 +1,6 @@
 import type { Collection, ContentRecord } from "@core/course/content";
 import type { Lesson } from "@core/course/lesson";
-import type { Asset } from "@core/course/media";
+import type { Asset, MediaFolder } from "@core/course/media";
 
 export interface Contributor {
   readonly id: string;
@@ -62,6 +62,7 @@ export interface Course {
   readonly collections: readonly Collection[];
   readonly records: readonly ContentRecord[];
   readonly assets: readonly Asset[];
+  readonly mediaFolders: readonly MediaFolder[];
   readonly lessons: readonly Lesson[];
   readonly outline: readonly OutlineSection[];
 }

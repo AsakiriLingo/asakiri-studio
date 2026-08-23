@@ -34,6 +34,7 @@ const COURSE: Course = {
   collections: [],
   records: [],
   assets: [],
+  mediaFolders: [],
   lessons: [],
   outline: [],
 };

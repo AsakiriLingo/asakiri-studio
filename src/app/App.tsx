@@ -14,7 +14,7 @@ import { SPREADSHEET_EXTENSIONS } from "@core/documents";
 import { CourseStructure, OutlineSearch } from "@features/course-structure";
 import { LessonWorkspace } from "@features/lesson-workspace";
 import { CourseContent } from "@features/content";
-import { CourseMedia } from "@features/media";
+import { CourseMedia, type MediaSelection } from "@features/media";
 import { CourseAttribution } from "@features/attribution";
 import { CourseDetails } from "@features/course-details";
 import { PartEditor, courseToRichLibrary, type SaveState } from "@features/lesson-editor";
@@ -78,6 +78,12 @@ export function App() {
   const [outlineCollapsed, setOutlineCollapsed] = useState(false);
   const [referenceCollapsed, setReferenceCollapsed] = useState(false);
   const [collectionsCollapsed, setCollectionsCollapsed] = useState(false);
+  const [mediaInspectorCollapsed, setMediaInspectorCollapsed] = useState(false);
+  const [mediaSelection, setMediaSelection] = useState<MediaSelection>({
+    kind: "view",
+    view: "all",
+  });
+  const [mediaSelectedId, setMediaSelectedId] = useState<string | null>(null);
   const [partSaveState, setPartSaveState] = useState<SaveState>("idle");
   const [savedPartId, setSavedPartId] = useState<string | null>(null);
 
@@ -422,6 +428,16 @@ export function App() {
               onSearchAudio={(query, page) => services.mediaSearch.searchAudio(query, page)}
               onAddRemoteMedia={mediaActions.addRemoteMedia}
               onRenameAsset={mediaActions.renameAsset}
+              inspectorCollapsed={mediaInspectorCollapsed}
+              onInspectorCollapsedChange={setMediaInspectorCollapsed}
+              selection={mediaSelection}
+              onSelectionChange={setMediaSelection}
+              selectedId={mediaSelectedId}
+              onSelectedIdChange={setMediaSelectedId}
+              onMoveAsset={mediaActions.moveAssetToFolder}
+              onCreateFolder={mediaActions.createFolder}
+              onRenameFolder={mediaActions.renameFolder}
+              onDeleteFolder={mediaActions.deleteFolder}
               onListTtsVoices={() => services.tts.listVoices()}
               onPreviewTtsVoice={mediaActions.previewTtsVoice}
               onListAvailableVoices={() => services.tts.listAvailableVoices()}

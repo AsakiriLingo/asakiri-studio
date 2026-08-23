@@ -12,7 +12,57 @@ export interface Asset {
   readonly mimeType: string;
   readonly sha256?: string;
   readonly byteSize?: number;
+  readonly folderId?: string;
   readonly metadata?: Readonly<Record<string, unknown>>;
+}
+
+export interface MediaFolder {
+  readonly id: string;
+  readonly name: string;
+  readonly parentId: string | null;
+}
+
+export const MAX_MEDIA_FOLDER_DEPTH = 3;
+
+export function mediaFolderChildren(
+  folders: readonly MediaFolder[],
+  parentId: string | null,
+): MediaFolder[] {
+  return folders.filter((folder) => folder.parentId === parentId);
+}
+
+export function mediaFolderDepth(folders: readonly MediaFolder[], id: string): number {
+  const byId = new Map(folders.map((folder) => [folder.id, folder]));
+  let depth = 1;
+  let current = byId.get(id);
+  const seen = new Set<string>();
+  while (current?.parentId != null && !seen.has(current.id)) {
+    seen.add(current.id);
+    current = byId.get(current.parentId);
+    depth += 1;
+  }
+  return depth;
+}
+
+export function canAddSubfolder(folders: readonly MediaFolder[], parentId: string | null): boolean {
+  if (parentId === null) return true;
+  return mediaFolderDepth(folders, parentId) < MAX_MEDIA_FOLDER_DEPTH;
+}
+
+export function mediaFolderSubtreeIds(folders: readonly MediaFolder[], id: string): string[] {
+  const ids = [id];
+  for (const child of mediaFolderChildren(folders, id)) {
+    ids.push(...mediaFolderSubtreeIds(folders, child.id));
+  }
+  return ids;
+}
+
+export function foldersAfterDelete(folders: readonly MediaFolder[], id: string): MediaFolder[] {
+  const removed = folders.find((folder) => folder.id === id);
+  const parentId = removed?.parentId ?? null;
+  return folders
+    .filter((folder) => folder.id !== id)
+    .map((folder) => (folder.parentId === id ? { ...folder, parentId } : folder));
 }
 
 interface MediaType {

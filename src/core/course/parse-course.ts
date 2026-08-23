@@ -43,7 +43,7 @@ import type {
 } from "@core/course/exercise";
 import { EXERCISE_TYPES } from "@core/course/exercise";
 import type { Lesson, Part, PartContent } from "@core/course/lesson";
-import type { Asset, AssetAvailability, AssetKind } from "@core/course/media";
+import type { Asset, AssetAvailability, AssetKind, MediaFolder } from "@core/course/media";
 import type { CourseFileKind } from "@core/course/format";
 import { migrateFile } from "@core/course/migrations";
 import { isLocaleMap, resolveLocalized } from "@core/course/localized";
@@ -623,8 +623,24 @@ function parseAsset(value: unknown, context: string): Asset {
     ...(typeof data.expectedFile === "string" ? { expectedFile: data.expectedFile } : {}),
     ...(typeof data.sha256 === "string" ? { sha256: data.sha256 } : {}),
     ...(typeof data.byteSize === "number" ? { byteSize: data.byteSize } : {}),
+    ...(typeof data.folderId === "string" ? { folderId: data.folderId } : {}),
     ...(isObject(data.metadata) ? { metadata: data.metadata } : {}),
   };
+}
+
+function parseMediaFolders(value: unknown, context: string): MediaFolder[] {
+  if (value === undefined) return [];
+  return arr(value, context).map((item, index) => {
+    const data = obj(item, `${context}[${String(index)}]`);
+    return {
+      id: str(data.id, `${context}[${String(index)}].id`),
+      name: str(data.name, `${context}[${String(index)}].name`),
+      parentId:
+        data.parentId === null || data.parentId === undefined
+          ? null
+          : str(data.parentId, `${context}[${String(index)}].parentId`),
+    };
+  });
 }
 
 function parseContributor(value: unknown): Contributor {
@@ -812,6 +828,7 @@ export async function parseCourseWithSources(files: CourseFileReader): Promise<L
     resolvePath(MANIFEST_PATH, path),
   );
   const outline = parseOutline(manifest.outline ?? [], `${MANIFEST_PATH} outline`, locale);
+  const mediaFolders = parseMediaFolders(manifest.mediaFolders, `${MANIFEST_PATH} mediaFolders`);
 
   const collections: Collection[] = [];
   const records: ContentRecord[] = [];
@@ -852,7 +869,15 @@ export async function parseCourseWithSources(files: CourseFileReader): Promise<L
     }
   }
 
-  const course: Course = { project, collections, records, assets, lessons, outline };
+  const course: Course = {
+    project,
+    collections,
+    records,
+    assets,
+    mediaFolders,
+    lessons,
+    outline,
+  };
   const sources: CourseSources = {
     project: MANIFEST_PATH,
     collections: collectionSources,

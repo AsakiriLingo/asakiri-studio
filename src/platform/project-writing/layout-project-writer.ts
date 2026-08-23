@@ -104,6 +104,7 @@ function serializeAsset(asset: Asset): Record<string, unknown> {
     ...(asset.expectedFile !== undefined ? { expectedFile: asset.expectedFile } : {}),
     ...(asset.sha256 !== undefined ? { sha256: asset.sha256 } : {}),
     ...(asset.byteSize !== undefined ? { byteSize: asset.byteSize } : {}),
+    ...(asset.folderId !== undefined ? { folderId: asset.folderId } : {}),
     ...(asset.metadata !== undefined ? { metadata: asset.metadata } : {}),
   };
 }
@@ -861,6 +862,49 @@ export function createLayoutProjectWriter(resolveRaw: ResolveProjectFileAccess):
         const base = isRecord(parsed) ? parsed : {};
         const next = { ...base, ...serializeAsset(asset) };
         await files.writeTextFile(assetPath, `${JSON.stringify(next, null, 2)}\n`);
+        return { status: "saved" };
+      } catch {
+        return { status: "failed", code: "unknown" };
+      }
+    },
+
+    async moveAssetToFolder(session, assetPath, asset): Promise<ProjectWriteResult> {
+      const files = resolve(session);
+      if (!files) {
+        return { status: "failed", code: "unavailable" };
+      }
+
+      try {
+        const parsed: unknown = JSON.parse(await files.readTextFile(assetPath));
+        const base = isRecord(parsed) ? parsed : {};
+        const next: Record<string, unknown> = { ...base, ...serializeAsset(asset) };
+        if (asset.folderId === undefined) delete next.folderId;
+        await files.writeTextFile(assetPath, `${JSON.stringify(next, null, 2)}\n`);
+        return { status: "saved" };
+      } catch {
+        return { status: "failed", code: "unknown" };
+      }
+    },
+
+    async writeMediaFolders(session, folders): Promise<ProjectWriteResult> {
+      const files = resolve(session);
+      if (!files) {
+        return { status: "failed", code: "unavailable" };
+      }
+
+      try {
+        const parsed: unknown = JSON.parse(await files.readTextFile(MANIFEST_PATH));
+        const base = isRecord(parsed) ? { ...parsed } : {};
+        if (folders.length > 0) {
+          base.mediaFolders = folders.map((folder) => ({
+            id: folder.id,
+            name: folder.name,
+            parentId: folder.parentId,
+          }));
+        } else {
+          delete base.mediaFolders;
+        }
+        await files.writeTextFile(MANIFEST_PATH, `${JSON.stringify(base, null, 2)}\n`);
         return { status: "saved" };
       } catch {
         return { status: "failed", code: "unknown" };

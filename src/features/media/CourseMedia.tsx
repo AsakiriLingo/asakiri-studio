@@ -1,8 +1,21 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Menu } from "@base-ui/react/menu";
 import { ContextMenu } from "@base-ui/react/context-menu";
+import {
+  DndContext,
+  DragOverlay,
+  PointerSensor,
+  pointerWithin,
+  useDraggable,
+  useDroppable,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+  type DragStartEvent,
+} from "@dnd-kit/core";
 import { Group, Panel, Separator, type PanelImperativeHandle } from "react-resizable-panels";
-import type { Asset, ContentRecord, Course } from "@core/course";
+import type { Asset, ContentRecord, Course, MediaFolder } from "@core/course";
+import { canAddSubfolder, mediaFolderChildren, mediaFolderSubtreeIds } from "@core/course";
 import type { AudioSearchResult, ImageSearchResult, SearchPage } from "@core/media-search";
 import type { ProjectWriteResult } from "@core/project-writing";
 import type { CatalogVoice, DownloadProgress, TtsSaveResult, TtsVoice } from "@core/tts";
@@ -24,6 +37,25 @@ const PAGE_SIZE = 24;
 const ANIMATION_MS = 180;
 
 type MediaView = "all" | "image" | "audio" | "video" | "unreferenced";
+
+export type MediaSelection =
+  | { readonly kind: "view"; readonly view: MediaView }
+  | { readonly kind: "folder"; readonly id: string };
+
+type FolderDialog =
+  | { readonly mode: "create"; readonly parentId: string | null }
+  | { readonly mode: "rename"; readonly id: string };
+
+function flattenFolders(
+  folders: readonly MediaFolder[],
+  parentId: string | null,
+  depth: number,
+): { readonly folder: MediaFolder; readonly depth: number }[] {
+  return mediaFolderChildren(folders, parentId).flatMap((folder) => [
+    { folder, depth },
+    ...flattenFolders(folders, folder.id, depth + 1),
+  ]);
+}
 
 function joinClassNames(...classNames: (string | undefined | false)[]): string {
   return classNames.filter(Boolean).join(" ");
@@ -77,8 +109,8 @@ function scrollParentOf(element: Element | null): Element | null {
 
 export interface CourseMediaProps {
   readonly course: Course;
-  readonly onImportMedia: () => Promise<ProjectWriteResult | null>;
-  readonly onImportMediaFolder: () => Promise<ProjectWriteResult | null>;
+  readonly onImportMedia: (folderId: string | null) => Promise<ProjectWriteResult | null>;
+  readonly onImportMediaFolder: (folderId: string | null) => Promise<ProjectWriteResult | null>;
   readonly onDeleteAsset: (assetId: string) => Promise<ProjectWriteResult>;
   readonly onLoadPreview: (assetId: string) => Promise<string | null>;
   readonly onSearchImages: (query: string, page: number) => Promise<SearchPage<ImageSearchResult>>;
@@ -87,18 +119,35 @@ export interface CourseMediaProps {
     url: string,
     fileName: string,
     metadata: Readonly<Record<string, unknown>>,
+    folderId?: string | null,
   ) => Promise<ProjectWriteResult | null>;
   readonly onRenameAsset: (assetId: string, name: string) => Promise<ProjectWriteResult>;
+  readonly inspectorCollapsed: boolean;
+  readonly onInspectorCollapsedChange: (collapsed: boolean) => void;
+  readonly selection: MediaSelection;
+  readonly onSelectionChange: (selection: MediaSelection) => void;
+  readonly selectedId: string | null;
+  readonly onSelectedIdChange: (id: string | null) => void;
+  readonly onMoveAsset: (assetId: string, folderId: string | null) => Promise<ProjectWriteResult>;
+  readonly onCreateFolder: (name: string, parentId: string | null) => Promise<string | null>;
+  readonly onRenameFolder: (folderId: string, name: string) => Promise<ProjectWriteResult>;
+  readonly onDeleteFolder: (folderId: string) => Promise<ProjectWriteResult>;
   readonly onListTtsVoices: () => Promise<readonly TtsVoice[]>;
   readonly onPreviewTtsVoice: (text: string, voice: string) => Promise<string>;
   readonly onListAvailableVoices: () => Promise<readonly CatalogVoice[]>;
   readonly onDownloadVoice: (voiceId: string, onProgress?: DownloadProgress) => Promise<boolean>;
   readonly onRemoveVoice: (voiceId: string) => Promise<boolean>;
-  readonly onAddTtsAudio: (text: string, voice: string, fileName: string) => Promise<TtsSaveResult>;
+  readonly onAddTtsAudio: (
+    text: string,
+    voice: string,
+    fileName: string,
+    folderId?: string | null,
+  ) => Promise<TtsSaveResult>;
   readonly onAddRecording: (
     bytes: Uint8Array,
     mimeType: string,
     ext: string,
+    folderId?: string | null,
   ) => Promise<ProjectWriteResult | null>;
 }
 
@@ -112,6 +161,16 @@ export function CourseMedia({
   onSearchAudio,
   onAddRemoteMedia,
   onRenameAsset,
+  inspectorCollapsed,
+  onInspectorCollapsedChange,
+  selection,
+  onSelectionChange,
+  selectedId,
+  onSelectedIdChange,
+  onMoveAsset,
+  onCreateFolder,
+  onRenameFolder,
+  onDeleteFolder,
   onListTtsVoices,
   onPreviewTtsVoice,
   onListAvailableVoices,
@@ -128,21 +187,35 @@ export function CourseMedia({
   const [saveState, setSaveState] = useState<"idle" | "saved" | "failed">("idle");
   const [query, setQuery] = useState("");
   const [settledQuery, setSettledQuery] = useState("");
-  const [lastKey, setLastKey] = useState("all|");
-  const [view, setView] = useState<MediaView>("all");
+  const [lastKey, setLastKey] = useState("view:all|");
+  const setSelection = onSelectionChange;
+  const [expandedFolders, setExpandedFolders] = useState<ReadonlySet<string>>(new Set());
+  const [folderDialog, setFolderDialog] = useState<FolderDialog | null>(null);
+  const [folderName, setFolderName] = useState("");
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [playingId, setPlayingId] = useState<string | null>(null);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const setSelectedId = onSelectedIdChange;
+  const [selectedIds, setSelectedIds] = useState<ReadonlySet<string>>(new Set());
+  const [anchorId, setAnchorId] = useState<string | null>(null);
+  const [activeDragId, setActiveDragId] = useState<string | null>(null);
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
+  const rootDroppable = useDroppable({ id: "root" });
   const [previews, setPreviews] = useState<Record<string, string>>({});
   const [searchMode, setSearchMode] = useState<MediaSearchMode | null>(null);
   const [showTts, setShowTts] = useState(false);
   const [showRecord, setShowRecord] = useState(false);
   const [renameTarget, setRenameTarget] = useState<Asset | null>(null);
   const [renameValue, setRenameValue] = useState("");
-  const [inspectorCollapsed, setInspectorCollapsed] = useState(false);
   const [animating, setAnimating] = useState(false);
   const inspectorRef = useRef<PanelImperativeHandle>(null);
   const animationTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    const panel = inspectorRef.current;
+    if (!panel) return;
+    if (inspectorCollapsed && !panel.isCollapsed()) panel.collapse();
+    else if (!inspectorCollapsed && panel.isCollapsed()) panel.expand();
+  }, [inspectorCollapsed]);
 
   useEffect(
     () => () => {
@@ -199,22 +272,46 @@ export function CourseMedia({
     return tally;
   }, [course.assets, usage]);
 
+  const folderCounts = useMemo(() => {
+    const direct = new Map<string, number>();
+    for (const asset of course.assets) {
+      if (asset.folderId) direct.set(asset.folderId, (direct.get(asset.folderId) ?? 0) + 1);
+    }
+    const total = new Map<string, number>();
+    for (const folder of course.mediaFolders) {
+      let sum = 0;
+      for (const id of mediaFolderSubtreeIds(course.mediaFolders, folder.id)) {
+        sum += direct.get(id) ?? 0;
+      }
+      total.set(folder.id, sum);
+    }
+    return total;
+  }, [course.assets, course.mediaFolders]);
+
   const filtered = useMemo(() => {
+    const subtree =
+      selection.kind === "folder"
+        ? new Set(mediaFolderSubtreeIds(course.mediaFolders, selection.id))
+        : null;
     return course.assets.filter((asset) => {
-      if (view === "unreferenced") {
+      if (selection.kind === "folder") {
+        if (!subtree || asset.folderId === undefined || !subtree.has(asset.folderId)) return false;
+      } else if (selection.view === "unreferenced") {
         if ((usage.get(asset.id) ?? 0) !== 0) return false;
-      } else if (view !== "all" && asset.kind !== view) {
+      } else if (selection.view !== "all" && asset.kind !== selection.view) {
         return false;
       }
       return settledQuery === "" || matchesQuery(asset, settledQuery);
     });
-  }, [course.assets, view, settledQuery, usage]);
+  }, [course.assets, course.mediaFolders, selection, settledQuery, usage]);
 
-  const currentKey = `${view}|${settledQuery}`;
+  const currentKey = `${selection.kind === "view" ? selection.view : `folder:${selection.id}`}|${settledQuery}`;
   if (currentKey !== lastKey) {
     setLastKey(currentKey);
     setVisibleCount(PAGE_SIZE);
     setPlayingId(null);
+    setSelectedIds(new Set());
+    setAnchorId(null);
   }
 
   const visible = filtered.slice(0, visibleCount);
@@ -276,9 +373,11 @@ export function CourseMedia({
     };
   }, [hasMore, filtered.length]);
 
+  const activeFolderId = selection.kind === "folder" ? selection.id : null;
+
   const runFolderImport = () => {
     setImporting(true);
-    void onImportMediaFolder()
+    void onImportMediaFolder(activeFolderId)
       .then((result) => {
         if (result) setSaveState(result.status === "saved" ? "saved" : "failed");
       })
@@ -289,7 +388,7 @@ export function CourseMedia({
 
   const runImport = () => {
     setImporting(true);
-    void onImportMedia()
+    void onImportMedia(activeFolderId)
       .then((result) => {
         if (result) setSaveState(result.status === "saved" ? "saved" : "failed");
       })
@@ -334,8 +433,159 @@ export function CourseMedia({
     });
   };
 
+  const toggleFolder = (id: string) => {
+    setExpandedFolders((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const openFolderDialog = (dialog: FolderDialog, initial: string) => {
+    setFolderName(initial);
+    setFolderDialog(dialog);
+  };
+
+  const submitFolder = () => {
+    const dialog = folderDialog;
+    setFolderDialog(null);
+    if (!dialog) return;
+    if (dialog.mode === "create") {
+      const parentId = dialog.parentId;
+      if (parentId) setExpandedFolders((prev) => new Set(prev).add(parentId));
+      void onCreateFolder(folderName, parentId).then((id) => {
+        if (id) setSelection({ kind: "folder", id });
+      });
+    } else {
+      void onRenameFolder(dialog.id, folderName).then((result) => {
+        setSaveState(result.status === "saved" ? "saved" : "failed");
+      });
+    }
+  };
+
+  const removeFolder = (folder: MediaFolder) => {
+    void confirm({
+      title: t.confirmDeleteFolderTitle,
+      description: format(t.confirmDeleteFolderBody, { name: folder.name }),
+      confirmLabel: t.deleteFolder,
+    }).then((ok) => {
+      if (!ok) return;
+      if (
+        selection.kind === "folder" &&
+        mediaFolderSubtreeIds(course.mediaFolders, folder.id).includes(selection.id)
+      ) {
+        setSelection({ kind: "view", view: "all" });
+      }
+      void onDeleteFolder(folder.id).then((result) => {
+        setSaveState(result.status === "saved" ? "saved" : "failed");
+      });
+    });
+  };
+
+  const moveAsset = (assetId: string, folderId: string | null) => {
+    void onMoveAsset(assetId, folderId).then((result) => {
+      setSaveState(result.status === "saved" ? "saved" : "failed");
+    });
+  };
+
+  const moveMany = (ids: readonly string[], folderId: string | null) => {
+    setSelectedIds(new Set());
+    void Promise.all(ids.map((id) => onMoveAsset(id, folderId))).then((results) => {
+      setSaveState(results.some((r) => r.status !== "saved") ? "failed" : "saved");
+    });
+  };
+
+  const dragIdsFor = (assetId: string): string[] =>
+    selectedIds.has(assetId) && selectedIds.size > 1 ? [...selectedIds] : [assetId];
+
+  const handleDragStart = (event: DragStartEvent) => {
+    setActiveDragId(String(event.active.id));
+  };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const activeId = String(event.active.id);
+    setActiveDragId(null);
+    if (!event.over) return;
+    const overId = String(event.over.id);
+    const target = overId === "root" ? null : overId.startsWith("tile:") ? overId.slice(5) : overId;
+    moveMany(dragIdsFor(activeId), target);
+  };
+
+  const dragCount = activeDragId === null ? 0 : dragIdsFor(activeDragId).length;
+
+  const handleCardSelect = (id: string, mods: { shift: boolean; toggle: boolean }) => {
+    if (mods.shift && anchorId !== null) {
+      const ids = visible.map((asset) => asset.id);
+      const from = ids.indexOf(anchorId);
+      const to = ids.indexOf(id);
+      if (from !== -1 && to !== -1) {
+        const [lo, hi] = from < to ? [from, to] : [to, from];
+        setSelectedIds(new Set(ids.slice(lo, hi + 1)));
+      } else {
+        setSelectedIds(new Set([id]));
+      }
+      setSelectedId(id);
+    } else if (mods.toggle) {
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        if (next.has(id)) next.delete(id);
+        else next.add(id);
+        return next;
+      });
+      setAnchorId(id);
+      setSelectedId(id);
+    } else {
+      setSelectedIds(new Set([id]));
+      setAnchorId(id);
+      selectAsset(id);
+    }
+  };
+
+  const flatFolders = flattenFolders(course.mediaFolders, null, 0);
+
+  const childFolders =
+    selection.kind === "folder" ? mediaFolderChildren(course.mediaFolders, selection.id) : [];
+  const showFolderTiles = childFolders.length > 0 && settledQuery === "";
+
+  const renderFolderRow = (folder: MediaFolder, depth: number): ReactNode => {
+    const children = mediaFolderChildren(course.mediaFolders, folder.id);
+    const open = expandedFolders.has(folder.id);
+    const active = selection.kind === "folder" && selection.id === folder.id;
+    return (
+      <FolderRow
+        key={folder.id}
+        folder={folder}
+        depth={depth}
+        count={folderCounts.get(folder.id) ?? 0}
+        active={active}
+        open={open}
+        hasChildren={children.length > 0}
+        canSubfolder={canAddSubfolder(course.mediaFolders, folder.id)}
+        messages={messages}
+        onSelect={() => {
+          setSelection({ kind: "folder", id: folder.id });
+        }}
+        onToggle={() => {
+          toggleFolder(folder.id);
+        }}
+        onNewSubfolder={() => {
+          openFolderDialog({ mode: "create", parentId: folder.id }, "");
+        }}
+        onRename={() => {
+          openFolderDialog({ mode: "rename", id: folder.id }, folder.name);
+        }}
+        onDelete={() => {
+          removeFolder(folder);
+        }}
+      >
+        {open ? children.map((child) => renderFolderRow(child, depth + 1)) : null}
+      </FolderRow>
+    );
+  };
+
   const views: readonly { key: MediaView; label: string; icon: IconName; count: number }[] = [
-    { key: "all", label: t.viewAll, icon: "media", count: counts.all },
+    { key: "all", label: t.viewAll, icon: "folder-photo", count: counts.all },
     { key: "image", label: t.kindImage, icon: "image", count: counts.image },
     { key: "audio", label: t.kindAudio, icon: "audio", count: counts.audio },
     { key: "video", label: t.kindVideo, icon: "video", count: counts.video },
@@ -406,291 +656,651 @@ export function CourseMedia({
     </Menu.Root>
   );
 
+  const activeDragAsset =
+    activeDragId === null ? null : (course.assets.find((a) => a.id === activeDragId) ?? null);
+
   return (
-    <div className={styles.media}>
-      <aside className={styles.sidebar} aria-label={t.projectMedia}>
-        <div className={styles.sidebarHeader}>
-          <span className={styles.sidebarTitle}>{t.projectMedia}</span>
-        </div>
-        <div className={styles.list}>
-          {views.map((entry) => (
-            <button
-              key={entry.key}
-              type="button"
-              className={joinClassNames(styles.viewRow, view === entry.key && styles.viewSelected)}
-              aria-pressed={view === entry.key}
-              onClick={() => {
-                setView(entry.key);
-              }}
-            >
-              <Icon name={entry.icon} size={16} />
-              <span className={styles.viewLabel}>{entry.label}</span>
-              <span className={styles.count}>{entry.count}</span>
-            </button>
-          ))}
-        </div>
-      </aside>
-
-      <Group
-        orientation="horizontal"
-        id="asakiri.media-inspector"
-        className={joinClassNames(styles.group, animating && styles.animating)}
-      >
-        <Panel id="grid" minSize="24rem" className={styles.gridPanel}>
-          <div className={styles.toolbar}>
-            <div className={styles.searchBar}>
-              <Icon name="search" size={18} />
-              <TextInput
-                type="search"
-                className={styles.searchInput}
-                style={{ paddingInlineStart: "2.25rem" }}
-                aria-label={t.searchLabel}
-                placeholder={t.searchPlaceholder}
-                value={query}
-                onChange={(event) => {
-                  setQuery(event.currentTarget.value);
-                }}
-              />
-            </div>
-            <span className={styles.toolbarCount}>
-              {format(t.showing, {
-                shown: Math.min(visibleCount, filtered.length),
-                total: filtered.length,
-              })}
-            </span>
-            {importing ? <Status>{t.importing}</Status> : null}
-            {!importing && saveState === "failed" ? (
-              <Status tone="warning">{t.importFailed}</Status>
-            ) : null}
-            {addMenu}
+    <DndContext
+      sensors={sensors}
+      collisionDetection={pointerWithin}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+      onDragCancel={() => {
+        setActiveDragId(null);
+      }}
+    >
+      <div className={styles.media}>
+        <aside className={styles.sidebar} aria-label={t.projectMedia}>
+          <div className={styles.sidebarHeader}>
+            <span className={styles.sidebarTitle}>{t.projectMedia}</span>
+          </div>
+          <div className={styles.list}>
+            {views.map((entry) => {
+              const active = selection.kind === "view" && selection.view === entry.key;
+              const rootDrop = entry.key === "all";
+              return (
+                <button
+                  key={entry.key}
+                  type="button"
+                  ref={rootDrop ? rootDroppable.setNodeRef : undefined}
+                  className={joinClassNames(
+                    styles.viewRow,
+                    active && styles.viewSelected,
+                    rootDrop && rootDroppable.isOver && styles.folderRowDrop,
+                  )}
+                  aria-pressed={active}
+                  onClick={() => {
+                    setSelection({ kind: "view", view: entry.key });
+                  }}
+                >
+                  <Icon name={entry.icon} size={16} />
+                  <span className={styles.viewLabel}>{entry.label}</span>
+                  <span className={styles.count}>{entry.count}</span>
+                </button>
+              );
+            })}
           </div>
 
-          <div className={styles.body}>
-            {course.assets.length === 0 ? (
-              <div className={styles.emptyState}>
-                <span className={styles.emptyIcon}>
-                  <Icon name="media" size={32} />
-                </span>
-                <p className={styles.empty}>{t.empty}</p>
-                {addMenu}
-              </div>
-            ) : filtered.length === 0 ? (
-              <div className={styles.emptyState}>
-                <p className={styles.empty}>{t.noResults}</p>
-              </div>
-            ) : (
-              <ScrollArea className={styles.gridScroll} contentClassName={styles.gridContent}>
-                <div className={styles.grid} aria-label={t.projectMedia}>
-                  {visible.map((asset) => (
-                    <MediaCard
-                      key={asset.id}
-                      asset={asset}
-                      preview={previews[asset.id]}
-                      uses={usage.get(asset.id) ?? 0}
-                      playing={playingId === asset.id}
-                      selected={selectedId === asset.id}
-                      messages={messages}
-                      onSelect={() => {
-                        selectAsset(asset.id);
-                      }}
-                      onTogglePlay={(next) => {
-                        setPlayingId(next ? asset.id : null);
-                      }}
-                      onLoadUrl={onLoadPreview}
-                      onDelete={() => {
-                        removeAsset(asset);
-                      }}
-                      onRename={() => {
-                        openRename(asset);
-                      }}
-                    />
-                  ))}
-                </div>
-
-                {hasMore ? (
-                  <div className={styles.more}>
-                    <div ref={sentinelRef} aria-hidden className={styles.sentinel} />
-                    <Button
-                      variant="ghost"
-                      onClick={() => {
-                        setVisibleCount((count) => Math.min(count + PAGE_SIZE, filtered.length));
-                      }}
-                    >
-                      {t.loadMore}
-                    </Button>
-                  </div>
-                ) : null}
-              </ScrollArea>
-            )}
-          </div>
-        </Panel>
-
-        <Separator className={styles.handle} />
-
-        <Panel
-          id="inspector"
-          collapsible
-          collapsedSize={0}
-          minSize="306px"
-          maxSize="40%"
-          defaultSize="20rem"
-          panelRef={inspectorRef}
-          onResize={(size) => {
-            setInspectorCollapsed(size.inPixels === 0);
-          }}
-          className={styles.inspectorPanel}
-        >
-          <div className={styles.inspectorHeader}>
-            <span
-              className={styles.inspectorTitle}
-              title={selected ? assetName(selected) : undefined}
-            >
-              {selected ? assetName(selected) : ""}
-            </span>
+          <div className={styles.sidebarHeader}>
+            <span className={styles.sidebarTitle}>{t.folders}</span>
             <IconButton
               size="sm"
-              aria-label={t.hideDetails}
+              aria-label={t.newFolder}
               onClick={() => {
-                animate(() => inspectorRef.current?.collapse());
+                openFolderDialog({ mode: "create", parentId: null }, "");
+              }}
+            >
+              <Icon name="plus" size={16} />
+            </IconButton>
+          </div>
+          <div className={styles.list}>
+            {mediaFolderChildren(course.mediaFolders, null).map((folder) =>
+              renderFolderRow(folder, 0),
+            )}
+          </div>
+        </aside>
+
+        <Group
+          orientation="horizontal"
+          id="asakiri.media-inspector"
+          className={joinClassNames(styles.group, animating && styles.animating)}
+        >
+          <Panel id="grid" minSize="24rem" className={styles.gridPanel}>
+            <div className={styles.toolbar}>
+              <div className={styles.searchBar}>
+                <Icon name="search" size={18} />
+                <TextInput
+                  type="search"
+                  className={styles.searchInput}
+                  style={{ paddingInlineStart: "2.25rem" }}
+                  aria-label={t.searchLabel}
+                  placeholder={t.searchPlaceholder}
+                  value={query}
+                  onChange={(event) => {
+                    setQuery(event.currentTarget.value);
+                  }}
+                />
+              </div>
+              {selectedIds.size >= 2 ? (
+                <div className={styles.bulkBar}>
+                  <span className={styles.toolbarCount}>
+                    {format(t.selectedCount, { count: selectedIds.size })}
+                  </span>
+                  <Menu.Root>
+                    <Menu.Trigger
+                      render={
+                        <Button variant="secondary" size="compact">
+                          <Icon name="folder" size={16} />
+                          {t.moveTo}
+                          <Icon name="chevron-down" size={16} />
+                        </Button>
+                      }
+                    />
+                    <Menu.Portal>
+                      <Menu.Positioner className={styles.menuPositioner} sideOffset={4}>
+                        <Menu.Popup className={styles.menuPopup}>
+                          <Menu.Item
+                            className={styles.menuItem}
+                            onClick={() => {
+                              moveMany([...selectedIds], null);
+                            }}
+                          >
+                            {t.noFolder}
+                          </Menu.Item>
+                          {flatFolders.map(({ folder, depth }) => (
+                            <Menu.Item
+                              key={folder.id}
+                              className={styles.menuItem}
+                              style={{
+                                paddingInlineStart: `calc(var(--space-3) + ${String(depth)} * var(--space-3))`,
+                              }}
+                              onClick={() => {
+                                moveMany([...selectedIds], folder.id);
+                              }}
+                            >
+                              <Icon name="folder" size={18} />
+                              {folder.name}
+                            </Menu.Item>
+                          ))}
+                        </Menu.Popup>
+                      </Menu.Positioner>
+                    </Menu.Portal>
+                  </Menu.Root>
+                  <Button
+                    variant="ghost"
+                    size="compact"
+                    onClick={() => {
+                      setSelectedIds(new Set());
+                    }}
+                  >
+                    {t.clearSelection}
+                  </Button>
+                </div>
+              ) : (
+                <span className={styles.toolbarCount}>
+                  {format(t.showing, {
+                    shown: Math.min(visibleCount, filtered.length),
+                    total: filtered.length,
+                  })}
+                </span>
+              )}
+              {importing ? <Status>{t.importing}</Status> : null}
+              {!importing && saveState === "failed" ? (
+                <Status tone="warning">{t.importFailed}</Status>
+              ) : null}
+              {addMenu}
+            </div>
+
+            <div className={styles.body}>
+              {course.assets.length === 0 && course.mediaFolders.length === 0 ? (
+                <div className={styles.emptyState}>
+                  <span className={styles.emptyIcon}>
+                    <Icon name="media" size={32} />
+                  </span>
+                  <p className={styles.empty}>{t.empty}</p>
+                  {addMenu}
+                </div>
+              ) : filtered.length === 0 && !showFolderTiles ? (
+                <div className={styles.emptyState}>
+                  <p className={styles.empty}>
+                    {selection.kind === "folder" && settledQuery === ""
+                      ? t.emptyFolder
+                      : t.noResults}
+                  </p>
+                </div>
+              ) : (
+                <ScrollArea className={styles.gridScroll} contentClassName={styles.gridContent}>
+                  {showFolderTiles ? (
+                    <div className={styles.folderTiles} aria-label={t.folders}>
+                      {childFolders.map((folder) => (
+                        <FolderTile
+                          key={folder.id}
+                          folder={folder}
+                          count={folderCounts.get(folder.id) ?? 0}
+                          canSubfolder={canAddSubfolder(course.mediaFolders, folder.id)}
+                          messages={messages}
+                          onOpen={() => {
+                            setSelection({ kind: "folder", id: folder.id });
+                          }}
+                          onNewSubfolder={() => {
+                            openFolderDialog({ mode: "create", parentId: folder.id }, "");
+                          }}
+                          onRename={() => {
+                            openFolderDialog({ mode: "rename", id: folder.id }, folder.name);
+                          }}
+                          onDelete={() => {
+                            removeFolder(folder);
+                          }}
+                        />
+                      ))}
+                    </div>
+                  ) : null}
+                  <div className={styles.grid} aria-label={t.projectMedia}>
+                    {visible.map((asset) => (
+                      <MediaCard
+                        key={asset.id}
+                        asset={asset}
+                        preview={previews[asset.id]}
+                        uses={usage.get(asset.id) ?? 0}
+                        playing={playingId === asset.id}
+                        selected={selectedIds.has(asset.id)}
+                        messages={messages}
+                        folders={flatFolders}
+                        onSelect={(mods) => {
+                          handleCardSelect(asset.id, mods);
+                        }}
+                        onTogglePlay={(next) => {
+                          setPlayingId(next ? asset.id : null);
+                        }}
+                        onLoadUrl={onLoadPreview}
+                        onDelete={() => {
+                          removeAsset(asset);
+                        }}
+                        onRename={() => {
+                          openRename(asset);
+                        }}
+                        onMove={(folderId) => {
+                          moveAsset(asset.id, folderId);
+                        }}
+                      />
+                    ))}
+                  </div>
+
+                  {hasMore ? (
+                    <div className={styles.more}>
+                      <div ref={sentinelRef} aria-hidden className={styles.sentinel} />
+                      <Button
+                        variant="ghost"
+                        onClick={() => {
+                          setVisibleCount((count) => Math.min(count + PAGE_SIZE, filtered.length));
+                        }}
+                      >
+                        {t.loadMore}
+                      </Button>
+                    </div>
+                  ) : null}
+                </ScrollArea>
+              )}
+            </div>
+          </Panel>
+
+          <Separator className={styles.handle} />
+
+          <Panel
+            id="inspector"
+            collapsible
+            collapsedSize={0}
+            minSize="306px"
+            maxSize="40%"
+            defaultSize="20rem"
+            panelRef={inspectorRef}
+            onResize={(size) => {
+              onInspectorCollapsedChange(size.inPixels === 0);
+            }}
+            className={styles.inspectorPanel}
+          >
+            <ScrollArea
+              className={styles.inspectorScroll}
+              contentClassName={styles.inspectorScrollBody}
+              contentStyle={{ minWidth: 0 }}
+            >
+              {selected ? (
+                <MediaInspectorBody
+                  asset={selected}
+                  preview={previews[selected.id]}
+                  uses={usage.get(selected.id) ?? 0}
+                  messages={messages}
+                  onRename={() => {
+                    openRename(selected);
+                  }}
+                  onDelete={() => {
+                    removeAsset(selected);
+                  }}
+                />
+              ) : (
+                <p className={styles.inspectorEmpty}>{t.inspectorEmpty}</p>
+              )}
+            </ScrollArea>
+            <div className={styles.inspectorFooter}>
+              <IconButton
+                size="sm"
+                aria-label={t.hideDetails}
+                onClick={() => {
+                  animate(() => inspectorRef.current?.collapse());
+                }}
+              >
+                <Icon name="sidebar-right" size={18} />
+              </IconButton>
+            </div>
+          </Panel>
+        </Group>
+
+        {inspectorCollapsed ? (
+          <div className={joinClassNames(styles.pill, styles.pillRight)}>
+            <IconButton
+              size="sm"
+              aria-label={t.showDetails}
+              onClick={() => {
+                animate(() => inspectorRef.current?.expand());
               }}
             >
               <Icon name="sidebar-right" size={18} />
             </IconButton>
           </div>
-          <ScrollArea
-            className={styles.inspectorScroll}
-            contentClassName={styles.inspectorScrollBody}
-            contentStyle={{ minWidth: 0 }}
-          >
-            {selected ? (
-              <MediaInspectorBody
-                asset={selected}
-                preview={previews[selected.id]}
-                uses={usage.get(selected.id) ?? 0}
-                messages={messages}
-                onRename={() => {
-                  openRename(selected);
-                }}
-                onDelete={() => {
-                  removeAsset(selected);
-                }}
-              />
-            ) : (
-              <p className={styles.inspectorEmpty}>{t.inspectorEmpty}</p>
-            )}
-          </ScrollArea>
-        </Panel>
-      </Group>
+        ) : null}
 
-      {inspectorCollapsed ? (
-        <div className={joinClassNames(styles.pill, styles.pillRight)}>
-          <IconButton
-            size="sm"
-            aria-label={t.showDetails}
+        {searchMode ? (
+          <MediaSearchDialog
+            mode={searchMode}
+            onClose={() => {
+              setSearchMode(null);
+            }}
+            onSearchImages={onSearchImages}
+            onSearchAudio={onSearchAudio}
+            onAddRemoteMedia={(url, fileName, metadata) =>
+              onAddRemoteMedia(url, fileName, metadata, activeFolderId)
+            }
+          />
+        ) : null}
+
+        {showTts ? (
+          <TtsDialog
+            onClose={() => {
+              setShowTts(false);
+            }}
+            onListVoices={onListTtsVoices}
+            onPreviewVoice={onPreviewTtsVoice}
+            onListAvailableVoices={onListAvailableVoices}
+            onDownloadVoice={onDownloadVoice}
+            onRemoveVoice={onRemoveVoice}
+            onAddTtsAudio={(text, voice, fileName) =>
+              onAddTtsAudio(text, voice, fileName, activeFolderId).then((result) => {
+                setSaveState(result.ok ? "saved" : "failed");
+                return result;
+              })
+            }
+          />
+        ) : null}
+
+        {showRecord ? (
+          <RecordDialog
+            onClose={() => {
+              setShowRecord(false);
+            }}
+            onAddRecording={(bytes, mimeType, ext) =>
+              onAddRecording(bytes, mimeType, ext, activeFolderId).then((result) => {
+                if (result) setSaveState(result.status === "saved" ? "saved" : "failed");
+                return result;
+              })
+            }
+          />
+        ) : null}
+
+        {renameTarget ? (
+          <div
+            className={styles.renameOverlay}
+            role="presentation"
             onClick={() => {
-              animate(() => inspectorRef.current?.expand());
+              setRenameTarget(null);
             }}
           >
-            <Icon name="sidebar-right" size={18} />
-          </IconButton>
-        </div>
-      ) : null}
+            <form
+              className={styles.renameDialog}
+              role="dialog"
+              aria-modal="true"
+              aria-label={t.renameTitle}
+              onClick={(event) => {
+                event.stopPropagation();
+              }}
+              onSubmit={(event) => {
+                event.preventDefault();
+                submitRename();
+              }}
+            >
+              <h2 className={styles.renameTitle}>{t.renameTitle}</h2>
+              <Field label={t.renameLabel}>
+                <TextInput
+                  autoFocus
+                  value={renameValue}
+                  autoComplete="off"
+                  onChange={(event) => {
+                    setRenameValue(event.currentTarget.value);
+                  }}
+                />
+              </Field>
+              <div className={styles.renameActions}>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() => {
+                    setRenameTarget(null);
+                  }}
+                >
+                  {t.renameCancel}
+                </Button>
+                <Button type="submit" disabled={renameValue.trim() === ""}>
+                  {messages.common.save}
+                </Button>
+              </div>
+            </form>
+          </div>
+        ) : null}
 
-      {searchMode ? (
-        <MediaSearchDialog
-          mode={searchMode}
-          onClose={() => {
-            setSearchMode(null);
-          }}
-          onSearchImages={onSearchImages}
-          onSearchAudio={onSearchAudio}
-          onAddRemoteMedia={onAddRemoteMedia}
-        />
-      ) : null}
-
-      {showTts ? (
-        <TtsDialog
-          onClose={() => {
-            setShowTts(false);
-          }}
-          onListVoices={onListTtsVoices}
-          onPreviewVoice={onPreviewTtsVoice}
-          onListAvailableVoices={onListAvailableVoices}
-          onDownloadVoice={onDownloadVoice}
-          onRemoveVoice={onRemoveVoice}
-          onAddTtsAudio={(text, voice, fileName) =>
-            onAddTtsAudio(text, voice, fileName).then((result) => {
-              setSaveState(result.ok ? "saved" : "failed");
-              return result;
-            })
-          }
-        />
-      ) : null}
-
-      {showRecord ? (
-        <RecordDialog
-          onClose={() => {
-            setShowRecord(false);
-          }}
-          onAddRecording={(bytes, mimeType, ext) =>
-            onAddRecording(bytes, mimeType, ext).then((result) => {
-              if (result) setSaveState(result.status === "saved" ? "saved" : "failed");
-              return result;
-            })
-          }
-        />
-      ) : null}
-
-      {renameTarget ? (
-        <div
-          className={styles.renameOverlay}
-          role="presentation"
-          onClick={() => {
-            setRenameTarget(null);
-          }}
-        >
-          <form
-            className={styles.renameDialog}
-            role="dialog"
-            aria-modal="true"
-            aria-label={t.renameTitle}
-            onClick={(event) => {
-              event.stopPropagation();
-            }}
-            onSubmit={(event) => {
-              event.preventDefault();
-              submitRename();
+        {folderDialog ? (
+          <div
+            className={styles.renameOverlay}
+            role="presentation"
+            onClick={() => {
+              setFolderDialog(null);
             }}
           >
-            <h2 className={styles.renameTitle}>{t.renameTitle}</h2>
-            <Field label={t.renameLabel}>
-              <TextInput
-                autoFocus
-                value={renameValue}
-                autoComplete="off"
-                onChange={(event) => {
-                  setRenameValue(event.currentTarget.value);
-                }}
-              />
-            </Field>
-            <div className={styles.renameActions}>
-              <Button
+            <form
+              className={styles.renameDialog}
+              role="dialog"
+              aria-modal="true"
+              aria-label={folderDialog.mode === "create" ? t.newFolder : t.renameFolder}
+              onClick={(event) => {
+                event.stopPropagation();
+              }}
+              onSubmit={(event) => {
+                event.preventDefault();
+                submitFolder();
+              }}
+            >
+              <h2 className={styles.renameTitle}>
+                {folderDialog.mode === "create" ? t.newFolder : t.renameFolder}
+              </h2>
+              <Field label={t.folderName}>
+                <TextInput
+                  autoFocus
+                  value={folderName}
+                  autoComplete="off"
+                  onChange={(event) => {
+                    setFolderName(event.currentTarget.value);
+                  }}
+                />
+              </Field>
+              <div className={styles.renameActions}>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() => {
+                    setFolderDialog(null);
+                  }}
+                >
+                  {t.renameCancel}
+                </Button>
+                <Button type="submit" disabled={folderName.trim() === ""}>
+                  {messages.common.save}
+                </Button>
+              </div>
+            </form>
+          </div>
+        ) : null}
+      </div>
+      <DragOverlay>
+        {activeDragAsset ? (
+          <div className={styles.dragOverlay}>
+            <Icon name="media" size={16} />
+            {dragCount > 1
+              ? format(t.selectedCount, { count: dragCount })
+              : assetName(activeDragAsset)}
+          </div>
+        ) : null}
+      </DragOverlay>
+    </DndContext>
+  );
+}
+
+interface FolderRowProps {
+  readonly folder: MediaFolder;
+  readonly depth: number;
+  readonly count: number;
+  readonly active: boolean;
+  readonly open: boolean;
+  readonly hasChildren: boolean;
+  readonly canSubfolder: boolean;
+  readonly messages: StudioMessages;
+  readonly onSelect: () => void;
+  readonly onToggle: () => void;
+  readonly onNewSubfolder: () => void;
+  readonly onRename: () => void;
+  readonly onDelete: () => void;
+  readonly children: ReactNode;
+}
+
+function FolderRow({
+  folder,
+  depth,
+  count,
+  active,
+  open,
+  hasChildren,
+  canSubfolder,
+  messages,
+  onSelect,
+  onToggle,
+  onNewSubfolder,
+  onRename,
+  onDelete,
+  children,
+}: FolderRowProps) {
+  const t = messages.media;
+  const { setNodeRef, isOver } = useDroppable({ id: folder.id });
+  return (
+    <div>
+      <ContextMenu.Root>
+        <ContextMenu.Trigger
+          render={
+            <div
+              ref={setNodeRef}
+              className={joinClassNames(
+                styles.folderRow,
+                active && styles.folderRowActive,
+                isOver && styles.folderRowDrop,
+              )}
+              style={{ paddingInlineStart: `calc(${String(depth)} * var(--space-4))` }}
+            >
+              {hasChildren ? (
+                <button
+                  type="button"
+                  className={styles.folderToggle}
+                  aria-label={folder.name}
+                  aria-expanded={open}
+                  onClick={onToggle}
+                >
+                  <Icon name={open ? "chevron-down" : "chevron-right"} size={14} />
+                </button>
+              ) : (
+                <span className={styles.folderToggle} aria-hidden />
+              )}
+              <button
                 type="button"
-                variant="secondary"
-                onClick={() => {
-                  setRenameTarget(null);
-                }}
+                className={styles.folderLabel}
+                aria-pressed={active}
+                onClick={onSelect}
               >
-                {t.renameCancel}
-              </Button>
-              <Button type="submit" disabled={renameValue.trim() === ""}>
-                {messages.common.save}
-              </Button>
+                <Icon name="folder" size={16} />
+                <span className={styles.viewLabel}>{folder.name}</span>
+                <span className={styles.count}>{count}</span>
+              </button>
             </div>
-          </form>
-        </div>
-      ) : null}
+          }
+        />
+        <ContextMenu.Portal>
+          <ContextMenu.Positioner className={styles.menuPositioner}>
+            <ContextMenu.Popup className={styles.menuPopup}>
+              {canSubfolder ? (
+                <ContextMenu.Item className={styles.menuItem} onClick={onNewSubfolder}>
+                  <Icon name="folder" size={18} />
+                  {t.newSubfolder}
+                </ContextMenu.Item>
+              ) : null}
+              <ContextMenu.Item className={styles.menuItem} onClick={onRename}>
+                <Icon name="edit" size={18} />
+                {t.renameFolder}
+              </ContextMenu.Item>
+              <ContextMenu.Item
+                className={joinClassNames(styles.menuItem, styles.menuItemDanger)}
+                onClick={onDelete}
+              >
+                <Icon name="trash" size={18} />
+                {t.deleteFolder}
+              </ContextMenu.Item>
+            </ContextMenu.Popup>
+          </ContextMenu.Positioner>
+        </ContextMenu.Portal>
+      </ContextMenu.Root>
+      {children}
     </div>
+  );
+}
+
+interface FolderTileProps {
+  readonly folder: MediaFolder;
+  readonly count: number;
+  readonly canSubfolder: boolean;
+  readonly messages: StudioMessages;
+  readonly onOpen: () => void;
+  readonly onNewSubfolder: () => void;
+  readonly onRename: () => void;
+  readonly onDelete: () => void;
+}
+
+function FolderTile({
+  folder,
+  count,
+  canSubfolder,
+  messages,
+  onOpen,
+  onNewSubfolder,
+  onRename,
+  onDelete,
+}: FolderTileProps) {
+  const t = messages.media;
+  const { setNodeRef, isOver } = useDroppable({ id: `tile:${folder.id}` });
+  return (
+    <ContextMenu.Root>
+      <ContextMenu.Trigger
+        render={
+          <button
+            ref={setNodeRef}
+            type="button"
+            className={joinClassNames(styles.folderTile, isOver && styles.folderTileDrop)}
+            onClick={onOpen}
+          >
+            <Icon name="folder" size={22} />
+            <span className={styles.folderTileName} title={folder.name}>
+              {folder.name}
+            </span>
+            <span className={styles.count}>{count}</span>
+          </button>
+        }
+      />
+      <ContextMenu.Portal>
+        <ContextMenu.Positioner className={styles.menuPositioner}>
+          <ContextMenu.Popup className={styles.menuPopup}>
+            {canSubfolder ? (
+              <ContextMenu.Item className={styles.menuItem} onClick={onNewSubfolder}>
+                <Icon name="folder" size={18} />
+                {t.newSubfolder}
+              </ContextMenu.Item>
+            ) : null}
+            <ContextMenu.Item className={styles.menuItem} onClick={onRename}>
+              <Icon name="edit" size={18} />
+              {t.renameFolder}
+            </ContextMenu.Item>
+            <ContextMenu.Item
+              className={joinClassNames(styles.menuItem, styles.menuItemDanger)}
+              onClick={onDelete}
+            >
+              <Icon name="trash" size={18} />
+              {t.deleteFolder}
+            </ContextMenu.Item>
+          </ContextMenu.Popup>
+        </ContextMenu.Positioner>
+      </ContextMenu.Portal>
+    </ContextMenu.Root>
   );
 }
 
@@ -701,11 +1311,13 @@ interface MediaCardProps {
   readonly playing: boolean;
   readonly selected: boolean;
   readonly messages: StudioMessages;
-  readonly onSelect: () => void;
+  readonly folders: readonly { readonly folder: MediaFolder; readonly depth: number }[];
+  readonly onSelect: (mods: { shift: boolean; toggle: boolean }) => void;
   readonly onTogglePlay: (next: boolean) => void;
   readonly onLoadUrl: (assetId: string) => Promise<string | null>;
   readonly onDelete: () => void;
   readonly onRename: () => void;
+  readonly onMove: (folderId: string | null) => void;
 }
 
 function MediaCard({
@@ -715,11 +1327,13 @@ function MediaCard({
   playing,
   selected,
   messages,
+  folders,
   onSelect,
   onTogglePlay,
   onLoadUrl,
   onDelete,
   onRename,
+  onMove,
 }: MediaCardProps) {
   const t = messages.media;
   const format = useFormat();
@@ -727,6 +1341,7 @@ function MediaCard({
   const ready = asset.availability === "ready" && Boolean(asset.file);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const { setNodeRef, listeners, attributes, isDragging } = useDraggable({ id: asset.id });
 
   useEffect(() => {
     const element = audioRef.current;
@@ -760,16 +1375,25 @@ function MediaCard({
       <ContextMenu.Trigger
         render={
           <article
-            className={joinClassNames(styles.card, selected && styles.cardSelected)}
+            {...attributes}
+            {...listeners}
+            ref={setNodeRef}
+            className={joinClassNames(
+              styles.card,
+              selected && styles.cardSelected,
+              isDragging && styles.cardDragging,
+            )}
             role="button"
             tabIndex={0}
             aria-label={name}
             aria-pressed={selected}
-            onClick={onSelect}
+            onClick={(event) => {
+              onSelect({ shift: event.shiftKey, toggle: event.metaKey || event.ctrlKey });
+            }}
             onKeyDown={(event) => {
               if (event.key === "Enter" || event.key === " ") {
                 event.preventDefault();
-                onSelect();
+                onSelect({ shift: false, toggle: false });
               }
             }}
           >
@@ -839,6 +1463,44 @@ function MediaCard({
               <Icon name="edit" size={18} />
               {t.renameMedia}
             </ContextMenu.Item>
+            {folders.length > 0 ? (
+              <ContextMenu.SubmenuRoot>
+                <ContextMenu.SubmenuTrigger className={styles.menuItem}>
+                  <Icon name="folder" size={18} />
+                  <span className={styles.menuItemLabel}>{t.moveTo}</span>
+                  <Icon name="chevron-right" size={16} />
+                </ContextMenu.SubmenuTrigger>
+                <ContextMenu.Portal>
+                  <ContextMenu.Positioner className={styles.menuPositioner}>
+                    <ContextMenu.Popup className={styles.menuPopup}>
+                      <ContextMenu.Item
+                        className={styles.menuItem}
+                        onClick={() => {
+                          onMove(null);
+                        }}
+                      >
+                        {t.noFolder}
+                      </ContextMenu.Item>
+                      {folders.map(({ folder, depth }) => (
+                        <ContextMenu.Item
+                          key={folder.id}
+                          className={styles.menuItem}
+                          style={{
+                            paddingInlineStart: `calc(var(--space-3) + ${String(depth)} * var(--space-3))`,
+                          }}
+                          onClick={() => {
+                            onMove(folder.id);
+                          }}
+                        >
+                          <Icon name="folder" size={18} />
+                          {folder.name}
+                        </ContextMenu.Item>
+                      ))}
+                    </ContextMenu.Popup>
+                  </ContextMenu.Positioner>
+                </ContextMenu.Portal>
+              </ContextMenu.SubmenuRoot>
+            ) : null}
             <ContextMenu.Item
               className={joinClassNames(styles.menuItem, styles.menuItemDanger)}
               onClick={onDelete}
@@ -879,6 +1541,9 @@ function MediaInspectorBody({
 
   return (
     <>
+      <span className={styles.inspectorName} title={assetName(asset)}>
+        {assetName(asset)}
+      </span>
       {asset.kind === "audio" && ready && preview ? (
         <InspectorPlayer src={preview} type={asset.mimeType} title={assetName(asset)} />
       ) : asset.kind === "video" && ready && preview ? (
