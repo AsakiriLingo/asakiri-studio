@@ -250,6 +250,13 @@
   color: var(--color-text-muted);
 }
 
+.prose hr {
+  height: 0;
+  margin: var(--space-8) 0;
+  border: 0;
+  border-top: var(--border-hairline) solid var(--color-border);
+}
+
 .prose a {
   color: var(--color-brand);
   text-decoration: underline;
