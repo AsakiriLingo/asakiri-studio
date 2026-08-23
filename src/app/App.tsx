@@ -14,10 +14,8 @@ import { SPREADSHEET_EXTENSIONS } from "@core/documents";
 import { CourseStructure, OutlineSearch } from "@features/course-structure";
 import { LessonWorkspace } from "@features/lesson-workspace";
 import type { MediaSelection } from "@features/media";
-import { courseToRichLibrary } from "@features/lesson-editor/rich-library";
-import type { SaveState } from "@features/lesson-editor/PartEditor";
-import { DraftsToolbar } from "@features/drafts/DraftsToolbar";
-import { DraftsSearch } from "@features/drafts/DraftsSearch";
+import { courseToRichLibrary, PartEditor, type SaveState } from "@features/lesson-editor";
+import { DraftsToolbar, DraftsSearch, DraftsPanel } from "@features/drafts";
 import { createAppServices } from "@app/services";
 import { useCourseState } from "@app/useCourseState";
 import { useProjectActions } from "@app/useProjectActions";
@@ -29,25 +27,17 @@ import { useDrafts } from "@app/useDrafts";
 import styles from "@app/App.module.css";
 
 const CourseDetails = lazy(() =>
-  import("@features/course-details/CourseDetails").then((m) => ({ default: m.CourseDetails })),
+  import("@features/course-details").then((m) => ({ default: m.CourseDetails })),
 );
 const CourseAttribution = lazy(() =>
-  import("@features/attribution/CourseAttribution").then((m) => ({ default: m.CourseAttribution })),
+  import("@features/attribution").then((m) => ({ default: m.CourseAttribution })),
 );
 const CourseContent = lazy(() =>
-  import("@features/content/CourseContent").then((m) => ({ default: m.CourseContent })),
+  import("@features/content").then((m) => ({ default: m.CourseContent })),
 );
-const CourseMedia = lazy(() =>
-  import("@features/media/CourseMedia").then((m) => ({ default: m.CourseMedia })),
-);
-const PartEditor = lazy(() =>
-  import("@features/lesson-editor/PartEditor").then((m) => ({ default: m.PartEditor })),
-);
+const CourseMedia = lazy(() => import("@features/media").then((m) => ({ default: m.CourseMedia })));
 const PartPreview = lazy(() =>
-  import("@features/part-preview/PartPreview").then((m) => ({ default: m.PartPreview })),
-);
-const DraftsPanel = lazy(() =>
-  import("@features/drafts/DraftsPanel").then((m) => ({ default: m.DraftsPanel })),
+  import("@features/part-preview").then((m) => ({ default: m.PartPreview })),
 );
 
 function initialThemePreference(): ThemePreference {
