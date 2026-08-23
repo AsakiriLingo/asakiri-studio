@@ -80,7 +80,6 @@ export function StartScreen({
             Asakiri <strong>Studio</strong>
           </span>
         </div>
-        <h1 className={styles.title}>{messages.start.title}</h1>
         <div className={styles.list} aria-label={messages.start.projectActions}>
           <button className={styles.row} type="button" onClick={onNewCourse}>
             <span className={[styles.tile, styles.tileBrand].join(" ")}>

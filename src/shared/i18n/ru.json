@@ -569,8 +569,7 @@
     "openCourseDetail": "Выбрать существующий проект Asakiri",
     "openCourseName": "Открыть курс",
     "projectActions": "Действия с проектом",
-    "recentTitle": "Недавние курсы",
-    "title": "Начало"
+    "recentTitle": "Недавние курсы"
   },
   "structure": {
     "addLesson": "Добавить урок",

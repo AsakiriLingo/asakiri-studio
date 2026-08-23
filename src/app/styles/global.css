@@ -59,6 +59,19 @@ select {
   font: inherit;
 }
 
+body {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+input,
+textarea,
+[contenteditable]:not([contenteditable="false"]),
+[data-selectable] {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
 * {
   scrollbar-width: thin;
   scrollbar-color: transparent transparent;

@@ -75,6 +75,7 @@
   align-items: center;
   gap: var(--space-3);
   margin-bottom: var(--space-4);
+  padding-left: var(--space-4);
   color: var(--color-text);
   font-size: var(--font-size-400);
   font-weight: var(--font-weight-bold);
@@ -88,16 +89,6 @@
 .brand strong {
   color: var(--color-text-muted);
   font-weight: var(--font-weight-medium);
-}
-
-.title {
-  margin: 0 0 var(--space-6);
-  font-family: var(--font-family-display);
-  font-size: clamp(2rem, 4vw, 2.75rem);
-  font-weight: var(--font-weight-medium);
-  letter-spacing: -0.03em;
-  line-height: 1.05;
-  text-wrap: balance;
 }
 
 .list {

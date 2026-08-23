@@ -569,8 +569,7 @@
     "openCourseDetail": "Elige un proyecto de Asakiri existente",
     "openCourseName": "Abrir curso",
     "projectActions": "Acciones del proyecto",
-    "recentTitle": "Cursos recientes",
-    "title": "Inicio"
+    "recentTitle": "Cursos recientes"
   },
   "structure": {
     "addLesson": "Agregar lección",

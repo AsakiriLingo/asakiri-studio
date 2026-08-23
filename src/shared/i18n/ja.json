@@ -569,8 +569,7 @@
     "openCourseDetail": "既存のアサキリプロジェクトを選ぶ",
     "openCourseName": "コースを開く",
     "projectActions": "プロジェクトの操作",
-    "recentTitle": "最近のコース",
-    "title": "スタート"
+    "recentTitle": "最近のコース"
   },
   "structure": {
     "addLesson": "レッスンを追加",
