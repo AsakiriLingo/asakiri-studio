@@ -19,6 +19,7 @@ export interface ReleasePlan {
   readonly orphanFiles: readonly string[];
   readonly assignments: Readonly<Record<string, PackOwner>>;
   readonly blobInfo: Readonly<Record<string, BlobRef>>;
+  readonly missingAssetIds: readonly string[];
 }
 
 export function akcFileName(project: CourseProject): string {
@@ -59,7 +60,7 @@ export function planRelease(input: {
   prior: ReleaseState | null;
   sizeCap?: number;
 }): ReleasePlan {
-  const reachable = collectReachableBlobs(input.course, input.sources);
+  const { blobs: reachable, missing } = collectReachableBlobs(input.course, input.sources);
   const sourceBySha = new Map(reachable.map((blob) => [blob.sha256, blob.sourceRelativePath]));
   const blobInfo: Record<string, BlobRef> = {};
   for (const blob of reachable) {
@@ -114,5 +115,6 @@ export function planRelease(input: {
     orphanFiles,
     assignments: plan.assignments,
     blobInfo,
+    missingAssetIds: missing,
   };
 }

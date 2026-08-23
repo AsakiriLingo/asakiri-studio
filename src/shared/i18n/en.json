@@ -738,6 +738,7 @@
     "markUploaded": "Mark as uploaded",
     "markedUploaded": "Marked uploaded",
     "changedSinceUpload": "{count} files changed since your last upload",
+    "missingAssets": "{count} referenced assets have no media file and were left out of the release",
     "openFolder": "Open project folder"
   }
 }

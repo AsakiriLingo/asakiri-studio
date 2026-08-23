@@ -81,6 +81,12 @@
   font-size: var(--font-size-200);
 }
 
+.warning {
+  margin: 0;
+  color: var(--color-danger);
+  font-size: var(--font-size-200);
+}
+
 .empty {
   margin: 0;
   color: var(--color-text-muted);

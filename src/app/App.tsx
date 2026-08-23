@@ -1,4 +1,4 @@
-import { lazy, Suspense, useCallback, useEffect, useState, type ReactNode } from "react";
+import { lazy, Suspense, useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import type { AvailableUpdate } from "@core/app-update";
 import { createProjectSession, type ProjectDirectory, type RecentProject } from "@core/projects";
 import { I18nProvider, LOCALES, getMessages, useMessages, type Locale } from "@shared/i18n";
@@ -19,6 +19,7 @@ import { DraftsToolbar, DraftsSearch, DraftsPanel } from "@features/drafts";
 import { ReleaseChip } from "@features/release";
 import { createAppServices } from "@app/services";
 import { useRelease } from "@app/useRelease";
+import { useMediaBackfill } from "@app/useMediaBackfill";
 import { useCourseState } from "@app/useCourseState";
 import { useProjectActions } from "@app/useProjectActions";
 import { useOutlineActions } from "@app/useOutlineActions";
@@ -121,6 +122,12 @@ export function App() {
   const store = useCourseState(services);
   const { project, courseState } = store;
   const release = useRelease(services, store);
+  useMediaBackfill(services, store);
+  const readyCourse = courseState?.status === "ready" ? courseState.course : null;
+  const richLibrary = useMemo(
+    () => (readyCourse ? courseToRichLibrary(readyCourse) : null),
+    [readyCourse],
+  );
 
   const closeLessonAfterDelete = (lessonId: string) => {
     const ready = store.courseState?.status === "ready" ? store.courseState.course : null;
@@ -408,6 +415,7 @@ export function App() {
               history={release.history}
               uploadedMark={release.uploadedMark}
               changedSinceUpload={release.changedSinceUpload}
+              missingAssets={release.missingAssets}
               onMarkUploaded={release.markUploaded}
               onOpenFolder={release.openFolder}
             />
@@ -546,7 +554,7 @@ export function App() {
                     <PartPreview
                       part={openPart}
                       course={course}
-                      library={courseToRichLibrary(course)}
+                      library={richLibrary ?? courseToRichLibrary(course)}
                       onLoadAssetPreview={mediaActions.loadAssetPreview}
                     />
                   </Suspense>
@@ -564,7 +572,7 @@ export function App() {
                     onUpdate={draftActions.updateDraft}
                     onRename={draftActions.renameDraft}
                     onDelete={draftActions.deleteDraft}
-                    library={courseToRichLibrary(course)}
+                    library={richLibrary ?? courseToRichLibrary(course)}
                     onLoadAssetPreview={mediaActions.loadAssetPreview}
                   />
                 </Suspense>

@@ -25,6 +25,7 @@ export interface ReleaseState {
   readonly packs: readonly ReleasePackRecord[];
   readonly akc: AkcInfo;
   readonly manifest: Manifest;
+  readonly missingAssets: number;
   readonly history: readonly ReleaseHistoryEntry[];
   readonly uploadedMark: string | null;
 }

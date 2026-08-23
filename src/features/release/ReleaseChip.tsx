@@ -12,6 +12,7 @@ export interface ReleaseChipProps {
   readonly history: readonly ReleaseHistoryEntry[];
   readonly uploadedMark: string | null;
   readonly changedSinceUpload: number;
+  readonly missingAssets: number;
   readonly onMarkUploaded: (entryId: string | null) => void;
   readonly onOpenFolder: () => void;
 }
@@ -23,6 +24,7 @@ export function ReleaseChip({
   history,
   uploadedMark,
   changedSinceUpload,
+  missingAssets,
   onMarkUploaded,
   onOpenFolder,
 }: ReleaseChipProps) {
@@ -68,6 +70,12 @@ export function ReleaseChip({
                 {release.openFolder}
               </button>
             </div>
+
+            {missingAssets > 0 ? (
+              <p className={styles.warning}>
+                {format(release.missingAssets, { count: missingAssets })}
+              </p>
+            ) : null}
 
             {changedSinceUpload > 0 ? (
               <p className={styles.summary}>

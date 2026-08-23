@@ -182,7 +182,12 @@ function assetDirectory(assetJsonPath: string): string {
   return slash >= 0 ? assetJsonPath.slice(0, slash) : "";
 }
 
-export function collectReachableBlobs(course: Course, sources: CourseSources): ReachableBlob[] {
+export interface ReachabilityResult {
+  readonly blobs: ReachableBlob[];
+  readonly missing: string[];
+}
+
+export function collectReachableBlobs(course: Course, sources: CourseSources): ReachabilityResult {
   const assets = new Map(course.assets.map((asset) => [asset.id, asset]));
   const records = new Map(course.records.map((record) => [record.id, record]));
   const lessons = new Map(course.lessons.map((lesson) => [lesson.id, lesson]));
@@ -198,11 +203,20 @@ export function collectReachableBlobs(course: Course, sources: CourseSources): R
     }
   >();
 
+  const missing = new Set<string>();
+
   const note = (assetId: string, unitId: string | null): void => {
     const asset = assets.get(assetId);
-    if (!asset?.file || !asset.sha256 || asset.byteSize === undefined) return;
+    if (!asset) return;
+    if (!asset.file || !asset.sha256 || asset.byteSize === undefined) {
+      missing.add(asset.id);
+      return;
+    }
     const assetJsonPath = sources.assets[asset.id];
-    if (assetJsonPath === undefined) return;
+    if (assetJsonPath === undefined) {
+      missing.add(asset.id);
+      return;
+    }
     const entry = byHash.get(asset.sha256) ?? {
       byteSize: asset.byteSize,
       mime: asset.mimeType,
@@ -230,11 +244,12 @@ export function collectReachableBlobs(course: Course, sources: CourseSources): R
   if (course.project.coverAssetId) note(course.project.coverAssetId, null);
   if (course.project.taughtFlagAssetId) note(course.project.taughtFlagAssetId, null);
 
-  return [...byHash.entries()].map(([sha256, entry]) => ({
+  const blobs = [...byHash.entries()].map(([sha256, entry]) => ({
     sha256,
     byteSize: entry.byteSize,
     mime: entry.mime,
     sourceRelativePath: entry.sourceRelativePath,
     referencingUnitIds: entry.units,
   }));
+  return { blobs, missing: [...missing] };
 }

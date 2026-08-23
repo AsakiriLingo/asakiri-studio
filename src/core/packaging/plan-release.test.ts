@@ -128,6 +128,7 @@ function priorState(
       packs: [],
       assets: {},
     },
+    missingAssets: 0,
     history: [],
     uploadedMark: null,
   };

@@ -15,6 +15,7 @@ export interface ReleaseController {
   readonly history: readonly ReleaseHistoryEntry[];
   readonly uploadedMark: string | null;
   readonly changedSinceUpload: number;
+  readonly missingAssets: number;
   readonly markUploaded: (entryId: string | null) => void;
   readonly openFolder: () => void;
 }
@@ -115,6 +116,7 @@ export function useRelease(services: AppServices, store: CourseStateStore): Rele
     history: state?.history ?? [],
     uploadedMark: state?.uploadedMark ?? null,
     changedSinceUpload: changedSince(state?.history ?? [], state?.uploadedMark ?? null),
+    missingAssets: state?.missingAssets ?? 0,
     markUploaded,
     openFolder,
   };

@@ -2,7 +2,7 @@ import type { AppMenuGateway } from "@core/app-menu";
 import type { AppUpdateGateway } from "@core/app-update";
 import type { LinkOpener } from "@core/links";
 import type { MediaSearchGateway } from "@core/media-search";
-import type { AssetReader, MediaPicker } from "@core/project-media";
+import type { AssetDigestBackfiller, AssetReader, MediaPicker } from "@core/project-media";
 import type { ProjectCreationGateway, ProjectDirectoryGateway } from "@core/projects";
 import type { ProjectReader } from "@core/project-reading";
 import type { ProjectSystem } from "@core/project-system";
@@ -18,7 +18,11 @@ import { createAppUpdateGateway } from "@platform/app-update";
 import { createLinkOpener } from "@platform/links";
 import { createProjectCreationGateway } from "@platform/project-creation";
 import { createProjectDirectoryGateway } from "@platform/project-directory";
-import { createAssetReader, createMediaPicker } from "@platform/project-media";
+import {
+  createAssetDigestBackfiller,
+  createAssetReader,
+  createMediaPicker,
+} from "@platform/project-media";
 import { ProjectLocationRegistry, RecentProjectsStore } from "@platform/project-location";
 import { createProjectReader } from "@platform/project-reading";
 import { createProjectSystem } from "@platform/project-system";
@@ -36,6 +40,7 @@ export interface AppServices {
   readonly system: ProjectSystem;
   readonly mediaPicker: MediaPicker;
   readonly assetReader: AssetReader;
+  readonly assetDigests?: AssetDigestBackfiller;
   readonly mediaSearch: MediaSearchGateway;
   readonly appUpdate: AppUpdateGateway;
   readonly menu: AppMenuGateway;
@@ -62,6 +67,7 @@ export function createAppServices(): AppServices {
     system: createProjectSystem(locations),
     mediaPicker: createMediaPicker(),
     assetReader: createAssetReader(locations),
+    assetDigests: createAssetDigestBackfiller(locations),
     mediaSearch: createTauriMediaSearchGateway(),
     appUpdate: createAppUpdateGateway(),
     menu: createAppMenuGateway(),

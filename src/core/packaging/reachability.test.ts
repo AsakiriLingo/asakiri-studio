@@ -27,7 +27,7 @@ function sourcesFor(course: Course): CourseSources {
 }
 
 function reachable(course: Course) {
-  return collectReachableBlobs(course, sourcesFor(course));
+  return collectReachableBlobs(course, sourcesFor(course)).blobs;
 }
 
 function project(overrides: Partial<CourseProject> = {}): CourseProject {
@@ -89,7 +89,7 @@ function course(overrides: Partial<Course> = {}): Course {
   };
 }
 
-function shaOf(blobs: ReturnType<typeof collectReachableBlobs>, sha: string) {
+function shaOf(blobs: ReturnType<typeof reachable>, sha: string) {
   return blobs.find((blob) => blob.sha256 === sha);
 }
 
@@ -321,7 +321,24 @@ describe("collectReachableBlobs", () => {
       lessons: {},
       parts: {},
     };
-    const blobs = collectReachableBlobs(built, sources);
+    const blobs = collectReachableBlobs(built, sources).blobs;
     expect(shaOf(blobs, "sha-x")?.sourceRelativePath).toBe("media/assets/audio-x/kuumin.mp3");
+  });
+
+  it("reports referenced assets that have no packable binary", () => {
+    const built = course({
+      assets: [asset("a1", undefined)],
+      lessons: [
+        lesson("l1", [
+          compositionPart("p1", {
+            blocks: [{ id: "b1", type: "media", binding: { kind: "asset", assetId: "a1" } }],
+          }),
+        ]),
+      ],
+      outline: [{ id: "u1", title: "U1", lessonIds: ["l1"] }],
+    });
+    const result = collectReachableBlobs(built, sourcesFor(built));
+    expect(result.blobs).toHaveLength(0);
+    expect(result.missing).toEqual(["a1"]);
   });
 });

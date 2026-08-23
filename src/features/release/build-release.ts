@@ -141,6 +141,7 @@ export async function buildRelease(
     })),
     akc,
     manifest,
+    missingAssets: plan.missingAssetIds.length,
     history: [historyEntry, ...(prior?.history ?? [])],
     uploadedMark: prior?.uploadedMark ?? null,
   };
