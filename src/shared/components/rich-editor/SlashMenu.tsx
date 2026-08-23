@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import { CheckChoice, RadioChoice, RadioChoices } from "@shared/components/choice";
 import { Icon, type IconName } from "@shared/components/icon";
 import { useAssetPreview } from "@shared/components/rich-editor/context";
+import { ScrollArea } from "@shared/components/scroll-area";
 import { useMessages } from "@shared/i18n";
 import type {
   EditorAsset,
@@ -233,45 +234,54 @@ export function SlashMenu({
       role="dialog"
       aria-label={t.title}
     >
-      {screen.kind === "root" ? (
-        <RootScreen
-          assets={assets}
-          collections={collections}
-          rootRows={rootRows}
-          highlight={highlightIndex}
-          onHover={setHighlight}
-          onPickAsset={onInsertAsset}
-          onPickCollection={openCollection}
-          onImport={onImportMedia ? runImport : undefined}
-          importing={importing}
-          importLabel={t.importMedia}
-          emptyLabel={t.empty}
-          assetsLabel={t.assetsSection}
-          collectionsLabel={t.collectionsSection}
-          search={search}
-          searching={searching}
-          onSearchChange={changeSearch}
-          searchLabel={t.searchLibrary}
-        />
-      ) : screen.kind === "records" ? (
-        <RecordsScreen
-          collection={screen.collection}
-          records={library.records.filter((record) => record.collectionId === screen.collection.id)}
-          onBack={back}
-          onPick={(record) => {
-            openConfigure(screen.collection, record);
-          }}
-        />
-      ) : (
-        <ConfigureScreen
-          collection={screen.collection}
-          record={screen.record}
-          onBack={back}
-          onInsert={(presentation) => {
-            onInsertRecord(screen.record, presentation);
-          }}
-        />
-      )}
+      <ScrollArea
+        className={styles.slashScroll}
+        viewportClassName={styles.slashScrollViewport}
+        contentClassName={styles.slashScrollContent}
+        contentStyle={{ minWidth: 0 }}
+      >
+        {screen.kind === "root" ? (
+          <RootScreen
+            assets={assets}
+            collections={collections}
+            rootRows={rootRows}
+            highlight={highlightIndex}
+            onHover={setHighlight}
+            onPickAsset={onInsertAsset}
+            onPickCollection={openCollection}
+            onImport={onImportMedia ? runImport : undefined}
+            importing={importing}
+            importLabel={t.importMedia}
+            emptyLabel={t.empty}
+            assetsLabel={t.assetsSection}
+            collectionsLabel={t.collectionsSection}
+            search={search}
+            searching={searching}
+            onSearchChange={changeSearch}
+            searchLabel={t.searchLibrary}
+          />
+        ) : screen.kind === "records" ? (
+          <RecordsScreen
+            collection={screen.collection}
+            records={library.records.filter(
+              (record) => record.collectionId === screen.collection.id,
+            )}
+            onBack={back}
+            onPick={(record) => {
+              openConfigure(screen.collection, record);
+            }}
+          />
+        ) : (
+          <ConfigureScreen
+            collection={screen.collection}
+            record={screen.record}
+            onBack={back}
+            onInsert={(presentation) => {
+              onInsertRecord(screen.record, presentation);
+            }}
+          />
+        )}
+      </ScrollArea>
     </div>,
     document.body,
   );

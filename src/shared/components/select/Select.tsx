@@ -1,6 +1,7 @@
 import { Combobox as BaseCombobox } from "@base-ui/react/combobox";
 import { Select as BaseSelect } from "@base-ui/react/select";
 import { Icon } from "@shared/components/icon";
+import { ScrollArea } from "@shared/components/scroll-area";
 import { useMessages } from "@shared/i18n";
 import styles from "@shared/components/select/Select.module.css";
 
@@ -85,21 +86,23 @@ export function Select({
               <BaseCombobox.Empty className={styles.empty}>
                 {messages.common.noResults}
               </BaseCombobox.Empty>
-              <BaseCombobox.List className={styles.list}>
-                {(item: SelectOption, index: number) => (
-                  <BaseCombobox.Item
-                    key={item.value}
-                    className={styles.item}
-                    value={item}
-                    index={index}
-                  >
-                    <span className={styles.value}>{item.label}</span>
-                    <BaseCombobox.ItemIndicator className={styles.indicator}>
-                      <Icon name="check" size={16} />
-                    </BaseCombobox.ItemIndicator>
-                  </BaseCombobox.Item>
-                )}
-              </BaseCombobox.List>
+              <ScrollArea viewportClassName={styles.scrollViewport} contentStyle={{ minWidth: 0 }}>
+                <BaseCombobox.List className={styles.list}>
+                  {(item: SelectOption, index: number) => (
+                    <BaseCombobox.Item
+                      key={item.value}
+                      className={styles.item}
+                      value={item}
+                      index={index}
+                    >
+                      <span className={styles.value}>{item.label}</span>
+                      <BaseCombobox.ItemIndicator className={styles.indicator}>
+                        <Icon name="check" size={16} />
+                      </BaseCombobox.ItemIndicator>
+                    </BaseCombobox.Item>
+                  )}
+                </BaseCombobox.List>
+              </ScrollArea>
             </BaseCombobox.Popup>
           </BaseCombobox.Positioner>
         </BaseCombobox.Portal>
@@ -136,14 +139,16 @@ export function Select({
           sideOffset={4}
         >
           <BaseSelect.Popup className={styles.popup}>
-            {items.map((item) => (
-              <BaseSelect.Item key={item.value} className={styles.item} value={item.value}>
-                <BaseSelect.ItemText>{item.label}</BaseSelect.ItemText>
-                <BaseSelect.ItemIndicator className={styles.indicator}>
-                  <Icon name="check" size={16} />
-                </BaseSelect.ItemIndicator>
-              </BaseSelect.Item>
-            ))}
+            <ScrollArea viewportClassName={styles.scrollViewport} contentStyle={{ minWidth: 0 }}>
+              {items.map((item) => (
+                <BaseSelect.Item key={item.value} className={styles.item} value={item.value}>
+                  <BaseSelect.ItemText>{item.label}</BaseSelect.ItemText>
+                  <BaseSelect.ItemIndicator className={styles.indicator}>
+                    <Icon name="check" size={16} />
+                  </BaseSelect.ItemIndicator>
+                </BaseSelect.Item>
+              ))}
+            </ScrollArea>
           </BaseSelect.Popup>
         </BaseSelect.Positioner>
       </BaseSelect.Portal>

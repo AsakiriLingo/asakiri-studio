@@ -111,12 +111,15 @@
 }
 
 .popup {
-  max-height: var(--available-height);
-  overflow-y: auto;
+  overflow: hidden;
   padding: var(--space-1);
   border: var(--border-hairline) solid var(--color-border);
   border-radius: var(--radius-md);
   background: var(--color-surface);
+}
+
+.scrollViewport {
+  max-height: var(--available-height);
 }
 
 .list {

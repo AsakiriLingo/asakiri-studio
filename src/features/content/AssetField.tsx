@@ -3,6 +3,7 @@ import { Popover } from "@base-ui/react/popover";
 import type { Asset, FieldDefinition, RecordFieldItem, RecordFieldValue } from "@core/course";
 import { useFormat, useMessages } from "@shared/i18n";
 import { Icon } from "@shared/components/icon";
+import { ScrollArea } from "@shared/components/scroll-area";
 import type { SelectOption } from "@shared/components/select";
 import styles from "@features/content/CourseContent.module.css";
 
@@ -135,13 +136,44 @@ export function AssetPreview({
   return <Icon name={asset ? asset.kind : "image"} size={size} />;
 }
 
+function PickerItemThumb({
+  asset,
+  loadPreview,
+}: {
+  readonly asset: Asset | undefined;
+  readonly loadPreview: LoadPreview;
+}) {
+  const url = useAssetPreview(asset, loadPreview);
+  if (asset?.kind === "image" && url) {
+    return (
+      <img
+        className={styles.pickerItemThumb}
+        src={url}
+        alt=""
+        loading="lazy"
+        decoding="async"
+        aria-hidden="true"
+      />
+    );
+  }
+  return (
+    <span className={styles.pickerItemThumbFallback}>
+      <Icon name={asset ? asset.kind : "image"} size={16} aria-hidden="true" />
+    </span>
+  );
+}
+
 function AssetPicker({
   options,
+  assets,
+  loadPreview,
   ariaLabel,
   onPick,
   onImport,
 }: {
   readonly options: readonly SelectOption[];
+  readonly assets: readonly Asset[];
+  readonly loadPreview: LoadPreview;
   readonly ariaLabel: string;
   readonly onPick: (assetId: string) => void;
   readonly onImport: () => void;
@@ -152,6 +184,7 @@ function AssetPicker({
   const [query, setQuery] = useState("");
   const q = query.trim().toLowerCase();
   const filtered = q ? options.filter((option) => option.label.toLowerCase().includes(q)) : options;
+  const byId = new Map(assets.map((asset) => [asset.id, asset]));
 
   const close = () => {
     setOpen(false);
@@ -186,7 +219,11 @@ function AssetPicker({
                 }}
               />
             </div>
-            <div className={styles.pickerList}>
+            <ScrollArea
+              viewportClassName={styles.pickerScrollViewport}
+              contentClassName={styles.pickerList}
+              contentStyle={{ minWidth: 0 }}
+            >
               {filtered.length === 0 ? (
                 <p className={styles.pickerEmpty}>{messages.common.noResults}</p>
               ) : (
@@ -200,11 +237,12 @@ function AssetPicker({
                       onPick(option.value);
                     }}
                   >
+                    <PickerItemThumb asset={byId.get(option.value)} loadPreview={loadPreview} />
                     <span className={styles.pickerItemLabel}>{option.label}</span>
                   </button>
                 ))
               )}
-            </div>
+            </ScrollArea>
             <button
               type="button"
               className={styles.pickerImport}
@@ -278,6 +316,8 @@ export function AssetFieldControl({
   return (
     <AssetPicker
       options={assetOptions(assets, field.assetKind)}
+      assets={assets}
+      loadPreview={loadPreview}
       ariaLabel={field.name || t.linkAsset}
       onPick={setAsset}
       onImport={importNew}
@@ -338,6 +378,8 @@ export function AssetListFieldControl({
       })}
       <AssetPicker
         options={assetOptions(assets, field.assetKind)}
+        assets={assets}
+        loadPreview={loadPreview}
         ariaLabel={field.name || t.linkAsset}
         onPick={append}
         onImport={importNew}

@@ -453,11 +453,19 @@
   z-index: var(--z-dropdown);
   width: 20rem;
   max-height: 22rem;
-  overflow-y: auto;
-  padding: var(--space-2);
+  overflow: hidden;
   border: var(--border-hairline) solid var(--color-border);
   border-radius: var(--radius-md);
   background: var(--color-surface);
+}
+
+.slashScroll,
+.slashScrollViewport {
+  max-height: inherit;
+}
+
+.slashScrollContent {
+  padding: var(--space-2);
 }
 
 .slashList {

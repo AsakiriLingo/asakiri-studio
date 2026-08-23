@@ -109,6 +109,7 @@ export function FragmentField({
         ) : source === "content" ? (
           <>
             <Select
+              searchable
               aria-label={t.entry}
               placeholder={t.pickRecord}
               value={recordId}
