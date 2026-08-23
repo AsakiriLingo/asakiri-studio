@@ -1,5 +1,6 @@
 mod course;
 mod media;
+mod packaging;
 mod tts;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -90,6 +91,7 @@ pub fn run() {
             media::write_temp_media,
             media::list_folder_files,
             media::read_document,
+            packaging::write_stored_zip,
             tts::list_tts_voices,
             tts::synthesize_tts,
             tts::preview_tts,

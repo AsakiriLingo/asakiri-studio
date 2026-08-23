@@ -29,6 +29,12 @@ export type {
   ManifestCourseEntry,
   Manifest,
 } from "@core/packaging/model";
+export type {
+  StoredZipEntry,
+  WrittenZipEntry,
+  WrittenZip,
+  PackWriter,
+} from "@core/packaging/pack-writer";
 export { collectReachableBlobs } from "@core/packaging/reachability";
 export { planPacks } from "@core/packaging/pack-plan";
 export { buildManifest } from "@core/packaging/manifest";

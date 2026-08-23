@@ -107,7 +107,7 @@ pub fn create_course(parent_path: String, name: String) -> Result<CreatedCourse,
     })
 }
 
-fn resolve_course_path(root_path: &str, relative_path: &str) -> Option<std::path::PathBuf> {
+pub(crate) fn resolve_course_path(root_path: &str, relative_path: &str) -> Option<std::path::PathBuf> {
     let root = Path::new(root_path);
     let mut target = root.to_path_buf();
     for segment in relative_path.split('/') {
