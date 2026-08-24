@@ -1,6 +1,7 @@
 import {
   memo,
   useCallback,
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -39,6 +40,7 @@ import { Field, TextInput } from "@shared/components/form";
 import { Icon, type IconName } from "@shared/components/icon";
 import { IconButton } from "@shared/components/icon-button";
 import { Status } from "@shared/components/status";
+import { Tooltip } from "@shared/components/tooltip";
 import { WorkInner } from "@shared/components/work-surface";
 import styles from "@features/course-structure/CourseStructure.module.css";
 
@@ -199,11 +201,15 @@ function RowMenu({
   onRename,
   onDuplicate,
   onDelete,
+  moveTargets,
+  onMove,
 }: {
   readonly trigger: ReactElement;
   readonly onRename: () => void;
   readonly onDuplicate?: (() => void) | undefined;
   readonly onDelete: () => void;
+  readonly moveTargets?: readonly OutlineSection[] | undefined;
+  readonly onMove?: ((unitId: string) => void) | undefined;
 }) {
   const messages = useMessages();
   return (
@@ -219,6 +225,32 @@ function RowMenu({
               <ContextMenu.Item className={styles.menuItem} onClick={onDuplicate}>
                 {messages.common.duplicate}
               </ContextMenu.Item>
+            ) : null}
+            {onMove && moveTargets && moveTargets.length > 0 ? (
+              <ContextMenu.SubmenuRoot>
+                <ContextMenu.SubmenuTrigger className={styles.menuItem}>
+                  <span className={styles.menuItemLabel}>{messages.structure.moveToUnit}</span>
+                  <Icon name="chevron-right" size={16} />
+                </ContextMenu.SubmenuTrigger>
+                <ContextMenu.Portal>
+                  <ContextMenu.Positioner className={styles.menuPositioner}>
+                    <ContextMenu.Popup className={styles.menuPopup}>
+                      {moveTargets.map((unit) => (
+                        <ContextMenu.Item
+                          key={unit.id}
+                          className={styles.menuItem}
+                          onClick={() => {
+                            onMove(unit.id);
+                          }}
+                        >
+                          <Icon name="folder" size={18} />
+                          {unit.title}
+                        </ContextMenu.Item>
+                      ))}
+                    </ContextMenu.Popup>
+                  </ContextMenu.Positioner>
+                </ContextMenu.Portal>
+              </ContextMenu.SubmenuRoot>
             ) : null}
             <ContextMenu.Item
               className={[styles.menuItem, styles.menuItemDanger].join(" ")}
@@ -249,6 +281,8 @@ const LessonRow = memo(function LessonRow({
   onDuplicatePart,
   onReorderParts,
   onRequestAddPart,
+  moveUnits,
+  onMove,
 }: {
   readonly lesson: Lesson;
   readonly index: number;
@@ -267,6 +301,8 @@ const LessonRow = memo(function LessonRow({
     | ((lessonId: string, orderedPartIds: readonly string[]) => Promise<ProjectWriteResult>)
     | undefined;
   readonly onRequestAddPart?: ((lessonId: string) => void) | undefined;
+  readonly moveUnits?: readonly OutlineSection[] | undefined;
+  readonly onMove?: ((lesson: Lesson, unitId: string) => void) | undefined;
 }) {
   const messages = useMessages();
   const t = messages.structure;
@@ -331,6 +367,12 @@ const LessonRow = memo(function LessonRow({
   const handleRequestAddPart = useCallback(() => {
     onRequestAddPart?.(lesson.id);
   }, [onRequestAddPart, lesson.id]);
+  const handleMove = useCallback(
+    (unitId: string) => {
+      onMove?.(lesson, unitId);
+    },
+    [onMove, lesson],
+  );
 
   if (variant === "sidebar") {
     const hasParts = lesson.parts.length > 0;
@@ -346,6 +388,8 @@ const LessonRow = memo(function LessonRow({
           }}
           onDuplicate={onDuplicate ? handleDuplicate : undefined}
           onDelete={handleRequestDelete}
+          moveTargets={moveUnits}
+          onMove={onMove ? handleMove : undefined}
           trigger={
             <div className={[styles.treeRow, styles.lessonRow].join(" ")}>
               {hasParts ? (
@@ -632,11 +676,87 @@ function PartList({
   );
 }
 
+function OrphanLessons({
+  lessons,
+  units,
+  variant,
+  selectedPartId,
+  collapseParts,
+  onOpenSettings,
+  onOpenPart,
+  onRename,
+  onRequestDelete,
+  onDuplicate,
+  onMove,
+  onRenamePart,
+  onRequestDeletePart,
+  onDuplicatePart,
+  onReorderParts,
+}: {
+  readonly lessons: readonly Lesson[];
+  readonly units: readonly OutlineSection[];
+  readonly variant: "page" | "sidebar";
+  readonly selectedPartId?: string | undefined;
+  readonly collapseParts: boolean;
+  readonly onOpenSettings: (lessonId: string) => void;
+  readonly onOpenPart: (lessonId: string, partId: string) => void;
+  readonly onRename: (lesson: Lesson, title: string) => void;
+  readonly onRequestDelete: (lesson: Lesson) => void;
+  readonly onDuplicate?: ((lesson: Lesson) => void) | undefined;
+  readonly onMove: (lesson: Lesson, unitId: string) => void;
+  readonly onRenamePart: (lesson: Lesson, part: Part, title: string) => void;
+  readonly onRequestDeletePart: (lesson: Lesson, part: Part) => void;
+  readonly onDuplicatePart?: ((lesson: Lesson, part: Part) => void) | undefined;
+  readonly onReorderParts?:
+    | ((lessonId: string, orderedPartIds: readonly string[]) => Promise<ProjectWriteResult>)
+    | undefined;
+}) {
+  const t = useMessages().structure;
+  return (
+    <section className={styles.orphanGroup} aria-label={t.unassignedTitle}>
+      <header className={styles.orphanHeader}>
+        <Icon className={styles.typeIcon} name="inbox-filled" size={16} aria-hidden="true" />
+        <span className={styles.unitName}>{t.unassignedTitle}</span>
+      </header>
+      <p className={styles.orphanHint}>{t.unassignedHint}</p>
+      <SortableContext
+        items={lessons.map((lesson) => lesson.id)}
+        strategy={verticalListSortingStrategy}
+      >
+        <div className={styles.lessonOrder}>
+          {lessons.map((lesson, index) => (
+            <LessonRow
+              key={lesson.id}
+              lesson={lesson}
+              index={index}
+              variant={variant}
+              selectedPartId={selectedPartId}
+              collapseParts={collapseParts}
+              moveUnits={units}
+              onMove={onMove}
+              onOpenSettings={onOpenSettings}
+              onOpenPart={onOpenPart}
+              onRename={onRename}
+              onRequestDelete={onRequestDelete}
+              onDuplicate={onDuplicate}
+              onRenamePart={onRenamePart}
+              onRequestDeletePart={onRequestDeletePart}
+              onDuplicatePart={onDuplicatePart}
+              onReorderParts={onReorderParts}
+            />
+          ))}
+        </div>
+      </SortableContext>
+    </section>
+  );
+}
+
 const UnitBlock = memo(function UnitBlock({
   unit,
   index,
   lessons,
   collapsed,
+  highlighted,
   addingLesson,
   variant,
   selectedPartId,
@@ -657,15 +777,20 @@ const UnitBlock = memo(function UnitBlock({
   onDuplicatePart,
   onReorderParts,
   onRequestAddPart,
+  moveTargets,
+  onMoveLesson,
 }: {
   readonly unit: OutlineSection;
   readonly index: number;
   readonly lessons: readonly Lesson[];
   readonly collapsed: boolean;
+  readonly highlighted: boolean;
   readonly addingLesson: boolean;
   readonly variant: "page" | "sidebar";
   readonly selectedPartId?: string | undefined;
   readonly collapseParts: boolean;
+  readonly moveTargets?: readonly OutlineSection[] | undefined;
+  readonly onMoveLesson?: ((lesson: Lesson, unitId: string) => void) | undefined;
   readonly onToggleCollapsed: (unitId: string) => void;
   readonly onAddLesson: (unitId: string) => void;
   readonly onOpenSettings: (unitId: string) => void;
@@ -724,7 +849,14 @@ const UnitBlock = memo(function UnitBlock({
     <article
       ref={setNodeRef}
       style={style}
-      className={[styles.unitBlock, isDragging ? styles.dragging : ""].filter(Boolean).join(" ")}
+      data-unit-id={unit.id}
+      className={[
+        styles.unitBlock,
+        isDragging ? styles.dragging : "",
+        highlighted ? styles.highlighted : "",
+      ]
+        .filter(Boolean)
+        .join(" ")}
     >
       {sidebar ? (
         <ContextMenu.Root>
@@ -919,6 +1051,8 @@ const UnitBlock = memo(function UnitBlock({
                 onDuplicatePart={onDuplicatePart}
                 onReorderParts={onReorderParts}
                 onRequestAddPart={onRequestAddPart}
+                moveUnits={moveTargets?.filter((target) => target.id !== unit.id)}
+                onMove={onMoveLesson}
               />
             ))}
           </div>
@@ -967,6 +1101,8 @@ export interface CourseStructureProps {
   readonly onRenameLesson: (lessonId: string, title: string) => Promise<ProjectWriteResult>;
   readonly onDeleteLesson: (lessonId: string) => Promise<ProjectWriteResult>;
   readonly onDuplicateLesson?: ((lessonId: string) => Promise<ProjectWriteResult>) | undefined;
+  readonly onMoveLesson?:
+    ((lessonId: string, unitId: string) => Promise<ProjectWriteResult>) | undefined;
   readonly onReorderOutline: (
     sections: readonly { readonly id: string; readonly lessonIds: readonly string[] }[],
   ) => Promise<ProjectWriteResult>;
@@ -991,8 +1127,25 @@ interface UnitLayout {
   readonly lessonIds: readonly string[];
 }
 
+const UNASSIGNED_ID = "__unassigned__";
+
 function outlineToLayout(outline: readonly OutlineSection[]): UnitLayout[] {
   return outline.map((section) => ({ id: section.id, lessonIds: [...section.lessonIds] }));
+}
+
+function orphanLessonIds(outline: readonly OutlineSection[], lessons: readonly Lesson[]): string[] {
+  const assigned = new Set(outline.flatMap((section) => section.lessonIds));
+  return lessons.filter((lesson) => !assigned.has(lesson.id)).map((lesson) => lesson.id);
+}
+
+function buildLayout(outline: readonly OutlineSection[], lessons: readonly Lesson[]): UnitLayout[] {
+  const base = outlineToLayout(outline);
+  const orphans = orphanLessonIds(outline, lessons);
+  return orphans.length > 0 ? [...base, { id: UNASSIGNED_ID, lessonIds: orphans }] : base;
+}
+
+function unitSections(layout: readonly UnitLayout[]): UnitLayout[] {
+  return layout.filter((unit) => unit.id !== UNASSIGNED_ID);
 }
 
 function sameLayout(layout: readonly UnitLayout[], outline: readonly OutlineSection[]): boolean {
@@ -1024,6 +1177,7 @@ export function CourseStructure({
   onRenamePart,
   onDeletePart,
   onDuplicatePart,
+  onMoveLesson,
   query = "",
   variant = "page",
 }: CourseStructureProps) {
@@ -1034,6 +1188,8 @@ export function CourseStructure({
   const [creating, setCreating] = useState(false);
   const [addingUnitId, setAddingUnitId] = useState<string | null>(null);
   const [failed, setFailed] = useState(false);
+  const [highlightUnitId, setHighlightUnitId] = useState<string | null>(null);
+  const pendingUnitIdsRef = useRef<ReadonlySet<string> | null>(null);
   const [settingsUnitId, setSettingsUnitId] = useState<string | null>(null);
   const [settingsLessonId, setSettingsLessonId] = useState<string | null>(null);
   const [addingPartLessonId, setAddingPartLessonId] = useState<string | null>(null);
@@ -1089,10 +1245,43 @@ export function CourseStructure({
   const createUnit = useCallback(async () => {
     setCreating(true);
     setFailed(false);
+    pendingUnitIdsRef.current = new Set(course.outline.map((section) => section.id));
     const result = await onNewUnit();
     setCreating(false);
     report(result);
-  }, [onNewUnit, report]);
+    if (result.status !== "saved") {
+      pendingUnitIdsRef.current = null;
+    }
+  }, [onNewUnit, report, course.outline]);
+
+  useEffect(() => {
+    const pending = pendingUnitIdsRef.current;
+    if (!pending) return;
+    const added = course.outline.find((section) => !pending.has(section.id));
+    if (!added) return;
+    pendingUnitIdsRef.current = null;
+    setHighlightUnitId(added.id);
+    const frame = requestAnimationFrame(() => {
+      const element = document.querySelector(`[data-unit-id="${added.id}"]`);
+      if (element instanceof HTMLElement) {
+        const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        element.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "nearest" });
+      }
+    });
+    return () => {
+      cancelAnimationFrame(frame);
+    };
+  }, [course.outline]);
+
+  useEffect(() => {
+    if (highlightUnitId === null) return;
+    const timer = window.setTimeout(() => {
+      setHighlightUnitId(null);
+    }, 1600);
+    return () => {
+      window.clearTimeout(timer);
+    };
+  }, [highlightUnitId]);
 
   const renameUnit = useCallback(
     (unit: OutlineSection, title: string) => {
@@ -1269,14 +1458,18 @@ export function CourseStructure({
   }, []);
 
   const sensors = useReorderSensors();
-  const [layout, setLayout] = useState<UnitLayout[]>(() => outlineToLayout(course.outline));
+  const [layout, setLayout] = useState<UnitLayout[]>(() =>
+    buildLayout(course.outline, course.lessons),
+  );
   const [syncedOutline, setSyncedOutline] = useState(course.outline);
+  const [syncedLessons, setSyncedLessons] = useState(course.lessons);
   const [activeId, setActiveId] = useState<string | null>(null);
   const layoutRef = useRef(layout);
 
-  if (activeId === null && course.outline !== syncedOutline) {
+  if (activeId === null && (course.outline !== syncedOutline || course.lessons !== syncedLessons)) {
     setSyncedOutline(course.outline);
-    setLayout(outlineToLayout(course.outline));
+    setSyncedLessons(course.lessons);
+    setLayout(buildLayout(course.outline, course.lessons));
   }
 
   const commitLayout = (next: UnitLayout[]) => {
@@ -1293,13 +1486,15 @@ export function CourseStructure({
   };
 
   const persistLayout = (next: UnitLayout[]) => {
-    if (sameLayout(next, course.outline)) return;
+    const sections = unitSections(next);
+    if (sameLayout(sections, course.outline)) return;
     setFailed(false);
-    void onReorderOutline(next).then((result) => {
+    void onReorderOutline(sections).then((result) => {
       report(result);
       if (result.status !== "saved") {
         setSyncedOutline(course.outline);
-        setLayout(outlineToLayout(course.outline));
+        setSyncedLessons(course.lessons);
+        setLayout(buildLayout(course.outline, course.lessons));
       }
     });
   };
@@ -1346,7 +1541,7 @@ export function CourseStructure({
     const activeIdStr = String(active.id);
     setActiveId(null);
     if (!over) {
-      commitLayout(outlineToLayout(course.outline));
+      commitLayout(buildLayout(course.outline, course.lessons));
       return;
     }
     const overId = String(over.id);
@@ -1367,7 +1562,7 @@ export function CourseStructure({
       course.outline.find((section) => section.lessonIds.includes(activeIdStr))?.id ??
       containerOf(activeIdStr);
     if (!toUnit || !originUnit) {
-      commitLayout(outlineToLayout(course.outline));
+      commitLayout(buildLayout(course.outline, course.lessons));
       return;
     }
     expandUnit(toUnit);
@@ -1393,7 +1588,7 @@ export function CourseStructure({
 
     const target = current.find((entry) => entry.id === toUnit);
     if (!target) {
-      commitLayout(outlineToLayout(course.outline));
+      commitLayout(buildLayout(course.outline, course.lessons));
       return;
     }
     const baseIds = target.lessonIds.filter((id) => id !== activeIdStr);
@@ -1420,6 +1615,20 @@ export function CourseStructure({
     [course.outline],
   );
 
+  const orphanLessons = useMemo(() => {
+    const assigned = new Set(course.outline.flatMap((section) => section.lessonIds));
+    return course.lessons.filter((lesson) => !assigned.has(lesson.id));
+  }, [course.outline, course.lessons]);
+
+  const moveLesson = useCallback(
+    (lesson: Lesson, unitId: string) => {
+      if (!onMoveLesson) return;
+      setFailed(false);
+      void onMoveLesson(lesson.id, unitId).then(report);
+    },
+    [onMoveLesson, report],
+  );
+
   const collapsePartsByDefault = useMemo(() => {
     if (course.lessons.length > LARGE_LESSON_COUNT) return true;
     let parts = 0;
@@ -1429,6 +1638,11 @@ export function CourseStructure({
     }
     return false;
   }, [course.lessons]);
+
+  const visibleUnits = unitSections(layout);
+  const unassignedLessons = (layout.find((unit) => unit.id === UNASSIGNED_ID)?.lessonIds ?? [])
+    .map((id) => lessonById.get(id))
+    .filter((lesson): lesson is Lesson => lesson !== undefined);
 
   return (
     <WorkInner
@@ -1447,16 +1661,18 @@ export function CourseStructure({
                 <Icon name={allCollapsed ? "arrows-expand" : "minimize"} size={18} />
               </IconButton>
             ) : null}
-            <IconButton
-              size="sm"
-              aria-label={t.newUnit}
-              disabled={creating}
-              onClick={() => {
-                void createUnit();
-              }}
-            >
-              <Icon name="plus" size={18} />
-            </IconButton>
+            <Tooltip content={t.newUnit}>
+              <IconButton
+                size="sm"
+                aria-label={t.newUnit}
+                disabled={creating}
+                onClick={() => {
+                  void createUnit();
+                }}
+              >
+                <Icon name="plus" size={18} />
+              </IconButton>
+            </Tooltip>
           </div>
         </div>
       ) : (
@@ -1496,7 +1712,7 @@ export function CourseStructure({
           selectedId={selectedId}
           onOpenPart={onOpenPart}
         />
-      ) : course.outline.length === 0 ? (
+      ) : course.outline.length === 0 && orphanLessons.length === 0 ? (
         <p className={styles.empty}>{t.empty}</p>
       ) : (
         <DndContext
@@ -1507,52 +1723,76 @@ export function CourseStructure({
           onDragEnd={handleDragEnd}
           onDragCancel={() => {
             setActiveId(null);
-            commitLayout(outlineToLayout(course.outline));
+            commitLayout(buildLayout(course.outline, course.lessons));
           }}
         >
-          <SortableContext
-            items={layout.map((unit) => unit.id)}
-            strategy={verticalListSortingStrategy}
-          >
-            <div className={styles.unitStack} aria-label="Course units">
-              {layout.map((unitLayout, unitIndex) => {
-                const unit = unitById.get(unitLayout.id);
-                if (!unit) return null;
-                const lessons = unitLayout.lessonIds
-                  .map((lessonId) => lessonById.get(lessonId))
-                  .filter((lesson): lesson is Lesson => lesson !== undefined);
-                return (
-                  <UnitBlock
-                    key={unit.id}
-                    unit={unit}
-                    index={unitIndex}
-                    lessons={lessons}
-                    collapsed={collapsedUnitIds.has(unit.id)}
-                    addingLesson={addingUnitId === unit.id}
-                    variant={variant}
-                    selectedPartId={selectedId}
-                    collapseParts={collapsePartsByDefault}
-                    onToggleCollapsed={toggleUnitCollapsed}
-                    onAddLesson={handleAddLesson}
-                    onOpenSettings={openUnitSettings}
-                    onRename={renameUnit}
-                    onRequestDelete={requestDeleteUnit}
-                    onDuplicate={onDuplicateUnit ? duplicateUnit : undefined}
-                    onOpenPart={handleOpenPart}
-                    onOpenLessonSettings={openLessonSettings}
-                    onRenameLesson={renameLesson}
-                    onRequestDeleteLesson={requestDeleteLesson}
-                    onDuplicateLesson={onDuplicateLesson ? duplicateLesson : undefined}
-                    onRenamePart={renamePart}
-                    onRequestDeletePart={requestDeletePart}
-                    onDuplicatePart={onDuplicatePart ? duplicatePart : undefined}
-                    onReorderParts={reorderPartsWithReport}
-                    onRequestAddPart={onAddPart ? requestAddPart : undefined}
-                  />
-                );
-              })}
-            </div>
-          </SortableContext>
+          {visibleUnits.length > 0 ? (
+            <SortableContext
+              items={visibleUnits.map((unit) => unit.id)}
+              strategy={verticalListSortingStrategy}
+            >
+              <div className={styles.unitStack} aria-label="Course units">
+                {visibleUnits.map((unitLayout, unitIndex) => {
+                  const unit = unitById.get(unitLayout.id);
+                  if (!unit) return null;
+                  const lessons = unitLayout.lessonIds
+                    .map((lessonId) => lessonById.get(lessonId))
+                    .filter((lesson): lesson is Lesson => lesson !== undefined);
+                  return (
+                    <UnitBlock
+                      key={unit.id}
+                      unit={unit}
+                      index={unitIndex}
+                      lessons={lessons}
+                      collapsed={collapsedUnitIds.has(unit.id)}
+                      highlighted={highlightUnitId === unit.id}
+                      addingLesson={addingUnitId === unit.id}
+                      variant={variant}
+                      selectedPartId={selectedId}
+                      collapseParts={collapsePartsByDefault}
+                      onToggleCollapsed={toggleUnitCollapsed}
+                      onAddLesson={handleAddLesson}
+                      onOpenSettings={openUnitSettings}
+                      onRename={renameUnit}
+                      onRequestDelete={requestDeleteUnit}
+                      onDuplicate={onDuplicateUnit ? duplicateUnit : undefined}
+                      onOpenPart={handleOpenPart}
+                      onOpenLessonSettings={openLessonSettings}
+                      onRenameLesson={renameLesson}
+                      onRequestDeleteLesson={requestDeleteLesson}
+                      onDuplicateLesson={onDuplicateLesson ? duplicateLesson : undefined}
+                      onRenamePart={renamePart}
+                      onRequestDeletePart={requestDeletePart}
+                      onDuplicatePart={onDuplicatePart ? duplicatePart : undefined}
+                      onReorderParts={reorderPartsWithReport}
+                      onRequestAddPart={onAddPart ? requestAddPart : undefined}
+                      moveTargets={course.outline}
+                      onMoveLesson={onMoveLesson ? moveLesson : undefined}
+                    />
+                  );
+                })}
+              </div>
+            </SortableContext>
+          ) : null}
+          {unassignedLessons.length > 0 ? (
+            <OrphanLessons
+              lessons={unassignedLessons}
+              units={course.outline}
+              variant={variant}
+              selectedPartId={selectedId}
+              collapseParts={collapsePartsByDefault}
+              onOpenSettings={openLessonSettings}
+              onOpenPart={handleOpenPart}
+              onRename={renameLesson}
+              onRequestDelete={requestDeleteLesson}
+              onDuplicate={onDuplicateLesson ? duplicateLesson : undefined}
+              onMove={moveLesson}
+              onRenamePart={renamePart}
+              onRequestDeletePart={requestDeletePart}
+              onDuplicatePart={onDuplicatePart ? duplicatePart : undefined}
+              onReorderParts={reorderPartsWithReport}
+            />
+          ) : null}
           <DragOverlay>
             {activeLesson ? (
               <div className={[styles.orderedRow, styles.dragOverlay].join(" ")}>
