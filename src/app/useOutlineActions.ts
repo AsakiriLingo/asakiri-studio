@@ -89,6 +89,7 @@ export interface OutlineActions {
   readonly renameLesson: (lessonId: string, title: string) => Promise<ProjectWriteResult>;
   readonly deleteLesson: (lessonId: string) => Promise<ProjectWriteResult>;
   readonly duplicateLesson: (lessonId: string) => Promise<ProjectWriteResult>;
+  readonly moveLessonToUnit: (lessonId: string, unitId: string) => Promise<ProjectWriteResult>;
   readonly reorderOutline: (
     sections: readonly { readonly id: string; readonly lessonIds: readonly string[] }[],
   ) => Promise<ProjectWriteResult>;
@@ -313,6 +314,30 @@ export function useOutlineActions(
       return result;
     });
 
+  const moveLessonToUnit = (lessonId: string, unitId: string): Promise<ProjectWriteResult> =>
+    store.withCourse(WRITE_UNAVAILABLE, async ({ session, course, apply }) => {
+      if (!course.outline.some((section) => section.id === unitId)) {
+        return WRITE_UNAVAILABLE;
+      }
+      const nextOutline = course.outline.map((section) => {
+        const without = section.lessonIds.filter((id) => id !== lessonId);
+        if (section.id === unitId) {
+          return { ...section, lessonIds: [...without, lessonId] };
+        }
+        return without.length === section.lessonIds.length
+          ? section
+          : { ...section, lessonIds: without };
+      });
+      const result = await services.writer.updateOutline(session, nextOutline);
+      if (result.status === "saved") {
+        apply((current) => ({
+          ...current,
+          course: { ...current.course, outline: nextOutline },
+        }));
+      }
+      return result;
+    });
+
   const reorderOutline = (
     sections: readonly { readonly id: string; readonly lessonIds: readonly string[] }[],
   ): Promise<ProjectWriteResult> =>
@@ -342,6 +367,7 @@ export function useOutlineActions(
     renameLesson,
     deleteLesson,
     duplicateLesson,
+    moveLessonToUnit,
     reorderOutline,
   };
 }

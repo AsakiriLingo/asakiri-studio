@@ -545,6 +545,7 @@ export function App() {
                   onRenameLesson={outlineActions.renameLesson}
                   onDeleteLesson={outlineActions.deleteLesson}
                   onDuplicateLesson={outlineActions.duplicateLesson}
+                  onMoveLesson={outlineActions.moveLessonToUnit}
                   onReorderOutline={outlineActions.reorderOutline}
                   onOpenPart={openPartView}
                   onReorderParts={partActions.reorderParts}

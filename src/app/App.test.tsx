@@ -101,6 +101,7 @@ interface StructureProps {
   readonly onDuplicateUnit?: (unitId: string) => Promise<ProjectWriteResult>;
   readonly onDuplicateLesson?: (lessonId: string) => Promise<ProjectWriteResult>;
   readonly onDuplicatePart?: (lessonId: string, partId: string) => Promise<ProjectWriteResult>;
+  readonly onMoveLesson?: (lessonId: string, unitId: string) => Promise<ProjectWriteResult>;
   readonly selectedId?: string;
 }
 
@@ -756,6 +757,31 @@ describe("App", () => {
     expect(course.outline[1]?.title).toBe("Unit 1 copy");
     expect(course.outline[1]?.lessonIds).toHaveLength(2);
     expect(services.writer.duplicateLessons).toHaveBeenCalledTimes(2);
+  });
+
+  it("keeps a deleted unit's lesson and moves it into another unit", async () => {
+    await openWorkspace();
+    await navigate("lessons");
+    let structure = must(captured.structure, "CourseStructure");
+
+    await act(async () => {
+      await structure.onNewUnit();
+    });
+    structure = must(captured.structure, "CourseStructure");
+    const newUnitId = structure.course.outline[1]?.id ?? "";
+
+    await act(async () => {
+      await structure.onDeleteUnit("u1");
+    });
+    let course = must(captured.structure, "CourseStructure").course;
+    expect(course.lessons.some((entry) => entry.id === "l1")).toBe(true);
+    expect(course.outline.some((section) => section.lessonIds.includes("l1"))).toBe(false);
+
+    await act(async () => {
+      await must(captured.structure, "CourseStructure").onMoveLesson?.("l1", newUnitId);
+    });
+    course = must(captured.structure, "CourseStructure").course;
+    expect(course.outline.find((section) => section.id === newUnitId)?.lessonIds).toContain("l1");
   });
 
   it("creates, renames, and deletes lessons", async () => {

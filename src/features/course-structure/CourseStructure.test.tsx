@@ -108,3 +108,50 @@ describe("CourseStructure collapsing", () => {
     expect(screen.getByRole("button", { name: /Reorder Unit two/ })).toBeInTheDocument();
   });
 });
+
+describe("CourseStructure unassigned lessons", () => {
+  it("lists lessons that belong to no unit with their parts and no part-count copy", () => {
+    const base = makeCourse();
+    const course: Course = {
+      ...base,
+      lessons: [
+        ...base.lessons,
+        {
+          id: "lesson-stray",
+          title: "Stray lesson",
+          parts: [
+            {
+              id: "stray-part",
+              title: "Stray part",
+              content: { kind: "tiptap", document: { type: "doc", content: [] } },
+            },
+          ],
+        },
+      ],
+    };
+    render(
+      <I18nProvider locale="en">
+        <ConfirmProvider>
+          <CourseStructure
+            course={course}
+            variant="sidebar"
+            onNewUnit={vi.fn().mockResolvedValue(saved)}
+            onRenameUnit={vi.fn().mockResolvedValue(saved)}
+            onDeleteUnit={vi.fn().mockResolvedValue(saved)}
+            onAddLesson={vi.fn().mockResolvedValue(saved)}
+            onRenameLesson={vi.fn().mockResolvedValue(saved)}
+            onDeleteLesson={vi.fn().mockResolvedValue(saved)}
+            onMoveLesson={vi.fn().mockResolvedValue(saved)}
+            onReorderOutline={vi.fn().mockResolvedValue(saved)}
+            onOpenPart={vi.fn()}
+          />
+        </ConfirmProvider>
+      </I18nProvider>,
+    );
+
+    expect(screen.getByText("Unassigned lessons")).toBeInTheDocument();
+    expect(screen.getByText("Stray lesson")).toBeInTheDocument();
+    expect(screen.getByText("Stray part")).toBeInTheDocument();
+    expect(screen.queryByText("1 part")).not.toBeInTheDocument();
+  });
+});

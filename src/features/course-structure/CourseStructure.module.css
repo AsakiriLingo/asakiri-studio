@@ -695,3 +695,47 @@
 .searchInput::placeholder {
   color: var(--color-text-muted);
 }
+
+.orphanGroup {
+  margin-top: var(--space-4);
+  border-top: var(--border-hairline) solid var(--color-border);
+  padding-top: var(--space-3);
+}
+
+.orphanHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-3);
+}
+
+.orphanHint {
+  margin: 0;
+  padding: 0 var(--space-3) var(--space-2);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-200);
+}
+
+.menuItemLabel {
+  flex: 1;
+}
+
+.highlighted {
+  animation: unitHighlight 1.6s ease-out;
+}
+
+@keyframes unitHighlight {
+  from {
+    box-shadow: 0 0 0 2px var(--color-brand);
+  }
+  to {
+    box-shadow: 0 0 0 2px transparent;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .highlighted {
+    animation: none;
+    box-shadow: 0 0 0 2px var(--color-brand);
+  }
+}
