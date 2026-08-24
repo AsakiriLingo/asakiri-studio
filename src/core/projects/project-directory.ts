@@ -30,5 +30,6 @@ export interface ProjectDirectoryGateway {
   openProjectDirectory(options: { readonly dialogTitle: string }): Promise<ProjectDirectory | null>;
   listRecentProjects(): readonly RecentProject[];
   openRecentProject(id: string): Promise<ProjectDirectory | null>;
+  forgetRecentProject(id: string): void;
   clearRecentProjects(): void;
 }

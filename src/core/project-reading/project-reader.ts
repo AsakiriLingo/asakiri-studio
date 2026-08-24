@@ -8,7 +8,8 @@ export interface ContentCollectionSummary {
   readonly recordCount: number;
 }
 
-export type ProjectReadErrorCode = "unavailable" | "unknown";
+export type ProjectReadErrorCode =
+  "missing" | "incompatibleVersion" | "malformed" | "unavailable" | "unknown";
 
 export type ProjectReadResult<T> =
   | { readonly status: "ready"; readonly data: T }

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { ProjectSession } from "@core/projects";
 import {
   createLayoutProjectReader,
+  ProjectFileNotFoundError,
   type ProjectFileReader,
 } from "@platform/project-reading/layout-project-reader";
 import { runProjectReaderContract } from "@platform/project-reading/project-reader-contract";
@@ -11,7 +12,7 @@ function fakeFileReader(files: Readonly<Record<string, string>>): ProjectFileRea
     readTextFile(relativePath) {
       const content = files[relativePath];
       return content === undefined
-        ? Promise.reject(new Error(`ENOENT: ${relativePath}`))
+        ? Promise.reject(new ProjectFileNotFoundError(relativePath))
         : Promise.resolve(content);
     },
   };
@@ -91,15 +92,44 @@ describe("createLayoutProjectReader readCourse", () => {
     }
   });
 
-  it("fails as unavailable when the manifest is missing", async () => {
+  it("fails as missing when the manifest is absent", async () => {
     const reader = createLayoutProjectReader(() => fakeFileReader({}));
 
-    expect(await reader.readCourse(session)).toEqual({ status: "failed", code: "unavailable" });
+    expect(await reader.readCourse(session)).toEqual({ status: "failed", code: "missing" });
   });
 
   it("fails as unavailable when the session cannot be resolved", async () => {
     const reader = createLayoutProjectReader(() => null);
 
     expect(await reader.readCourse(session)).toEqual({ status: "failed", code: "unavailable" });
+  });
+
+  it("fails as incompatibleVersion when the course needs a newer format", async () => {
+    const reader = createLayoutProjectReader(() =>
+      fakeFileReader({
+        "project.json": JSON.stringify({ format: "asakiri-course", formatVersion: 99 }),
+      }),
+    );
+
+    expect(await reader.readCourse(session)).toEqual({
+      status: "failed",
+      code: "incompatibleVersion",
+    });
+  });
+
+  it("fails as malformed when the manifest is not valid JSON", async () => {
+    const reader = createLayoutProjectReader(() =>
+      fakeFileReader({ "project.json": "{ not json" }),
+    );
+
+    expect(await reader.readCourse(session)).toEqual({ status: "failed", code: "malformed" });
+  });
+
+  it("fails as malformed when a referenced file is missing", async () => {
+    const withoutRecord: Record<string, string> = { ...courseFiles };
+    delete withoutRecord["content/records/cat.json"];
+    const reader = createLayoutProjectReader(() => fakeFileReader(withoutRecord));
+
+    expect(await reader.readCourse(session)).toEqual({ status: "failed", code: "malformed" });
   });
 });

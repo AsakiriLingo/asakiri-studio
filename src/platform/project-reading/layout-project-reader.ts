@@ -1,9 +1,10 @@
 import type { LoadedCourse } from "@core/course";
-import { parseCourseWithSources } from "@core/course";
+import { CourseFormatError, CourseParseError, parseCourseWithSources } from "@core/course";
 import type { LoadedDrafts } from "@core/drafts";
 import { parseDrafts } from "@core/drafts";
 import type {
   ContentCollectionSummary,
+  ProjectReadErrorCode,
   ProjectReader,
   ProjectReadResult,
 } from "@core/project-reading";
@@ -12,6 +13,8 @@ import type { ProjectSession } from "@core/projects";
 export interface ProjectFileReader {
   readTextFile(relativePath: string): Promise<string>;
 }
+
+export class ProjectFileNotFoundError extends Error {}
 
 export type ResolveProjectFileReader = (session: ProjectSession) => ProjectFileReader | null;
 
@@ -46,6 +49,20 @@ function parseCollectionSummary(text: string): ContentCollectionSummary {
   return { id: data.id, name: data.name, recordCount: data.recordFiles.length };
 }
 
+function isMissingFileError(error: unknown): boolean {
+  return error instanceof ProjectFileNotFoundError;
+}
+
+function classifyReadError(error: unknown): ProjectReadErrorCode {
+  if (error instanceof CourseFormatError) {
+    return "incompatibleVersion";
+  }
+  if (error instanceof CourseParseError || isMissingFileError(error)) {
+    return "malformed";
+  }
+  return "unknown";
+}
+
 export function createLayoutProjectReader(
   resolveFileReader: ResolveProjectFileReader,
 ): ProjectReader {
@@ -76,9 +93,18 @@ export function createLayoutProjectReader(
       }
 
       try {
+        await files.readTextFile(MANIFEST_PATH);
+      } catch (error) {
+        if (isMissingFileError(error)) {
+          return { status: "failed", code: "missing" };
+        }
+        return { status: "failed", code: classifyReadError(error) };
+      }
+
+      try {
         return { status: "ready", data: await parseCourseWithSources(files) };
-      } catch {
-        return { status: "failed", code: "unavailable" };
+      } catch (error) {
+        return { status: "failed", code: classifyReadError(error) };
       }
     },
     async readDrafts(session): Promise<ProjectReadResult<LoadedDrafts>> {

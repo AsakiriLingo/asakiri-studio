@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { act, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type {
   Asset,
@@ -418,6 +418,7 @@ function makeServices() {
         .mockImplementation((id: string) =>
           Promise.resolve(id === "p1" ? DIR_A : id === "p2" ? DIR_B : null),
         ),
+      forgetRecentProject: vi.fn(),
       clearRecentProjects: vi.fn(),
     },
     reader: {
@@ -588,6 +589,28 @@ describe("App", () => {
     });
 
     expect(await screen.findByText(MESSAGES.workspace.failedTitle)).toBeInTheDocument();
+  });
+
+  it("offers to remove a missing recent course and returns to start", async () => {
+    services.reader.readCourse.mockResolvedValue({ status: "failed", code: "missing" });
+
+    render(<App />);
+    await act(async () => {
+      must(captured.start, "StartScreen").onOpenRecent("p1");
+      await Promise.resolve();
+    });
+
+    expect(await screen.findByText(MESSAGES.workspace.missingTitle)).toBeInTheDocument();
+
+    const removeButton = screen.getByRole("button", { name: MESSAGES.workspace.forgetRecent });
+    await act(async () => {
+      fireEvent.click(removeButton);
+      await Promise.resolve();
+    });
+
+    expect(services.directory.forgetRecentProject).toHaveBeenCalledWith("p1");
+    expect(screen.getByTestId("start")).toBeInTheDocument();
+    expect(screen.queryByText(MESSAGES.workspace.missingTitle)).not.toBeInTheDocument();
   });
 
   it("serializes overlapping project saves so both edits survive", async () => {
