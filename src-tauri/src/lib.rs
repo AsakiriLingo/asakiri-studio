@@ -1,6 +1,7 @@
 mod course;
 mod media;
 mod packaging;
+mod process;
 mod tts;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]

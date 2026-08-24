@@ -381,8 +381,10 @@ pub fn reveal_path(path: String) -> Result<(), String> {
     #[cfg(all(unix, not(target_os = "macos")))]
     let program = "xdg-open";
 
-    Command::new(program)
-        .arg(&path)
+    let mut command = Command::new(program);
+    command.arg(&path);
+    crate::process::hide_console(&mut command);
+    command
         .spawn()
         .map(|_| ())
         .map_err(|_| "unknown".to_string())
