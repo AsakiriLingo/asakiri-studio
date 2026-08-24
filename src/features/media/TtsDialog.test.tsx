@@ -40,6 +40,8 @@ const CATALOG: readonly CatalogVoice[] = [
 function renderDialog(overrides: Partial<TtsDialogProps> = {}) {
   const props: TtsDialogProps = {
     onClose: vi.fn(),
+    defaultVoice: "",
+    onDefaultVoiceChange: vi.fn(),
     onListVoices: vi.fn().mockResolvedValue(VOICES),
     onPreviewVoice: vi.fn().mockResolvedValue("data:audio/wav;base64,abc"),
     onListAvailableVoices: vi.fn().mockResolvedValue(CATALOG),
@@ -88,6 +90,44 @@ describe("TtsDialog", () => {
     });
     await waitFor(() => {
       expect(props.onClose).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  it("pre-selects the remembered default voice", async () => {
+    const props = renderDialog({
+      onListVoices: vi.fn().mockResolvedValue([
+        { name: "en_US-amy-low", locale: "en_US" },
+        { name: "en_GB-alan-low", locale: "en_GB" },
+      ] satisfies TtsVoice[]),
+      defaultVoice: "en_GB-alan-low",
+    });
+    await screen.findByRole("dialog");
+    fireEvent.change(await screen.findByPlaceholderText(t.ttsTextPlaceholder), {
+      target: { value: "hi" },
+    });
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: t.ttsSave })).toBeEnabled();
+    });
+    fireEvent.click(screen.getByRole("button", { name: t.ttsSave }));
+
+    await waitFor(() => {
+      expect(props.onAddTtsAudio).toHaveBeenCalledWith("hi", "en_GB-alan-low", "hi.wav");
+    });
+  });
+
+  it("remembers the voice used after a successful save", async () => {
+    const props = renderDialog();
+    await screen.findByRole("dialog");
+    fireEvent.change(await screen.findByPlaceholderText(t.ttsTextPlaceholder), {
+      target: { value: "hi" },
+    });
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: t.ttsSave })).toBeEnabled();
+    });
+    fireEvent.click(screen.getByRole("button", { name: t.ttsSave }));
+
+    await waitFor(() => {
+      expect(props.onDefaultVoiceChange).toHaveBeenCalledWith("en_US-amy-low");
     });
   });
 

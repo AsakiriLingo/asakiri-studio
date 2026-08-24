@@ -12,6 +12,8 @@ import styles from "@features/media/TtsDialog.module.css";
 
 export interface TtsDialogProps {
   readonly onClose: () => void;
+  readonly defaultVoice: string;
+  readonly onDefaultVoiceChange: (voice: string) => void;
   readonly onListVoices: () => Promise<readonly TtsVoice[]>;
   readonly onPreviewVoice: (text: string, voice: string) => Promise<string>;
   readonly onListAvailableVoices: () => Promise<readonly CatalogVoice[]>;
@@ -40,6 +42,8 @@ function formatSize(bytes: number): string {
 
 export function TtsDialog({
   onClose,
+  defaultVoice,
+  onDefaultVoiceChange,
   onListVoices,
   onPreviewVoice,
   onListAvailableVoices,
@@ -72,6 +76,8 @@ export function TtsDialog({
   const [playingSample, setPlayingSample] = useState<string | null>(null);
   const sampleAudio = useRef<HTMLAudioElement | null>(null);
 
+  const defaultVoiceRef = useRef(defaultVoice);
+
   useEffect(() => {
     return () => {
       sampleAudio.current?.pause();
@@ -86,10 +92,10 @@ export function TtsDialog({
     void onListVoices().then((result) => {
       if (cancelled) return;
       setVoices(result);
-      const first = result[0];
-      if (first) {
-        setLocale(first.locale);
-        setVoice(first.name);
+      const preferred = result.find((item) => item.name === defaultVoiceRef.current) ?? result[0];
+      if (preferred) {
+        setLocale(preferred.locale);
+        setVoice(preferred.name);
       }
     });
     return () => {
@@ -238,6 +244,7 @@ export function TtsDialog({
     void onAddTtsAudio(text.trim(), voice, fileNameFromText(text))
       .then((result) => {
         if (result.ok) {
+          onDefaultVoiceChange(voice);
           onClose();
         } else {
           setFailed(true);
