@@ -17,6 +17,20 @@ export type ProjectWriteResult =
   | { readonly status: "saved" }
   | { readonly status: "failed"; readonly code: ProjectWriteErrorCode };
 
+export interface DuplicatedPart {
+  readonly newId: string;
+  readonly sourceBodyPath: string;
+  readonly newBodyPath: string;
+}
+
+export interface DuplicatedLesson {
+  readonly sourceLessonPath: string;
+  readonly newLessonPath: string;
+  readonly newLessonId: string;
+  readonly newTitle: string;
+  readonly parts: readonly DuplicatedPart[];
+}
+
 /**
  * Writes changes back to the project folder. Implementations read the target
  * file and merge the change, so on-disk keys and file layout are preserved.
@@ -87,6 +101,19 @@ export interface ProjectWriter {
     session: ProjectSession,
     lessonPath: string,
     orderedPartIds: readonly string[],
+  ): Promise<ProjectWriteResult>;
+  duplicatePart(
+    session: ProjectSession,
+    lessonPath: string,
+    sourcePartId: string,
+    newPart: { readonly id: string; readonly title: string },
+    sourceBodyPath: string,
+    newBodyPath: string,
+  ): Promise<ProjectWriteResult>;
+  duplicateLessons(
+    session: ProjectSession,
+    copies: readonly DuplicatedLesson[],
+    outline: readonly OutlineSection[],
   ): Promise<ProjectWriteResult>;
   createLesson(
     session: ProjectSession,

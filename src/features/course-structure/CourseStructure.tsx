@@ -197,10 +197,12 @@ function RenameInput({
 function RowMenu({
   trigger,
   onRename,
+  onDuplicate,
   onDelete,
 }: {
   readonly trigger: ReactElement;
   readonly onRename: () => void;
+  readonly onDuplicate?: (() => void) | undefined;
   readonly onDelete: () => void;
 }) {
   const messages = useMessages();
@@ -213,6 +215,11 @@ function RowMenu({
             <ContextMenu.Item className={styles.menuItem} onClick={onRename}>
               {messages.common.rename}
             </ContextMenu.Item>
+            {onDuplicate ? (
+              <ContextMenu.Item className={styles.menuItem} onClick={onDuplicate}>
+                {messages.common.duplicate}
+              </ContextMenu.Item>
+            ) : null}
             <ContextMenu.Item
               className={[styles.menuItem, styles.menuItemDanger].join(" ")}
               onClick={onDelete}
@@ -236,8 +243,10 @@ const LessonRow = memo(function LessonRow({
   onOpenPart,
   onRename,
   onRequestDelete,
+  onDuplicate,
   onRenamePart,
   onRequestDeletePart,
+  onDuplicatePart,
   onReorderParts,
   onRequestAddPart,
 }: {
@@ -250,8 +259,10 @@ const LessonRow = memo(function LessonRow({
   readonly onOpenPart: (lessonId: string, partId: string) => void;
   readonly onRename: (lesson: Lesson, title: string) => void;
   readonly onRequestDelete: (lesson: Lesson) => void;
+  readonly onDuplicate?: ((lesson: Lesson) => void) | undefined;
   readonly onRenamePart: (lesson: Lesson, part: Part, title: string) => void;
   readonly onRequestDeletePart: (lesson: Lesson, part: Part) => void;
+  readonly onDuplicatePart?: ((lesson: Lesson, part: Part) => void) | undefined;
   readonly onReorderParts?:
     | ((lessonId: string, orderedPartIds: readonly string[]) => Promise<ProjectWriteResult>)
     | undefined;
@@ -290,6 +301,15 @@ const LessonRow = memo(function LessonRow({
   const handleRequestDelete = useCallback(() => {
     onRequestDelete(lesson);
   }, [onRequestDelete, lesson]);
+  const handleDuplicate = useCallback(() => {
+    onDuplicate?.(lesson);
+  }, [onDuplicate, lesson]);
+  const handleDuplicatePart = useCallback(
+    (part: Part) => {
+      onDuplicatePart?.(lesson, part);
+    },
+    [onDuplicatePart, lesson],
+  );
   const handleOpenPart = useCallback(
     (partId: string) => {
       onOpenPart(lesson.id, partId);
@@ -324,6 +344,7 @@ const LessonRow = memo(function LessonRow({
           onRename={() => {
             setEditing(true);
           }}
+          onDuplicate={onDuplicate ? handleDuplicate : undefined}
           onDelete={handleRequestDelete}
           trigger={
             <div className={[styles.treeRow, styles.lessonRow].join(" ")}>
@@ -407,6 +428,7 @@ const LessonRow = memo(function LessonRow({
             onReorderParts={onReorderParts}
             onRenamePart={handleRenamePart}
             onRequestDeletePart={handleRequestDeletePart}
+            onDuplicatePart={onDuplicatePart ? handleDuplicatePart : undefined}
           />
         ) : null}
       </div>
@@ -457,6 +479,7 @@ const SortablePartRow = memo(function SortablePartRow({
   onOpen,
   onRename,
   onRequestDelete,
+  onDuplicate,
 }: {
   readonly part: Part;
   readonly selected: boolean;
@@ -464,6 +487,7 @@ const SortablePartRow = memo(function SortablePartRow({
   readonly onOpen: (partId: string) => void;
   readonly onRename: (part: Part, title: string) => void;
   readonly onRequestDelete: (part: Part) => void;
+  readonly onDuplicate?: ((part: Part) => void) | undefined;
 }) {
   const messages = useMessages();
   const format = useFormat();
@@ -481,6 +505,9 @@ const SortablePartRow = memo(function SortablePartRow({
   const handleRequestDelete = useCallback(() => {
     onRequestDelete(part);
   }, [onRequestDelete, part]);
+  const handleDuplicate = useCallback(() => {
+    onDuplicate?.(part);
+  }, [onDuplicate, part]);
 
   return (
     <div ref={setNodeRef} style={style}>
@@ -488,6 +515,7 @@ const SortablePartRow = memo(function SortablePartRow({
         onRename={() => {
           setEditing(true);
         }}
+        onDuplicate={onDuplicate ? handleDuplicate : undefined}
         onDelete={handleRequestDelete}
         trigger={
           <div
@@ -556,6 +584,7 @@ function PartList({
   onReorderParts,
   onRenamePart,
   onRequestDeletePart,
+  onDuplicatePart,
 }: {
   readonly lesson: Lesson;
   readonly selectedPartId?: string | undefined;
@@ -565,6 +594,7 @@ function PartList({
     | undefined;
   readonly onRenamePart: (part: Part, title: string) => void;
   readonly onRequestDeletePart: (part: Part) => void;
+  readonly onDuplicatePart?: ((part: Part) => void) | undefined;
 }) {
   const sensors = useReorderSensors();
   const ids = lesson.parts.map((part) => part.id);
@@ -593,6 +623,7 @@ function PartList({
               onOpen={onOpenPart}
               onRename={onRenamePart}
               onRequestDelete={onRequestDeletePart}
+              onDuplicate={onDuplicatePart}
             />
           ))}
         </div>
@@ -615,12 +646,15 @@ const UnitBlock = memo(function UnitBlock({
   onOpenSettings,
   onRename,
   onRequestDelete,
+  onDuplicate,
   onOpenPart,
   onOpenLessonSettings,
   onRenameLesson,
   onRequestDeleteLesson,
+  onDuplicateLesson,
   onRenamePart,
   onRequestDeletePart,
+  onDuplicatePart,
   onReorderParts,
   onRequestAddPart,
 }: {
@@ -637,12 +671,15 @@ const UnitBlock = memo(function UnitBlock({
   readonly onOpenSettings: (unitId: string) => void;
   readonly onRename: (unit: OutlineSection, title: string) => void;
   readonly onRequestDelete: (unit: OutlineSection) => void;
+  readonly onDuplicate?: ((unit: OutlineSection) => void) | undefined;
   readonly onOpenPart: (lessonId: string, partId: string) => void;
   readonly onOpenLessonSettings: (lessonId: string) => void;
   readonly onRenameLesson: (lesson: Lesson, title: string) => void;
   readonly onRequestDeleteLesson: (lesson: Lesson) => void;
+  readonly onDuplicateLesson?: ((lesson: Lesson) => void) | undefined;
   readonly onRenamePart: (lesson: Lesson, part: Part, title: string) => void;
   readonly onRequestDeletePart: (lesson: Lesson, part: Part) => void;
+  readonly onDuplicatePart?: ((lesson: Lesson, part: Part) => void) | undefined;
   readonly onReorderParts?:
     | ((lessonId: string, orderedPartIds: readonly string[]) => Promise<ProjectWriteResult>)
     | undefined;
@@ -674,6 +711,9 @@ const UnitBlock = memo(function UnitBlock({
   const handleRequestDelete = useCallback(() => {
     onRequestDelete(unit);
   }, [onRequestDelete, unit]);
+  const handleDuplicate = useCallback(() => {
+    onDuplicate?.(unit);
+  }, [onDuplicate, unit]);
 
   const commitRename = (value: string) => {
     setEditing(false);
@@ -781,6 +821,11 @@ const UnitBlock = memo(function UnitBlock({
                 >
                   {messages.common.rename}
                 </ContextMenu.Item>
+                {onDuplicate ? (
+                  <ContextMenu.Item className={styles.menuItem} onClick={handleDuplicate}>
+                    {messages.common.duplicate}
+                  </ContextMenu.Item>
+                ) : null}
                 <ContextMenu.Item
                   className={[styles.menuItem, styles.menuItemDanger].join(" ")}
                   onClick={handleRequestDelete}
@@ -868,8 +913,10 @@ const UnitBlock = memo(function UnitBlock({
                 onOpenPart={onOpenPart}
                 onRename={onRenameLesson}
                 onRequestDelete={onRequestDeleteLesson}
+                onDuplicate={onDuplicateLesson}
                 onRenamePart={onRenamePart}
                 onRequestDeletePart={onRequestDeletePart}
+                onDuplicatePart={onDuplicatePart}
                 onReorderParts={onReorderParts}
                 onRequestAddPart={onRequestAddPart}
               />
@@ -915,9 +962,11 @@ export interface CourseStructureProps {
   readonly onNewUnit: () => Promise<ProjectWriteResult>;
   readonly onRenameUnit: (unitId: string, title: string) => Promise<ProjectWriteResult>;
   readonly onDeleteUnit: (unitId: string) => Promise<ProjectWriteResult>;
+  readonly onDuplicateUnit?: ((unitId: string) => Promise<ProjectWriteResult>) | undefined;
   readonly onAddLesson: (unitId: string) => Promise<ProjectWriteResult>;
   readonly onRenameLesson: (lessonId: string, title: string) => Promise<ProjectWriteResult>;
   readonly onDeleteLesson: (lessonId: string) => Promise<ProjectWriteResult>;
+  readonly onDuplicateLesson?: ((lessonId: string) => Promise<ProjectWriteResult>) | undefined;
   readonly onReorderOutline: (
     sections: readonly { readonly id: string; readonly lessonIds: readonly string[] }[],
   ) => Promise<ProjectWriteResult>;
@@ -930,6 +979,8 @@ export interface CourseStructureProps {
   readonly onRenamePart?:
     ((lessonId: string, partId: string, title: string) => Promise<ProjectWriteResult>) | undefined;
   readonly onDeletePart?:
+    ((lessonId: string, partId: string) => Promise<ProjectWriteResult>) | undefined;
+  readonly onDuplicatePart?:
     ((lessonId: string, partId: string) => Promise<ProjectWriteResult>) | undefined;
   readonly query?: string;
   readonly variant?: "page" | "sidebar";
@@ -960,9 +1011,11 @@ export function CourseStructure({
   onNewUnit,
   onRenameUnit,
   onDeleteUnit,
+  onDuplicateUnit,
   onAddLesson,
   onRenameLesson,
   onDeleteLesson,
+  onDuplicateLesson,
   onReorderOutline,
   onOpenPart,
   selectedId,
@@ -970,6 +1023,7 @@ export function CourseStructure({
   onAddPart,
   onRenamePart,
   onDeletePart,
+  onDuplicatePart,
   query = "",
   variant = "page",
 }: CourseStructureProps) {
@@ -1156,6 +1210,33 @@ export function CourseStructure({
       void removePart(lesson, part);
     },
     [removePart],
+  );
+
+  const duplicateUnit = useCallback(
+    (unit: OutlineSection) => {
+      if (!onDuplicateUnit) return;
+      setFailed(false);
+      void onDuplicateUnit(unit.id).then(report);
+    },
+    [onDuplicateUnit, report],
+  );
+
+  const duplicateLesson = useCallback(
+    (lesson: Lesson) => {
+      if (!onDuplicateLesson) return;
+      setFailed(false);
+      void onDuplicateLesson(lesson.id).then(report);
+    },
+    [onDuplicateLesson, report],
+  );
+
+  const duplicatePart = useCallback(
+    (lesson: Lesson, part: Part) => {
+      if (!onDuplicatePart) return;
+      setFailed(false);
+      void onDuplicatePart(lesson.id, part.id).then(report);
+    },
+    [onDuplicatePart, report],
   );
 
   const handleAddLesson = useCallback(
@@ -1456,12 +1537,15 @@ export function CourseStructure({
                     onOpenSettings={openUnitSettings}
                     onRename={renameUnit}
                     onRequestDelete={requestDeleteUnit}
+                    onDuplicate={onDuplicateUnit ? duplicateUnit : undefined}
                     onOpenPart={handleOpenPart}
                     onOpenLessonSettings={openLessonSettings}
                     onRenameLesson={renameLesson}
                     onRequestDeleteLesson={requestDeleteLesson}
+                    onDuplicateLesson={onDuplicateLesson ? duplicateLesson : undefined}
                     onRenamePart={renamePart}
                     onRequestDeletePart={requestDeletePart}
+                    onDuplicatePart={onDuplicatePart ? duplicatePart : undefined}
                     onReorderParts={reorderPartsWithReport}
                     onRequestAddPart={onAddPart ? requestAddPart : undefined}
                   />

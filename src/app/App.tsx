@@ -540,9 +540,11 @@ export function App() {
                   onNewUnit={outlineActions.addUnit}
                   onRenameUnit={outlineActions.renameUnit}
                   onDeleteUnit={outlineActions.deleteUnit}
+                  onDuplicateUnit={outlineActions.duplicateUnit}
                   onAddLesson={outlineActions.addLesson}
                   onRenameLesson={outlineActions.renameLesson}
                   onDeleteLesson={outlineActions.deleteLesson}
+                  onDuplicateLesson={outlineActions.duplicateLesson}
                   onReorderOutline={outlineActions.reorderOutline}
                   onOpenPart={openPartView}
                   onReorderParts={partActions.reorderParts}
@@ -553,6 +555,7 @@ export function App() {
                   }}
                   onRenamePart={partActions.renamePart}
                   onDeletePart={deletePart}
+                  onDuplicatePart={partActions.duplicatePart}
                   query={outlineQuery}
                 />
               }

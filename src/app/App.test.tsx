@@ -98,6 +98,9 @@ interface StructureProps {
     title: string,
   ) => Promise<ProjectWriteResult>;
   readonly onDeletePart: (lessonId: string, partId: string) => Promise<ProjectWriteResult>;
+  readonly onDuplicateUnit?: (unitId: string) => Promise<ProjectWriteResult>;
+  readonly onDuplicateLesson?: (lessonId: string) => Promise<ProjectWriteResult>;
+  readonly onDuplicatePart?: (lessonId: string, partId: string) => Promise<ProjectWriteResult>;
   readonly selectedId?: string;
 }
 
@@ -384,6 +387,8 @@ function makeWriter() {
     createPart: vi.fn().mockResolvedValue(SAVED),
     createExercisePart: vi.fn().mockResolvedValue(SAVED),
     reorderParts: vi.fn().mockResolvedValue(SAVED),
+    duplicatePart: vi.fn().mockResolvedValue(SAVED),
+    duplicateLessons: vi.fn().mockResolvedValue(SAVED),
     createLesson: vi.fn().mockResolvedValue(SAVED),
     updateLesson: vi.fn().mockResolvedValue(SAVED),
     deleteLesson: vi.fn().mockResolvedValue(SAVED),
@@ -719,6 +724,38 @@ describe("App", () => {
     });
     outline = must(captured.structure, "CourseStructure").course.outline;
     expect(outline).toHaveLength(1);
+  });
+
+  it("duplicates a unit, a lesson, and a part", async () => {
+    await openWorkspace();
+    await navigate("lessons");
+    const structure = must(captured.structure, "CourseStructure");
+
+    await act(async () => {
+      await structure.onDuplicatePart?.("l1", "part1");
+    });
+    let course = must(captured.structure, "CourseStructure").course;
+    const lesson = course.lessons.find((entry: Course["lessons"][number]) => entry.id === "l1");
+    expect(lesson?.parts).toHaveLength(3);
+    expect(lesson?.parts[1]?.title).toBe("Reading copy");
+    expect(services.writer.duplicatePart).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      await structure.onDuplicateLesson?.("l1");
+    });
+    course = must(captured.structure, "CourseStructure").course;
+    expect(course.lessons).toHaveLength(2);
+    expect(course.outline[0]?.lessonIds).toHaveLength(2);
+    expect(course.lessons[1]?.title).toBe("Lesson 1 copy");
+
+    await act(async () => {
+      await structure.onDuplicateUnit?.("u1");
+    });
+    course = must(captured.structure, "CourseStructure").course;
+    expect(course.outline).toHaveLength(2);
+    expect(course.outline[1]?.title).toBe("Unit 1 copy");
+    expect(course.outline[1]?.lessonIds).toHaveLength(2);
+    expect(services.writer.duplicateLessons).toHaveBeenCalledTimes(2);
   });
 
   it("creates, renames, and deletes lessons", async () => {

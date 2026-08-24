@@ -540,6 +540,118 @@ describe("layout project writer", () => {
     });
   });
 
+  it("duplicates a part after the source and copies its body", async () => {
+    const lessonPath = "lessons/intro/lesson.json";
+    const sourceBody = "lessons/intro/parts/p1/document.json";
+    const newBody = "lessons/intro/parts/part_new/document.json";
+    const files = new Map([
+      [
+        lessonPath,
+        JSON.stringify({
+          id: "l1",
+          title: "Intro",
+          parts: [
+            {
+              id: "p1",
+              title: "Warm up",
+              content: { kind: "tiptap", file: "parts/p1/document.json" },
+            },
+            {
+              id: "p2",
+              title: "Quiz",
+              content: { kind: "exercise", file: "parts/p2/exercise.json" },
+            },
+          ],
+        }),
+      ],
+      [sourceBody, JSON.stringify({ type: "doc", content: [{ type: "paragraph" }] })],
+    ]);
+    const writer = createLayoutProjectWriter(() => fileAccess(files));
+
+    const result = await writer.duplicatePart(
+      SESSION,
+      lessonPath,
+      "p1",
+      { id: "part_new", title: "Warm up copy" },
+      sourceBody,
+      newBody,
+    );
+
+    expect(result).toEqual({ status: "saved" });
+    expect(readWritten(files, newBody)).toEqual({ type: "doc", content: [{ type: "paragraph" }] });
+    const written = readWritten(files, lessonPath) as { parts: unknown[] };
+    expect(written.parts).toEqual([
+      { id: "p1", title: "Warm up", content: { kind: "tiptap", file: "parts/p1/document.json" } },
+      {
+        id: "part_new",
+        title: "Warm up copy",
+        content: { kind: "tiptap", file: "parts/part_new/document.json" },
+      },
+      { id: "p2", title: "Quiz", content: { kind: "exercise", file: "parts/p2/exercise.json" } },
+    ]);
+  });
+
+  it("duplicates a lesson with its parts and links it into the manifest", async () => {
+    const sourceLessonPath = "lessons/intro/lesson.json";
+    const newLessonPath = "lessons/lnew/lesson.json";
+    const sourceBody = "lessons/intro/parts/p1/document.json";
+    const newBody = "lessons/lnew/parts/pnew/document.json";
+    const files = new Map([
+      ["project.json", MANIFEST],
+      [
+        sourceLessonPath,
+        JSON.stringify({
+          id: "l1",
+          title: "Intro",
+          parts: [
+            {
+              id: "p1",
+              title: "Warm up",
+              content: { kind: "tiptap", file: "parts/p1/document.json" },
+            },
+          ],
+        }),
+      ],
+      [sourceBody, JSON.stringify({ type: "doc", content: [] })],
+    ]);
+    const writer = createLayoutProjectWriter(() => fileAccess(files));
+
+    const outline = [{ id: "u1", title: "Unit 1", lessonIds: ["l1", "lnew"] }];
+    const result = await writer.duplicateLessons(
+      SESSION,
+      [
+        {
+          sourceLessonPath,
+          newLessonPath,
+          newLessonId: "lnew",
+          newTitle: "Intro copy",
+          parts: [{ newId: "pnew", sourceBodyPath: sourceBody, newBodyPath: newBody }],
+        },
+      ],
+      outline,
+    );
+
+    expect(result).toEqual({ status: "saved" });
+    expect(readWritten(files, newLessonPath)).toEqual({
+      id: "lnew",
+      title: "Intro copy",
+      parts: [
+        {
+          id: "pnew",
+          title: "Warm up",
+          content: { kind: "tiptap", file: "parts/pnew/document.json" },
+        },
+      ],
+    });
+    expect(readWritten(files, newBody)).toEqual({ type: "doc", content: [] });
+    const manifest = readWritten(files, "project.json") as {
+      lessons: string[];
+      outline: unknown;
+    };
+    expect(manifest.lessons).toContain(newLessonPath);
+    expect(manifest.outline).toEqual([{ id: "u1", title: "Unit 1", lessonIds: ["l1", "lnew"] }]);
+  });
+
   it("writes an exercise back to its body file", async () => {
     const path = "lessons/intro/parts/quiz/exercise.json";
     const files = new Map([[path, JSON.stringify({ id: "ex_old", type: "multiple-choice" })]]);
