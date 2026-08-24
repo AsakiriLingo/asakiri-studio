@@ -171,6 +171,7 @@ fn synthesize_to_temp(
     command.stdin(Stdio::piped());
     command.stdout(Stdio::null());
     command.stderr(Stdio::piped());
+    crate::process::hide_console(&mut command);
 
     let mut child = command.spawn().map_err(|error| error.to_string())?;
     if let Some(mut stdin) = child.stdin.take() {
