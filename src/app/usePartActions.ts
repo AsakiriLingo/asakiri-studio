@@ -28,11 +28,16 @@ export interface PartActions {
     title: string,
   ) => Promise<ProjectWriteResult>;
   readonly deletePart: (lessonId: string, partId: string) => Promise<ProjectWriteResult>;
+  readonly duplicatePart: (lessonId: string, partId: string) => Promise<ProjectWriteResult>;
   readonly addPart: (lessonId: string, kind: PartKind) => Promise<string | null>;
   readonly reorderParts: (
     lessonId: string,
     orderedPartIds: readonly string[],
   ) => Promise<ProjectWriteResult>;
+}
+
+function dirOfPath(filePath: string): string {
+  return filePath.split("/").slice(0, -1).join("/");
 }
 
 export function usePartActions(
@@ -219,6 +224,56 @@ export function usePartActions(
       return result;
     });
 
+  const duplicatePart = (lessonId: string, partId: string): Promise<ProjectWriteResult> =>
+    store.withCourse(WRITE_UNAVAILABLE, async ({ session, course, sources, apply }) => {
+      const lessonPath = sources.lessons[lessonId];
+      const sourceBodyPath = sources.parts[partSourceKey(lessonId, partId)];
+      const lesson = course.lessons.find((entry) => entry.id === lessonId);
+      const part = lesson?.parts.find((entry) => entry.id === partId);
+      if (lessonPath === undefined || sourceBodyPath === undefined || !lesson || !part) {
+        return WRITE_UNAVAILABLE;
+      }
+      const newPartId = `part_${crypto.randomUUID()}`;
+      const basename = sourceBodyPath.split("/").pop() ?? "body.json";
+      const newBodyPath = `${dirOfPath(lessonPath)}/parts/${newPartId}/${basename}`;
+      const newTitle = formatMessage(locale, messages.common.copyTitle, { title: part.title });
+      const result = await services.writer.duplicatePart(
+        session,
+        lessonPath,
+        partId,
+        { id: newPartId, title: newTitle },
+        sourceBodyPath,
+        newBodyPath,
+      );
+      if (result.status === "saved") {
+        const newPart: Part = { ...part, id: newPartId, title: newTitle };
+        apply((current) => ({
+          ...current,
+          course: {
+            ...current.course,
+            lessons: current.course.lessons.map((entry) => {
+              if (entry.id !== lessonId) return entry;
+              const index = entry.parts.findIndex((candidate) => candidate.id === partId);
+              const parts = [
+                ...entry.parts.slice(0, index + 1),
+                newPart,
+                ...entry.parts.slice(index + 1),
+              ];
+              return { ...entry, parts };
+            }),
+          },
+          sources: {
+            ...current.sources,
+            parts: {
+              ...current.sources.parts,
+              [partSourceKey(lessonId, newPartId)]: newBodyPath,
+            },
+          },
+        }));
+      }
+      return result;
+    });
+
   const addPart = (lessonId: string, kind: PartKind): Promise<string | null> =>
     store.withCourse<string | null>(null, async ({ session, course, sources, apply }) => {
       const lessonPath = sources.lessons[lessonId];
@@ -315,6 +370,7 @@ export function usePartActions(
     savePartContentTitle,
     renamePart,
     deletePart,
+    duplicatePart,
     addPart,
     reorderParts,
   };

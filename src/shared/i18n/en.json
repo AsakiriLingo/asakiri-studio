@@ -21,6 +21,8 @@
     "decrement": "Decrease",
     "increment": "Increase",
     "delete": "Delete",
+    "copyTitle": "{title} copy",
+    "duplicate": "Duplicate",
     "done": "Done",
     "edit": "Edit",
     "next": "Next",

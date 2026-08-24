@@ -21,6 +21,8 @@
     "decrement": "減らす",
     "increment": "増やす",
     "delete": "削除",
+    "copyTitle": "{title}（コピー）",
+    "duplicate": "複製",
     "done": "完了",
     "edit": "編集",
     "next": "次へ",

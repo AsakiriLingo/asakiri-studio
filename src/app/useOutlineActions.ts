@@ -1,17 +1,94 @@
-import type { Lesson, OutlineSection } from "@core/course";
-import type { ProjectWriteResult } from "@core/project-writing";
+import type { CourseSources, Lesson, OutlineSection, Part } from "@core/course";
+import { partSourceKey } from "@core/course";
+import type { DuplicatedLesson, DuplicatedPart, ProjectWriteResult } from "@core/project-writing";
 import { formatMessage, getMessages, type Locale } from "@shared/i18n";
 import type { AppServices } from "@app/services";
-import { WRITE_UNAVAILABLE } from "@app/course-state";
+import { WRITE_UNAVAILABLE, type ReadyCourseState } from "@app/course-state";
 import type { CourseStateStore } from "@app/useCourseState";
+
+interface LessonPlan {
+  readonly copy: DuplicatedLesson;
+  readonly lesson: Lesson;
+  readonly lessonSource: readonly [string, string];
+  readonly partSources: readonly (readonly [string, string])[];
+}
+
+function insertAfter(ids: readonly string[], afterId: string, newId: string): string[] {
+  const index = ids.indexOf(afterId);
+  if (index === -1) return [...ids, newId];
+  return [...ids.slice(0, index + 1), newId, ...ids.slice(index + 1)];
+}
+
+function planLessonDuplicate(
+  sourceLesson: Lesson,
+  sourceLessonPath: string,
+  newTitle: string,
+  sources: CourseSources,
+): LessonPlan | null {
+  const newLessonId = `lesson_${crypto.randomUUID()}`;
+  const newLessonDir = `lessons/${newLessonId}`;
+  const parts: DuplicatedPart[] = [];
+  const newParts: Part[] = [];
+  const partSources: (readonly [string, string])[] = [];
+  for (const part of sourceLesson.parts) {
+    const sourceBodyPath = sources.parts[partSourceKey(sourceLesson.id, part.id)];
+    if (sourceBodyPath === undefined) return null;
+    const newPartId = `part_${crypto.randomUUID()}`;
+    const basename = sourceBodyPath.split("/").pop() ?? "body.json";
+    const newBodyPath = `${newLessonDir}/parts/${newPartId}/${basename}`;
+    parts.push({ newId: newPartId, sourceBodyPath, newBodyPath });
+    newParts.push({ ...part, id: newPartId });
+    partSources.push([partSourceKey(newLessonId, newPartId), newBodyPath]);
+  }
+  return {
+    copy: {
+      sourceLessonPath,
+      newLessonPath: `${newLessonDir}/lesson.json`,
+      newLessonId,
+      newTitle,
+      parts,
+    },
+    lesson: { id: newLessonId, title: newTitle, parts: newParts },
+    lessonSource: [newLessonId, `${newLessonDir}/lesson.json`],
+    partSources,
+  };
+}
+
+function applyLessonPlans(
+  current: ReadyCourseState,
+  plans: readonly LessonPlan[],
+  nextOutline: readonly OutlineSection[],
+): ReadyCourseState {
+  return {
+    ...current,
+    course: {
+      ...current.course,
+      lessons: [...current.course.lessons, ...plans.map((plan) => plan.lesson)],
+      outline: nextOutline,
+    },
+    sources: {
+      ...current.sources,
+      lessons: {
+        ...current.sources.lessons,
+        ...Object.fromEntries(plans.map((plan) => plan.lessonSource)),
+      },
+      parts: {
+        ...current.sources.parts,
+        ...Object.fromEntries(plans.flatMap((plan) => plan.partSources)),
+      },
+    },
+  };
+}
 
 export interface OutlineActions {
   readonly addUnit: () => Promise<ProjectWriteResult>;
   readonly renameUnit: (unitId: string, title: string) => Promise<ProjectWriteResult>;
   readonly deleteUnit: (unitId: string) => Promise<ProjectWriteResult>;
+  readonly duplicateUnit: (unitId: string) => Promise<ProjectWriteResult>;
   readonly addLesson: (unitId: string) => Promise<ProjectWriteResult>;
   readonly renameLesson: (lessonId: string, title: string) => Promise<ProjectWriteResult>;
   readonly deleteLesson: (lessonId: string) => Promise<ProjectWriteResult>;
+  readonly duplicateLesson: (lessonId: string) => Promise<ProjectWriteResult>;
   readonly reorderOutline: (
     sections: readonly { readonly id: string; readonly lessonIds: readonly string[] }[],
   ) => Promise<ProjectWriteResult>;
@@ -69,6 +146,47 @@ export function useOutlineActions(
           ...current,
           course: { ...current.course, outline: nextOutline },
         }));
+      }
+      return result;
+    });
+
+  const duplicateUnit = (unitId: string): Promise<ProjectWriteResult> =>
+    store.withCourse(WRITE_UNAVAILABLE, async ({ session, course, sources, apply }) => {
+      const unit = course.outline.find((section) => section.id === unitId);
+      if (!unit) {
+        return WRITE_UNAVAILABLE;
+      }
+      const plans: LessonPlan[] = [];
+      for (const lessonId of unit.lessonIds) {
+        const lesson = course.lessons.find((entry) => entry.id === lessonId);
+        const sourceLessonPath = sources.lessons[lessonId];
+        if (!lesson || sourceLessonPath === undefined) {
+          return WRITE_UNAVAILABLE;
+        }
+        const plan = planLessonDuplicate(lesson, sourceLessonPath, lesson.title, sources);
+        if (!plan) {
+          return WRITE_UNAVAILABLE;
+        }
+        plans.push(plan);
+      }
+      const newSection: OutlineSection = {
+        id: `unit_${crypto.randomUUID()}`,
+        title: formatMessage(locale, messages.common.copyTitle, { title: unit.title }),
+        lessonIds: plans.map((plan) => plan.lesson.id),
+      };
+      const index = course.outline.findIndex((section) => section.id === unitId);
+      const nextOutline = [
+        ...course.outline.slice(0, index + 1),
+        newSection,
+        ...course.outline.slice(index + 1),
+      ];
+      const result = await services.writer.duplicateLessons(
+        session,
+        plans.map((plan) => plan.copy),
+        nextOutline,
+      );
+      if (result.status === "saved") {
+        apply((current) => applyLessonPlans(current, plans, nextOutline));
       }
       return result;
     });
@@ -171,6 +289,30 @@ export function useOutlineActions(
       return result;
     });
 
+  const duplicateLesson = (lessonId: string): Promise<ProjectWriteResult> =>
+    store.withCourse(WRITE_UNAVAILABLE, async ({ session, course, sources, apply }) => {
+      const lesson = course.lessons.find((entry) => entry.id === lessonId);
+      const sourceLessonPath = sources.lessons[lessonId];
+      if (!lesson || sourceLessonPath === undefined) {
+        return WRITE_UNAVAILABLE;
+      }
+      const newTitle = formatMessage(locale, messages.common.copyTitle, { title: lesson.title });
+      const plan = planLessonDuplicate(lesson, sourceLessonPath, newTitle, sources);
+      if (!plan) {
+        return WRITE_UNAVAILABLE;
+      }
+      const nextOutline = course.outline.map((section) =>
+        section.lessonIds.includes(lessonId)
+          ? { ...section, lessonIds: insertAfter(section.lessonIds, lessonId, plan.lesson.id) }
+          : section,
+      );
+      const result = await services.writer.duplicateLessons(session, [plan.copy], nextOutline);
+      if (result.status === "saved") {
+        apply((current) => applyLessonPlans(current, [plan], nextOutline));
+      }
+      return result;
+    });
+
   const reorderOutline = (
     sections: readonly { readonly id: string; readonly lessonIds: readonly string[] }[],
   ): Promise<ProjectWriteResult> =>
@@ -191,5 +333,15 @@ export function useOutlineActions(
       return result;
     });
 
-  return { addUnit, renameUnit, deleteUnit, addLesson, renameLesson, deleteLesson, reorderOutline };
+  return {
+    addUnit,
+    renameUnit,
+    deleteUnit,
+    duplicateUnit,
+    addLesson,
+    renameLesson,
+    deleteLesson,
+    duplicateLesson,
+    reorderOutline,
+  };
 }

@@ -21,6 +21,8 @@
     "decrement": "Уменьшить",
     "increment": "Увеличить",
     "delete": "Удалить",
+    "copyTitle": "{title} (копия)",
+    "duplicate": "Дублировать",
     "done": "Готово",
     "edit": "Изменить",
     "next": "Далее",

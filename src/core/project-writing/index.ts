@@ -1,4 +1,6 @@
 export type {
+  DuplicatedLesson,
+  DuplicatedPart,
   ProjectWriteErrorCode,
   ProjectWriteResult,
   ProjectWriter,

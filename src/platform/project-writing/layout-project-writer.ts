@@ -518,6 +518,115 @@ export function createLayoutProjectWriter(resolveRaw: ResolveProjectFileAccess):
       }
     },
 
+    async duplicatePart(
+      session,
+      lessonPath,
+      sourcePartId,
+      newPart,
+      sourceBodyPath,
+      newBodyPath,
+    ): Promise<ProjectWriteResult> {
+      const files = resolve(session);
+      if (!files) {
+        return { status: "failed", code: "unavailable" };
+      }
+
+      try {
+        const body = await files.readTextFile(sourceBodyPath);
+        await files.writeTextFile(newBodyPath, body);
+      } catch {
+        return { status: "failed", code: "unknown" };
+      }
+      try {
+        const parsed: unknown = JSON.parse(await files.readTextFile(lessonPath));
+        if (!isRecord(parsed) || !Array.isArray(parsed.parts)) {
+          await discardDir(files, dirOf(newBodyPath));
+          return { status: "failed", code: "unknown" };
+        }
+        const parts = parsed.parts as unknown[];
+        const index = parts.findIndex((part) => isRecord(part) && part.id === sourcePartId);
+        if (index === -1) {
+          await discardDir(files, dirOf(newBodyPath));
+          return { status: "failed", code: "unknown" };
+        }
+        const source = parts[index] as Record<string, unknown>;
+        const content = isRecord(source.content) ? source.content : {};
+        const entry = {
+          id: newPart.id,
+          title: newPart.title,
+          content: { ...content, file: relativeFromDir(lessonPath, newBodyPath) },
+        };
+        const nextParts = [...parts.slice(0, index + 1), entry, ...parts.slice(index + 1)];
+        await files.writeTextFile(
+          lessonPath,
+          `${JSON.stringify({ ...parsed, parts: nextParts }, null, 2)}\n`,
+        );
+        return { status: "saved" };
+      } catch {
+        await discardDir(files, dirOf(newBodyPath));
+        return { status: "failed", code: "unknown" };
+      }
+    },
+
+    async duplicateLessons(session, copies, outline): Promise<ProjectWriteResult> {
+      const files = resolve(session);
+      if (!files) {
+        return { status: "failed", code: "unavailable" };
+      }
+
+      const createdDirs: string[] = [];
+      try {
+        for (const copy of copies) {
+          const parsed: unknown = JSON.parse(await files.readTextFile(copy.sourceLessonPath));
+          const sourceParts =
+            isRecord(parsed) && Array.isArray(parsed.parts) ? (parsed.parts as unknown[]) : [];
+          if (sourceParts.length !== copy.parts.length) {
+            throw new Error("part count mismatch");
+          }
+          const nextParts = copy.parts.map((target, partIndex) => {
+            const part = sourceParts[partIndex];
+            const content = isRecord(part) && isRecord(part.content) ? part.content : {};
+            const title = isRecord(part) && typeof part.title === "string" ? part.title : "";
+            return {
+              id: target.newId,
+              title,
+              content: {
+                ...content,
+                file: relativeFromDir(copy.newLessonPath, target.newBodyPath),
+              },
+            };
+          });
+          for (const target of copy.parts) {
+            const body = await files.readTextFile(target.sourceBodyPath);
+            await files.writeTextFile(target.newBodyPath, body);
+          }
+          createdDirs.push(dirOf(copy.newLessonPath));
+          await files.writeTextFile(
+            copy.newLessonPath,
+            `${JSON.stringify({ id: copy.newLessonId, title: copy.newTitle, parts: nextParts }, null, 2)}\n`,
+          );
+        }
+        const manifest: unknown = JSON.parse(await files.readTextFile(MANIFEST_PATH));
+        if (!isRecord(manifest)) {
+          throw new Error("invalid manifest");
+        }
+        const lessons = [
+          ...stringArray(manifest.lessons),
+          ...copies.map((copy) => copy.newLessonPath),
+        ];
+        await files.writeTextFile(
+          MANIFEST_PATH,
+          `${JSON.stringify({ ...manifest, lessons, outline: serializeOutline(outline) }, null, 2)}\n`,
+        );
+        return { status: "saved" };
+      } catch {
+        for (const dir of createdDirs) {
+          await discardDir(files, dir);
+        }
+        return { status: "failed", code: "unknown" };
+      }
+    },
+
     async createLesson(session, lessonPath, lesson, outline): Promise<ProjectWriteResult> {
       const files = resolve(session);
       if (!files) {
