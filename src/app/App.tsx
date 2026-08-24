@@ -70,6 +70,10 @@ function initialLocale(): Locale {
   return LOCALES.find((locale) => language.startsWith(locale)) ?? "en";
 }
 
+function initialTtsVoice(): string {
+  return localStorage.getItem("asakiri-tts-voice") ?? "";
+}
+
 const PATREON_URL = "https://www.patreon.com/asakiri";
 
 function initialSupportEnabled(): boolean {
@@ -124,6 +128,7 @@ export function App() {
   const [autoUpdate, setAutoUpdate] = useState(initialAutoUpdate);
   const [supportPromptEnabled, setSupportPromptEnabled] = useState(initialSupportEnabled);
   const [supportHiddenSession, setSupportHiddenSession] = useState(false);
+  const [ttsVoice, setTtsVoice] = useState(initialTtsVoice);
   const [recentProjects, setRecentProjects] = useState<readonly RecentProject[]>(() =>
     services.directory.listRecentProjects(),
   );
@@ -193,6 +198,10 @@ export function App() {
   useEffect(() => {
     localStorage.setItem("asakiri-auto-update", autoUpdate ? "true" : "false");
   }, [autoUpdate]);
+
+  useEffect(() => {
+    if (ttsVoice) localStorage.setItem("asakiri-tts-voice", ttsVoice);
+  }, [ttsVoice]);
 
   useEffect(() => {
     localStorage.setItem("asakiri-support-dismissed", supportPromptEnabled ? "false" : "true");
@@ -508,6 +517,8 @@ export function App() {
                 onCreateFolder={mediaActions.createFolder}
                 onRenameFolder={mediaActions.renameFolder}
                 onDeleteFolder={mediaActions.deleteFolder}
+                defaultTtsVoice={ttsVoice}
+                onDefaultTtsVoiceChange={setTtsVoice}
                 onListTtsVoices={() => services.tts.listVoices()}
                 onPreviewTtsVoice={mediaActions.previewTtsVoice}
                 onListAvailableVoices={() => services.tts.listAvailableVoices()}

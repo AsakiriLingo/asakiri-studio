@@ -132,6 +132,8 @@ export interface CourseMediaProps {
   readonly onCreateFolder: (name: string, parentId: string | null) => Promise<string | null>;
   readonly onRenameFolder: (folderId: string, name: string) => Promise<ProjectWriteResult>;
   readonly onDeleteFolder: (folderId: string) => Promise<ProjectWriteResult>;
+  readonly defaultTtsVoice: string;
+  readonly onDefaultTtsVoiceChange: (voice: string) => void;
   readonly onListTtsVoices: () => Promise<readonly TtsVoice[]>;
   readonly onPreviewTtsVoice: (text: string, voice: string) => Promise<string>;
   readonly onListAvailableVoices: () => Promise<readonly CatalogVoice[]>;
@@ -171,6 +173,8 @@ export function CourseMedia({
   onCreateFolder,
   onRenameFolder,
   onDeleteFolder,
+  defaultTtsVoice,
+  onDefaultTtsVoiceChange,
   onListTtsVoices,
   onPreviewTtsVoice,
   onListAvailableVoices,
@@ -988,6 +992,8 @@ export function CourseMedia({
             onClose={() => {
               setShowTts(false);
             }}
+            defaultVoice={defaultTtsVoice}
+            onDefaultVoiceChange={onDefaultTtsVoiceChange}
             onListVoices={onListTtsVoices}
             onPreviewVoice={onPreviewTtsVoice}
             onListAvailableVoices={onListAvailableVoices}
