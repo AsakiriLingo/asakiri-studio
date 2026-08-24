@@ -48,6 +48,15 @@ export class RecentProjectsStore {
     }
   }
 
+  forget(id: string): void {
+    const next = this.list().filter((entry) => entry.id !== id);
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+    } catch {
+      return;
+    }
+  }
+
   clear(): void {
     try {
       localStorage.removeItem(STORAGE_KEY);

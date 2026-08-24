@@ -1,8 +1,17 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import type { AvailableUpdate } from "@core/app-update";
 import { createProjectSession, type ProjectDirectory, type RecentProject } from "@core/projects";
-import { I18nProvider, LOCALES, getMessages, useMessages, type Locale } from "@shared/i18n";
+import type { ProjectReadErrorCode } from "@core/project-reading";
+import {
+  I18nProvider,
+  LOCALES,
+  getMessages,
+  useMessages,
+  type Locale,
+  type StudioMessages,
+} from "@shared/i18n";
 import { ConfirmProvider } from "@shared/components/confirm-dialog";
+import { Button } from "@shared/components/button";
 import type { StatusTone } from "@shared/components/status";
 import { StartScreen } from "@features/start";
 import { SettingsDialog, type ThemePreference } from "@features/settings";
@@ -292,6 +301,12 @@ export function App() {
     setView("start");
   };
 
+  const forgetRecent = (id: string) => {
+    services.directory.forgetRecentProject(id);
+    setRecentProjects(services.directory.listRecentProjects());
+    goToStart();
+  };
+
   const navigate = (target: WorkspaceSection) => {
     setSection(target);
   };
@@ -425,8 +440,19 @@ export function App() {
       >
         {courseState?.status === "loading" ? null : courseState?.status === "failed" ? (
           <WorkspaceMessage
-            title={messages.workspace.failedTitle}
-            body={messages.workspace.failedBody}
+            {...courseErrorMessage(messages, courseState.code)}
+            action={
+              courseState.code === "missing" && project ? (
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    forgetRecent(project.id);
+                  }}
+                >
+                  {messages.workspace.forgetRecent}
+                </Button>
+              ) : null
+            }
           />
         ) : course ? (
           section === "details" ? (
@@ -718,11 +744,37 @@ function ImportNotice({
   );
 }
 
-function WorkspaceMessage({ title, body }: { readonly title: string; readonly body: string }) {
+function courseErrorMessage(
+  messages: StudioMessages,
+  code: ProjectReadErrorCode,
+): { readonly title: string; readonly body: string } {
+  const workspace = messages.workspace;
+  switch (code) {
+    case "missing":
+      return { title: workspace.missingTitle, body: workspace.missingBody };
+    case "incompatibleVersion":
+      return { title: workspace.incompatibleTitle, body: workspace.incompatibleBody };
+    case "malformed":
+      return { title: workspace.malformedTitle, body: workspace.malformedBody };
+    default:
+      return { title: workspace.failedTitle, body: workspace.failedBody };
+  }
+}
+
+function WorkspaceMessage({
+  title,
+  body,
+  action,
+}: {
+  readonly title: string;
+  readonly body: string;
+  readonly action?: ReactNode;
+}) {
   return (
     <div className={styles.message}>
       <h1 className={styles.messageTitle}>{title}</h1>
       <p className={styles.messageBody}>{body}</p>
+      {action ? <div className={styles.messageActions}>{action}</div> : null}
     </div>
   );
 }

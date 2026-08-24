@@ -46,6 +46,10 @@ export class TauriProjectDirectoryGateway implements ProjectDirectoryGateway {
     }));
   }
 
+  forgetRecentProject(id: string): void {
+    this.recents.forget(id);
+  }
+
   clearRecentProjects(): void {
     this.recents.clear();
   }

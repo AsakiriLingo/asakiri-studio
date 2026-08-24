@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { createLayoutProjectReader } from "@platform/project-reading/layout-project-reader";
+import {
+  createLayoutProjectReader,
+  ProjectFileNotFoundError,
+} from "@platform/project-reading/layout-project-reader";
 import { runProjectReaderContract } from "@platform/project-reading/project-reader-contract";
 import { createTauriProjectFileReader } from "@platform/project-reading/tauri-project-file-reader";
 
@@ -40,6 +43,18 @@ describe("createTauriProjectFileReader", () => {
         relativePath: "content/collections/vocabulary.json",
       },
     ]);
+  });
+
+  it("translates a notFound rejection into a ProjectFileNotFoundError", async () => {
+    const fileReader = createTauriProjectFileReader({
+      rootPath: "/Users/me/courses/japanese-starter",
+      // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
+      readCourseFile: () => Promise.reject("notFound"),
+    });
+
+    await expect(fileReader.readTextFile("project.json")).rejects.toBeInstanceOf(
+      ProjectFileNotFoundError,
+    );
   });
 
   it("rejects paths outside the selected project", async () => {

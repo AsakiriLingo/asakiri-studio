@@ -21,6 +21,10 @@
   color: var(--color-text-muted);
 }
 
+.messageActions {
+  margin-top: var(--space-4);
+}
+
 .importNotice {
   position: fixed;
   inset-block-end: var(--space-4);

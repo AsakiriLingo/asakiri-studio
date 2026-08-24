@@ -1,5 +1,8 @@
 import { invoke } from "@tauri-apps/api/core";
-import type { ProjectFileReader } from "@platform/project-reading/layout-project-reader";
+import {
+  ProjectFileNotFoundError,
+  type ProjectFileReader,
+} from "@platform/project-reading/layout-project-reader";
 import { projectRelativePathSegments } from "@platform/project-reading/project-relative-path";
 
 export interface TauriProjectFileReaderOptions {
@@ -18,7 +21,14 @@ export function createTauriProjectFileReader({
   return {
     async readTextFile(relativePath) {
       projectRelativePathSegments(relativePath);
-      return readCourseFile(rootPath, relativePath);
+      try {
+        return await readCourseFile(rootPath, relativePath);
+      } catch (error) {
+        if (error === "notFound") {
+          throw new ProjectFileNotFoundError(relativePath);
+        }
+        throw error;
+      }
     },
   };
 }
