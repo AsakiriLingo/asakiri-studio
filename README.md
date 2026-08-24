@@ -8,25 +8,21 @@ Start from one place. Create a new course or reopen a recent project, each kept 
 
 ![The Asakiri Studio start screen with options to create a new course, open a course, and a list of recent courses.](docs/screenshots/studio-start.webp)
 
-Structure the whole course. Group lessons into units and arrange each lesson's parts by dragging.
+Structure and write in one place. Arrange units, lessons, and parts in the outline, then edit each part in rich text with a live learner preview beside it.
 
-![Asakiri Studio showing a Beginner Italian course outline with units and lessons.](docs/screenshots/studio-course-structure.webp)
-
-Write lessons with a live preview. A focused editor for rich text and references, with a learner preview beside every part.
-
-![The Asakiri Studio lesson editor with a rich text part and a learner preview panel.](docs/screenshots/studio-lesson-editor.webp)
+![The Asakiri Studio lesson editor: a course outline of units and lessons on the left, a rich text part in the center, and a live learner preview on the right.](docs/screenshots/studio-lesson-editor.webp)
 
 Build exercises that check themselves. Multiple choice, listening, matching, word order, and more, each previewing as you edit.
 
-![A multiple choice exercise being edited in Asakiri Studio with answer options and a preview.](docs/screenshots/studio-exercise-editor.webp)
+![A match-pairs exercise being edited in Asakiri Studio, with paired Italian and English entries and a live preview.](docs/screenshots/studio-exercise-editor.webp)
 
 Reuse content everywhere. Keep vocabulary and phrases in collections, then pull the same entries into any lesson, media block, or exercise.
 
-![The Asakiri Studio content library listing Italian vocabulary with images and tags.](docs/screenshots/studio-content-library.webp)
+![The Asakiri Studio content library listing Italian vocabulary with English translations, images, and tags.](docs/screenshots/studio-content-library.webp)
 
 Bring in real media. Search Unsplash photos and Tatoeba audio, record your own, or import files. Everything stays local to your project.
 
-![The Asakiri Studio media library with photos and audio clips and an add media menu open.](docs/screenshots/studio-media-library.webp)
+![The Asakiri Studio media library with photos and audio clips, an add media menu open, and details for a selected image.](docs/screenshots/studio-media-library.webp)
 
 ## Commands
 
