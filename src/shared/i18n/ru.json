@@ -579,7 +579,10 @@
     "ttsTitle": "Добавить TTS-аудио",
     "ttsVoiceLabel": "Голос",
     "unsplashCredit": "Фотографии из Unsplash",
-    "usedBy": "Используется: {count}"
+    "usedBy": "Используется: {count}",
+    "copyText": "Копировать текст",
+    "viewGrid": "Вид сеткой",
+    "viewList": "Вид списком"
   },
   "newCourse": {
     "calloutBody": "Studio создаст папку и добавит файлы курса.",

@@ -6,6 +6,7 @@ import type { CatalogVoice, TtsVoice } from "@core/tts";
 import { useMessages } from "@shared/i18n";
 import { Icon, type IconName } from "@shared/components/icon";
 import { ScrollArea } from "@shared/components/scroll-area";
+import { assetSourceText } from "@features/media/asset-text";
 import { MediaSearchDialog } from "@features/media/MediaSearchDialog";
 import { TtsDialog } from "@features/media/TtsDialog";
 import { RecordDialog } from "@features/media/RecordDialog";
@@ -137,7 +138,7 @@ export function MediaSourcePicker({
     if (assetKind !== undefined && asset.kind !== assetKind) return false;
     const q = query.trim().toLowerCase();
     if (q === "") return true;
-    return `${asset.file ?? ""} ${asset.label}`.toLowerCase().includes(q);
+    return `${asset.file ?? ""} ${asset.label} ${assetSourceText(asset)}`.toLowerCase().includes(q);
   });
 
   const sources: readonly { key: string; icon: IconName; label: string; run: () => void }[] = [
@@ -217,6 +218,7 @@ export function MediaSourcePicker({
                       key={asset.id}
                       type="button"
                       className={styles.item}
+                      title={assetSourceText(asset) || (asset.file ?? asset.label)}
                       onClick={() => {
                         picked(asset);
                       }}

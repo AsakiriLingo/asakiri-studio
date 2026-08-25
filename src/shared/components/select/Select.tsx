@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { Combobox as BaseCombobox } from "@base-ui/react/combobox";
 import { Select as BaseSelect } from "@base-ui/react/select";
 import { Icon } from "@shared/components/icon";
@@ -12,6 +13,7 @@ function joinClassNames(...classNames: (string | undefined)[]) {
 export interface SelectOption {
   readonly value: string;
   readonly label: string;
+  readonly leading?: ReactNode;
 }
 
 export interface SelectProps {
@@ -99,6 +101,11 @@ export function Select({
                       value={item}
                       index={index}
                     >
+                      {item.leading === undefined ? null : (
+                        <span className={styles.leading} aria-hidden>
+                          {item.leading}
+                        </span>
+                      )}
                       <span className={styles.value}>{item.label}</span>
                       <BaseCombobox.ItemIndicator className={styles.indicator}>
                         <Icon name="check" size={16} />
@@ -150,7 +157,12 @@ export function Select({
             >
               {items.map((item) => (
                 <BaseSelect.Item key={item.value} className={styles.item} value={item.value}>
-                  <BaseSelect.ItemText>{item.label}</BaseSelect.ItemText>
+                  {item.leading === undefined ? null : (
+                    <span className={styles.leading} aria-hidden>
+                      {item.leading}
+                    </span>
+                  )}
+                  <BaseSelect.ItemText className={styles.value}>{item.label}</BaseSelect.ItemText>
                   <BaseSelect.ItemIndicator className={styles.indicator}>
                     <Icon name="check" size={16} />
                   </BaseSelect.ItemIndicator>

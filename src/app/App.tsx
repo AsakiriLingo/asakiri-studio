@@ -22,7 +22,7 @@ import type { DocumentTable } from "@core/documents";
 import { SPREADSHEET_EXTENSIONS } from "@core/documents";
 import { CourseStructure, OutlineSearch } from "@features/course-structure";
 import { LessonWorkspace } from "@features/lesson-workspace";
-import type { MediaSelection, MediaAuthoringCapability } from "@features/media";
+import type { MediaSelection, MediaAuthoringCapability, MediaLayout } from "@features/media";
 import { courseToRichLibrary, PartEditor, type SaveState } from "@features/lesson-editor";
 import { DraftsToolbar, DraftsSearch, DraftsPanel } from "@features/drafts";
 import { ReleaseChip } from "@features/release";
@@ -77,6 +77,10 @@ function initialTtsVoice(): string {
   return localStorage.getItem("asakiri-tts-voice") ?? "";
 }
 
+function initialMediaLayout(): MediaLayout {
+  return localStorage.getItem("asakiri-media-layout") === "list" ? "list" : "grid";
+}
+
 const PATREON_URL = "https://www.patreon.com/asakiri";
 
 function initialSupportEnabled(): boolean {
@@ -113,6 +117,7 @@ export function App() {
     view: "all",
   });
   const [mediaSelectedId, setMediaSelectedId] = useState<string | null>(null);
+  const [mediaLayout, setMediaLayout] = useState<MediaLayout>(initialMediaLayout);
   const [partSaveState, setPartSaveState] = useState<SaveState>("idle");
   const [savedPartId, setSavedPartId] = useState<string | null>(null);
 
@@ -225,6 +230,10 @@ export function App() {
   useEffect(() => {
     if (ttsVoice) localStorage.setItem("asakiri-tts-voice", ttsVoice);
   }, [ttsVoice]);
+
+  useEffect(() => {
+    localStorage.setItem("asakiri-media-layout", mediaLayout);
+  }, [mediaLayout]);
 
   useEffect(() => {
     localStorage.setItem("asakiri-support-dismissed", supportPromptEnabled ? "false" : "true");
@@ -539,6 +548,8 @@ export function App() {
             <Suspense fallback={null}>
               <CourseMedia
                 course={course}
+                layout={mediaLayout}
+                onLayoutChange={setMediaLayout}
                 onImportMedia={mediaActions.importMedia}
                 onImportMediaFolder={mediaActions.importMediaFolder}
                 onDeleteAsset={mediaActions.deleteAsset}

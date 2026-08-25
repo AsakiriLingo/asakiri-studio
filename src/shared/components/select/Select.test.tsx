@@ -5,8 +5,8 @@ import { I18nProvider } from "@shared/i18n";
 import { Select } from "@shared/components/select";
 
 const items = [
-  { value: "cat", label: "cat.jpg" },
-  { value: "dog", label: "dog.mp3" },
+  { value: "cat", label: "cat.jpg", leading: <span data-testid="thumb-cat" /> },
+  { value: "dog", label: "dog.mp3", leading: <span data-testid="thumb-dog" /> },
   { value: "bird", label: "bird.png" },
 ];
 
@@ -36,6 +36,7 @@ describe("Select", () => {
 
     expect(await screen.findByText("dog.mp3")).toBeInTheDocument();
     expect(screen.queryByText("cat.jpg")).not.toBeInTheDocument();
+    expect(screen.getByTestId("thumb-dog")).toBeInTheDocument();
 
     fireEvent.click(screen.getByText("dog.mp3"));
 

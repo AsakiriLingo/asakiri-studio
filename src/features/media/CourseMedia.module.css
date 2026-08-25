@@ -430,6 +430,42 @@
   font-size: var(--font-size-100);
 }
 
+.viewToggle {
+  display: flex;
+  flex: none;
+  gap: var(--space-1);
+}
+
+.listRows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.cardRow {
+  flex-direction: row;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.cardRow .thumb {
+  width: 4.5rem;
+  flex: none;
+  aspect-ratio: 4 / 3;
+  border-radius: var(--radius-sm);
+}
+
+.cardRow .cardTitle {
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
+.sourceText {
+  overflow-wrap: anywhere;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-100);
+}
+
 .more {
   position: relative;
   display: grid;

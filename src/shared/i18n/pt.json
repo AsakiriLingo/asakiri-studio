@@ -579,7 +579,10 @@
     "ttsTitle": "Adicionar áudio TTS",
     "ttsVoiceLabel": "Voz",
     "unsplashCredit": "Fotos do Unsplash",
-    "usedBy": "Usado por {count}"
+    "usedBy": "Usado por {count}",
+    "copyText": "Copiar texto",
+    "viewGrid": "Visualização em grade",
+    "viewList": "Visualização em lista"
   },
   "newCourse": {
     "calloutBody": "O Studio cria a pasta e adiciona os ficheiros do curso.",

@@ -1,4 +1,4 @@
-export { CourseMedia, type MediaSelection } from "@features/media/CourseMedia";
+export { CourseMedia, type MediaSelection, type MediaLayout } from "@features/media/CourseMedia";
 export {
   MediaSourcePicker,
   type MediaSourcePickerProps,

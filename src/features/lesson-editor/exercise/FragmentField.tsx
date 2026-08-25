@@ -1,8 +1,13 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { Binding, RenderFragment } from "@core/course";
-import type { RichEditorLibrary } from "@shared/components/rich-editor";
+import {
+  useAssetPreview,
+  type EditorAsset,
+  type RichEditorLibrary,
+} from "@shared/components/rich-editor";
 import { useMessages } from "@shared/i18n";
 import { TextInput } from "@shared/components/form";
+import { Icon } from "@shared/components/icon";
 import { Select } from "@shared/components/select";
 import {
   WHOLE_RECORD,
@@ -16,6 +21,32 @@ import {
   type FragmentSource,
 } from "@features/lesson-editor/exercise/fragment-model";
 import styles from "@features/lesson-editor/LessonEditor.module.css";
+
+function AssetOptionThumb({ asset }: { readonly asset: EditorAsset }) {
+  const loadPreview = useAssetPreview();
+  const [url, setUrl] = useState<string | null>(null);
+  const previewable = asset.kind === "image" && asset.file !== null;
+
+  useEffect(() => {
+    if (!previewable) return;
+    let cancelled = false;
+    void loadPreview(asset.id).then((next) => {
+      if (!cancelled && next) setUrl(next);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [asset.id, previewable, loadPreview]);
+
+  if (url) {
+    return <img className={styles.assetOptionThumb} src={url} alt="" loading="lazy" />;
+  }
+  return (
+    <span className={styles.assetOptionIcon}>
+      <Icon name={asset.kind} size={14} />
+    </span>
+  );
+}
 
 export interface FragmentFieldProps {
   readonly fragment: RenderFragment | undefined;
@@ -145,7 +176,11 @@ export function FragmentField({
               setAssetId(id);
               if (id) emit(assetBinding(id));
             }}
-            items={library.assets.map((entry) => ({ value: entry.id, label: entry.label }))}
+            items={library.assets.map((entry) => ({
+              value: entry.id,
+              label: entry.label,
+              leading: <AssetOptionThumb asset={entry} />,
+            }))}
           />
         )}
       </div>
