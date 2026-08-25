@@ -1,7 +1,7 @@
 import { useCallback } from "react";
 import type { Asset, MediaFolder } from "@core/course";
 import { foldersAfterDelete, labelForFile, mediaTypeForFile } from "@core/course";
-import type { TtsSaveResult } from "@core/tts";
+import type { TtsAddResult } from "@features/media";
 import type { PickedMediaFile } from "@core/project-media";
 import type { ProjectWriteResult } from "@core/project-writing";
 import { createProjectSession } from "@core/projects";
@@ -18,20 +18,20 @@ export interface MediaActions {
     fileName: string,
     metadata?: Readonly<Record<string, unknown>>,
     folderId?: string | null,
-  ) => Promise<ProjectWriteResult | null>;
+  ) => Promise<Asset | null>;
   readonly addTtsAudio: (
     text: string,
     voice: string,
     fileName: string,
     folderId?: string | null,
-  ) => Promise<TtsSaveResult>;
+  ) => Promise<TtsAddResult>;
   readonly previewTtsVoice: (text: string, voice: string) => Promise<string>;
   readonly addRecording: (
     bytes: Uint8Array,
     mimeType: string,
     ext: string,
     folderId?: string | null,
-  ) => Promise<ProjectWriteResult | null>;
+  ) => Promise<Asset | null>;
   readonly renameAsset: (assetId: string, rawName: string) => Promise<ProjectWriteResult>;
   readonly deleteAsset: (assetId: string) => Promise<ProjectWriteResult>;
   readonly loadAssetPreview: (assetId: string) => Promise<string | null>;
@@ -141,14 +141,12 @@ export function useMediaActions(services: AppServices, store: CourseStateStore):
     fileName: string,
     metadata?: Readonly<Record<string, unknown>>,
     folderId?: string | null,
-  ): Promise<ProjectWriteResult | null> => {
-    if (!ready) {
-      return WRITE_UNAVAILABLE;
-    }
+  ): Promise<Asset | null> => {
+    if (!ready) return null;
     const picked = await services.mediaSearch.downloadToTemp(url, fileName);
-    if (!picked) return { status: "failed", code: "unknown" };
-    const { allOk } = await importPickedMedia([picked], metadata, folderId);
-    return allOk ? { status: "saved" } : { status: "failed", code: "unknown" };
+    if (!picked) return null;
+    const { assets } = await importPickedMedia([picked], metadata, folderId);
+    return assets[0] ?? null;
   };
 
   const addTtsAudio = async (
@@ -156,7 +154,7 @@ export function useMediaActions(services: AppServices, store: CourseStateStore):
     voice: string,
     fileName: string,
     folderId?: string | null,
-  ): Promise<TtsSaveResult> => {
+  ): Promise<TtsAddResult> => {
     if (!ready) {
       return { ok: false, error: "Project is not ready." };
     }
@@ -166,8 +164,11 @@ export function useMediaActions(services: AppServices, store: CourseStateStore):
     } catch (error) {
       return { ok: false, error: String(error) };
     }
-    const { allOk } = await importPickedMedia([picked], undefined, folderId);
-    return allOk ? { ok: true } : { ok: false, error: "Could not import the generated audio." };
+    const { assets, allOk } = await importPickedMedia([picked], undefined, folderId);
+    const asset = assets[0];
+    return allOk && asset
+      ? { ok: true, asset }
+      : { ok: false, error: "Could not import the generated audio." };
   };
 
   const previewTtsVoice = (text: string, voice: string): Promise<string> =>
@@ -178,15 +179,13 @@ export function useMediaActions(services: AppServices, store: CourseStateStore):
     mimeType: string,
     ext: string,
     folderId?: string | null,
-  ): Promise<ProjectWriteResult | null> => {
-    if (!ready) {
-      return WRITE_UNAVAILABLE;
-    }
+  ): Promise<Asset | null> => {
+    if (!ready) return null;
     const id = `asset_${crypto.randomUUID()}`;
     const fileName = `recording-${id.slice(-6)}.${ext}`;
     const picked = await services.recording.saveToTemp(fileName, bytes);
-    if (!picked) return { status: "failed", code: "unknown" };
-    return store.withCourse<ProjectWriteResult>(WRITE_UNAVAILABLE, async ({ session, apply }) => {
+    if (!picked) return null;
+    return store.withCourse<Asset | null>(null, async ({ session, apply }) => {
       const assetDir = `media/assets/${id}`;
       const assetPath = `${assetDir}/asset.json`;
       const asset: Asset = {
@@ -205,17 +204,16 @@ export function useMediaActions(services: AppServices, store: CourseStateStore):
         picked.path,
         asset,
       );
-      if (result.status === "saved") {
-        apply((current) => ({
-          ...current,
-          course: { ...current.course, assets: [...current.course.assets, asset] },
-          sources: {
-            ...current.sources,
-            assets: { ...current.sources.assets, [asset.id]: assetPath },
-          },
-        }));
-      }
-      return result;
+      if (result.status !== "saved") return null;
+      apply((current) => ({
+        ...current,
+        course: { ...current.course, assets: [...current.course.assets, asset] },
+        sources: {
+          ...current.sources,
+          assets: { ...current.sources.assets, [asset.id]: assetPath },
+        },
+      }));
+      return asset;
     });
   };
 

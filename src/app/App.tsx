@@ -22,7 +22,7 @@ import type { DocumentTable } from "@core/documents";
 import { SPREADSHEET_EXTENSIONS } from "@core/documents";
 import { CourseStructure, OutlineSearch } from "@features/course-structure";
 import { LessonWorkspace } from "@features/lesson-workspace";
-import type { MediaSelection } from "@features/media";
+import type { MediaSelection, MediaAuthoringCapability } from "@features/media";
 import { courseToRichLibrary, PartEditor, type SaveState } from "@features/lesson-editor";
 import { DraftsToolbar, DraftsSearch, DraftsPanel } from "@features/drafts";
 import { ReleaseChip } from "@features/release";
@@ -48,6 +48,9 @@ const CourseContent = lazy(() =>
   import("@features/content").then((m) => ({ default: m.CourseContent })),
 );
 const CourseMedia = lazy(() => import("@features/media").then((m) => ({ default: m.CourseMedia })));
+const MediaSourcePicker = lazy(() =>
+  import("@features/media").then((m) => ({ default: m.MediaSourcePicker })),
+);
 const PartPreview = lazy(() =>
   import("@features/part-preview").then((m) => ({ default: m.PartPreview })),
 );
@@ -158,6 +161,26 @@ export function App() {
   const partActions = usePartActions(services, store, locale);
   const mediaActions = useMediaActions(services, store);
   const draftActions = useDrafts(services, store);
+
+  const mediaAuthoring = useMemo<MediaAuthoringCapability>(
+    () => ({
+      importFromDevice: () => mediaActions.importAssetForField(),
+      searchImages: (query, page) => services.mediaSearch.searchImages(query, page),
+      searchAudio: (query, page) => services.mediaSearch.searchAudio(query, page),
+      addRemoteMedia: (url, fileName, metadata) =>
+        mediaActions.addRemoteMedia(url, fileName, metadata, null),
+      defaultTtsVoice: ttsVoice,
+      onDefaultTtsVoiceChange: setTtsVoice,
+      listTtsVoices: () => services.tts.listVoices(),
+      previewTtsVoice: (text, voice) => mediaActions.previewTtsVoice(text, voice),
+      listAvailableVoices: () => services.tts.listAvailableVoices(),
+      downloadVoice: (voiceId, onProgress) => services.tts.downloadVoice(voiceId, onProgress),
+      removeVoice: (voiceId) => services.tts.removeVoice(voiceId),
+      addTtsAudio: (text, voice, fileName) => mediaActions.addTtsAudio(text, voice, fileName, null),
+      addRecording: (bytes, mimeType, ext) => mediaActions.addRecording(bytes, mimeType, ext, null),
+    }),
+    [mediaActions, services, ttsVoice],
+  );
 
   const openPartView = (_lessonId: string, partId: string) => {
     setOpenPartId(partId);
@@ -488,7 +511,19 @@ export function App() {
                 onAddCollection={contentActions.addCollection}
                 onUpdateCollection={contentActions.updateCollection}
                 onDeleteCollection={contentActions.deleteCollection}
-                onImportAsset={mediaActions.importAssetForField}
+                renderAssetPicker={(request) => (
+                  <Suspense fallback={<span />}>
+                    <MediaSourcePicker
+                      assets={course.assets}
+                      assetKind={request.assetKind}
+                      multiple={request.multiple}
+                      ariaLabel={request.ariaLabel}
+                      loadPreview={mediaActions.loadAssetPreview}
+                      onPick={request.onPick}
+                      capability={mediaAuthoring}
+                    />
+                  </Suspense>
+                )}
                 onImportSpreadsheet={pickSpreadsheet}
                 onLoadPreview={mediaActions.loadAssetPreview}
                 sidebarCollapsed={collectionsCollapsed}

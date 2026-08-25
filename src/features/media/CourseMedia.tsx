@@ -18,7 +18,8 @@ import type { Asset, ContentRecord, Course, MediaFolder } from "@core/course";
 import { canAddSubfolder, mediaFolderChildren, mediaFolderSubtreeIds } from "@core/course";
 import type { AudioSearchResult, ImageSearchResult, SearchPage } from "@core/media-search";
 import type { ProjectWriteResult } from "@core/project-writing";
-import type { CatalogVoice, DownloadProgress, TtsSaveResult, TtsVoice } from "@core/tts";
+import type { CatalogVoice, DownloadProgress, TtsVoice } from "@core/tts";
+import type { TtsAddResult } from "@features/media/MediaSourcePicker";
 import { useFormat, useMessages, type StudioMessages } from "@shared/i18n";
 import { Button } from "@shared/components/button";
 import { useConfirm } from "@shared/components/confirm-dialog";
@@ -120,7 +121,7 @@ export interface CourseMediaProps {
     fileName: string,
     metadata: Readonly<Record<string, unknown>>,
     folderId?: string | null,
-  ) => Promise<ProjectWriteResult | null>;
+  ) => Promise<Asset | null>;
   readonly onRenameAsset: (assetId: string, name: string) => Promise<ProjectWriteResult>;
   readonly inspectorCollapsed: boolean;
   readonly onInspectorCollapsedChange: (collapsed: boolean) => void;
@@ -144,13 +145,13 @@ export interface CourseMediaProps {
     voice: string,
     fileName: string,
     folderId?: string | null,
-  ) => Promise<TtsSaveResult>;
+  ) => Promise<TtsAddResult>;
   readonly onAddRecording: (
     bytes: Uint8Array,
     mimeType: string,
     ext: string,
     folderId?: string | null,
-  ) => Promise<ProjectWriteResult | null>;
+  ) => Promise<Asset | null>;
 }
 
 export function CourseMedia({
@@ -982,7 +983,9 @@ export function CourseMedia({
             onSearchImages={onSearchImages}
             onSearchAudio={onSearchAudio}
             onAddRemoteMedia={(url, fileName, metadata) =>
-              onAddRemoteMedia(url, fileName, metadata, activeFolderId)
+              onAddRemoteMedia(url, fileName, metadata, activeFolderId).then((asset) =>
+                asset ? { status: "saved" } : { status: "failed", code: "unknown" },
+              )
             }
           />
         ) : null}
@@ -1014,9 +1017,9 @@ export function CourseMedia({
               setShowRecord(false);
             }}
             onAddRecording={(bytes, mimeType, ext) =>
-              onAddRecording(bytes, mimeType, ext, activeFolderId).then((result) => {
-                if (result) setSaveState(result.status === "saved" ? "saved" : "failed");
-                return result;
+              onAddRecording(bytes, mimeType, ext, activeFolderId).then((asset) => {
+                setSaveState(asset ? "saved" : "failed");
+                return asset ? { status: "saved" } : null;
               })
             }
           />

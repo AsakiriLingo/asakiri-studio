@@ -27,7 +27,7 @@ import { Tag } from "@shared/components/tag";
 import {
   AssetFieldControl,
   AssetListFieldControl,
-  type ImportAsset,
+  type RenderAssetPicker,
   type LoadPreview,
 } from "@features/content/AssetField";
 import styles from "@features/content/CourseContent.module.css";
@@ -115,14 +115,14 @@ function FieldEditor({
   field,
   record,
   assets,
-  importAsset,
+  renderAssetPicker,
   loadPreview,
   onSave,
 }: {
   readonly field: FieldDefinition;
   readonly record: ContentRecord;
   readonly assets: readonly Asset[];
-  readonly importAsset: ImportAsset;
+  readonly renderAssetPicker: RenderAssetPicker;
   readonly loadPreview: LoadPreview;
   readonly onSave: SaveField;
 }) {
@@ -165,7 +165,7 @@ function FieldEditor({
         value={value}
         field={field}
         assets={assets}
-        importAsset={importAsset}
+        renderAssetPicker={renderAssetPicker}
         loadPreview={loadPreview}
         onChange={set}
       />
@@ -176,7 +176,7 @@ function FieldEditor({
         value={value}
         field={field}
         assets={assets}
-        importAsset={importAsset}
+        renderAssetPicker={renderAssetPicker}
         loadPreview={loadPreview}
         onChange={set}
       />
@@ -227,7 +227,7 @@ export interface CourseContentProps {
   readonly onAddCollection: (collection: Collection) => Promise<ProjectWriteResult>;
   readonly onUpdateCollection: (collection: Collection) => Promise<ProjectWriteResult>;
   readonly onDeleteCollection: (collectionId: string) => Promise<ProjectWriteResult>;
-  readonly onImportAsset: ImportAsset;
+  readonly renderAssetPicker: RenderAssetPicker;
   readonly onImportSpreadsheet: () => Promise<void>;
   readonly onLoadPreview: LoadPreview;
   readonly sidebarCollapsed?: boolean;
@@ -242,7 +242,7 @@ export function CourseContent({
   onAddCollection,
   onUpdateCollection,
   onDeleteCollection,
-  onImportAsset,
+  renderAssetPicker,
   onImportSpreadsheet,
   onLoadPreview,
   sidebarCollapsed = false,
@@ -309,14 +309,17 @@ export function CourseContent({
   };
 
   const saveFieldRef = useRef(saveField);
-  const importAssetRef = useRef(onImportAsset);
+  const renderAssetPickerRef = useRef(renderAssetPicker);
   const loadPreviewRef = useRef(onLoadPreview);
   useEffect(() => {
     saveFieldRef.current = saveField;
-    importAssetRef.current = onImportAsset;
+    renderAssetPickerRef.current = renderAssetPicker;
     loadPreviewRef.current = onLoadPreview;
   });
-  const importAsset = useCallback<ImportAsset>(() => importAssetRef.current(), []);
+  const renderAssetPickerStable = useCallback<RenderAssetPicker>(
+    (request) => renderAssetPickerRef.current(request),
+    [],
+  );
   const loadPreview = useCallback<LoadPreview>((assetId) => loadPreviewRef.current(assetId), []);
 
   const removeRecord = async (recordId: string) => {
@@ -466,7 +469,7 @@ export function CourseContent({
                 value={row.original.fields[field.id]}
                 field={field}
                 assets={course.assets}
-                importAsset={importAsset}
+                renderAssetPicker={renderAssetPickerStable}
                 loadPreview={loadPreview}
                 onChange={(value) => {
                   saveFieldRef.current(row.original, field.id, value);
@@ -511,7 +514,7 @@ export function CourseContent({
         ),
       },
     ];
-  }, [collection, assets, course.assets, messages, importAsset, loadPreview]);
+  }, [collection, assets, course.assets, messages, renderAssetPickerStable, loadPreview]);
 
   const editingRecord =
     editingRecordId !== null
@@ -710,7 +713,7 @@ export function CourseContent({
                 field={field}
                 record={editingRecord}
                 assets={course.assets}
-                importAsset={importAsset}
+                renderAssetPicker={renderAssetPickerStable}
                 loadPreview={loadPreview}
                 onSave={saveField}
               />
@@ -737,9 +740,6 @@ export function CourseContent({
             setShowingSettings(false);
           }}
         >
-          <div className={styles.dialogHeader}>
-            <h2 className={styles.dialogTitle}>{t.collectionSettings}</h2>
-          </div>
           <ScrollArea
             viewportClassName={styles.dialogViewport}
             contentClassName={styles.dialogBody}
@@ -785,6 +785,7 @@ export function CourseContent({
                 />
                 <Select
                   className={styles.fieldTypeSelect}
+                  elevated
                   aria-label={t.fieldType}
                   items={[
                     { value: "text", label: t.kindText },
@@ -797,6 +798,7 @@ export function CourseContent({
                 />
                 <Select
                   className={styles.fieldCardSelect}
+                  elevated
                   aria-label={t.allows}
                   items={[
                     { value: "one", label: t.cardinalityOne },
