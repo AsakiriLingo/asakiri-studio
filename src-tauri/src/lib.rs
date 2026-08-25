@@ -3,10 +3,12 @@ mod media;
 mod packaging;
 mod process;
 mod tts;
+mod window;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let builder = tauri::Builder::default()
+        .manage(window::WindowState::default())
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init());
@@ -18,6 +20,9 @@ pub fn run() {
         .plugin(tauri_plugin_decorum::init())
         .menu(|handle| {
             use tauri::menu::{MenuBuilder, MenuItemBuilder, SubmenuBuilder};
+            let new_window = MenuItemBuilder::with_id("new-window", "New Window")
+                .accelerator("CmdOrCtrl+Shift+N")
+                .build(handle)?;
             let preferences = MenuItemBuilder::with_id("preferences", "Preferences…")
                 .accelerator("CmdOrCtrl+,")
                 .build(handle)?;
@@ -27,6 +32,8 @@ pub fn run() {
                 .quit()
                 .build()?;
             let file_menu = SubmenuBuilder::new(handle, "File")
+                .item(&new_window)
+                .separator()
                 .item(&preferences)
                 .separator()
                 .close_window()
@@ -40,16 +47,36 @@ pub fn run() {
                 .paste()
                 .select_all()
                 .build()?;
+            let window_menu = SubmenuBuilder::new(handle, "Window")
+                .minimize()
+                .maximize()
+                .separator()
+                .fullscreen()
+                .build()?;
+            #[cfg(target_os = "macos")]
+            let _ = window_menu.set_as_windows_menu_for_nsapp();
             MenuBuilder::new(handle)
                 .item(&app_menu)
                 .item(&file_menu)
                 .item(&edit_menu)
+                .item(&window_menu)
                 .build()
         })
         .on_menu_event(|app, event| {
-            if event.id().as_ref() == "preferences" {
-                use tauri::Emitter;
-                let _ = app.emit("open-preferences", ());
+            use tauri::Emitter;
+            match event.id().as_ref() {
+                "preferences" => {
+                    let _ = app.emit("open-preferences", ());
+                }
+                "new-window" => {
+                    let _ = window::open_course_window(app);
+                }
+                _ => {}
+            }
+        })
+        .on_window_event(|window, event| {
+            if let tauri::WindowEvent::Destroyed = event {
+                window::forget_window(window);
             }
         });
 
@@ -101,7 +128,9 @@ pub fn run() {
             tts::preview_tts,
             tts::list_available_voices,
             tts::download_voice,
-            tts::remove_voice
+            tts::remove_voice,
+            window::set_window_course,
+            window::focus_course_window
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
