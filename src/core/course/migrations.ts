@@ -18,6 +18,12 @@ export const MIGRATIONS: readonly MigrationStep[] = [
     summary: "Stamp the canonical format envelope on every file",
     apply: (_kind, data) => withFormatFirst(data),
   },
+  {
+    to: 2,
+    summary: "Fold select-image exercises into multiple-choice",
+    apply: (kind, data) =>
+      kind === "part" && data.type === "select-image" ? { ...data, type: "multiple-choice" } : data,
+  },
 ];
 
 export interface MigrationOutcome {

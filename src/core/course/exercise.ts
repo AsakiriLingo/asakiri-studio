@@ -2,7 +2,6 @@ import type { AcceptedValue, RenderFragment } from "@core/course/binding";
 
 export const EXERCISE_TYPES = [
   "multiple-choice",
-  "select-image",
   "match-pairs",
   "fill-blank",
   "word-order",
@@ -99,7 +98,7 @@ interface ExerciseBase {
 }
 
 export interface MultipleChoiceExercise extends ExerciseBase {
-  readonly type: "multiple-choice" | "select-image";
+  readonly type: "multiple-choice";
   readonly options: readonly ChoiceOption[];
   readonly evaluation: SelectedOptionsEvaluation;
 }

@@ -14,7 +14,7 @@ The fixture demonstrates:
 - an explicit literal binding representing content detached from a live record;
 - a part for every exercise type, each composing content bindings:
   - `multiple-choice` (Choose the matching word);
-  - `select-image` (audio prompt, image options across Cat, Dog, Bird);
+  - `multiple-choice` with an `image-grid` layout (audio prompt, image options across Cat, Dog, Bird);
   - `match-pairs` (hiragana characters to romaji);
   - `fill-blank` (a templated sentence with a word bank);
   - `word-order` (ordered tokens plus distractors, reusing both collections);

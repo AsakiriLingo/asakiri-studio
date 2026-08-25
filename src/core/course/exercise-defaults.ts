@@ -25,15 +25,6 @@ export function createDefaultExercise(type: ExerciseType): Exercise {
         options: [],
         evaluation: { kind: "selected-options", select: "one", correctOptionIds: [] },
       };
-    case "select-image":
-      return {
-        id,
-        type,
-        prompt,
-        options: [],
-        presentation: { layout: "image-grid" },
-        evaluation: { kind: "selected-options", select: "one", correctOptionIds: [] },
-      };
     case "match-pairs":
       return {
         id,

@@ -176,7 +176,6 @@ export function serializeExercise(exercise: Exercise): Json {
   const base = serializeBase(exercise);
   switch (exercise.type) {
     case "multiple-choice":
-    case "select-image":
       return { ...base, options: serializeChoices(exercise.options) };
     case "match-pairs":
       return {

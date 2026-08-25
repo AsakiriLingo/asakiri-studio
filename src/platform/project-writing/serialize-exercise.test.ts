@@ -14,7 +14,6 @@ function roundTrip(exercise: Exercise): Exercise {
 
 const ALL_TYPES: readonly ExerciseType[] = [
   "multiple-choice",
-  "select-image",
   "match-pairs",
   "fill-blank",
   "word-order",
@@ -73,6 +72,45 @@ describe("serializeExercise", () => {
         },
       },
       evaluation: { kind: "selected-options", select: "one", correctOptionIds: ["opt_cat"] },
+    };
+    expect(roundTrip(exercise)).toEqual(exercise);
+  });
+
+  it("round-trips options whose body carries multiple fragments", () => {
+    const exercise: Exercise = {
+      id: "ex_match",
+      type: "match-pairs",
+      prompt: [],
+      left: [
+        {
+          id: "left_cat",
+          body: [
+            {
+              id: "left_cat_word",
+              role: "primary",
+              binding: { kind: "field", recordId: "rec_cat", fieldId: "field_ja" },
+            },
+            {
+              id: "left_cat_audio",
+              role: "audio",
+              binding: { kind: "asset", assetId: "asset_cat_audio" },
+            },
+          ],
+        },
+      ],
+      right: [
+        {
+          id: "right_cat",
+          body: [
+            {
+              id: "right_cat_image",
+              role: "visual",
+              binding: { kind: "asset", assetId: "asset_cat_image" },
+            },
+          ],
+        },
+      ],
+      evaluation: { kind: "matched-pairs", pairs: [{ leftId: "left_cat", rightId: "right_cat" }] },
     };
     expect(roundTrip(exercise)).toEqual(exercise);
   });

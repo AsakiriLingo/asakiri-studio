@@ -8,6 +8,7 @@ import { IconButton } from "@shared/components/icon-button";
 import { PanelHeader } from "@shared/components/panel";
 import { ExerciseShell } from "@features/lesson-editor/exercise/ExerciseShell";
 import { FragmentField } from "@features/lesson-editor/exercise/FragmentField";
+import { FragmentList } from "@features/lesson-editor/exercise/FragmentList";
 import { newFragmentId, textFragment } from "@features/lesson-editor/exercise/fragment-model";
 import styles from "@features/lesson-editor/LessonEditor.module.css";
 
@@ -46,10 +47,8 @@ export function MatchPairsEditor({ exercise, library, onChange }: MatchPairsEdit
     return left && right ? [{ leftId: pair.leftId, rightId: pair.rightId, left, right }] : [];
   });
 
-  const setSideBody = (side: "left" | "right", id: string, fragment: RenderFragment) => {
-    const options = ex[side].map((option) =>
-      option.id === id ? { ...option, body: [fragment, ...option.body.slice(1)] } : option,
-    );
+  const setSideBody = (side: "left" | "right", id: string, body: readonly RenderFragment[]) => {
+    const options = ex[side].map((option) => (option.id === id ? { ...option, body } : option));
     update({ ...ex, [side]: options });
   };
 
@@ -109,22 +108,20 @@ export function MatchPairsEditor({ exercise, library, onChange }: MatchPairsEdit
                   <Icon name="close" size={18} />
                 </IconButton>
               </div>
-              <FragmentField
+              <FragmentList
                 label={te.pairLeft}
-                role="primary"
-                fragment={pair.left.body[0]}
+                fragments={pair.left.body}
                 library={library}
-                onChange={(fragment) => {
-                  setSideBody("left", pair.leftId, fragment);
+                onChange={(body) => {
+                  setSideBody("left", pair.leftId, body);
                 }}
               />
-              <FragmentField
+              <FragmentList
                 label={te.pairRight}
-                role="primary"
-                fragment={pair.right.body[0]}
+                fragments={pair.right.body}
                 library={library}
-                onChange={(fragment) => {
-                  setSideBody("right", pair.rightId, fragment);
+                onChange={(body) => {
+                  setSideBody("right", pair.rightId, body);
                 }}
               />
             </div>

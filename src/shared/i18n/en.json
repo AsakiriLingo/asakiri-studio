@@ -292,6 +292,7 @@
     "editorAria": "Selected lesson part editor",
     "editorModesAria": "Part editor modes",
     "exercise": {
+      "addDetail": "Add detail",
       "addDistractor": "Add distractor",
       "addOption": "Add option",
       "addWord": "Add word",
@@ -331,6 +332,7 @@
       "pairsTitle": "Pairs",
       "phraseDesc": "What the learner should say. The audio is the model pronunciation.",
       "phraseTitle": "Phrase to speak",
+      "removeDetail": "Remove detail {index}",
       "removeDistractor": "Remove distractor {token}",
       "removeOption": "Remove option {option}",
       "removePair": "Remove pair {pair}",
@@ -373,7 +375,6 @@
       "match-pairs": "Match pairs",
       "multiple-choice": "Multiple choice",
       "rich-text": "Rich text",
-      "select-image": "Select image",
       "speak": "Speak aloud",
       "unknown": "Unsupported",
       "word-order": "Word order"

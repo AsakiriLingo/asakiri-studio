@@ -77,6 +77,17 @@ describe("migrateFile", () => {
     expect(outcome.data).toBe(data);
   });
 
+  it("folds a legacy select-image exercise into multiple-choice", () => {
+    const outcome = migrateFile(
+      "part",
+      { format: COURSE_FORMAT, formatVersion: 1, id: "exercise_x", type: "select-image" },
+      "lessons/x/parts/y/exercise.json",
+    );
+
+    expect(outcome.migrated).toBe(true);
+    expect(outcome.data).toMatchObject({ id: "exercise_x", type: "multiple-choice" });
+  });
+
   it("refuses a file from a newer Studio", () => {
     expect(() =>
       migrateFile("manifest", { format: COURSE_FORMAT, formatVersion: 99 }, "project.json"),

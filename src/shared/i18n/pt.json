@@ -292,6 +292,7 @@
     "editorAria": "Editor da parte da lição selecionada",
     "editorModesAria": "Modos do editor de partes",
     "exercise": {
+      "addDetail": "Adicionar detalhe",
       "addDistractor": "Adicionar distrator",
       "addOption": "Adicionar opção",
       "addWord": "Adicionar palavra",
@@ -331,6 +332,7 @@
       "pairsTitle": "Pares",
       "phraseDesc": "O que o aluno deve dizer. O áudio é o modelo de pronúncia.",
       "phraseTitle": "Frase a dizer",
+      "removeDetail": "Remover detalhe {index}",
       "removeDistractor": "Remover distrator {token}",
       "removeOption": "Remover opção {option}",
       "removePair": "Remover par {pair}",
@@ -373,7 +375,6 @@
       "match-pairs": "Associar pares",
       "multiple-choice": "Escolha múltipla",
       "rich-text": "Texto formatado",
-      "select-image": "Selecionar imagem",
       "speak": "Falar em voz alta",
       "unknown": "Não suportado",
       "word-order": "Ordem das palavras"

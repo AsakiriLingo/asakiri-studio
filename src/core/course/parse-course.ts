@@ -382,7 +382,6 @@ export function parseExercise(value: unknown, context: string, locale = "en"): E
   const evaluation = parseEvaluation(data.evaluation, `${context}.evaluation`, locale);
   switch (type) {
     case "multiple-choice":
-    case "select-image":
       return {
         ...base,
         type,

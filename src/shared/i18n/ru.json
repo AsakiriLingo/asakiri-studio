@@ -292,6 +292,7 @@
     "editorAria": "Редактор выбранной части урока",
     "editorModesAria": "Режимы редактора части",
     "exercise": {
+      "addDetail": "Добавить деталь",
       "addDistractor": "Добавить дистрактор",
       "addOption": "Добавить вариант",
       "addWord": "Добавить слово",
@@ -331,6 +332,7 @@
       "pairsTitle": "Пары",
       "phraseDesc": "Что должен произнести учащийся. Аудио служит образцом произношения.",
       "phraseTitle": "Фраза для произнесения",
+      "removeDetail": "Удалить деталь {index}",
       "removeDistractor": "Удалить дистрактор {token}",
       "removeOption": "Удалить вариант {option}",
       "removePair": "Удалить пару {pair}",
@@ -373,7 +375,6 @@
       "match-pairs": "Соединить пары",
       "multiple-choice": "Выбор ответа",
       "rich-text": "Форматированный текст",
-      "select-image": "Выбрать изображение",
       "speak": "Произнести вслух",
       "unknown": "Не поддерживается",
       "word-order": "Порядок слов"

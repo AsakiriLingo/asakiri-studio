@@ -431,7 +431,6 @@ export async function validateExampleCourse(courseRoot) {
 
 const EXERCISE_TYPES = new Set([
   "multiple-choice",
-  "select-image",
   "match-pairs",
   "fill-blank",
   "word-order",
@@ -451,7 +450,6 @@ function validateExercise(exercise, lessonId, report) {
 
   switch (exercise.type) {
     case "multiple-choice":
-    case "select-image":
       validateSelectedOptions(exercise, lessonId, report, exercise.options);
       break;
     case "match-pairs":

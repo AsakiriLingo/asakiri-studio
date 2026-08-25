@@ -1,6 +1,6 @@
 # Asakiri course format v1
 
-Status: **canonical as of 2026-08-16.** `format: "asakiri-course"`, `formatVersion: 1`.
+Status: **canonical as of 2026-08-25.** `format: "asakiri-course"`, current `formatVersion: 2`.
 
 A course is one directory. Every file in it is JSON, every file carries the format envelope,
 and every entity carries a stable ID. Machine-readable schemas live in
@@ -49,7 +49,9 @@ shape is written back the next time that file is saved, so opening a course neve
 
 Version 0 means "no envelope", which covers both pre-1.0 draft fixtures
 (`format: "asakiri-example"`) and files written before versioning existed. The v1 step stamps
-the envelope and changes nothing else.
+the envelope and changes nothing else. The v2 step folds the removed `select-image` exercise
+type into `multiple-choice`, which it always was mechanically (image-valued option bodies plus
+`presentation.layout: "image-grid"`); it touches nothing else.
 
 ## Unknown content is preserved, not rejected
 
