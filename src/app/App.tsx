@@ -303,12 +303,16 @@ export function App() {
     setLocale(next);
   };
 
-  const enterWorkspace = (directory: ProjectDirectory) => {
+  const enterWorkspace = async (directory: ProjectDirectory) => {
+    if (await services.appWindow.focusCourseWindow(directory)) {
+      return;
+    }
     store.openProject(directory);
     setSection("lessons");
     setOpenPartId(null);
     setView("workspace");
     setRecentProjects(services.directory.listRecentProjects());
+    void services.appWindow.setCourseWindow(directory);
   };
 
   const openCourse = async () => {
@@ -316,14 +320,14 @@ export function App() {
       dialogTitle: "Open an Asakiri course",
     });
     if (directory) {
-      enterWorkspace(directory);
+      await enterWorkspace(directory);
     }
   };
 
   const openRecent = async (id: string) => {
     const directory = await services.directory.openRecentProject(id);
     if (directory) {
-      enterWorkspace(directory);
+      await enterWorkspace(directory);
     }
   };
 
@@ -331,6 +335,7 @@ export function App() {
     store.closeProject();
     setOpenPartId(null);
     setView("start");
+    void services.appWindow.setCourseWindow(null);
   };
 
   const forgetRecent = (id: string) => {
@@ -413,7 +418,7 @@ export function App() {
               dialogTitle: `Choose where to create ${name}`,
             })
           }
-          onCreated={enterWorkspace}
+          onCreated={(directory) => void enterWorkspace(directory)}
         />
       );
     }

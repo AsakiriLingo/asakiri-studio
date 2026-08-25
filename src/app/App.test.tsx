@@ -461,6 +461,10 @@ function makeServices() {
       getCurrentVersion: vi.fn().mockResolvedValue("0.2.5"),
     },
     menu: { onOpenPreferences: vi.fn().mockReturnValue(() => undefined) },
+    appWindow: {
+      focusCourseWindow: vi.fn().mockResolvedValue(false),
+      setCourseWindow: vi.fn().mockResolvedValue(undefined),
+    },
     links: { open: vi.fn().mockResolvedValue(undefined) },
     tts: {
       listVoices: vi.fn().mockResolvedValue([]),
@@ -583,6 +587,24 @@ describe("App", () => {
     expect(details.course.project.title).toBe("Course A");
     expect(must(captured.shell, "WorkspaceShell").projectName).toBe("Course A");
     expect(must(captured.shell, "WorkspaceShell").projectLocation).toBe("/tmp/a");
+    expect(services.appWindow.setCourseWindow).toHaveBeenCalledWith(DIR_A);
+  });
+
+  it("focuses the existing window when the course is already open elsewhere", async () => {
+    services.appWindow.focusCourseWindow.mockResolvedValue(true);
+
+    render(<App />);
+    await act(async () => {
+      must(captured.start, "StartScreen").onOpenRecent("p1");
+      await Promise.resolve();
+    });
+    await waitFor(() => {
+      expect(services.appWindow.focusCourseWindow).toHaveBeenCalledWith(DIR_A);
+    });
+
+    expect(captured.shell).toBeUndefined();
+    expect(services.reader.readCourse).not.toHaveBeenCalled();
+    expect(services.appWindow.setCourseWindow).not.toHaveBeenCalled();
   });
 
   it("shows the failure message when the course cannot be read", async () => {
