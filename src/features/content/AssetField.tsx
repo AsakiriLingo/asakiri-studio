@@ -1,23 +1,27 @@
-import { useEffect, useRef, useState } from "react";
-import { Popover } from "@base-ui/react/popover";
-import type { Asset, FieldDefinition, RecordFieldItem, RecordFieldValue } from "@core/course";
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import type {
+  Asset,
+  AssetKind,
+  FieldDefinition,
+  RecordFieldItem,
+  RecordFieldValue,
+} from "@core/course";
 import { useFormat, useMessages } from "@shared/i18n";
 import { Icon } from "@shared/components/icon";
-import { ScrollArea } from "@shared/components/scroll-area";
-import type { SelectOption } from "@shared/components/select";
 import styles from "@features/content/CourseContent.module.css";
-
-export type ImportAsset = () => Promise<Asset | null>;
 
 export type LoadPreview = (assetId: string) => Promise<string | null>;
 
-const previewCache = new Map<string, Promise<string | null>>();
-
-function assetOptions(assets: readonly Asset[], assetKind?: Asset["kind"]): SelectOption[] {
-  return assets
-    .filter((asset) => assetKind === undefined || asset.kind === assetKind)
-    .map((asset) => ({ value: asset.id, label: asset.file ?? asset.label }));
+export interface AssetPickerRequest {
+  readonly assetKind?: AssetKind | undefined;
+  readonly multiple: boolean;
+  readonly ariaLabel: string;
+  readonly onPick: (assetId: string) => void;
 }
+
+export type RenderAssetPicker = (request: AssetPickerRequest) => ReactNode;
+
+const previewCache = new Map<string, Promise<string | null>>();
 
 function useAssetPreview(asset: Asset | undefined, loadPreview: LoadPreview): string | null {
   const [loaded, setLoaded] = useState<{ readonly id: string; readonly url: string } | null>(null);
@@ -136,136 +140,11 @@ export function AssetPreview({
   return <Icon name={asset ? asset.kind : "image"} size={size} />;
 }
 
-function PickerItemThumb({
-  asset,
-  loadPreview,
-}: {
-  readonly asset: Asset | undefined;
-  readonly loadPreview: LoadPreview;
-}) {
-  const url = useAssetPreview(asset, loadPreview);
-  if (asset?.kind === "image" && url) {
-    return (
-      <img
-        className={styles.pickerItemThumb}
-        src={url}
-        alt=""
-        loading="lazy"
-        decoding="async"
-        aria-hidden="true"
-      />
-    );
-  }
-  return (
-    <span className={styles.pickerItemThumbFallback}>
-      <Icon name={asset ? asset.kind : "image"} size={16} aria-hidden="true" />
-    </span>
-  );
-}
-
-function AssetPicker({
-  options,
-  assets,
-  loadPreview,
-  ariaLabel,
-  onPick,
-  onImport,
-}: {
-  readonly options: readonly SelectOption[];
-  readonly assets: readonly Asset[];
-  readonly loadPreview: LoadPreview;
-  readonly ariaLabel: string;
-  readonly onPick: (assetId: string) => void;
-  readonly onImport: () => void;
-}) {
-  const messages = useMessages();
-  const t = messages.content;
-  const [open, setOpen] = useState(false);
-  const [query, setQuery] = useState("");
-  const q = query.trim().toLowerCase();
-  const filtered = q ? options.filter((option) => option.label.toLowerCase().includes(q)) : options;
-  const byId = new Map(assets.map((asset) => [asset.id, asset]));
-
-  const close = () => {
-    setOpen(false);
-    setQuery("");
-  };
-
-  return (
-    <Popover.Root open={open} onOpenChange={setOpen}>
-      <Popover.Trigger className={styles.addAsset} aria-label={ariaLabel}>
-        <Icon name="plus" size={16} />
-      </Popover.Trigger>
-      <Popover.Portal>
-        <Popover.Positioner className={styles.pickerPositioner} sideOffset={4} align="start">
-          <Popover.Popup className={styles.pickerPopup}>
-            <div className={styles.pickerSearch}>
-              <Icon
-                name="search"
-                size={16}
-                className={styles.pickerSearchIcon}
-                aria-hidden="true"
-              />
-              <input
-                type="search"
-                className={styles.pickerInput}
-                value={query}
-                placeholder={messages.common.searchPlaceholder}
-                aria-label={messages.common.search}
-                autoComplete="off"
-                autoFocus
-                onChange={(event) => {
-                  setQuery(event.currentTarget.value);
-                }}
-              />
-            </div>
-            <ScrollArea
-              viewportClassName={styles.pickerScrollViewport}
-              contentClassName={styles.pickerList}
-              contentStyle={{ minWidth: 0 }}
-            >
-              {filtered.length === 0 ? (
-                <p className={styles.pickerEmpty}>{messages.common.noResults}</p>
-              ) : (
-                filtered.map((option) => (
-                  <button
-                    key={option.value}
-                    type="button"
-                    className={styles.pickerItem}
-                    onClick={() => {
-                      close();
-                      onPick(option.value);
-                    }}
-                  >
-                    <PickerItemThumb asset={byId.get(option.value)} loadPreview={loadPreview} />
-                    <span className={styles.pickerItemLabel}>{option.label}</span>
-                  </button>
-                ))
-              )}
-            </ScrollArea>
-            <button
-              type="button"
-              className={styles.pickerImport}
-              onClick={() => {
-                close();
-                onImport();
-              }}
-            >
-              <Icon name="upload" size={16} />
-              {t.importNewFile}
-            </button>
-          </Popover.Popup>
-        </Popover.Positioner>
-      </Popover.Portal>
-    </Popover.Root>
-  );
-}
-
 interface AssetControlProps {
   readonly value: RecordFieldValue | undefined;
   readonly field: FieldDefinition;
   readonly assets: readonly Asset[];
-  readonly importAsset: ImportAsset;
+  readonly renderAssetPicker: RenderAssetPicker;
   readonly loadPreview: LoadPreview;
   readonly onChange: (value: RecordFieldValue) => void;
 }
@@ -274,7 +153,7 @@ export function AssetFieldControl({
   value,
   field,
   assets,
-  importAsset,
+  renderAssetPicker,
   loadPreview,
   onChange,
 }: AssetControlProps) {
@@ -286,11 +165,6 @@ export function AssetFieldControl({
 
   const setAsset = (nextId: string) => {
     onChange({ kind: "asset", assetId: nextId });
-  };
-  const importNew = () => {
-    void importAsset().then((created) => {
-      if (created) setAsset(created.id);
-    });
   };
 
   if (assetId) {
@@ -313,23 +187,19 @@ export function AssetFieldControl({
     );
   }
 
-  return (
-    <AssetPicker
-      options={assetOptions(assets, field.assetKind)}
-      assets={assets}
-      loadPreview={loadPreview}
-      ariaLabel={field.name || t.linkAsset}
-      onPick={setAsset}
-      onImport={importNew}
-    />
-  );
+  return renderAssetPicker({
+    assetKind: field.assetKind,
+    multiple: false,
+    ariaLabel: field.name || t.linkAsset,
+    onPick: setAsset,
+  });
 }
 
 export function AssetListFieldControl({
   value,
   field,
   assets,
-  importAsset,
+  renderAssetPicker,
   loadPreview,
   onChange,
 }: AssetControlProps) {
@@ -346,11 +216,6 @@ export function AssetListFieldControl({
     onChange({
       kind: "list",
       items: [...items, { id: `item_${crypto.randomUUID()}`, kind: "asset", assetId }],
-    });
-  };
-  const importNew = () => {
-    void importAsset().then((created) => {
-      if (created) append(created.id);
     });
   };
 
@@ -376,14 +241,12 @@ export function AssetListFieldControl({
           </span>
         );
       })}
-      <AssetPicker
-        options={assetOptions(assets, field.assetKind)}
-        assets={assets}
-        loadPreview={loadPreview}
-        ariaLabel={field.name || t.linkAsset}
-        onPick={append}
-        onImport={importNew}
-      />
+      {renderAssetPicker({
+        assetKind: field.assetKind,
+        multiple: true,
+        ariaLabel: field.name || t.linkAsset,
+        onPick: append,
+      })}
     </span>
   );
 }
