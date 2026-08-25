@@ -1547,6 +1547,8 @@ function MediaInspectorBody({
   const author = typeof asset.metadata?.author === "string" ? asset.metadata.author : "";
   const license = typeof asset.metadata?.license === "string" ? asset.metadata.license : "";
   const credit = author && license ? format(t.credit, { author, license }) : author || license;
+  const sourceText =
+    typeof asset.metadata?.sourceText === "string" ? asset.metadata.sourceText : "";
 
   return (
     <>
@@ -1590,6 +1592,12 @@ function MediaInspectorBody({
           <dt>{uses > 0 ? format(t.usedIn, { count: uses }) : t.notReferenced}</dt>
           <dd />
         </div>
+        {sourceText ? (
+          <div className={styles.detailRow}>
+            <dt title={sourceText}>{sourceText}</dt>
+            <dd />
+          </div>
+        ) : null}
         {credit ? (
           <div className={styles.detailRow}>
             <dt title={credit}>{credit}</dt>

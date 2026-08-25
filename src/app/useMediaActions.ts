@@ -164,7 +164,11 @@ export function useMediaActions(services: AppServices, store: CourseStateStore):
     } catch (error) {
       return { ok: false, error: String(error) };
     }
-    const { assets, allOk } = await importPickedMedia([picked], undefined, folderId);
+    const { assets, allOk } = await importPickedMedia(
+      [picked],
+      { sourceText: text, ttsVoice: voice },
+      folderId,
+    );
     const asset = assets[0];
     return allOk && asset
       ? { ok: true, asset }

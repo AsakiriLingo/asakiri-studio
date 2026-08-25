@@ -145,12 +145,10 @@ export function MediaSearchDialog({
     );
   };
   const addAudio = (item: AudioSearchResult) => {
-    void add(
-      item.id,
-      item.audioUrl,
-      `tatoeba-${item.lang}-${item.id}.mp3`,
-      toMetadata(item.attribution),
-    );
+    void add(item.id, item.audioUrl, `tatoeba-${item.lang}-${item.id}.mp3`, {
+      sourceText: item.text,
+      ...toMetadata(item.attribution),
+    });
   };
   const add = async (
     id: string,

@@ -978,6 +978,11 @@ describe("App", () => {
       await media.onAddTtsAudio("hello", "en_US-amy-low", "speech.wav");
     });
     expect(services.tts.synthesizeToTemp).toHaveBeenCalledTimes(1);
+    const assetsAfterTts = must(captured.media, "CourseMedia").course.assets;
+    expect(assetsAfterTts[assetsAfterTts.length - 1]?.metadata).toEqual({
+      sourceText: "hello",
+      ttsVoice: "en_US-amy-low",
+    });
 
     await act(async () => {
       await media.onAddRecording(new Uint8Array([1, 2]), "audio/mp4", "m4a");
