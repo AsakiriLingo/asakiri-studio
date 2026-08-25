@@ -292,6 +292,7 @@
     "editorAria": "Editor della parte di lezione selezionata",
     "editorModesAria": "Modalità dell’editor della parte",
     "exercise": {
+      "addDetail": "Aggiungi dettaglio",
       "addDistractor": "Aggiungi distrattore",
       "addOption": "Aggiungi opzione",
       "addWord": "Aggiungi parola",
@@ -331,6 +332,7 @@
       "pairsTitle": "Coppie",
       "phraseDesc": "Ciò che lo studente deve dire. L’audio è la pronuncia di riferimento.",
       "phraseTitle": "Frase da pronunciare",
+      "removeDetail": "Rimuovi dettaglio {index}",
       "removeDistractor": "Rimuovi distrattore {token}",
       "removeOption": "Rimuovi opzione {option}",
       "removePair": "Rimuovi coppia {pair}",
@@ -373,7 +375,6 @@
       "match-pairs": "Abbina le coppie",
       "multiple-choice": "Scelta multipla",
       "rich-text": "Testo formattato",
-      "select-image": "Scegli l’immagine",
       "speak": "Parla ad alta voce",
       "unknown": "Non supportata",
       "word-order": "Ordine delle parole"

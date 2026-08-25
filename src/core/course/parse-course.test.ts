@@ -80,7 +80,6 @@ describe("parseCourse", () => {
     expect(new Set(types)).toEqual(
       new Set([
         "multiple-choice",
-        "select-image",
         "match-pairs",
         "fill-blank",
         "word-order",

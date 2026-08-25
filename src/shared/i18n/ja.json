@@ -292,6 +292,7 @@
     "editorAria": "選択中のレッスンパートエディター",
     "editorModesAria": "パートエディターのモード",
     "exercise": {
+      "addDetail": "詳細を追加",
       "addDistractor": "ダミーを追加",
       "addOption": "選択肢を追加",
       "addWord": "単語を追加",
@@ -331,6 +332,7 @@
       "pairsTitle": "ペア",
       "phraseDesc": "学習者が話す内容。音声はお手本の発音です。",
       "phraseTitle": "話すフレーズ",
+      "removeDetail": "詳細{index}を削除",
       "removeDistractor": "ダミー{token}を削除",
       "removeOption": "選択肢{option}を削除",
       "removePair": "ペア{pair}を削除",
@@ -373,7 +375,6 @@
       "match-pairs": "ペア合わせ",
       "multiple-choice": "選択問題",
       "rich-text": "リッチテキスト",
-      "select-image": "画像を選ぶ",
       "speak": "声に出す",
       "unknown": "未対応",
       "word-order": "語順"

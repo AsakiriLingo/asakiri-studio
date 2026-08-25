@@ -73,7 +73,6 @@ function exerciseBindings(exercise: Exercise): Binding[] {
   };
   switch (exercise.type) {
     case "multiple-choice":
-    case "select-image":
       options(exercise.options);
       break;
     case "match-pairs":

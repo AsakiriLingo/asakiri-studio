@@ -1,5 +1,5 @@
 export const COURSE_FORMAT = "asakiri-course";
-export const COURSE_FORMAT_VERSION = 1;
+export const COURSE_FORMAT_VERSION = 2;
 
 export const DRAFT_FORMATS = ["asakiri-example"] as const;
 

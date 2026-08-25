@@ -120,7 +120,7 @@ A character record typically carries the glyph, a romanization, pronunciation au
 }
 ```
 
-Character records are bound from lessons and exercises exactly like vocabulary. The existing exercise types already cover alphabet drills: `select-image` or `listening` for recognition, `match-pairs` for character to romaji, `word-order` for building kana from a bank. Reuse also composes: a vocabulary record may bind the characters it contains, so a lesson can point out which known characters make up a new word.
+Character records are bound from lessons and exercises exactly like vocabulary. The existing exercise types already cover alphabet drills: `multiple-choice` with image options or `listening` for recognition, `match-pairs` for character to romaji, `word-order` for building kana from a bank. Reuse also composes: a vocabulary record may bind the characters it contains, so a lesson can point out which known characters make up a new word.
 
 Three concerns are specific to writing systems, and all are expressible today:
 
@@ -149,7 +149,7 @@ Exercise presentation and answer evaluation are different concerns, and differen
 - **Presentation**: the fragments a learner sees and the pieces they manipulate (prompt, options, tokens, pairs, blanks). These are compositions of bindings, the same as any lesson content.
 - **Evaluation**: how a response is graded. Correctness always refers to stable IDs or to accepted-value bindings, never to duplicated display values.
 
-The stable core is the small set of evaluation strategies. An exercise `type` is an authoring and interaction template layered on top, and several types can share one strategy (for example both `multiple-choice` and `select-image` grade with `selected-options`).
+The stable core is the small set of evaluation strategies. An exercise `type` is an authoring and interaction template layered on top, and several types can share one strategy (for example both `multiple-choice` and a select-mode `listening` grade with `selected-options`).
 
 ### Shared shape
 
@@ -157,13 +157,7 @@ Every exercise carries a common envelope plus one type-specific body.
 
 ```ts
 type ExerciseType =
-  | "multiple-choice"
-  | "select-image"
-  | "match-pairs"
-  | "fill-blank"
-  | "word-order"
-  | "listening"
-  | "speaking";
+  "multiple-choice" | "match-pairs" | "fill-blank" | "word-order" | "listening" | "speaking";
 
 interface RenderFragment {
   readonly id: string;
@@ -230,7 +224,6 @@ Accepted-value bindings usually point at a record field such as `field_alternate
 | Type              | Learner does                            | Evaluation                           | Auto-graded in Studio |
 | ----------------- | --------------------------------------- | ------------------------------------ | --------------------- |
 | `multiple-choice` | picks one or more options               | `selected-options`                   | yes                   |
-| `select-image`    | hears audio, taps the matching image    | `selected-options`                   | yes                   |
 | `match-pairs`     | links each item to its partner          | `matched-pairs`                      | yes                   |
 | `fill-blank`      | fills blank(s) from a bank or by typing | `filled-blanks`                      | yes                   |
 | `word-order`      | orders tokens into a sentence           | `ordered-tokens`                     | yes                   |
@@ -239,7 +232,7 @@ Accepted-value bindings usually point at a record field such as `field_alternate
 
 ```ts
 interface MultipleChoiceExercise extends ExerciseBase {
-  readonly type: "multiple-choice" | "select-image";
+  readonly type: "multiple-choice";
   readonly options: readonly ChoiceOption[];
   readonly evaluation: Extract<Evaluation, { kind: "selected-options" }>;
 }
@@ -307,7 +300,7 @@ Auto-gradable types resolve entirely from authored IDs, ordering, pairs, or norm
 
 ### Notes
 
-- `select-image` is mechanically `multiple-choice` with image-valued option bodies and an audio prompt fragment. It is a distinct authoring template sharing the `selected-options` strategy, with `presentation.layout` set to `image-grid`.
+- Image-choice exercises (an audio prompt, image-valued option bodies) are just `multiple-choice` with `presentation.layout` set to `image-grid`; there is no separate type. An earlier `select-image` type was removed as a redundant subset of `multiple-choice`, and a migration folds existing `select-image` exercises into it (see [COURSE-FORMAT.md](COURSE-FORMAT.md)).
 - Distractors stay explicit for every type: options, unpaired right items, and unused tokens. Distractor queries remain editor tooling: the author selects a pool, Studio proposes candidates, and the chosen distractors are stored explicitly. Runtime-generated distractors can be added later if the learner format gains deterministic generation rules.
 - Typed grading (typed `listening`, typed `fill-blank`) uses accepted-value bindings plus `NormalizationRules` for case, whitespace, script, or punctuation, rather than duplicating text.
 - The existing `japanese-starter` fixture uses `multiple-choice` and remains valid unchanged.

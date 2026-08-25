@@ -292,6 +292,7 @@
     "editorAria": "Editor de la parte de lección seleccionada",
     "editorModesAria": "Modos del editor de partes",
     "exercise": {
+      "addDetail": "Añadir detalle",
       "addDistractor": "Agregar distractor",
       "addOption": "Agregar opción",
       "addWord": "Agregar palabra",
@@ -331,6 +332,7 @@
       "pairsTitle": "Parejas",
       "phraseDesc": "Lo que el estudiante debe decir. El audio es la pronunciación modelo.",
       "phraseTitle": "Frase para pronunciar",
+      "removeDetail": "Quitar detalle {index}",
       "removeDistractor": "Eliminar distractor {token}",
       "removeOption": "Eliminar opción {option}",
       "removePair": "Eliminar pareja {pair}",
@@ -373,7 +375,6 @@
       "match-pairs": "Unir parejas",
       "multiple-choice": "Opción múltiple",
       "rich-text": "Texto enriquecido",
-      "select-image": "Seleccionar imagen",
       "speak": "Hablar en voz alta",
       "unknown": "No compatible",
       "word-order": "Orden de palabras"

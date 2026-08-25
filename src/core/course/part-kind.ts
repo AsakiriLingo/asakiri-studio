@@ -3,7 +3,6 @@ import type { PartContent } from "@core/course/lesson";
 
 export type PartKind =
   | "rich-text"
-  | "select-image"
   | "multiple-choice"
   | "match-pairs"
   | "fill-blank"
@@ -14,7 +13,6 @@ export type PartKind =
 export const PART_KINDS: readonly PartKind[] = [
   "rich-text",
   "multiple-choice",
-  "select-image",
   "match-pairs",
   "fill-blank",
   "word-order",
@@ -24,7 +22,6 @@ export const PART_KINDS: readonly PartKind[] = [
 
 const EXERCISE_TYPE_BY_KIND: Record<Exclude<PartKind, "rich-text">, ExerciseType> = {
   "multiple-choice": "multiple-choice",
-  "select-image": "select-image",
   "match-pairs": "match-pairs",
   "fill-blank": "fill-blank",
   "word-order": "word-order",
@@ -48,8 +45,6 @@ export function partKind(content: PartContent): PartDisplayKind {
   switch (content.exercise.type) {
     case "multiple-choice":
       return "multiple-choice";
-    case "select-image":
-      return "select-image";
     case "match-pairs":
       return "match-pairs";
     case "fill-blank":

@@ -9,6 +9,7 @@ import { PanelHeader } from "@shared/components/panel";
 import { Select } from "@shared/components/select";
 import { ExerciseShell } from "@features/lesson-editor/exercise/ExerciseShell";
 import { FragmentField } from "@features/lesson-editor/exercise/FragmentField";
+import { FragmentList } from "@features/lesson-editor/exercise/FragmentList";
 import {
   newFragmentId,
   textFragment,
@@ -69,12 +70,10 @@ export function MultipleChoiceEditor({
     update({ ...ex, evaluation: { ...ex.evaluation, correctOptionIds } });
   };
 
-  const setOptionBody = (id: string, fragment: RenderFragment) => {
+  const setOptionBody = (id: string, body: readonly RenderFragment[]) => {
     update({
       ...ex,
-      options: ex.options.map((option) =>
-        option.id === id ? { ...option, body: [fragment, ...option.body.slice(1)] } : option,
-      ),
+      options: ex.options.map((option) => (option.id === id ? { ...option, body } : option)),
     });
   };
 
@@ -130,12 +129,11 @@ export function MultipleChoiceEditor({
           {ex.options.map((option, index) => (
             <div key={option.id} className={styles.exerciseOption}>
               <span className={styles.optionIndex}>{optionLetter(index)}</span>
-              <FragmentField
-                role="primary"
-                fragment={option.body[0]}
+              <FragmentList
+                fragments={option.body}
                 library={library}
-                onChange={(fragment) => {
-                  setOptionBody(option.id, fragment);
+                onChange={(body) => {
+                  setOptionBody(option.id, body);
                 }}
                 ariaLabel={te.optionContent}
                 defaultSource={optionSource}

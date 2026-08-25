@@ -158,21 +158,13 @@ function EditorBody({
 
   const exerciseBody = () => {
     switch (kind) {
-      case "select-image":
-        return exercise?.type === "select-image" ? (
-          <MultipleChoiceEditor
-            exercise={exercise}
-            library={library}
-            onChange={onPersistExercise}
-            optionSource="asset"
-          />
-        ) : null;
       case "multiple-choice":
         return exercise?.type === "multiple-choice" ? (
           <MultipleChoiceEditor
             exercise={exercise}
             library={library}
             onChange={onPersistExercise}
+            optionSource={exercise.presentation?.layout === "image-grid" ? "asset" : undefined}
           />
         ) : null;
       case "match-pairs":

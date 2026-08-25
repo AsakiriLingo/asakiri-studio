@@ -8,6 +8,7 @@ import type {
   MatchPairsExercise,
   Part,
   PartDisplayKind,
+  RenderFragment,
   ResolvedValue,
 } from "@core/course";
 import { createBindingResolver, partKind } from "@core/course";
@@ -78,7 +79,15 @@ function fragmentText(
   return fragment ? resolvedText(resolver.resolve(fragment.binding)) : "";
 }
 
-function MultipleChoicePreview({ part, course }: { readonly part: Part; readonly course: Course }) {
+function MultipleChoicePreview({
+  part,
+  course,
+  onLoadAssetPreview,
+}: {
+  readonly part: Part;
+  readonly course: Course;
+  readonly onLoadAssetPreview: LoadAssetPreview;
+}) {
   const messages = useMessages();
   if (part.content.kind !== "exercise" || part.content.exercise.type !== "multiple-choice") {
     return null;
@@ -86,16 +95,48 @@ function MultipleChoicePreview({ part, course }: { readonly part: Part; readonly
   const exercise = part.content.exercise;
   const resolver = createBindingResolver(course);
   const prompt = fragmentText(exercise.prompt[0], resolver);
+  const imageGrid = exercise.presentation?.layout === "image-grid";
   return (
     <>
       <p className={styles.muted}>{messages.lesson.kind["multiple-choice"]}</p>
       <h2>{prompt || part.title}</h2>
       {exercise.options.length === 0 ? (
         <p className={styles.exerciseHint}>{messages.lesson.previewNoOptions}</p>
+      ) : imageGrid ? (
+        <div className={styles.imageChoiceGrid}>
+          {exercise.options.map((option) => {
+            const correct = exercise.evaluation.correctOptionIds.includes(option.id);
+            const imageFragment =
+              option.body.find((fragment) => fragmentAsset(fragment, resolver)?.kind === "image") ??
+              option.body[0];
+            const asset = imageFragment ? fragmentAsset(imageFragment, resolver) : undefined;
+            const captions = option.body.filter((fragment) => fragment !== imageFragment);
+            return (
+              <button
+                key={option.id}
+                className={joinClassNames(
+                  styles.imageChoice,
+                  correct ? styles.selected : undefined,
+                )}
+                type="button"
+              >
+                <span className={styles.imageThumb}>
+                  <OptionThumb asset={asset} load={onLoadAssetPreview} />
+                </span>
+                {captions.length > 0 ? (
+                  <FragmentBody
+                    body={captions}
+                    resolver={resolver}
+                    onLoadAssetPreview={onLoadAssetPreview}
+                  />
+                ) : null}
+              </button>
+            );
+          })}
+        </div>
       ) : (
         exercise.options.map((option, index) => {
           const correct = exercise.evaluation.correctOptionIds.includes(option.id);
-          const label = fragmentText(option.body[0], resolver);
           return (
             <button
               key={option.id}
@@ -105,7 +146,12 @@ function MultipleChoicePreview({ part, course }: { readonly part: Part; readonly
               )}
               type="button"
             >
-              {label || String.fromCharCode(65 + index)}
+              <FragmentBody
+                body={option.body}
+                resolver={resolver}
+                onLoadAssetPreview={onLoadAssetPreview}
+                fallback={String.fromCharCode(65 + index)}
+              />
             </button>
           );
         })
@@ -160,7 +206,58 @@ function OptionThumb({
   );
 }
 
-function SelectImagePreview({
+function fragmentAsset(fragment: RenderFragment, resolver: BindingResolver): Asset | undefined {
+  const resolved = resolver.resolve(fragment.binding);
+  return resolved.kind === "asset" ? resolved.asset : undefined;
+}
+
+function InlineThumb({ asset, load }: { readonly asset: Asset; readonly load: LoadAssetPreview }) {
+  const url = useAssetThumb(asset, load);
+  return url ? (
+    <img className={styles.inlineThumbImage} src={url} alt="" loading="lazy" decoding="async" />
+  ) : (
+    <Icon name="image" size={16} />
+  );
+}
+
+function FragmentBody({
+  body,
+  resolver,
+  onLoadAssetPreview,
+  fallback,
+}: {
+  readonly body: readonly RenderFragment[];
+  readonly resolver: BindingResolver;
+  readonly onLoadAssetPreview: LoadAssetPreview;
+  readonly fallback?: string;
+}) {
+  const pieces = body.flatMap((fragment) => {
+    const resolved = resolver.resolve(fragment.binding);
+    if (resolved.kind === "asset" && resolved.asset.kind === "audio") {
+      return [
+        <span key={fragment.id} className={styles.fragmentAudio} aria-hidden="true">
+          <Icon name="audio" size={16} />
+        </span>,
+      ];
+    }
+    if (resolved.kind === "asset" && resolved.asset.kind === "image") {
+      return [
+        <span key={fragment.id} className={styles.inlineThumb}>
+          <InlineThumb asset={resolved.asset} load={onLoadAssetPreview} />
+        </span>,
+      ];
+    }
+    const text = resolvedText(resolved);
+    return text ? [<span key={fragment.id}>{text}</span>] : [];
+  });
+
+  if (pieces.length === 0) {
+    return <>{fallback ?? ""}</>;
+  }
+  return <span className={styles.fragmentBody}>{pieces}</span>;
+}
+
+function MatchPreview({
   part,
   course,
   onLoadAssetPreview,
@@ -169,47 +266,6 @@ function SelectImagePreview({
   readonly course: Course;
   readonly onLoadAssetPreview: LoadAssetPreview;
 }) {
-  const messages = useMessages();
-  if (part.content.kind !== "exercise" || part.content.exercise.type !== "select-image") {
-    return null;
-  }
-  const exercise = part.content.exercise;
-  const resolver = createBindingResolver(course);
-  const prompt = fragmentText(exercise.prompt[0], resolver);
-  return (
-    <>
-      <p className={styles.muted}>{messages.lesson.kind["select-image"]}</p>
-      <h2>{prompt || part.title}</h2>
-      {exercise.options.length === 0 ? (
-        <p className={styles.exerciseHint}>{messages.lesson.previewNoOptions}</p>
-      ) : (
-        <div className={styles.imageChoiceGrid}>
-          {exercise.options.map((option) => {
-            const correct = exercise.evaluation.correctOptionIds.includes(option.id);
-            const resolved = option.body[0] ? resolver.resolve(option.body[0].binding) : null;
-            const asset = resolved?.kind === "asset" ? resolved.asset : undefined;
-            return (
-              <button
-                key={option.id}
-                className={joinClassNames(
-                  styles.imageChoice,
-                  correct ? styles.selected : undefined,
-                )}
-                type="button"
-              >
-                <span className={styles.imageThumb}>
-                  <OptionThumb asset={asset} load={onLoadAssetPreview} />
-                </span>
-              </button>
-            );
-          })}
-        </div>
-      )}
-    </>
-  );
-}
-
-function MatchPreview({ part, course }: { readonly part: Part; readonly course: Course }) {
   const messages = useMessages();
   if (part.content.kind !== "exercise" || part.content.exercise.type !== "match-pairs") {
     return null;
@@ -228,7 +284,12 @@ function MatchPreview({ part, course }: { readonly part: Part; readonly course: 
       return (
         <button key={option.id} className={styles.matchChip} type="button">
           {number === undefined ? null : <span className={styles.matchNum}>{number}</span>}
-          {fragmentText(option.body[0], resolver) || "…"}
+          <FragmentBody
+            body={option.body}
+            resolver={resolver}
+            onLoadAssetPreview={onLoadAssetPreview}
+            fallback="…"
+          />
         </button>
       );
     });
@@ -336,7 +397,15 @@ function WordOrderPreview({ part, course }: { readonly part: Part; readonly cour
   );
 }
 
-function ListenPreview({ part, course }: { readonly part: Part; readonly course: Course }) {
+function ListenPreview({
+  part,
+  course,
+  onLoadAssetPreview,
+}: {
+  readonly part: Part;
+  readonly course: Course;
+  readonly onLoadAssetPreview: LoadAssetPreview;
+}) {
   const messages = useMessages();
   if (part.content.kind !== "exercise" || part.content.exercise.type !== "listening") {
     return null;
@@ -368,7 +437,12 @@ function ListenPreview({ part, course }: { readonly part: Part; readonly course:
                 className={joinClassNames(styles.wordChip, correct ? styles.selected : undefined)}
                 type="button"
               >
-                {fragmentText(option.body[0], resolver) || "…"}
+                <FragmentBody
+                  body={option.body}
+                  resolver={resolver}
+                  onLoadAssetPreview={onLoadAssetPreview}
+                  fallback="…"
+                />
               </button>
             );
           })}
@@ -432,20 +506,22 @@ function PreviewBody({
       return (
         <RichTextPreview part={part} library={library} onLoadAssetPreview={onLoadAssetPreview} />
       );
-    case "select-image":
-      return (
-        <SelectImagePreview part={part} course={course} onLoadAssetPreview={onLoadAssetPreview} />
-      );
     case "multiple-choice":
-      return <MultipleChoicePreview part={part} course={course} />;
+      return (
+        <MultipleChoicePreview
+          part={part}
+          course={course}
+          onLoadAssetPreview={onLoadAssetPreview}
+        />
+      );
     case "match-pairs":
-      return <MatchPreview part={part} course={course} />;
+      return <MatchPreview part={part} course={course} onLoadAssetPreview={onLoadAssetPreview} />;
     case "fill-blank":
       return <FillBlankPreview part={part} course={course} />;
     case "word-order":
       return <WordOrderPreview part={part} course={course} />;
     case "listen":
-      return <ListenPreview part={part} course={course} />;
+      return <ListenPreview part={part} course={course} onLoadAssetPreview={onLoadAssetPreview} />;
     case "speak":
       return <SpeakPreview part={part} course={course} />;
     case "unknown":

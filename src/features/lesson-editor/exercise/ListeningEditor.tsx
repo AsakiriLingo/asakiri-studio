@@ -14,6 +14,7 @@ import { PanelHeader } from "@shared/components/panel";
 import { Select } from "@shared/components/select";
 import { ExerciseShell } from "@features/lesson-editor/exercise/ExerciseShell";
 import { FragmentField } from "@features/lesson-editor/exercise/FragmentField";
+import { FragmentList } from "@features/lesson-editor/exercise/FragmentList";
 import { newFragmentId, textFragment } from "@features/lesson-editor/exercise/fragment-model";
 import styles from "@features/lesson-editor/LessonEditor.module.css";
 
@@ -78,12 +79,10 @@ export function ListeningEditor({ exercise, library, onChange }: ListeningEditor
     update({ ...ex, evaluation: { ...selectedEval, correctOptionIds } });
   };
 
-  const setOptionBody = (id: string, fragment: RenderFragment) => {
+  const setOptionBody = (id: string, body: readonly RenderFragment[]) => {
     update({
       ...ex,
-      options: options.map((option) =>
-        option.id === id ? { ...option, body: [fragment, ...option.body.slice(1)] } : option,
-      ),
+      options: options.map((option) => (option.id === id ? { ...option, body } : option)),
     });
   };
 
@@ -165,12 +164,11 @@ export function ListeningEditor({ exercise, library, onChange }: ListeningEditor
             {options.map((option, index) => (
               <div key={option.id} className={styles.exerciseOption}>
                 <span className={styles.optionIndex}>{optionLetter(index)}</span>
-                <FragmentField
-                  role="primary"
-                  fragment={option.body[0]}
+                <FragmentList
+                  fragments={option.body}
                   library={library}
-                  onChange={(fragment) => {
-                    setOptionBody(option.id, fragment);
+                  onChange={(body) => {
+                    setOptionBody(option.id, body);
                   }}
                   ariaLabel={te.optionContent}
                 />

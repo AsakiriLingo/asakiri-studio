@@ -2,7 +2,7 @@
   "format": "asakiri-course",
   "formatVersion": 1,
   "id": "exercise_cat_select_image",
-  "type": "select-image",
+  "type": "multiple-choice",
   "instruction": "Listen, then tap the matching picture.",
   "presentation": {
     "layout": "image-grid"
