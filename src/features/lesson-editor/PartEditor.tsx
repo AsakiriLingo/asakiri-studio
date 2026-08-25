@@ -13,6 +13,7 @@ import type { ProjectWriteResult } from "@core/project-writing";
 import { useFormat, useMessages } from "@shared/i18n";
 import {
   RichEditor,
+  RichEditorProvider,
   type EditorAsset,
   type EditorPresentation,
   type ImportMedia,
@@ -141,6 +142,10 @@ function EditorBody({
   const isTiptap = part.content.kind === "tiptap";
   const initial = isTiptap ? (part.content.document as unknown as JSONContent) : undefined;
   const exercise = part.content.kind === "exercise" ? part.content.exercise : undefined;
+  const editorContext = useMemo(
+    () => ({ library, loadAssetPreview: onLoadAssetPreview }),
+    [library, onLoadAssetPreview],
+  );
 
   if (kind === "rich-text") {
     // Only real tiptap parts persist; composition placeholders do not.
@@ -192,7 +197,11 @@ function EditorBody({
     }
   };
 
-  return <div className={styles.exercisePane}>{exerciseBody()}</div>;
+  return (
+    <RichEditorProvider value={editorContext}>
+      <div className={styles.exercisePane}>{exerciseBody()}</div>
+    </RichEditorProvider>
+  );
 }
 
 function UnsupportedPart({ content }: { readonly content: PartContent }) {

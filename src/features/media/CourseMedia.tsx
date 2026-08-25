@@ -28,6 +28,7 @@ import { Icon, type IconName } from "@shared/components/icon";
 import { IconButton } from "@shared/components/icon-button";
 import { ScrollArea } from "@shared/components/scroll-area";
 import { Status } from "@shared/components/status";
+import { assetSourceText } from "@features/media/asset-text";
 import { MediaSearchDialog, type MediaSearchMode } from "@features/media/MediaSearchDialog";
 import { TtsDialog } from "@features/media/TtsDialog";
 import { RecordDialog } from "@features/media/RecordDialog";
@@ -82,7 +83,7 @@ function assetName(asset: Asset): string {
 
 function matchesQuery(asset: Asset, query: string): boolean {
   const haystack =
-    `${assetName(asset)} ${asset.label} ${asset.kind} ${asset.mimeType}`.toLowerCase();
+    `${assetName(asset)} ${asset.label} ${assetSourceText(asset)} ${asset.kind} ${asset.mimeType}`.toLowerCase();
   return haystack.includes(query);
 }
 
@@ -108,8 +109,20 @@ function scrollParentOf(element: Element | null): Element | null {
   return null;
 }
 
+export type MediaLayout = "grid" | "list";
+
+function copyToClipboard(value: string): void {
+  try {
+    void navigator.clipboard.writeText(value).catch(() => undefined);
+  } catch {
+    return;
+  }
+}
+
 export interface CourseMediaProps {
   readonly course: Course;
+  readonly layout: MediaLayout;
+  readonly onLayoutChange: (layout: MediaLayout) => void;
   readonly onImportMedia: (folderId: string | null) => Promise<ProjectWriteResult | null>;
   readonly onImportMediaFolder: (folderId: string | null) => Promise<ProjectWriteResult | null>;
   readonly onDeleteAsset: (assetId: string) => Promise<ProjectWriteResult>;
@@ -156,6 +169,8 @@ export interface CourseMediaProps {
 
 export function CourseMedia({
   course,
+  layout,
+  onLayoutChange,
   onImportMedia,
   onImportMediaFolder,
   onDeleteAsset,
@@ -813,6 +828,28 @@ export function CourseMedia({
               {!importing && saveState === "failed" ? (
                 <Status tone="error">{t.importFailed}</Status>
               ) : null}
+              <div className={styles.viewToggle}>
+                <IconButton
+                  aria-label={t.viewGrid}
+                  aria-pressed={layout === "grid"}
+                  variant={layout === "grid" ? "secondary" : "ghost"}
+                  onClick={() => {
+                    onLayoutChange("grid");
+                  }}
+                >
+                  <Icon name="media" size={18} />
+                </IconButton>
+                <IconButton
+                  aria-label={t.viewList}
+                  aria-pressed={layout === "list"}
+                  variant={layout === "list" ? "secondary" : "ghost"}
+                  onClick={() => {
+                    onLayoutChange("list");
+                  }}
+                >
+                  <Icon name="list" size={18} />
+                </IconButton>
+              </div>
               {addMenu}
             </div>
 
@@ -860,11 +897,15 @@ export function CourseMedia({
                       ))}
                     </div>
                   ) : null}
-                  <div className={styles.grid} aria-label={t.projectMedia}>
+                  <div
+                    className={layout === "list" ? styles.listRows : styles.grid}
+                    aria-label={t.projectMedia}
+                  >
                     {visible.map((asset) => (
                       <MediaCard
                         key={asset.id}
                         asset={asset}
+                        layout={layout}
                         preview={previews[asset.id]}
                         uses={usage.get(asset.id) ?? 0}
                         playing={playingId === asset.id}
@@ -1315,6 +1356,7 @@ function FolderTile({
 
 interface MediaCardProps {
   readonly asset: Asset;
+  readonly layout: MediaLayout;
   readonly preview: string | undefined;
   readonly uses: number;
   readonly playing: boolean;
@@ -1331,6 +1373,7 @@ interface MediaCardProps {
 
 function MediaCard({
   asset,
+  layout,
   preview,
   uses,
   playing,
@@ -1347,6 +1390,7 @@ function MediaCard({
   const t = messages.media;
   const format = useFormat();
   const name = assetName(asset);
+  const sourceText = assetSourceText(asset);
   const ready = asset.availability === "ready" && Boolean(asset.file);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
@@ -1389,6 +1433,7 @@ function MediaCard({
             ref={setNodeRef}
             className={joinClassNames(
               styles.card,
+              layout === "list" && styles.cardRow,
               selected && styles.cardSelected,
               isDragging && styles.cardDragging,
             )}
@@ -1444,9 +1489,12 @@ function MediaCard({
             </div>
 
             <div className={styles.cardBody}>
-              <span className={styles.cardTitle} title={name}>
+              <span className={styles.cardTitle} title={sourceText || name}>
                 {name}
               </span>
+              {layout === "list" && sourceText && sourceText !== name ? (
+                <span className={styles.sourceText}>{sourceText}</span>
+              ) : null}
               <span className={styles.meta}>
                 {uses > 0 ? format(t.usedIn, { count: uses }) : t.notReferenced}
               </span>
@@ -1471,6 +1519,15 @@ function MediaCard({
             <ContextMenu.Item className={styles.menuItem} onClick={onRename}>
               <Icon name="edit" size={18} />
               {t.renameMedia}
+            </ContextMenu.Item>
+            <ContextMenu.Item
+              className={styles.menuItem}
+              onClick={() => {
+                copyToClipboard(sourceText || name);
+              }}
+            >
+              <Icon name="file-text" size={18} />
+              {t.copyText}
             </ContextMenu.Item>
             {folders.length > 0 ? (
               <ContextMenu.SubmenuRoot>

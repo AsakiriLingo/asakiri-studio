@@ -134,6 +134,18 @@
   font-size: var(--font-size-200);
 }
 
+.leading {
+  display: grid;
+  flex: none;
+  place-items: center;
+}
+
+.item .value {
+  flex: 1 1 auto;
+  min-width: 0;
+  text-align: start;
+}
+
 .item {
   display: flex;
   align-items: center;

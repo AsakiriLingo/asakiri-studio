@@ -579,7 +579,10 @@
     "ttsTitle": "TTS音声を追加",
     "ttsVoiceLabel": "声",
     "unsplashCredit": "写真の提供: Unsplash",
-    "usedBy": "{count}件で使用"
+    "usedBy": "{count}件で使用",
+    "copyText": "テキストをコピー",
+    "viewGrid": "グリッド表示",
+    "viewList": "リスト表示"
   },
   "newCourse": {
     "calloutBody": "スタジオがフォルダを作成し、コースファイルを追加します。",

@@ -223,6 +223,23 @@
   min-width: 0;
 }
 
+.assetOptionThumb {
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: var(--radius-sm);
+  object-fit: cover;
+}
+
+.assetOptionIcon {
+  display: grid;
+  width: 1.75rem;
+  height: 1.75rem;
+  place-items: center;
+  border-radius: var(--radius-sm);
+  background: var(--color-canvas);
+  color: var(--color-text-muted);
+}
+
 .fragmentRow {
   display: flex;
   align-items: flex-start;
