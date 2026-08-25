@@ -16,6 +16,29 @@ pub struct TtsVoice {
     locale: String,
 }
 
+const SHORT_UTTERANCE_CHAR_LIMIT: usize = 25;
+const SHORT_UTTERANCE_LENGTH_SCALE: &str = "1.2";
+
+fn ends_with_terminal_punctuation(text: &str) -> bool {
+    matches!(
+        text.chars().last(),
+        Some('.' | '!' | '?' | '…' | '。' | '！' | '？')
+    )
+}
+
+fn normalize_tts_text(text: &str) -> String {
+    let trimmed = text.trim();
+    if ends_with_terminal_punctuation(trimmed) {
+        trimmed.to_string()
+    } else {
+        format!("{trimmed}.")
+    }
+}
+
+fn is_short_utterance(text: &str) -> bool {
+    text.chars().count() < SHORT_UTTERANCE_CHAR_LIMIT
+}
+
 fn unique_stamp() -> u128 {
     SystemTime::now()
         .duration_since(UNIX_EPOCH)
@@ -130,6 +153,7 @@ fn synthesize_to_temp(
     if text.trim().is_empty() {
         return Err("emptyText".to_string());
     }
+    let text = normalize_tts_text(text);
     let voice = voice.trim();
     if voice.is_empty() {
         return Err("voiceMissing".to_string());
@@ -167,6 +191,11 @@ fn synthesize_to_temp(
     let espeak_data = piper_dir(app)?.join("espeak-ng-data");
     if espeak_data.exists() {
         command.arg("--espeak_data").arg(&espeak_data);
+    }
+    if is_short_utterance(&text) {
+        command
+            .arg("--length_scale")
+            .arg(SHORT_UTTERANCE_LENGTH_SCALE);
     }
     command.stdin(Stdio::piped());
     command.stdout(Stdio::null());
@@ -426,7 +455,30 @@ pub fn remove_voice(app: tauri::AppHandle, voice_id: String) -> Result<(), Strin
 
 #[cfg(test)]
 mod tests {
-    use super::{is_safe_voice_id, locale_from_voice_id};
+    use super::{is_safe_voice_id, is_short_utterance, locale_from_voice_id, normalize_tts_text};
+
+    #[test]
+    fn appends_terminal_punctuation_to_bare_text() {
+        assert_eq!(normalize_tts_text("gatto"), "gatto.");
+        assert_eq!(normalize_tts_text("  buongiorno  "), "buongiorno.");
+        assert_eq!(normalize_tts_text("come stai"), "come stai.");
+    }
+
+    #[test]
+    fn keeps_existing_terminal_punctuation() {
+        assert_eq!(normalize_tts_text("Ciao."), "Ciao.");
+        assert_eq!(normalize_tts_text("Davvero?"), "Davvero?");
+        assert_eq!(normalize_tts_text("Che bello!"), "Che bello!");
+        assert_eq!(normalize_tts_text("Aspetta…"), "Aspetta…");
+        assert_eq!(normalize_tts_text("こんにちは。"), "こんにちは。");
+    }
+
+    #[test]
+    fn detects_short_utterances_by_character_count() {
+        assert!(is_short_utterance("gatto."));
+        assert!(is_short_utterance("il gatto nero."));
+        assert!(!is_short_utterance("Il gatto nero dorme sul divano tutto il giorno."));
+    }
 
     #[test]
     fn derives_locale_from_voice_id() {
